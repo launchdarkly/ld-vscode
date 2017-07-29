@@ -1,0 +1,82 @@
+{
+	"name": "launchdarkly",
+	"displayName": "LaunchDarkly",
+	"description": "",
+	"version": "0.0.1",
+	"publisher": "LaunchDarkly",
+	"engines": {
+		"vscode": "^1.14.0"
+	},
+	"categories": ["Other"],
+	"activationEvents": ["onCommand:extension.getFlag"],
+	"main": "./out/src/extension",
+	"contributes": {
+		"configuration": {
+			"type": "object",
+			"title": "LaunchDarkly configuration",
+			"properties": {
+				"launchdarkly.accessToken": {
+					"type": "string",
+					"description": "LaunchDarkly API access token"
+				},
+				"launchdarkly.project": {
+					"type": ["string", "null"],
+					"default": null,
+					"description": "LaunchDarkly project key"
+				},
+				"launchdarkly.env": {
+					"type": ["string", "null"],
+					"default": null,
+					"description": "LaunchDarkly environment key"
+				},
+				"launchdarkly.clearOutputBeforeEveryCommand": {
+					"type": "boolean",
+					"default": true,
+					"description": "Clears the output console every time new data is displayed."
+				}
+			}
+		},
+		"commands": [
+			{
+				"command": "extension.getFlag",
+				"title": "LaunchDarkly: Get Flag Selection",
+				"when": "editorHasSelection"
+			}
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "extension.getFlag",
+					"when": "editorHasSelection",
+					"group": "LaunchDarkly"
+				}
+			]
+		},
+		"keybindings": [
+			{
+				"command": "extension.getFlag",
+				"key": "ctrl+alt+g",
+				"mac": "cmd+alt+g",
+				"when": "editorHasSelection"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "tsc -p ./",
+		"compile": "tsc -watch -p ./",
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"test": "node ./node_modules/vscode/bin/test"
+	},
+	"devDependencies": {
+		"@types/mocha": "^2.2.32",
+		"@types/node": "^6.0.40",
+		"mocha": "^2.3.3",
+		"typescript": "^2.0.3",
+		"vscode": "^1.0.0"
+	},
+	"dependencies": {
+		"prettier": "^1.5.3",
+		"pretty-error": "^2.1.1",
+		"yarn": "0.27.5"
+	}
+}
