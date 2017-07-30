@@ -2,8 +2,14 @@
 
 This extension aims to provide an accessibility layer for LaunchDarkly's REST API.
 
-## Usage
-![Display a feature flag configuration](animations/get-feature-flag.gif)
+## Features
+1. Display a flag configuration
+
+![Display a feature flag configuration](images/get-feature-flag.gif)
+
+2. LaunchDarkly language support (**Note**: flag configurations are currently updated every 5 minutes)
+  * Flag details tooltip on hover
+  * Flag name completion
 
 ## Extension Settings
 
