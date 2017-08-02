@@ -17,11 +17,8 @@ class LaunchDarklyCompletionItemProvider
 		position: vscode.Position,
 		token: vscode.CancellationToken,
 	): Thenable<vscode.CompletionItem[]> {
-		let flagCompletionItems;
-
 		return new Promise(resolve => {
 			ldClient.all_flag_configs(flags => {
-				flags = flags;
 				resolve(
 					Object.keys(flags).map(flag => {
 						return new vscode.CompletionItem(flag, 4);
@@ -158,7 +155,9 @@ export function activate(ctx: vscode.ExtensionContext) {
 	);
 }
 
-export function deactivate() {}
+export function deactivate() {
+	ldClient.close();
+}
 
 function getFlagFromEditorSelection() {
 	let editor = vscode.window.activeTextEditor;
