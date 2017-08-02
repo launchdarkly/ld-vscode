@@ -14,7 +14,7 @@ This extension aims to provide an accessibility layer for LaunchDarkly's REST AP
 ## Extension Settings
 
 This extension contributes the following settings:
-
+* `launchdarkly.sdkKey`: Your LaunchDarkly SDK key.
 * `launchdarkly.accessToken`: Your LaunchDarkly API access token.
 * `launchdarkly.project`: Your LaunchDarkly project key.
 * `launchdarkly.env`: Your LaunchDarkly environment key.
