@@ -2,14 +2,13 @@
 
 import * as vscode from 'vscode';
 import * as request from 'request';
+import * as LaunchDarkly from 'ldclient-node';
 
 const LD_MODE: vscode.DocumentFilter = {
 	scheme: 'file',
 };
-// 5 minutes
-const FLAG_CONFIGS_TTL = 5 * 60 * 1000;
-// Global object containing flag configurations. Initialized on activation.
-var flags;
+
+var ldClient;
 
 class LaunchDarklyCompletionItemProvider
 	implements vscode.CompletionItemProvider {
@@ -18,11 +17,17 @@ class LaunchDarklyCompletionItemProvider
 		position: vscode.Position,
 		token: vscode.CancellationToken,
 	): Thenable<vscode.CompletionItem[]> {
-		if (new Date().getTime() - flags.lastUpdated > FLAG_CONFIGS_TTL) {
-			getFlags();
-		}
-		return flags.map(flag => {
-			return new vscode.CompletionItem(flag.key, 4);
+		let flagCompletionItems;
+
+		return new Promise(resolve => {
+			ldClient.all_flag_configs(flags => {
+				flags = flags;
+				resolve(
+					Object.keys(flags).map(flag => {
+						return new vscode.CompletionItem(flag, 4);
+					}),
+				);
+			});
 		});
 	}
 }
@@ -33,58 +38,68 @@ class LaunchDarklyHoverProvider implements vscode.HoverProvider {
 		position: vscode.Position,
 		token: vscode.CancellationToken,
 	): Thenable<vscode.Hover> {
-		if (new Date().getTime() - flags.lastUpdated > FLAG_CONFIGS_TTL) {
-			getFlags();
-		}
-		let flag = flags.find(function(flag) {
-			return document.getText(
-				document.getWordRangeAtPosition(
-					position,
-					new RegExp(/([\'\"])[a-z0-9\.-_]+\1/, 'i'),
-				),
-			);
-		});
-		let env = getEnvironment(vscode.workspace.getConfiguration('launchdarkly'));
-		let hoverString =
-			'Name: ' +
-			flag.name +
-			' | Description: ' +
-			flag.description +
-			' | On: ' +
-			flag.environments[env].on +
-			' | Default variation: ' +
-			flag.variations[flag.environments[env].offVariation].value +
-			' | Last modified: ' +
-			new Date(flag.environments[env].lastModified);
 		return new Promise(resolve => {
-			resolve(new vscode.Hover(hoverString));
+			ldClient.all_flag_configs(flags => {
+				var flag =
+					flags[document.getText(document.getWordRangeAtPosition(position))];
+				if (flag) {
+					let hoverString =
+						'**LaunchDarkly Feature Flag**  \nKey: ' +
+						flag.key +
+						'  \nOn: ' +
+						flag.on +
+						'  \nDefault variation: ' +
+						flag.variations[flag.fallthrough.variation] +
+						'  \nOff variation: ' +
+						flag.variations[flag.offVariation] +
+						'  \nVersion number: ' +
+						flag.version +
+						'  \nPrerequisite count: ' +
+						flag.prerequisites.length +
+						'  \nTarget count: ' +
+						flag.targets.length +
+						'  \nRule count: ' +
+						flag.rules.length;
+					resolve(new vscode.Hover(hoverString));
+				} else {
+					resolve();
+				}
+			});
 		});
 	}
 }
 
 export function activate(ctx: vscode.ExtensionContext) {
 	const channel = vscode.window.createOutputChannel('LaunchDarkly');
-	flags = getFlags();
+	var settings = vscode.workspace.getConfiguration('launchdarkly');
+	if (settings.get('sdkKey')) {
+		var sdkKey = settings.get('sdkKey');
+		ldClient = LaunchDarkly.init(sdkKey.toString());
+		ldClient.once('ready', function() {
+			ctx.subscriptions.push(
+				vscode.languages.registerCompletionItemProvider(
+					LD_MODE,
+					new LaunchDarklyCompletionItemProvider(),
+					"'",
+					'"',
+				),
+			);
 
-	ctx.subscriptions.push(
-		vscode.languages.registerCompletionItemProvider(
-			LD_MODE,
-			new LaunchDarklyCompletionItemProvider(),
-			"'",
-			'"',
-		),
-	);
-
-	ctx.subscriptions.push(
-		vscode.languages.registerHoverProvider(
-			LD_MODE,
-			new LaunchDarklyHoverProvider(),
-		),
-	);
+			ctx.subscriptions.push(
+				vscode.languages.registerHoverProvider(
+					LD_MODE,
+					new LaunchDarklyHoverProvider(),
+				),
+			);
+		});
+	} else {
+		vscode.window.showWarningMessage(
+			'launchdarkly.sdkKey is not set. LaunchDarkly language support is unavailable.',
+		);
+	}
 
 	ctx.subscriptions.push(
 		vscode.commands.registerTextEditorCommand('extension.getFlag', () => {
-			let settings = vscode.workspace.getConfiguration('launchdarkly');
 			let flag = getFlagFromEditorSelection();
 
 			if (flag === '') {
@@ -144,41 +159,6 @@ export function activate(ctx: vscode.ExtensionContext) {
 }
 
 export function deactivate() {}
-
-function getFlags() {
-	let settings = vscode.workspace.getConfiguration('launchdarkly');
-	if (!settings.get('accessToken')) {
-		vscode.window.showErrorMessage(
-			'launchdarkly.accessToken is not set. Unable to load flags.',
-		);
-		return;
-	}
-
-	let project = getProject(settings);
-	let envParam = '?env=' + getEnvironment(settings);
-	var options = {
-		url: 'https://app.launchdarkly.com/api/v2/flags/' + project + envParam,
-		headers: {
-			Authorization: settings.get('accessToken'),
-		},
-	};
-
-	request(options, (error, response, body) => {
-		if (!error) {
-			if (response.statusCode == 200) {
-				flags = JSON.parse(body).items;
-				flags.lastUpdated = new Date().getTime();
-			} else {
-				console.log(response);
-				vscode.window.showErrorMessage(response.statusCode);
-			}
-		} else {
-			console.log(error);
-			vscode.window.showErrorMessage('Encountered an error retrieving flags.');
-		}
-	});
-	return;
-}
 
 function getFlagFromEditorSelection() {
 	let editor = vscode.window.activeTextEditor;
