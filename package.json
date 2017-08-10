@@ -7,9 +7,7 @@
 	"engines": {
 		"vscode": "^1.14.0"
 	},
-	"categories": [
-		"Other"
-	],
+	"categories": ["Other"],
 	"activationEvents": [
 		"onCommand:extension.getFlag",
 		"onLanguage:csharp",
@@ -38,18 +36,12 @@
 					"description": "LaunchDarkly SDK key"
 				},
 				"launchdarkly.project": {
-					"type": [
-						"string",
-						"null"
-					],
+					"type": ["string", "null"],
 					"default": null,
 					"description": "LaunchDarkly project key"
 				},
 				"launchdarkly.env": {
-					"type": [
-						"string",
-						"null"
-					],
+					"type": ["string", "null"],
 					"default": null,
 					"description": "LaunchDarkly environment key"
 				},
@@ -95,13 +87,14 @@
 		"@types/mocha": "^2.2.32",
 		"@types/node": "^6.0.40",
 		"mocha": "^2.3.3",
-		"typescript": "^2.0.3",
+		"typescript": "^2.4.2",
 		"vscode": "^1.1.4"
 	},
 	"dependencies": {
-		"ldclient-node": "https://github.com/launchdarkly/node-client-private.git#at/moonshot_add_get_flag_configs",
+		"eventsource": "^1.0.5",
 		"prettier": "^1.5.3",
 		"pretty-error": "^2.1.1",
+		"requestify": "^0.2.5",
 		"yarn": "0.27.5"
 	}
 }

@@ -1,6 +1,6 @@
 # LaunchDarkly VSCode Extension
 
-This extension aims to provide an accessibility layer for LaunchDarkly's REST API.
+This extension aims to provide an accessibility layer for LaunchDarkly's REST API and Stream.
 
 ## Features
 1. Display a flag configuration

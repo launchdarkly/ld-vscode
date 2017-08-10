@@ -2,13 +2,16 @@
 
 import * as vscode from 'vscode';
 import * as request from 'request';
-import * as LaunchDarkly from 'ldclient-node';
+import * as StreamProcessor from './streaming';
+import * as Requestor from './requestor';
+import * as InMemoryFeatureStore from './featureStore';
 
 const LD_MODE: vscode.DocumentFilter = {
 	scheme: 'file',
 };
 
-var ldClient;
+var store;
+var updateProcessor;
 
 class LaunchDarklyCompletionItemProvider
 	implements vscode.CompletionItemProvider {
@@ -18,7 +21,7 @@ class LaunchDarklyCompletionItemProvider
 		token: vscode.CancellationToken,
 	): Thenable<vscode.CompletionItem[]> {
 		return new Promise(resolve => {
-			ldClient.all_flag_configs(flags => {
+			store.all(flags => {
 				resolve(
 					Object.keys(flags).map(flag => {
 						return new vscode.CompletionItem(flag, 4);
@@ -36,7 +39,7 @@ class LaunchDarklyHoverProvider implements vscode.HoverProvider {
 		token: vscode.CancellationToken,
 	): Thenable<vscode.Hover> {
 		return new Promise(resolve => {
-			ldClient.all_flag_configs(flags => {
+			store.all(flags => {
 				var flag =
 					flags[document.getText(document.getWordRangeAtPosition(position))];
 				if (flag) {
@@ -71,23 +74,39 @@ export function activate(ctx: vscode.ExtensionContext) {
 	var settings = vscode.workspace.getConfiguration('launchdarkly');
 	if (settings.get('sdkKey')) {
 		var sdkKey = settings.get('sdkKey');
-		ldClient = LaunchDarkly.init(sdkKey.toString());
-		ldClient.once('ready', function() {
-			ctx.subscriptions.push(
-				vscode.languages.registerCompletionItemProvider(
-					LD_MODE,
-					new LaunchDarklyCompletionItemProvider(),
-					"'",
-					'"',
-				),
-			);
+		store = InMemoryFeatureStore();
+		var config = {
+			timeout: 5,
+			base_uri: 'https://app.launchdarkly.com',
+			stream_uri: 'https://stream.launchdarkly.com',
+			feature_store: store,
+		};
+		updateProcessor = StreamProcessor(
+			sdkKey,
+			config,
+			Requestor(sdkKey, config),
+		);
+		updateProcessor.start(function(err) {
+			if (err) {
+			} else {
+				process.nextTick(function() {
+					ctx.subscriptions.push(
+						vscode.languages.registerCompletionItemProvider(
+							LD_MODE,
+							new LaunchDarklyCompletionItemProvider(),
+							"'",
+							'"',
+						),
+					);
 
-			ctx.subscriptions.push(
-				vscode.languages.registerHoverProvider(
-					LD_MODE,
-					new LaunchDarklyHoverProvider(),
-				),
-			);
+					ctx.subscriptions.push(
+						vscode.languages.registerHoverProvider(
+							LD_MODE,
+							new LaunchDarklyHoverProvider(),
+						),
+					);
+				});
+			}
 		});
 	} else {
 		vscode.window.showWarningMessage(
@@ -156,7 +175,7 @@ export function activate(ctx: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-	ldClient.close();
+	updateProcessor.stop();
 }
 
 function getFlagFromEditorSelection() {
