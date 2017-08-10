@@ -8,7 +8,7 @@
 		"vscode": "^1.14.0"
 	},
 	"categories": ["Other"],
-	"icon": "https://github.com/launchdarkly/ld-vscode/blob/master/images/launchdarkly.png",
+	"icon": "images/launchdarkly.png",
 	"license": "SEE LICENSE IN LICENSE.txt",
 	"activationEvents": [
 		"onCommand:extension.getFlag",
