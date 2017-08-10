@@ -1,14 +1,14 @@
 # LaunchDarkly VSCode Extension
 
-This extension aims to provide an accessibility layer for LaunchDarkly's REST API and Stream.
+This extension aims to provide an accessibility layer for LaunchDarkly's REST API and streaming platform.
 
 ## Features
-1. Display a flag configuration
+Display a flag configuration
 
 ![flag config](https://github.com/launchdarkly/ld-vscode/blob/master/images/get-feature-flag.gif "Display a flag Configuration")
 
 
-2. LaunchDarkly language support (**Note**: flag configurations are currently updated every 5 minutes)
+LaunchDarkly language support
   * Flag details tooltip on hover
   * Flag name completion
 
