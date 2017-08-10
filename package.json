@@ -9,7 +9,7 @@
 	},
 	"categories": ["Other"],
 	"icon": "https://github.com/launchdarkly/ld-vscode/blob/master/images/launchdarkly.png",
-	"license": "SEE LICENSE IN LICENSE.md",
+	"license": "SEE LICENSE IN LICENSE.txt",
 	"activationEvents": [
 		"onCommand:extension.getFlag",
 		"onLanguage:csharp",
