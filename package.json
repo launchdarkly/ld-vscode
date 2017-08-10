@@ -2,12 +2,14 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"publisher": "LaunchDarkly",
 	"engines": {
 		"vscode": "^1.14.0"
 	},
 	"categories": ["Other"],
+	"icon": "https://github.com/launchdarkly/ld-vscode/blob/master/images/launchdarkly.png",
+	"license": "SEE LICENSE IN LICENSE.md",
 	"activationEvents": [
 		"onCommand:extension.getFlag",
 		"onLanguage:csharp",
@@ -87,14 +89,14 @@
 		"@types/mocha": "^2.2.32",
 		"@types/node": "^6.0.40",
 		"mocha": "^2.3.3",
+		"prettier": "^1.5.3",
+		"pretty-error": "^2.1.1",
 		"typescript": "^2.4.2",
-		"vscode": "^1.1.4"
+		"vscode": "^1.1.4",
+		"yarn": "^0.27.5"
 	},
 	"dependencies": {
 		"eventsource": "^1.0.5",
-		"prettier": "^1.5.3",
-		"pretty-error": "^2.1.1",
-		"requestify": "^0.2.5",
-		"yarn": "0.27.5"
+		"requestify": "^0.2.5"
 	}
 }
