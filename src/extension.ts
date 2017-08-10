@@ -88,6 +88,9 @@ export function activate(ctx: vscode.ExtensionContext) {
 		);
 		updateProcessor.start(function(err) {
 			if (err) {
+				vscode.window.showErrorMessage(
+					'[LaunchDarkly] Error retrieving flags.',
+				);
 			} else {
 				process.nextTick(function() {
 					ctx.subscriptions.push(
@@ -110,7 +113,7 @@ export function activate(ctx: vscode.ExtensionContext) {
 		});
 	} else {
 		vscode.window.showWarningMessage(
-			'launchdarkly.sdkKey is not set. LaunchDarkly language support is unavailable.',
+			'[LaunchDarkly] sdkKey is not set. LaunchDarkly language support is unavailable.',
 		);
 	}
 
@@ -120,7 +123,7 @@ export function activate(ctx: vscode.ExtensionContext) {
 
 			if (flag === '') {
 				vscode.window.showErrorMessage(
-					'Error retrieving flag (no selection made).',
+					'[LaunchDarkly] Error retrieving flag (no selection made).',
 				);
 				return;
 			}
@@ -132,7 +135,9 @@ export function activate(ctx: vscode.ExtensionContext) {
 			}
 
 			if (!settings.get('accessToken')) {
-				vscode.window.showErrorMessage('launchdarkly.accessToken is not set');
+				vscode.window.showErrorMessage(
+					'[LaunchDarkly] accessToken is not set.',
+				);
 				return;
 			}
 
@@ -157,16 +162,15 @@ export function activate(ctx: vscode.ExtensionContext) {
 						channel.appendLine(JSON.stringify(JSON.parse(body), null, 2));
 						channel.show();
 					} else if (response.statusCode == 404) {
-						console.log('404');
-						vscode.window.showErrorMessage('404 - Flag not found.');
+						vscode.window.showErrorMessage(
+							'[LaunchDarkly] 404 - Flag not found.',
+						);
 					} else {
-						console.log(response);
 						vscode.window.showErrorMessage(response.statusCode);
 					}
 				} else {
-					console.log(error);
 					vscode.window.showErrorMessage(
-						'Encountered an error retrieving flag.',
+						'[LaunchDarkly] Encountered an error retrieving flag.',
 					);
 				}
 			});
@@ -196,7 +200,7 @@ function getProject(settings) {
 		return settings.get('project');
 	} else {
 		vscode.window.showWarningMessage(
-			"launchdarkly.project is not set, using 'default' project instead",
+			"[LaunchDarkly] project is not set, using 'default' project instead.",
 		);
 		return 'default';
 	}
@@ -207,7 +211,7 @@ function getEnvironment(settings) {
 		return settings.get('env');
 	} else {
 		vscode.window.showInformationMessage(
-			'launchdarkly.env is not set. Showing all environments.',
+			'[LaunchDarkly] env is not set. Showing all environments.',
 		);
 		return '';
 	}
