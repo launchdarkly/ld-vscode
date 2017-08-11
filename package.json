@@ -1,9 +1,9 @@
 {
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
-	"description": "",
+	"description": "Retrieve LaunchDarkly feature flags in your editor.",
 	"version": "1.0.0",
-	"publisher": "LaunchDarkly",
+	"publisher": "launchdarkly",
 	"engines": {
 		"vscode": "^1.14.0"
 	},
@@ -92,11 +92,12 @@
 		"prettier": "^1.5.3",
 		"pretty-error": "^2.1.1",
 		"typescript": "^2.4.2",
-		"vscode": "^1.1.4",
 		"yarn": "^0.27.5"
 	},
 	"dependencies": {
 		"eventsource": "^1.0.5",
-		"requestify": "^0.2.5"
+		"request": "^2.81.0",
+		"requestify": "^0.2.5",
+		"vscode": "^1.1.4"
 	}
 }

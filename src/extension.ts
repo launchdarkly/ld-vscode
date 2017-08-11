@@ -120,7 +120,6 @@ export function activate(ctx: vscode.ExtensionContext) {
 	ctx.subscriptions.push(
 		vscode.commands.registerTextEditorCommand('extension.getFlag', () => {
 			let flag = getFlagFromEditorSelection();
-
 			if (flag === '') {
 				vscode.window.showErrorMessage(
 					'[LaunchDarkly] Error retrieving flag (no selection made).',
