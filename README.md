@@ -5,8 +5,7 @@ This extension aims to provide an accessibility layer for LaunchDarkly's REST AP
 ## Features
 Display a flag configuration
 
-![flag config](https://github.com/launchdarkly/ld-vscode/blob/master/images/get-feature-flag.gif "Display a flag Configuration")
-
+![flag config](https://github.com/launchdarkly/ld-vscode/blob/master/images/get-feature-flag.gif?raw=true "Display a flag Configuration")
 
 LaunchDarkly language support
   * Flag details tooltip on hover
