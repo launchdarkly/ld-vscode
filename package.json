@@ -13,17 +13,7 @@
 	"icon": "images/launchdarkly.png",
 	"license": "SEE LICENSE IN LICENSE.txt",
 	"activationEvents": [
-		"onCommand:extension.getFlag",
-		"onLanguage:csharp",
-		"onLanguage:go",
-		"onLanguage:java",
-		"onLanguage:javascript",
-		"onLanguage:objective-c",
-		"onLanguage:php",
-		"onLanguage:python",
-		"onLanguage:ruby",
-		"onLanguage:swift",
-		"onLanguage:typescript"
+		"*",
 	],
 	"main": "./out/src/extension",
 	"contributes": {
