@@ -51,25 +51,16 @@ class LaunchDarklyHoverProvider implements vscode.HoverProvider {
 							document.getWordRangeAtPosition(position, FLAG_KEY_REGEX),
 						)
 					]
-
 				if (flag) {
-					let hoverString =
-						'**LaunchDarkly feature flag**  \nKey: ' +
-						flag.key +
-						'  \nOn: ' +
-						flag.on +
-						'  \nDefault variation: ' +
-						flag.variations[flag.fallthrough.variation] +
-						'  \nOff variation: ' +
-						flag.variations[flag.offVariation] +
-						'  \nVersion number: ' +
-						flag.version +
-						'  \nPrerequisite count: ' +
-						flag.prerequisites.length +
-						'  \nTarget count: ' +
-						flag.targets.length +
-						'  \nRule count: ' +
-						flag.rules.length
+					let hoverString = `**LaunchDarkly Feature Flag**\n
+Key: ${flag.key}\n
+On: ${flag.on}\n
+Default variation: ${flag.variations[flag.fallthrough.variation]}\n
+Off variation: ${flag.variations[flag.offVariation]}\n
+Version number: ${flag.version}\n
+Prerequisite count: ${flag.prerequisites.length}\n
+Target count: ${flag.targets.length}\n
+Rule count: ${flag.rules.length}`
 					resolve(new vscode.Hover(hoverString))
 				} else {
 					resolve()
