@@ -7,7 +7,9 @@
 	"engines": {
 		"vscode": "^1.14.0"
 	},
-	"categories": ["Other"],
+	"categories": [
+		"Other"
+	],
 	"icon": "images/launchdarkly.png",
 	"license": "SEE LICENSE IN LICENSE.txt",
 	"activationEvents": [
@@ -38,12 +40,18 @@
 					"description": "LaunchDarkly SDK key"
 				},
 				"launchdarkly.project": {
-					"type": ["string", "null"],
+					"type": [
+						"string",
+						"null"
+					],
 					"default": null,
 					"description": "LaunchDarkly project key"
 				},
 				"launchdarkly.env": {
-					"type": ["string", "null"],
+					"type": [
+						"string",
+						"null"
+					],
 					"default": null,
 					"description": "LaunchDarkly environment key"
 				},
@@ -96,6 +104,7 @@
 	},
 	"dependencies": {
 		"eventsource": "^1.0.5",
+		"ldclient-node": "5.1.1",
 		"request": "^2.81.0",
 		"requestify": "^0.2.5",
 		"vscode": "^1.1.4"
