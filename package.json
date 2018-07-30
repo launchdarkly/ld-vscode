@@ -13,7 +13,7 @@
 	"icon": "images/launchdarkly.png",
 	"license": "SEE LICENSE IN LICENSE.txt",
 	"activationEvents": [
-		"*",
+		"*"
 	],
 	"main": "./out/src/extension",
 	"contributes": {
