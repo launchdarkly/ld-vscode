@@ -10,19 +10,7 @@
 	"categories": ["Other"],
 	"icon": "images/launchdarkly.png",
 	"license": "SEE LICENSE IN LICENSE.txt",
-	"activationEvents": [
-		"onCommand:extension.getFlag",
-		"onLanguage:csharp",
-		"onLanguage:go",
-		"onLanguage:java",
-		"onLanguage:javascript",
-		"onLanguage:objective-c",
-		"onLanguage:php",
-		"onLanguage:python",
-		"onLanguage:ruby",
-		"onLanguage:swift",
-		"onLanguage:typescript"
-	],
+	"activationEvents": ["*"],
 	"main": "./out/src/extension",
 	"contributes": {
 		"configuration": {
@@ -83,7 +71,9 @@
 		"vscode:prepublish": "tsc -p ./",
 		"compile": "tsc -watch -p ./",
 		"postinstall": "node ./node_modules/vscode/bin/install",
-		"test": "node ./node_modules/vscode/bin/test"
+		"test": "node ./node_modules/vscode/bin/test",
+		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"**/*.ts\"",
+		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"**/*.ts\""
 	},
 	"devDependencies": {
 		"@types/mocha": "^2.2.32",
@@ -96,8 +86,9 @@
 	},
 	"dependencies": {
 		"eventsource": "^1.0.5",
+		"ldclient-node": "5.1.1",
 		"request": "^2.81.0",
 		"requestify": "^0.2.5",
-		"vscode": "^1.1.4"
+		"vscode": "^1.1.8"
 	}
 }
