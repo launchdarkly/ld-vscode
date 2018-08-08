@@ -1,22 +1,21 @@
 # LaunchDarkly VSCode Extension
 
-This extension aims to provide an accessibility layer for LaunchDarkly's REST API and streaming platform.
+The LaunchDarkly VSCode extension provides some quality-of-life enhancements for interacting with feature flags within VSCode.
 
 ## Features
-Display a flag configuration
 
-![flag config](https://github.com/launchdarkly/ld-vscode/blob/master/images/get-feature-flag.gif?raw=true "Display a flag Configuration")
-
-LaunchDarkly language support
-  * Flag details tooltip on hover
-  * Flag name completion
+- Flag details tooltip on hover
+- Flag name autocomplete
+- Open feature flags in LaunchDarkly (Default keybind: `ctrl+alt+g`/`⌘+alt+g`)
 
 ## Extension Settings
 
 This extension contributes the following settings:
-* `launchdarkly.sdkKey`: Your LaunchDarkly SDK key.
-* `launchdarkly.accessToken`: Your LaunchDarkly API access token.
-* `launchdarkly.project`: Your LaunchDarkly project key.
-* `launchdarkly.env`: Your LaunchDarkly environment key.
-* `launchdarkly.clearOutputBeforeEveryCommand`: If `true`, the output channel is cleared between commands.
-
+| Setting                      | Description                                                                     | Default value                     |
+| ---------------------------- |:-------------------------------------------------------------------------------:| --------------------------------: |
+| `launchdarkly.sdkKey`        | Your LaunchDarkly SDK key. Required.                                            | undefined                         |
+| `launchdarkly.accessToken`   | Your LaunchDarkly API access token. Required.                                   | undefined                         |
+| `launchdarkly.project`       | Your LaunchDarkly project key, should match the provided SDK key. Required.     | undefined                         |
+| `launchdarkly.env`           | Your LaunchDarkly environment key, should match the provided SDK key. Required. | first environment                 |
+| `launchdarkly.baseUri`       | The LaunchDarkly base uri to be used. Optional.                                 | `https://app.launchdarkly.com`    |
+| `launchdarkly.streamUri`     | The LaunchDarkly stream uri to be used. Optional.                               | `https://stream.launchdarkly.com` |
