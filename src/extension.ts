@@ -2,6 +2,8 @@
 
 import * as vscode from 'vscode';
 import * as request from 'request';
+import * as url from 'url';
+import opn = require('opn');
 import InMemoryFeatureStore = require('ldclient-node/feature_store');
 import StreamProcessor = require('ldclient-node/streaming');
 import Requestor = require('ldclient-node/requestor');
@@ -62,15 +64,14 @@ Rule count: ${flag.rules.length}`;
 }
 
 export function activate(ctx: vscode.ExtensionContext) {
-	const channel = vscode.window.createOutputChannel('LaunchDarkly');
 	var settings = vscode.workspace.getConfiguration('launchdarkly');
 	if (settings.get('sdkKey')) {
 		var sdkKey = settings.get('sdkKey');
 		store = InMemoryFeatureStore();
 		var config = {
 			timeout: 5,
-			baseUri: 'https://app.launchdarkly.com',
-			streamUri: 'https://stream.launchdarkly.com',
+			baseUri: settings.get('baseUri'),
+			streamUri: settings.get('streamUri'),
 			featureStore: store,
 			// noop logger for debug calls
 			logger: { debug: () => {} },
@@ -78,6 +79,10 @@ export function activate(ctx: vscode.ExtensionContext) {
 		updateProcessor = StreamProcessor(sdkKey, config, Requestor(sdkKey, config));
 		updateProcessor.start(function(err) {
 			if (err) {
+				let errMsg = `[LaunchDarkly] Error retrieving flags.${settings.get('baseUri') !=
+					'https://app.launchdarkly.com' || settings.get('streamUri') != 'https://stream.launchdarkly.com'
+					? ' Please make sure your configured base and stream URIs are correct'
+					: ''}`;
 				vscode.window.showErrorMessage('[LaunchDarkly] Error retrieving flags.');
 			} else {
 				process.nextTick(function() {
@@ -98,17 +103,15 @@ export function activate(ctx: vscode.ExtensionContext) {
 	}
 
 	ctx.subscriptions.push(
-		vscode.commands.registerTextEditorCommand('extension.getFlag', () => {
-			let flag = getFlagFromEditorSelection();
-			if (flag === '') {
-				vscode.window.showErrorMessage('[LaunchDarkly] Error retrieving flag (no selection made).');
+		vscode.commands.registerTextEditorCommand('extension.openInLaunchDarkly', editor => {
+			let flagKey = editor.document.getText(
+				editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
+			);
+			if (flagKey === '') {
+				vscode.window.showErrorMessage(
+					'[LaunchDarkly] Error retrieving flag (current cursor position is not a feature flag).',
+				);
 				return;
-			}
-
-			if (settings.get('clearOutputBeforeEveryCommand')) {
-				channel.clear();
-			} else {
-				channel.appendLine('Getting flag: ' + flag);
 			}
 
 			if (!settings.get('accessToken')) {
@@ -117,27 +120,34 @@ export function activate(ctx: vscode.ExtensionContext) {
 			}
 
 			let project = getProject(settings);
-			let envParam = '?env=' + getEnvironment(settings);
-
+			if (!project) {
+				vscode.window.showErrorMessage('[LaunchDarkly] project is not set.');
+				return;
+			}
+			let env = getEnvironment(settings);
+			let envParam = env ? '?env=' + env : '';
 			var options = {
-				url: 'https://app.launchdarkly.com/api/v2/flags/' + project + '/' + flag + envParam,
+				url: url.resolve(settings.get('baseUri'), `api/v2/flags/${project}/${flagKey}${envParam}`),
 				headers: {
 					Authorization: settings.get('accessToken'),
 				},
 			};
-
 			request(options, (error, response, body) => {
 				if (!error) {
 					if (response.statusCode == 200) {
-						channel.appendLine(JSON.stringify(JSON.parse(body), null, 2));
-						channel.show();
+						let environments = JSON.parse(body).environments;
+						if (env === '') {
+							opn(url.resolve(settings.get('baseUri'), environments[Object.keys(environments)[0]]._site.href));
+						} else {
+							opn(url.resolve(settings.get('baseUri'), environments[env]._site.href));
+						}
 					} else if (response.statusCode == 404) {
-						vscode.window.showErrorMessage('[LaunchDarkly] 404 - Flag not found.');
+						vscode.window.showErrorMessage(`[LaunchDarkly] Flag key ${flagKey} not found.`);
 					} else {
 						vscode.window.showErrorMessage(response.statusCode);
 					}
 				} else {
-					vscode.window.showErrorMessage('[LaunchDarkly] Encountered an error retrieving flag.');
+					vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an error retrieving the flag ${flagKey}`);
 				}
 			});
 		}),
@@ -148,28 +158,17 @@ export function deactivate() {
 	updateProcessor.stop();
 }
 
-function getFlagFromEditorSelection() {
-	let editor = vscode.window.activeTextEditor;
-	let selection = editor.selection;
-	return editor.document.getText(
-		new vscode.Range(selection.start.line, selection.start.character, selection.end.line, selection.end.character),
-	);
-}
-
 function getProject(settings) {
 	if (settings.get('project')) {
 		return settings.get('project');
-	} else {
-		vscode.window.showWarningMessage("[LaunchDarkly] project is not set, using 'default' project instead.");
-		return 'default';
 	}
+	return '';
 }
 
 function getEnvironment(settings) {
 	if (settings.get('env')) {
 		return settings.get('env');
-	} else {
-		vscode.window.showInformationMessage('[LaunchDarkly] env is not set. Showing all environments.');
-		return '';
 	}
+	vscode.window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
+	return '';
 }

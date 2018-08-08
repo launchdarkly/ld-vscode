@@ -2,15 +2,19 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Retrieve LaunchDarkly feature flags in your editor.",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"publisher": "launchdarkly",
 	"engines": {
 		"vscode": "^1.14.0"
 	},
-	"categories": ["Other"],
+	"categories": [
+		"Other"
+	],
 	"icon": "images/launchdarkly.png",
 	"license": "SEE LICENSE IN LICENSE.txt",
-	"activationEvents": ["*"],
+	"activationEvents": [
+		"*"
+	],
 	"main": "./out/src/extension",
 	"contributes": {
 		"configuration": {
@@ -26,44 +30,55 @@
 					"description": "LaunchDarkly SDK key"
 				},
 				"launchdarkly.project": {
-					"type": ["string", "null"],
+					"type": [
+						"string",
+						"null"
+					],
 					"default": null,
 					"description": "LaunchDarkly project key"
 				},
 				"launchdarkly.env": {
-					"type": ["string", "null"],
+					"type": [
+						"string",
+						"null"
+					],
 					"default": null,
 					"description": "LaunchDarkly environment key"
 				},
-				"launchdarkly.clearOutputBeforeEveryCommand": {
-					"type": "boolean",
-					"default": true,
-					"description": "Clears the output console every time new data is displayed."
+				"launchdarkly.baseUri": {
+					"type": "string",
+					"default": "https://app.launchdarkly.com",
+					"description": "LaunchDarkly base uri"
+				},
+				"launchdarkly.streamUri": {
+					"type": "string",
+					"default": "https://stream.launchdarkly.com",
+					"description": "LaunchDarkly stream uri"
 				}
 			}
 		},
 		"commands": [
 			{
-				"command": "extension.getFlag",
-				"title": "LaunchDarkly: Get Flag Selection",
-				"when": "editorHasSelection"
+				"command": "extension.openInLaunchDarkly",
+				"title": "LaunchDarkly: Open in LaunchDarkly",
+				"when": "editorTextFocus"
 			}
 		],
 		"menus": {
 			"editor/context": [
 				{
-					"command": "extension.getFlag",
-					"when": "editorHasSelection",
+					"command": "extension.openInLaunchDarkly",
+					"when": "editorTextFocus",
 					"group": "LaunchDarkly"
 				}
 			]
 		},
 		"keybindings": [
 			{
-				"command": "extension.getFlag",
+				"command": "extension.openInLaunchDarkly",
 				"key": "ctrl+alt+g",
 				"mac": "cmd+alt+g",
-				"when": "editorHasSelection"
+				"when": "editorTextFocus"
 			}
 		]
 	},
@@ -85,8 +100,10 @@
 		"yarn": "^0.27.5"
 	},
 	"dependencies": {
+		"@types/opn": "5.1.0",
 		"eventsource": "^1.0.5",
 		"ldclient-node": "5.1.1",
+		"opn": "5.3.0",
 		"request": "^2.81.0",
 		"requestify": "^0.2.5",
 		"vscode": "^1.1.8"
