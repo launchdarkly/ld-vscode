@@ -8,6 +8,7 @@ import { LDStreamProcessor, LDFlagValue, LDOptions } from 'ldclient-node';
 import InMemoryFeatureStore = require('ldclient-node/feature_store');
 import StreamProcessor = require('ldclient-node/streaming');
 import Requestor = require('ldclient-node/requestor');
+import { kebabCase } from 'lodash';
 
 const LD_MODE: vscode.DocumentFilter = {
 	scheme: 'file',
@@ -127,30 +128,15 @@ export function activate(ctx: vscode.ExtensionContext) {
 				vscode.window.showErrorMessage('[LaunchDarkly] project is not set.');
 				return;
 			}
-			let env = getEnvironment(settings);
-			let envParam = env ? '?env=' + env : '';
-			let options = {
-				url: url.resolve(settings.get('baseUri'), `api/v2/flags/${project}/${flagKey}${envParam}`),
-				headers: {
-					Authorization: settings.get('accessToken'),
-				},
-			};
-			request(options, (error, response, body) => {
-				if (!error) {
-					if (response.statusCode == 200) {
-						let environments = JSON.parse(body).environments;
-						if (env === '') {
-							opn(url.resolve(settings.get('baseUri'), environments[Object.keys(environments)[0]]._site.href));
-						} else {
-							opn(url.resolve(settings.get('baseUri'), environments[env]._site.href));
-						}
-					} else if (response.statusCode == 404) {
-						vscode.window.showErrorMessage(`[LaunchDarkly] Flag key ${flagKey} not found.`);
-					} else {
-						vscode.window.showErrorMessage(response.statusCode);
-					}
+
+			getFeatureFlag(settings, flagKey, (flag: LDFlagValue) => {
+				console.log(flag)
+				let baseUri = settings.get<string>('baseUri');
+				let env = getEnvironment(settings);
+				if (env === '') {
+					opn(url.resolve(baseUri, flag.environments[Object.keys(flag.environments)[0]]._site.href));
 				} else {
-					vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an error retrieving the flag ${flagKey}`);
+					opn(url.resolve(baseUri, flag.environments[env]._site.href));
 				}
 			});
 		}),
@@ -161,28 +147,65 @@ export function deactivate() {
 	updateProcessor.stop();
 }
 
-function getProject(settings) {
-	if (settings.get('project')) {
-		return settings.get('project');
-	}
-	return '';
+function getProject(settings: vscode.WorkspaceConfiguration) {
+	return settings.get<string>('project');
 }
 
-function getEnvironment(settings) {
-	if (settings.get('env')) {
-		return settings.get('env');
+function getEnvironment(settings: vscode.WorkspaceConfiguration) {
+	if (settings.get<string>('env')) {
+		return settings.get<string>('env');
 	}
 	vscode.window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
 	return '';
 }
 
-function getFlagKeyAtCurrentPosition(
-	document: vscode.TextDocument,
-	position: vscode.Position,
-	cb: Function,
-): LDFlagValue {
+function getFlagKeyAtCurrentPosition(document: vscode.TextDocument, position: vscode.Position, cb: Function) {
 	store.all(DATA_KIND, flags => {
 		let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-		cb(flags[candidate]);
+		cb(flags[candidate] || flags[kebabCase(candidate)]);
+	});
+}
+
+function getFeatureFlag(settings: vscode.WorkspaceConfiguration, flagKey: string, cb: Function) {
+	let baseUri = settings.get<string>('baseUri');
+	let project = getProject(settings);
+	let env = getEnvironment(settings);
+	let envParam = env ? '?env=' + env : '';
+	let options = {
+		url: url.resolve(baseUri, `api/v2/flags/${project}/${flagKey + envParam}`),
+		headers: {
+			Authorization: settings.get('accessToken'),
+		},
+	};
+	request(options, (error, response, body) => {
+		if (!error) {
+			if (response.statusCode == 200) {
+				cb(JSON.parse(body).environments);
+			} else if (response.statusCode == 404) {
+				// Try resolving the flag key to kebab case
+				options.url = url.resolve(baseUri, `api/v2/flags/${project}/${kebabCase(flagKey) + envParam}`);
+				console.log(options)
+				request(options, (error, response, body) => {
+					if (!error) {
+						if (response.statusCode == 200) {
+							console.log(JSON.parse(body).environment)
+							cb(JSON.parse(body).environments);
+						} else if (response.statusCode == 404) {
+							vscode.window.showErrorMessage(`[LaunchDarkly] Flag ${flagKey} not found.`);
+							return;
+						} else {
+							vscode.window.showErrorMessage(response.statusCode);
+						}
+					} else {
+						vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an error retrieving the flag ${flagKey}`);
+					}
+				});
+			} else {
+				vscode.window.showErrorMessage(response.statusCode);
+			}
+		} else {
+			vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an error retrieving the flag ${flagKey}`);
+		}
+		cb(error, response, body);
 	});
 }

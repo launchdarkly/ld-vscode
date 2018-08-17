@@ -101,9 +101,11 @@
 		"yarn": "^0.27.5"
 	},
 	"dependencies": {
+		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
 		"eventsource": "^1.0.5",
 		"ldclient-node": "5.1.1",
+		"lodash.kebabcase": "4.1.1",
 		"opn": "5.3.0",
 		"request": "2.88.0",
 		"vscode": "^1.1.8"
