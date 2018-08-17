@@ -11,6 +11,7 @@ The LaunchDarkly VSCode extension provides some quality-of-life enhancements for
 ## Extension Settings
 
 This extension contributes the following settings:
+
 | Setting                      | Description                                                                     | Default value                     |
 | ---------------------------- |:-------------------------------------------------------------------------------:| --------------------------------: |
 | `launchdarkly.sdkKey`        | Your LaunchDarkly SDK key. Required.                                            | undefined                         |

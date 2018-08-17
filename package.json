@@ -1,7 +1,7 @@
 {
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
-	"description": "Retrieve LaunchDarkly feature flags in your editor.",
+	"description": "View LaunchDarkly feature flags in your editor.",
 	"version": "2.0.0",
 	"publisher": "launchdarkly",
 	"engines": {
@@ -20,7 +20,7 @@
 	"contributes": {
 		"configuration": {
 			"type": "object",
-			"title": "LaunchDarkly configuration",
+			"title": "LaunchDarkly",
 			"properties": {
 				"launchdarkly.accessToken": {
 					"type": "string",
