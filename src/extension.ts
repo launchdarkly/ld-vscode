@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as request from 'request';
 import * as url from 'url';
 import opn = require('opn');
+import { LDStreamProcessor, LDFlagValue, LDOptions } from 'ldclient-node';
 import InMemoryFeatureStore = require('ldclient-node/feature_store');
 import StreamProcessor = require('ldclient-node/streaming');
 import Requestor = require('ldclient-node/requestor');
@@ -14,8 +15,9 @@ const LD_MODE: vscode.DocumentFilter = {
 const DATA_KIND = { namespace: 'features' };
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
 
-var store;
-var updateProcessor;
+//TODO: update LDFeatureStore type to support versioned data kind
+let store: any;
+let updateProcessor: LDStreamProcessor;
 
 class LaunchDarklyCompletionItemProvider implements vscode.CompletionItemProvider {
 	public provideCompletionItems(
@@ -42,8 +44,7 @@ class LaunchDarklyHoverProvider implements vscode.HoverProvider {
 		token: vscode.CancellationToken,
 	): Thenable<vscode.Hover> {
 		return new Promise(resolve => {
-			store.all(DATA_KIND, flags => {
-				var flag = flags[document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX))];
+			getFlagKeyAtCurrentPosition(document, position, flag => {
 				if (flag) {
 					let hoverString = `**LaunchDarkly Feature Flag**\n
 Key: ${flag.key}\n
@@ -55,23 +56,25 @@ Prerequisite count: ${flag.prerequisites.length}\n
 Target count: ${flag.targets.length}\n
 Rule count: ${flag.rules.length}`;
 					resolve(new vscode.Hover(hoverString));
-				} else {
-					resolve();
+					return;
 				}
+				resolve();
 			});
 		});
 	}
 }
 
 export function activate(ctx: vscode.ExtensionContext) {
-	var settings = vscode.workspace.getConfiguration('launchdarkly');
-	if (settings.get('sdkKey')) {
-		var sdkKey = settings.get('sdkKey');
+	let settings = vscode.workspace.getConfiguration('launchdarkly');
+	let sdkKey = settings.get<string>('sdkKey');
+	if (sdkKey) {
+		let baseUri = settings.get<string>('baseUri');
+		let streamUri = settings.get<string>('streamUri');
 		store = InMemoryFeatureStore();
-		var config = {
+		let config: LDOptions = {
 			timeout: 5,
-			baseUri: settings.get('baseUri'),
-			streamUri: settings.get('streamUri'),
+			baseUri: baseUri,
+			streamUri: streamUri,
 			featureStore: store,
 			// noop logger for debug calls
 			logger: { debug: () => {} },
@@ -79,8 +82,8 @@ export function activate(ctx: vscode.ExtensionContext) {
 		updateProcessor = StreamProcessor(sdkKey, config, Requestor(sdkKey, config));
 		updateProcessor.start(function(err) {
 			if (err) {
-				let errMsg = `[LaunchDarkly] Error retrieving flags.${settings.get('baseUri') !=
-					'https://app.launchdarkly.com' || settings.get('streamUri') != 'https://stream.launchdarkly.com'
+				let errMsg = `[LaunchDarkly] Error retrieving flags.${baseUri != 'https://app.launchdarkly.com' ||
+				streamUri != 'https://stream.launchdarkly.com'
 					? ' Please make sure your configured base and stream URIs are correct'
 					: ''}`;
 				vscode.window.showErrorMessage('[LaunchDarkly] Error retrieving flags.');
@@ -126,7 +129,7 @@ export function activate(ctx: vscode.ExtensionContext) {
 			}
 			let env = getEnvironment(settings);
 			let envParam = env ? '?env=' + env : '';
-			var options = {
+			let options = {
 				url: url.resolve(settings.get('baseUri'), `api/v2/flags/${project}/${flagKey}${envParam}`),
 				headers: {
 					Authorization: settings.get('accessToken'),
@@ -171,4 +174,15 @@ function getEnvironment(settings) {
 	}
 	vscode.window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
 	return '';
+}
+
+function getFlagKeyAtCurrentPosition(
+	document: vscode.TextDocument,
+	position: vscode.Position,
+	cb: Function,
+): LDFlagValue {
+	store.all(DATA_KIND, flags => {
+		let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
+		cb(flags[candidate]);
+	});
 }
