@@ -55,6 +55,16 @@
 					"type": "string",
 					"default": "https://stream.launchdarkly.com",
 					"description": "LaunchDarkly stream uri"
+				},
+				"launchdarkly.enableHover": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enables flag info to be displayed on hover of a valid flag key"
+				},
+				"launchdarkly.enableAutocomplete": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable flag key autocompletion"
 				}
 			}
 		},

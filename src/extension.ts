@@ -68,40 +68,48 @@ Rule count: ${flag.rules.length}`;
 export function activate(ctx: vscode.ExtensionContext) {
 	let settings = vscode.workspace.getConfiguration('launchdarkly');
 	let sdkKey = settings.get<string>('sdkKey');
+	let enableHover = settings.get<boolean>('enableHover');
+	let enableAutocomplete = settings.get<boolean>('enableAutocomplete');
 	if (sdkKey) {
-		let baseUri = settings.get<string>('baseUri');
-		let streamUri = settings.get<string>('streamUri');
-		store = InMemoryFeatureStore();
-		let config: LDOptions = {
-			timeout: 5,
-			baseUri: baseUri,
-			streamUri: streamUri,
-			featureStore: store,
-			// noop logger for debug calls
-			logger: { debug: () => {} },
-		};
-		updateProcessor = StreamProcessor(sdkKey, config, Requestor(sdkKey, config));
-		updateProcessor.start(function(err) {
-			if (err) {
-				let errMsg = `[LaunchDarkly] Error retrieving flags.${baseUri != 'https://app.launchdarkly.com' ||
-				streamUri != 'https://stream.launchdarkly.com'
-					? ' Please make sure your configured base and stream URIs are correct'
-					: ''}`;
-				vscode.window.showErrorMessage('[LaunchDarkly] Error retrieving flags.');
-			} else {
-				process.nextTick(function() {
-					ctx.subscriptions.push(
-						vscode.languages.registerCompletionItemProvider(
-							LD_MODE,
-							new LaunchDarklyCompletionItemProvider(),
-							"'",
-							'"',
-						),
-					);
-					ctx.subscriptions.push(vscode.languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider()));
-				});
-			}
-		});
+		if (enableHover || enableAutocomplete) {
+			let baseUri = settings.get<string>('baseUri');
+			let streamUri = settings.get<string>('streamUri');
+			store = InMemoryFeatureStore();
+			let config: LDOptions = {
+				timeout: 5,
+				baseUri: baseUri,
+				streamUri: streamUri,
+				featureStore: store,
+				// noop logger for debug calls
+				logger: { debug: () => {} },
+			};
+			updateProcessor = StreamProcessor(sdkKey, config, Requestor(sdkKey, config));
+			updateProcessor.start(function(err) {
+				if (err) {
+					let errMsg = `[LaunchDarkly] Error retrieving flags.${baseUri != 'https://app.launchdarkly.com' ||
+					streamUri != 'https://stream.launchdarkly.com'
+						? ' Please make sure your configured base and stream URIs are correct'
+						: ''}`;
+					vscode.window.showErrorMessage('[LaunchDarkly] Error retrieving flags.');
+				} else {
+					process.nextTick(function() {
+						if (enableAutocomplete) {
+							ctx.subscriptions.push(
+								vscode.languages.registerCompletionItemProvider(
+									LD_MODE,
+									new LaunchDarklyCompletionItemProvider(),
+									"'",
+									'"',
+								),
+							);
+						}
+						if (enableHover) {
+							ctx.subscriptions.push(vscode.languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider()));
+						}
+					});
+				}
+			});
+		}
 	} else {
 		vscode.window.showWarningMessage('[LaunchDarkly] sdkKey is not set. LaunchDarkly language support is unavailable.');
 	}
@@ -130,7 +138,6 @@ export function activate(ctx: vscode.ExtensionContext) {
 			}
 
 			getFeatureFlag(settings, flagKey, (flag: LDFlagValue) => {
-				console.log(flag)
 				let baseUri = settings.get<string>('baseUri');
 				let env = getEnvironment(settings);
 				if (env === '') {
@@ -184,11 +191,11 @@ function getFeatureFlag(settings: vscode.WorkspaceConfiguration, flagKey: string
 			} else if (response.statusCode == 404) {
 				// Try resolving the flag key to kebab case
 				options.url = url.resolve(baseUri, `api/v2/flags/${project}/${kebabCase(flagKey) + envParam}`);
-				console.log(options)
+				console.log(options);
 				request(options, (error, response, body) => {
 					if (!error) {
 						if (response.statusCode == 200) {
-							console.log(JSON.parse(body).environment)
+							console.log(JSON.parse(body).environment);
 							cb(JSON.parse(body).environments);
 						} else if (response.statusCode == 404) {
 							vscode.window.showErrorMessage(`[LaunchDarkly] Flag ${flagKey} not found.`);

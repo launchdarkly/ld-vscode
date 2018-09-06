@@ -7,10 +7,11 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 ### Added
 
 - The LaunchDarkly base and stream uris are now configurable.
+- Added configuration options to disable flag key autocomplete and hover.
 
 ### Changed
 
-- Replace the "Get feature flag" command with an "Open in LaunchDarkly" command to view a feature flag in the LaunchDarkly dashboard.
+- Replaced the "Get feature flag" command with an "Open in LaunchDarkly" command to view a feature flag in the LaunchDarkly dashboard.
 
 ### Fixed
 
