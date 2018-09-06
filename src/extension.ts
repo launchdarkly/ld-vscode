@@ -50,8 +50,8 @@ class LaunchDarklyHoverProvider implements vscode.HoverProvider {
 					let hoverString = `**LaunchDarkly Feature Flag**\n
 Key: ${flag.key}\n
 On: ${flag.on}\n
-Default variation: ${flag.variations[flag.fallthrough.variation]}\n
-Off variation: ${flag.variations[flag.offVariation]}\n
+Default variation: ${JSON.stringify(flag.variations[flag.fallthrough.variation])}\n
+Off variation: ${JSON.stringify(flag.variations[flag.offVariation])}\n
 Version number: ${flag.version}\n
 Prerequisite count: ${flag.prerequisites.length}\n
 Target count: ${flag.targets.length}\n
@@ -191,11 +191,9 @@ function getFeatureFlag(settings: vscode.WorkspaceConfiguration, flagKey: string
 			} else if (response.statusCode == 404) {
 				// Try resolving the flag key to kebab case
 				options.url = url.resolve(baseUri, `api/v2/flags/${project}/${kebabCase(flagKey) + envParam}`);
-				console.log(options);
 				request(options, (error, response, body) => {
 					if (!error) {
 						if (response.statusCode == 200) {
-							console.log(JSON.parse(body).environment);
 							cb(JSON.parse(body).environments);
 						} else if (response.statusCode == 404) {
 							vscode.window.showErrorMessage(`[LaunchDarkly] Flag ${flagKey} not found.`);
