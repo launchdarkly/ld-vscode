@@ -187,14 +187,14 @@ function getFeatureFlag(settings: vscode.WorkspaceConfiguration, flagKey: string
 	request(options, (error, response, body) => {
 		if (!error) {
 			if (response.statusCode == 200) {
-				cb(JSON.parse(body).environments);
+				cb(JSON.parse(body));
 			} else if (response.statusCode == 404) {
 				// Try resolving the flag key to kebab case
 				options.url = url.resolve(baseUri, `api/v2/flags/${project}/${kebabCase(flagKey) + envParam}`);
 				request(options, (error, response, body) => {
 					if (!error) {
 						if (response.statusCode == 200) {
-							cb(JSON.parse(body).environments);
+							cb(JSON.parse(body));
 						} else if (response.statusCode == 404) {
 							vscode.window.showErrorMessage(`[LaunchDarkly] Flag ${flagKey} not found.`);
 							return;
@@ -211,6 +211,5 @@ function getFeatureFlag(settings: vscode.WorkspaceConfiguration, flagKey: string
 		} else {
 			vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an error retrieving the flag ${flagKey}`);
 		}
-		cb(error, response, body);
 	});
 }
