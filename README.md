@@ -22,3 +22,5 @@ This extension contributes the following settings:
 | `launchdarkly.streamUri`          | The LaunchDarkly stream uri to be used. Optional.                               | `https://stream.launchdarkly.com` |
 | `launchdarkly.enableHover`        | Enables flag info to be displayed on hover of a valid flag key.                 | `https://app.launchdarkly.com`    |
 | `launchdarkly.enableAutocomplete` | Enable flag key autocompletion.                                                 | `https://stream.launchdarkly.com` |
+
+Changing settings requires a VSCode window reload.
