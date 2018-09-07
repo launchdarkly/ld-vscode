@@ -46,23 +46,25 @@ class LaunchDarklyHoverProvider implements vscode.HoverProvider {
 	): Thenable<vscode.Hover> {
 		return new Promise(resolve => {
 			getFlagKeyAtCurrentPosition(document, position, flag => {
-				if (flag) {
-					let hoverString = `**LaunchDarkly Feature Flag**\n
-Key: ${flag.key}\n
-On: ${flag.on}\n
-Default variation: ${JSON.stringify(flag.variations[flag.fallthrough.variation])}\n
-Off variation: ${JSON.stringify(flag.variations[flag.offVariation])}\n
-Version number: ${flag.version}\n
-Prerequisite count: ${flag.prerequisites.length}\n
-Target count: ${flag.targets.length}\n
-Rule count: ${flag.rules.length}`;
-					resolve(new vscode.Hover(hoverString));
-					return;
-				}
-				resolve();
+				flag ? resolve(new vscode.Hover(generateHoverString(flag))) : resolve();
 			});
 		});
 	}
+}
+
+function generateHoverString(flag: LDFlagValue) {
+	return `**LaunchDarkly feature flag**\n
+	Key: ${flag.key}
+	On: ${flag.on}
+	Default variation: ${JSON.stringify(flag.variations[flag.fallthrough.variation])}
+	Off variation: ${JSON.stringify(flag.variations[flag.offVariation])}
+	${plural(flag.prerequisites.length, 'prerequisite', 'prerequisites')}
+	${plural(flag.targets.reduce((acc, curr) => acc + curr.values.length, 0), 'user target', 'user targets')}
+	${plural(flag.rules.length, 'rule', 'rules')}`;
+}
+
+function plural(count: number, singular: string, plural: string) {
+	return count === 1 ? `1 ${singular}` : `${count} ${plural}`;
 }
 
 export function activate(ctx: vscode.ExtensionContext) {
@@ -86,11 +88,12 @@ export function activate(ctx: vscode.ExtensionContext) {
 			updateProcessor = StreamProcessor(sdkKey, config, Requestor(sdkKey, config));
 			updateProcessor.start(function(err) {
 				if (err) {
-					let errMsg = `[LaunchDarkly] Error retrieving flags.${baseUri != 'https://app.launchdarkly.com' ||
+					console.log(err);
+					let errMsg = `[LaunchDarkly] Unexpected error retrieving flags.${baseUri != 'https://app.launchdarkly.com' ||
 					streamUri != 'https://stream.launchdarkly.com'
 						? ' Please make sure your configured base and stream URIs are correct'
 						: ''}`;
-					vscode.window.showErrorMessage('[LaunchDarkly] Error retrieving flags.');
+					vscode.window.showErrorMessage(errMsg);
 				} else {
 					process.nextTick(function() {
 						if (enableAutocomplete) {
@@ -199,17 +202,19 @@ function getFeatureFlag(settings: vscode.WorkspaceConfiguration, flagKey: string
 							vscode.window.showErrorMessage(`[LaunchDarkly] Flag ${flagKey} not found.`);
 							return;
 						} else {
-							vscode.window.showErrorMessage(response.statusCode);
+							vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an unexpected retrieving the flag ${flagKey}`);
 						}
 					} else {
-						vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an error retrieving the flag ${flagKey}`);
+						vscode.window.showErrorMessage(
+							`[LaunchDarkly] Encountered an unexpected error retrieving the flag ${flagKey}`,
+						);
 					}
 				});
 			} else {
 				vscode.window.showErrorMessage(response.statusCode);
 			}
 		} else {
-			vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an error retrieving the flag ${flagKey}`);
+			vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an unexpected error retrieving the flag ${flagKey}`);
 		}
 	});
 }
