@@ -55,7 +55,7 @@ class LaunchDarklyHoverProvider implements vscode.HoverProvider {
 function generateHoverString(flag: LDFlagValue) {
 	return `**LaunchDarkly feature flag**\n
 	Key: ${flag.key}
-	On: ${flag.on}
+	Enabled: ${flag.on}
 	Default variation: ${JSON.stringify(flag.variations[flag.fallthrough.variation])}
 	Off variation: ${JSON.stringify(flag.variations[flag.offVariation])}
 	${plural(flag.prerequisites.length, 'prerequisite', 'prerequisites')}
