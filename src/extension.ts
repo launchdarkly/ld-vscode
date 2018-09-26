@@ -11,6 +11,7 @@ import StreamProcessor = require('ldclient-node/streaming');
 import Requestor = require('ldclient-node/requestor');
 
 import * as utils from './utils';
+import package_json = require('../package.json')
 
 const DATA_KIND = { namespace: 'features' };
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
@@ -63,14 +64,16 @@ export function activate(ctx: vscode.ExtensionContext) {
 			let baseUri = settings.get<string>('baseUri');
 			let streamUri = settings.get<string>('streamUri');
 			store = InMemoryFeatureStore();
-			let config: LDOptions = {
+			let config = {
 				timeout: 5,
 				baseUri: baseUri,
 				streamUri: streamUri,
 				featureStore: store,
 				// noop logger for debug calls
 				logger: { debug: () => {} },
+				userAgent: 'VSCodeExtension/' + package_json.version,
 			};
+
 			updateProcessor = StreamProcessor(sdkKey, config, Requestor(sdkKey, config));
 			updateProcessor.start(function(err) {
 				if (err) {
