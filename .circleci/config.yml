@@ -20,6 +20,9 @@ jobs:
           paths:
             - node_modules
       - run:
+          name: Install libgtk
+          command: 'sudo apt install libgtk-3-0'
+      - run:
           name: Test
           command: 'npm test'
 workflows:
