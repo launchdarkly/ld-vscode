@@ -20,8 +20,8 @@ jobs:
           paths:
             - node_modules
       - run:
-          name: Install libgtk
-          command: 'sudo apt install libgtk-3-0'
+          name: Install vscode dependencies
+          command: 'sudo apt install libgtk-3-0 libxss1 libgconf-2-4 libnss3 libasound2'
       - run:
           name: Test
           command: 'npm test'
