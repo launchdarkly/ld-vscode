@@ -14,11 +14,9 @@ import * as utils from './utils';
 import package_json = require('../package.json');
 
 const DATA_KIND = { namespace: 'features' };
-const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
 const LD_MODE: vscode.DocumentFilter = {
 	scheme: 'file',
 };
-const STRING_DELIMETERS = ['"', "'", '`'];
 
 let store: LDFeatureStore;
 let updateProcessor: LDStreamProcessor;
@@ -28,9 +26,7 @@ class LaunchDarklyCompletionItemProvider implements vscode.CompletionItemProvide
 		document: vscode.TextDocument,
 		position: vscode.Position,
 	): Thenable<vscode.CompletionItem[]> {
-		const range = document.getWordRangeAtPosition(position, FLAG_KEY_REGEX);
-		const c = new vscode.Range(range.start.line, range.start.character - 1, range.start.line, range.start.character);
-		if (STRING_DELIMETERS.indexOf(document.getText(c)) >= 0) {
+		if (utils.isPrecedingCharStringDelimeter(document, position)) {
 			return new Promise(resolve => {
 				store.all(DATA_KIND, flags => {
 					resolve(
@@ -109,7 +105,7 @@ export function activate(ctx: vscode.ExtensionContext) {
 	ctx.subscriptions.push(
 		vscode.commands.registerTextEditorCommand('extension.openInLaunchDarkly', editor => {
 			let flagKey = editor.document.getText(
-				editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
+				editor.document.getWordRangeAtPosition(editor.selection.anchor, utils.FLAG_KEY_REGEX),
 			);
 			if (flagKey === '') {
 				vscode.window.showErrorMessage(
@@ -148,7 +144,7 @@ export function deactivate() {
 
 function getFlagKeyAtCurrentPosition(document: vscode.TextDocument, position: vscode.Position, cb: Function) {
 	store.all(DATA_KIND, flags => {
-		let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
+		let candidate = document.getText(document.getWordRangeAtPosition(position, utils.FLAG_KEY_REGEX));
 		cb(flags[candidate] || flags[kebabCase(candidate)]);
 	});
 }

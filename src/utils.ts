@@ -4,6 +4,9 @@ import { kebabCase } from 'lodash';
 import { LDFlagValue } from 'ldclient-node';
 import * as url from 'url';
 
+export const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
+const STRING_DELIMETERS = ['"', "'", '`'];
+
 export function getProject(settings: vscode.WorkspaceConfiguration) {
 	return settings.get<string>('project');
 }
@@ -73,3 +76,17 @@ export function generateHoverString(flag: LDFlagValue) {
 function plural(count: number, singular: string, plural: string) {
 	return count === 1 ? `1 ${singular}` : `${count} ${plural}`;
 }
+
+export function isPrecedingCharStringDelimeter(document: vscode.TextDocument, position: vscode.Position) {
+	const range = document.getWordRangeAtPosition(position, FLAG_KEY_REGEX);
+	const c = new vscode.Range(
+		range.start.line,
+		candidateTextStartLocation(range.start.character),
+		range.start.line,
+		range.start.character,
+	);
+	const candidate = document.getText(c).trim();
+	return STRING_DELIMETERS.indexOf(candidate) >= 0;
+}
+
+const candidateTextStartLocation = (char: number) => (char === 1 ? 0 : char - 2);
