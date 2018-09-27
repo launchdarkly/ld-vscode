@@ -5,19 +5,20 @@ import * as url from 'url';
 import opn = require('opn');
 import { kebabCase } from 'lodash';
 
-import { LDStreamProcessor, LDFlagValue, LDOptions, LDFeatureStore } from 'ldclient-node';
+import { LDStreamProcessor, LDFlagValue, LDFeatureStore } from 'ldclient-node';
 import InMemoryFeatureStore = require('ldclient-node/feature_store');
 import StreamProcessor = require('ldclient-node/streaming');
 import Requestor = require('ldclient-node/requestor');
 
 import * as utils from './utils';
-import package_json = require('../package.json')
+import package_json = require('../package.json');
 
 const DATA_KIND = { namespace: 'features' };
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
 const LD_MODE: vscode.DocumentFilter = {
 	scheme: 'file',
 };
+const STRING_DELIMETERS = ['"', "'", '`'];
 
 let store: LDFeatureStore;
 let updateProcessor: LDStreamProcessor;
@@ -26,26 +27,25 @@ class LaunchDarklyCompletionItemProvider implements vscode.CompletionItemProvide
 	public provideCompletionItems(
 		document: vscode.TextDocument,
 		position: vscode.Position,
-		token: vscode.CancellationToken,
 	): Thenable<vscode.CompletionItem[]> {
-		return new Promise(resolve => {
-			store.all(DATA_KIND, flags => {
-				resolve(
-					Object.keys(flags).map(flag => {
-						return new vscode.CompletionItem(flag, vscode.CompletionItemKind.Field);
-					}),
-				);
+		const range = document.getWordRangeAtPosition(position, FLAG_KEY_REGEX);
+		const c = new vscode.Range(range.start.line, range.start.character - 1, range.start.line, range.start.character);
+		if (STRING_DELIMETERS.indexOf(document.getText(c)) >= 0) {
+			return new Promise(resolve => {
+				store.all(DATA_KIND, flags => {
+					resolve(
+						Object.keys(flags).map(flag => {
+							return new vscode.CompletionItem(flag, vscode.CompletionItemKind.Field);
+						}),
+					);
+				});
 			});
-		});
+		}
 	}
 }
 
 class LaunchDarklyHoverProvider implements vscode.HoverProvider {
-	public provideHover(
-		document: vscode.TextDocument,
-		position: vscode.Position,
-		token: vscode.CancellationToken,
-	): Thenable<vscode.Hover> {
+	public provideHover(document: vscode.TextDocument, position: vscode.Position): Thenable<vscode.Hover> {
 		return new Promise(resolve => {
 			getFlagKeyAtCurrentPosition(document, position, flag => {
 				flag ? resolve(new vscode.Hover(utils.generateHoverString(flag))) : resolve();
