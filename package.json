@@ -94,10 +94,10 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "yarn test && tsc -p ./",
+		"vscode:prepublish": "npm test && tsc -p ./",
 		"compile": "tsc -watch -p ./",
 		"postinstall": "node ./node_modules/vscode/bin/install",
-		"test": "node ./node_modules/vscode/bin/test",
+		"test": "npm prettier:check && node ./node_modules/vscode/bin/test",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"**/*.ts\"",
 		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"**/*.ts\""
 	},
