@@ -26,6 +26,9 @@ jobs:
           name: Build
           command: 'npm run vscode:prepublish'
       - run:
+          name: Remove BOM
+          command: 'tail -c +4 /home/circleci/project/.vscode-test/stable/VSCode-linux-x64/code > /home/circleci/project/.vscode-test/stable/VSCode-linux-x64/code'
+      - run:
           name: Test
           command: 'npm test'
 workflows:
