@@ -53,7 +53,7 @@ suite('Utils tests', () => {
 				expected: false,
 				line: 4,
 				char: 2,
-			}
+			},
 		];
 
 		vscode.workspace.openTextDocument(uri).then(document => {
