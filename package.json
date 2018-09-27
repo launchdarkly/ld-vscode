@@ -98,8 +98,8 @@
 		"compile": "tsc -watch -p ./",
 		"postinstall": "node ./node_modules/vscode/bin/install",
 		"test": "npm run prettier:check && node ./node_modules/vscode/bin/test",
-		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"**/*.ts\"",
-		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"**/*.ts\""
+		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{!(.vscode-test)/**/*}.ts\"",
+		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{!(.vscode-test)/**/*}.ts\""
 	},
 	"devDependencies": {
 		"@types/mocha": "^2.2.32",
