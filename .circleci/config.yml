@@ -26,6 +26,9 @@ jobs:
           name: Build
           command: 'npm run vscode:prepublish'
       - run:
+          name: Download vscode executable
+          command: 'wget -qO- https://vscode-update.azurewebsites.net/1.27.2/linux-x64/stable | tar zxv -C .vscode-test/stable/ && chmod 0755 .vscode-test/stable/VSCode-linux-x64/code'
+      - run:
           name: Test
           command: 'npm test'
 workflows:
