@@ -11,7 +11,6 @@ let flagManager: LDFlagManager;
 export function activate(ctx: vscode.ExtensionContext) {
 	vscode.workspace.onDidChangeConfiguration((e: vscode.ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
-			console.log("CHANGED A SETTING")
 			settings.reload();
 			flagManager.reload(settings);
 		}
