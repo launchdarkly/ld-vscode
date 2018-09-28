@@ -5,9 +5,8 @@
 	"search.exclude": {
 		"out": true
 	},
-	"editor.formatOnSave": true,
 	"prettier.singleQuote": true,
 	"prettier.useTabs": true,
 	"prettier.trailingComma": "all",
-	"prettier.printWidth": 80
+	"prettier.printWidth": 120
 }

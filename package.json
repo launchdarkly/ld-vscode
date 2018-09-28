@@ -1,21 +1,26 @@
 {
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
-	"description": "Retrieve LaunchDarkly feature flags in your editor.",
-	"version": "1.0.0",
+	"description": "View LaunchDarkly feature flags in your editor.",
+	"version": "2.0.0",
 	"publisher": "launchdarkly",
 	"engines": {
-		"vscode": "^1.14.0"
+		"vscode": "^1.18.0"
 	},
-	"categories": ["Other"],
+	"repository": "https://github.com/launchdarkly/ld-vscode",
+	"categories": [
+		"Other"
+	],
 	"icon": "images/launchdarkly.png",
 	"license": "SEE LICENSE IN LICENSE.txt",
-	"activationEvents": ["*"],
+	"activationEvents": [
+		"*"
+	],
 	"main": "./out/src/extension",
 	"contributes": {
 		"configuration": {
 			"type": "object",
-			"title": "LaunchDarkly configuration",
+			"title": "LaunchDarkly",
 			"properties": {
 				"launchdarkly.accessToken": {
 					"type": "string",
@@ -26,44 +31,65 @@
 					"description": "LaunchDarkly SDK key"
 				},
 				"launchdarkly.project": {
-					"type": ["string", "null"],
+					"type": [
+						"string",
+						"null"
+					],
 					"default": null,
 					"description": "LaunchDarkly project key"
 				},
 				"launchdarkly.env": {
-					"type": ["string", "null"],
+					"type": [
+						"string",
+						"null"
+					],
 					"default": null,
 					"description": "LaunchDarkly environment key"
 				},
-				"launchdarkly.clearOutputBeforeEveryCommand": {
+				"launchdarkly.baseUri": {
+					"type": "string",
+					"default": "https://app.launchdarkly.com",
+					"description": "LaunchDarkly base uri"
+				},
+				"launchdarkly.streamUri": {
+					"type": "string",
+					"default": "https://stream.launchdarkly.com",
+					"description": "LaunchDarkly stream uri"
+				},
+				"launchdarkly.enableHover": {
 					"type": "boolean",
 					"default": true,
-					"description": "Clears the output console every time new data is displayed."
+					"description": "Enables flag info to be displayed on hover of a valid flag key"
+				},
+				"launchdarkly.enableAutocomplete": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable flag key autocompletion"
 				}
 			}
 		},
 		"commands": [
 			{
-				"command": "extension.getFlag",
-				"title": "LaunchDarkly: Get Flag Selection",
-				"when": "editorHasSelection"
+				"command": "extension.openInLaunchDarkly",
+				"title": "LaunchDarkly: Open in LaunchDarkly",
+				"when": "editorTextFocus"
 			}
 		],
 		"menus": {
 			"editor/context": [
 				{
-					"command": "extension.getFlag",
-					"when": "editorHasSelection",
+					"command": "extension.openInLaunchDarkly",
+					"when": "editorTextFocus",
 					"group": "LaunchDarkly"
 				}
 			]
 		},
 		"keybindings": [
 			{
-				"command": "extension.getFlag",
+				"command": "extension.openInLaunchDarkly",
 				"key": "ctrl+alt+g",
 				"mac": "cmd+alt+g",
-				"when": "editorHasSelection"
+				"when": "editorTextFocus"
 			}
 		]
 	},
@@ -71,24 +97,27 @@
 		"vscode:prepublish": "tsc -p ./",
 		"compile": "tsc -watch -p ./",
 		"postinstall": "node ./node_modules/vscode/bin/install",
-		"test": "node ./node_modules/vscode/bin/test",
-		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"**/*.ts\"",
-		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"**/*.ts\""
+		"test": "npm run prettier:check && node ./node_modules/vscode/bin/test",
+		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{!(.vscode-test)/**/*}.ts\"",
+		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{!(.vscode-test)/**/*}.ts\""
 	},
 	"devDependencies": {
 		"@types/mocha": "^2.2.32",
 		"@types/node": "^6.0.40",
-		"mocha": "^2.3.3",
+		"mocha": "5.2.0",
 		"prettier": "^1.5.3",
 		"pretty-error": "^2.1.1",
 		"typescript": "^2.4.2",
 		"yarn": "^0.27.5"
 	},
 	"dependencies": {
+		"@types/lodash": "4.14.116",
+		"@types/opn": "5.1.0",
 		"eventsource": "^1.0.5",
-		"ldclient-node": "5.1.1",
-		"request": "^2.81.0",
-		"requestify": "^0.2.5",
+		"ldclient-node": "5.4.2",
+		"lodash.kebabcase": "4.1.1",
+		"opn": "5.3.0",
+		"request": "2.88.0",
 		"vscode": "^1.1.8"
 	}
 }
