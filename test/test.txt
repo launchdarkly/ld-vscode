@@ -1,0 +1,5 @@
+'someFlagKey'
+"someFlagKey"
+`someFlagKey`
+ 'someFlagKey'
+ a'someFlagKey'

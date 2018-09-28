@@ -1,0 +1,38 @@
+version: 2
+
+jobs:
+  test:
+    docker:
+      - image: circleci/node:8
+    steps:
+      - checkout
+      - run: echo "Node version:" `node --version`
+      - run:
+          name: Update npm
+          command: 'sudo npm install -g npm@latest'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install npm
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: Install vscode dependencies
+          command: 'sudo apt install libgtk-3-0 libxss1 libgconf-2-4 libnss3 libasound2'
+      - run:
+          name: Build
+          command: 'npm run vscode:prepublish'
+      - run:
+          name: Download vscode executable
+          command: 'mkdir -p .vscode-test/stable && wget -qO- https://vscode-update.azurewebsites.net/1.27.2/linux-x64/stable | tar zxv -C .vscode-test/stable/ && chmod 0755 .vscode-test/stable/VSCode-linux-x64/code && tail -c +4 .vscode-test/stable/VSCode-linux-x64/code > .vscode-test/stable/VSCode-linux-x64/code'
+      - run:
+          name: Test
+          command: 'npm test'
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
