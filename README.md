@@ -24,3 +24,21 @@ This extension contributes the following settings:
 | `launchdarkly.enableAutocomplete` | Enable flag key autocompletion.                                                 | `https://stream.launchdarkly.com` |
 
 Changing settings requires a VSCode window reload.
+
+**Note:** If you use quick suggestions to autocomplete words, LaunchDarkly autocomplete functionality requires the `editor.quickSuggestions.strings` setting to be enabled. Otherwise, you'll need to press `Ctrl+Space` (default binding) to see your flag key suggestions.
+
+Here's an example setting configuration with quick suggestions enabled:
+
+```javascript
+{
+  "launchdarkly.accessToken": "api-xxx",
+  "launchdarkly.sdkKey": "sdk-xxx",
+  "launchdarkly.project": "default",
+  "launchdarkly.env": "production",
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+}
+```
