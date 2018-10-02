@@ -2,6 +2,13 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.0.1] - 2018-09-28
+
+### Fixed
+
+- Configuration settings no longer require manually editing the json settings file
+- The extension no longer requires a restart to apply configuration changes
+
 ## [2.0.0] - 2018-09-27
 
 ### Added
