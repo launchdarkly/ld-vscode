@@ -24,26 +24,22 @@
 			"properties": {
 				"launchdarkly.accessToken": {
 					"type": "string",
+					"default": "",
 					"description": "LaunchDarkly API access token"
 				},
 				"launchdarkly.sdkKey": {
 					"type": "string",
+					"default": "",
 					"description": "LaunchDarkly SDK key"
 				},
 				"launchdarkly.project": {
-					"type": [
-						"string",
-						"null"
-					],
-					"default": null,
+					"type": "string",
+					"default": "",
 					"description": "LaunchDarkly project key"
 				},
 				"launchdarkly.env": {
-					"type": [
-						"string",
-						"null"
-					],
-					"default": null,
+					"type": "string",
+					"default": "",
 					"description": "LaunchDarkly environment key"
 				},
 				"launchdarkly.baseUri": {

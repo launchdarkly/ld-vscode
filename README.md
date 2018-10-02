@@ -20,10 +20,8 @@ This extension contributes the following settings:
 | `launchdarkly.env`                | Your LaunchDarkly environment key, should match the provided SDK key.           | first environment                 |
 | `launchdarkly.baseUri`            | The LaunchDarkly base uri to be used. Optional.                                 | `https://app.launchdarkly.com`    |
 | `launchdarkly.streamUri`          | The LaunchDarkly stream uri to be used. Optional.                               | `https://stream.launchdarkly.com` |
-| `launchdarkly.enableHover`        | Enables flag info to be displayed on hover of a valid flag key.                 | `https://app.launchdarkly.com`    |
-| `launchdarkly.enableAutocomplete` | Enable flag key autocompletion.                                                 | `https://stream.launchdarkly.com` |
-
-Changing settings requires a VSCode window reload.
+| `launchdarkly.enableHover`        | Enables flag info to be displayed on hover of a valid flag key.                 | true                              |
+| `launchdarkly.enableAutocomplete` | Enable flag key autocompletion.                                                 | true                              |
 
 **Note:** If you use quick suggestions to autocomplete words, LaunchDarkly autocomplete functionality requires the `editor.quickSuggestions.strings` setting to be enabled. Otherwise, you'll need to press `Ctrl+Space` (default binding) to see your flag key suggestions.
 
