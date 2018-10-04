@@ -2,6 +2,12 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.0.2] - 2018-10-04
+
+### Fixed
+
+- Fixed a bug causing hovers on non-flag string literals to indefinitely display loading text
+
 ## [2.0.1] - 2018-09-28
 
 ### Fixed
