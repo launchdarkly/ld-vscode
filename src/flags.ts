@@ -107,26 +107,28 @@ export class LDFlagManager implements IFlagManager {
 		let config = this.config(settings);
 		if (settings.sdkKey) {
 			this.updateProcessor = StreamProcessor(settings.sdkKey, config, Requestor(settings.sdkKey, config));
-			this.start()
+			this.start();
 		} else {
-			vscode.window.showWarningMessage('[LaunchDarkly] sdkKey is not set. LaunchDarkly language support is unavailable.');
+			vscode.window.showWarningMessage(
+				'[LaunchDarkly] sdkKey is not set. LaunchDarkly language support is unavailable.',
+			);
 		}
-
 	}
 
 	start() {
-		this.updateProcessor && this.updateProcessor.start(function (err) {
-			if (err) {
-				console.log(err);
-				let errMsg = `[LaunchDarkly] Unexpected error retrieving flags.${this.settings.baseUri != DEFAULT_BASE_URI ||
+		this.updateProcessor &&
+			this.updateProcessor.start(function(err) {
+				if (err) {
+					console.log(err);
+					let errMsg = `[LaunchDarkly] Unexpected error retrieving flags.${this.settings.baseUri != DEFAULT_BASE_URI ||
 					this.settings.streamUri != DEFAULT_STREAM_URI
-					? ' Please make sure your configured base and stream URIs are correct'
-					: ''}`;
-				vscode.window.showErrorMessage(errMsg);
-			} else {
-				process.nextTick(function () { });
-			}
-		});
+						? ' Please make sure your configured base and stream URIs are correct'
+						: ''}`;
+					vscode.window.showErrorMessage(errMsg);
+				} else {
+					process.nextTick(function() {});
+				}
+			});
 	}
 
 	reload(newSettings: IConfiguration) {
@@ -135,14 +137,10 @@ export class LDFlagManager implements IFlagManager {
 			this.settings.baseUri !== newSettings.baseUri ||
 			this.settings.streamUri !== newSettings.streamUri
 		) {
-			let config = this.config(newSettings)
+			let config = this.config(newSettings);
 			this.updateProcessor && this.updateProcessor.stop();
-			this.updateProcessor = StreamProcessor(
-				newSettings.sdkKey,
-				config,
-				Requestor(newSettings.sdkKey, config),
-			);
-			this.start()
+			this.updateProcessor = StreamProcessor(newSettings.sdkKey, config, Requestor(newSettings.sdkKey, config));
+			this.start();
 		}
 		this.settings = newSettings;
 	}
@@ -163,26 +161,21 @@ export class LDFlagManager implements IFlagManager {
 	}
 
 	registerProviders(ctx: vscode.ExtensionContext, settings: IConfiguration) {
-		if (settings.enableAutocomplete) {
-			ctx.subscriptions.push(
-				vscode.languages.registerCompletionItemProvider(
-					LD_MODE,
-					new this.LaunchDarklyCompletionItemProvider(),
-					"'",
-					'"',
-				),
-			);
-		}
-		if (settings.enableHover) {
-			ctx.subscriptions.push(
-				vscode.languages.registerHoverProvider(LD_MODE, new this.LaunchDarklyHoverProvider()),
-			);
-		}
+		ctx.subscriptions.push(
+			vscode.languages.registerCompletionItemProvider(LD_MODE, new this.LaunchDarklyCompletionItemProvider(), "'", '"'),
+		);
 
-		ctx.subscriptions.push(vscode.commands.registerTextEditorCommand('extension.openInLaunchDarkly', editor => {
-				let flagKey = editor.document.getText(editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX));
+		ctx.subscriptions.push(vscode.languages.registerHoverProvider(LD_MODE, new this.LaunchDarklyHoverProvider()));
+
+		ctx.subscriptions.push(
+			vscode.commands.registerTextEditorCommand('extension.openInLaunchDarkly', editor => {
+				let flagKey = editor.document.getText(
+					editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
+				);
 				if (!flagKey) {
-					vscode.window.showErrorMessage('[LaunchDarkly] Error retrieving flag (current cursor position is not a feature flag).');
+					vscode.window.showErrorMessage(
+						'[LaunchDarkly] Error retrieving flag (current cursor position is not a feature flag).',
+					);
 					return;
 				}
 
@@ -204,7 +197,8 @@ export class LDFlagManager implements IFlagManager {
 						opn(url.resolve(settings.baseUri, flag.environments[settings.env]._site.href));
 					}
 				});
-			}));
+			}),
+		);
 	}
 
 	get LaunchDarklyHoverProvider() {
@@ -212,14 +206,19 @@ export class LDFlagManager implements IFlagManager {
 		const store = this.store;
 		return class LaunchDarklyHoverProvider implements vscode.HoverProvider {
 			public provideHover(document: vscode.TextDocument, position: vscode.Position): Thenable<vscode.Hover> {
-				return new Promise(resolve => {
+				return new Promise((resolve, reject) => {
 					settings.enableHover
 						? store.all(DATA_KIND, flags => {
 								let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-								let flag = generateHoverString(flags[candidate] || flags[kebabCase(candidate)]);
-								flag ? resolve(new vscode.Hover(flag)) : resolve();
+								let flag = flags[candidate] || flags[kebabCase(candidate)];
+								if (flag) {
+									let hover = generateHoverString(flag);
+									resolve(new vscode.Hover(hover));
+									return;
+								}
+								reject();
 							})
-						: resolve();
+						: reject();
 				});
 			}
 		};
