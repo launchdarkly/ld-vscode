@@ -2,7 +2,15 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.0.3] - 2018-11-26
+
+### Fixed
+
+- The previous version of ld-vscode had shipped with a potentially vulnerable version of `event-stream`, a dependency used by the vscode api. This version downgrades `event-stream` to a previous version that did not contain this vulnerability. More information on this vulnerability can be found here: https://github.com/dominictarr/event-stream/issues/116.
+
 ## [2.0.2] - 2018-10-04
+
+### ⚠ PSA: Version 2.0.2 contains a dependency vulnerability in `event-stream` and should not be used.
 
 ### Fixed
 
