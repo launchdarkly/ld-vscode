@@ -10,7 +10,7 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 
 ## [2.0.2] - 2018-10-04
 
-### PSA: Version 2.0.2 contains a dependency vulnerability in `event-stream` and should not be used.
+### ⚠ PSA: Version 2.0.2 contains a dependency vulnerability in `event-stream` and should not be used.
 
 ### Fixed
 
