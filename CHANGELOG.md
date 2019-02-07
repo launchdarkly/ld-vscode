@@ -2,6 +2,12 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.0.4] - 2019-02-07
+
+### Changed
+
+- Locked indirect dependency `node.extend` to versions ^1.1.7.
+
 ## [2.0.3] - 2018-11-26
 
 ### Fixed
