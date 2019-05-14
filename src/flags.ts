@@ -19,6 +19,12 @@ const LD_MODE: vscode.DocumentFilter = {
 	scheme: 'file',
 };
 
+function unexpectedError(flagKey: string) {
+	return vscode.window.showErrorMessage(
+		`[LaunchDarkly] Encountered an unexpected error retrieving the flag ${flagKey}`,
+	);
+}
+
 function getFeatureFlag(settings: IConfiguration, flagKey: string, cb: Function) {
 	let envParam = settings.env ? '?env=' + settings.env : '';
 	let options = {
@@ -45,19 +51,17 @@ function getFeatureFlag(settings: IConfiguration, flagKey: string, cb: Function)
 							vscode.window.showErrorMessage(`[LaunchDarkly] Could not find the flag ${flagKey}`);
 							return;
 						} else {
-							vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an unexpected retrieving the flag ${flagKey}`);
+							unexpectedError(flagKey);
 						}
 					} else {
-						vscode.window.showErrorMessage(
-							`[LaunchDarkly] Encountered an unexpected error retrieving the flag ${flagKey}`,
-						);
+						unexpectedError(flagKey);
 					}
 				});
 			} else {
 				vscode.window.showErrorMessage(response.statusCode);
 			}
 		} else {
-			vscode.window.showErrorMessage(`[LaunchDarkly] Encountered an unexpected error retrieving the flag ${flagKey}`);
+			unexpectedError(flagKey);
 		}
 	});
 }
