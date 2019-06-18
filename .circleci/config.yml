@@ -25,9 +25,9 @@ jobs:
       - run:
           name: Build
           command: 'yarn run vscode:prepublish'
-      - run:
-          name: Download vscode executable
-          command: 'mkdir -p .vscode-test/stable && wget -qO- https://vscode-update.azurewebsites.net/1.27.2/linux-x64/stable | tar zxv -C .vscode-test/stable/ && chmod 0755 .vscode-test/stable/VSCode-linux-x64/code && tail -c +4 .vscode-test/stable/VSCode-linux-x64/code > .vscode-test/stable/VSCode-linux-x64/code'
+      # - run:
+      #     name: Download vscode executable
+      #     command: 'mkdir -p .vscode-test/stable && wget -qO- https://vscode-update.azurewebsites.net/1.27.2/linux-x64/stable | tar zxv -C .vscode-test/stable/ && chmod 0755 .vscode-test/stable/VSCode-linux-x64/code && tail -c +4 .vscode-test/stable/VSCode-linux-x64/code > .vscode-test/stable/VSCode-linux-x64/code'
       - run:
           name: Test
           command: 'yarn test'
