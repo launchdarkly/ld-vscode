@@ -32,9 +32,9 @@ jobs:
       # - run:
       #     name: Test
       #     command: 'yarn test'
-        - run:
-            name: Lint
-            command: 'yarn run prettier:check'
+      - run:
+          name: Lint
+          command: 'yarn run prettier:check'
 workflows:
   version: 2
   test:
