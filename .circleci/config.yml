@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run: echo "Node version:" `node --version`
       - run:
-          name: Install npm globally
+          name: Install yarn globally
           command: 'sudo npm install -g yarn@latest'
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
