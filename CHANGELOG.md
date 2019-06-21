@@ -2,6 +2,13 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.1.0] - 2019-02-07
+
+### Changed
+
+- Updated dependencies
+- Fixed error message typo. Thanks @InTheCloudDan
+
 ## [2.0.4] - 2019-02-07
 
 ### Changed
