@@ -120,10 +120,11 @@ export class LDFlagManager implements IFlagManager {
 			this.updateProcessor.start(function(err) {
 				if (err) {
 					console.log(err);
-					let errMsg = `[LaunchDarkly] Unexpected error retrieving flags.${this.settings.baseUri != DEFAULT_BASE_URI ||
-					this.settings.streamUri != DEFAULT_STREAM_URI
-						? ' Please make sure your configured base and stream URIs are correct'
-						: ''}`;
+					let errMsg = `[LaunchDarkly] Unexpected error retrieving flags.${
+						this.settings.baseUri != DEFAULT_BASE_URI || this.settings.streamUri != DEFAULT_STREAM_URI
+							? ' Please make sure your configured base and stream URIs are correct'
+							: ''
+					}`;
 					vscode.window.showErrorMessage(errMsg);
 				} else {
 					process.nextTick(function() {});
@@ -217,7 +218,7 @@ export class LDFlagManager implements IFlagManager {
 									return;
 								}
 								reject();
-							})
+						  })
 						: reject();
 				});
 			}
@@ -241,7 +242,7 @@ export class LDFlagManager implements IFlagManager {
 											return new vscode.CompletionItem(flag, vscode.CompletionItemKind.Field);
 										}),
 									);
-								})
+							  })
 							: resolve();
 					});
 				}
