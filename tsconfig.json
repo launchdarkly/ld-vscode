@@ -7,6 +7,5 @@
 		"sourceMap": true,
 		"rootDir": ".",
 		"resolveJsonModule": true
-	},
-	"exclude": ["node_modules", ".vscode-test", "./out"]
+	}
 }

@@ -9,7 +9,7 @@ import * as url from 'url';
 import opn = require('opn');
 
 import { IConfiguration, DEFAULT_BASE_URI, DEFAULT_STREAM_URI } from './configuration';
-import package_json = require('../package.json');
+const package_json = require('../package.json');
 
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
 
