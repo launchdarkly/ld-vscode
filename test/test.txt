@@ -3,3 +3,5 @@
 `someFlagKey`
  'someFlagKey'
  a'someFlagKey'
+'someFlagKey'a
+ %$#$^

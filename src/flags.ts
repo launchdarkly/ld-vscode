@@ -87,6 +87,9 @@ function plural(count: number, singular: string, plural: string) {
 
 export function isPrecedingCharStringDelimeter(document: vscode.TextDocument, position: vscode.Position) {
 	const range = document.getWordRangeAtPosition(position, FLAG_KEY_REGEX);
+	if (!range || !range.start) {
+		return false;
+	}
 
 	const c = new vscode.Range(
 		range.start.line,
@@ -95,7 +98,7 @@ export function isPrecedingCharStringDelimeter(document: vscode.TextDocument, po
 		range.start.character,
 	);
 	const candidate = document.getText(c).trim();
-	return STRING_DELIMETERS.indexOf(candidate) >= 0;
+	return STRING_DELIMETERS.indexOf(candidate) !== -1;
 }
 
 const candidateTextStartLocation = (char: number) => (char === 1 ? 0 : char - 2);
