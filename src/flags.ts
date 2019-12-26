@@ -73,7 +73,11 @@ export function generateHoverString(flag: LDFlagValue) {
 	Default variation: ${JSON.stringify(flag.variations[flag.fallthrough.variation])}
 	Off variation: ${JSON.stringify(flag.variations[flag.offVariation])}
 	${plural(flag.prerequisites.length, 'prerequisite', 'prerequisites')}
-	${plural(flag.targets.reduce((acc, curr) => acc + curr.values.length, 0), 'user target', 'user targets')}
+	${plural(
+		flag.targets.reduce((acc, curr) => acc + curr.values.length, 0),
+		'user target',
+		'user targets',
+	)}
 	${plural(flag.rules.length, 'rule', 'rules')}`;
 }
 
