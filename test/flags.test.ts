@@ -54,6 +54,11 @@ suite('flags tests', () => {
 				line: 4,
 				char: 2,
 			},
+			{
+				expected: false,
+				line: -1,
+				char: 1,
+			}
 		];
 
 		vscode.workspace.openTextDocument(uri).then(document => {
