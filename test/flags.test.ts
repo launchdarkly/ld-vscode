@@ -26,46 +26,53 @@ suite('flags tests', () => {
 		);
 	});
 
-	test('isPrecedingCharStringDelimeter', () => {
-		let uri = vscode.Uri.file(path.join(testPath, 'test.txt'));
+	test('isPrecedingCharStringDelimeter', async () => {
+		// TODO: generate the test data in this file
+		const uri = vscode.Uri.file(path.join(testPath, 'test.txt'));
 		const tests = [
 			{
+				name: "single-quote delim",
 				expected: true,
 				line: 0,
 				char: 1,
 			},
 			{
+				name: "double-quote delim",
 				expected: true,
 				line: 1,
 				char: 1,
 			},
 			{
+				name: "backtick delim",
 				expected: true,
 				line: 2,
 				char: 1,
 			},
 			{
+				name: "not start of line",
 				expected: true,
 				line: 3,
 				char: 2,
 			},
 			{
+				name: "delim preceded by another char",
 				expected: false,
 				line: 4,
 				char: 2,
 			},
 			{
+				name: "doesn't match flag key regex",
 				expected: false,
-				line: -1,
-				char: 1,
+				line: 6,
+				char: 2,
 			}
 		];
 
-		vscode.workspace.openTextDocument(uri).then(document => {
-			tests.forEach(t => {
-				let pos = new vscode.Position(t.line, t.char);
-				assert.equal(flags.isPrecedingCharStringDelimeter(document, pos), t.expected);
-			});
+		const document = await vscode.workspace.openTextDocument(uri);
+		tests.forEach(t => {
+			const pos = new vscode.Position(t.line, t.char);
+			assert.equal(flags.isPrecedingCharStringDelimeter(document, pos), t.expected, t.name);
 		});
+
 	});
 });
