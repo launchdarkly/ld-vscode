@@ -125,7 +125,7 @@ export class LDFlagManager implements IFlagManager {
 
 	start() {
 		this.updateProcessor &&
-			this.updateProcessor.start(function(err) {
+			this.updateProcessor.start((err) => {
 				if (err) {
 					console.log(err);
 					let errMsg = `[LaunchDarkly] Unexpected error retrieving flags.${
@@ -141,6 +141,7 @@ export class LDFlagManager implements IFlagManager {
 	}
 
 	reload(newSettings: IConfiguration) {
+		console.log("this?",  this)
 		if (
 			this.settings.sdkKey !== newSettings.sdkKey ||
 			this.settings.baseUri !== newSettings.baseUri ||
