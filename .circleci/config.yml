@@ -19,9 +19,9 @@ jobs:
       - run:
           name: Install vscode dependencies
           command: 'sudo apt install libgtk-3-0 libxss1 libgconf-2-4 libnss3 libasound2'
-      - run:
-          name: Set display
-          command: "export DISPLAY=':0' && /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &"
+      # - run:
+      #     name: Set display
+      #     command: "export DISPLAY=':0' && /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &"
       - run:
           name: Build
           command: 'yarn run vscode:prepublish'
@@ -31,7 +31,7 @@ jobs:
       #     command: 'mkdir -p .vscode-test/stable && wget -qO- https://vscode-update.azurewebsites.net/1.27.2/linux-x64/stable | tar zxv -C .vscode-test/stable/ && chmod 0755 .vscode-test/stable/VSCode-linux-x64/code && tail -c +4 .vscode-test/stable/VSCode-linux-x64/code > .vscode-test/stable/VSCode-linux-x64/code'
       - run:
           name: Test
-          command: 'echo $DISPLAY && yarn test'
+          command: 'DISPLAY=:10 yarn test'
       - run:
           name: Lint
           command: 'yarn run prettier:check'
