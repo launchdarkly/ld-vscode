@@ -2,6 +2,16 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.1.2] - 2019-12-26
+
+### Fixed
+
+- Fixed an error log when cursor position was in an invalid state
+
+### Changed
+- Cleaned up debug logging
+- The extension will no longer initially display a warning message when not configured.
+
 ## [2.1.1] - 2019-06-24
 
 ### Changed
