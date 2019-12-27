@@ -94,7 +94,7 @@
 		"compile": "webpack --mode none",
 		"watch": "webpack --mode none --watch",
 		"test-compile": "tsc -p ./ && cp ./package.json ./out/package.json",
-		"test": "yarn run prettier:check && yarn run test-compile && node ./out/test/runTest.js",
+		"test": "yarn run test-compile && node ./out/test/runTest.js",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,tests}/**/*.ts\"",
 		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\""
 	},
