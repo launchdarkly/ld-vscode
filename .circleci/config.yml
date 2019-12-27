@@ -21,10 +21,7 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0
-            sudo cp src/test/xvfb.init /etc/init.d/xvfb
-            sudo chmod +x /etc/init.d/xvfb
-            sudo update-rc.d xvfb defaults
-            sudo service xvfb start
+            sh -e /etc/init.d/xvfb start; sleep 3
       - run:
           name: Build
           command: 'yarn run vscode:prepublish'
