@@ -124,14 +124,14 @@ export class LDFlagManager implements IFlagManager {
 
 	start() {
 		this.updateProcessor &&
-			this.updateProcessor.start((err) => {
+			this.updateProcessor.start(err => {
 				if (err) {
 					let errMsg;
 					if (err.message) {
-						errMsg = `Error retrieving feature flags: ${err.message}.`
+						errMsg = `Error retrieving feature flags: ${err.message}.`;
 					} else {
-						console.error(err)
-						errMsg = `Unexpected error retrieving flags.`
+						console.error(err);
+						errMsg = `Unexpected error retrieving flags.`;
 					}
 					vscode.window.showErrorMessage(`LaunchDarkly ${errMsg}`);
 				}
