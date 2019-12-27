@@ -136,7 +136,7 @@ export class LDFlagManager implements IFlagManager {
 						console.error(err);
 						errMsg = `Unexpected error retrieving flags.`;
 					}
-					vscode.window.showErrorMessage(`LaunchDarkly ${errMsg}`);
+					vscode.window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 				}
 				process.nextTick(function() {});
 			});
