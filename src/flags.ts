@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import * as request from 'request';
 import { kebabCase } from 'lodash';
-import { LDFlagValue, LDFeatureStore, LDStreamProcessor } from 'ldclient-node';
-import InMemoryFeatureStore = require('ldclient-node/feature_store');
-import StreamProcessor = require('ldclient-node/streaming');
-import Requestor = require('ldclient-node/requestor');
+import { LDFlagValue, LDFeatureStore, LDStreamProcessor } from 'launchdarkly-node-server-sdk';
+import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
+import StreamProcessor = require('launchdarkly-node-server-sdk/streaming');
+import Requestor = require('launchdarkly-node-server-sdk/requestor');
 import * as url from 'url';
 import opn = require('opn');
 
@@ -73,7 +73,11 @@ export function generateHoverString(flag: LDFlagValue) {
 	Default variation: ${JSON.stringify(flag.variations[flag.fallthrough.variation])}
 	Off variation: ${JSON.stringify(flag.variations[flag.offVariation])}
 	${plural(flag.prerequisites.length, 'prerequisite', 'prerequisites')}
-	${plural(flag.targets.reduce((acc, curr) => acc + curr.values.length, 0), 'user target', 'user targets')}
+	${plural(
+		flag.targets.reduce((acc, curr) => acc + curr.values.length, 0),
+		'user target',
+		'user targets',
+	)}
 	${plural(flag.rules.length, 'rule', 'rules')}`;
 }
 
@@ -83,7 +87,9 @@ function plural(count: number, singular: string, plural: string) {
 
 export function isPrecedingCharStringDelimeter(document: vscode.TextDocument, position: vscode.Position) {
 	const range = document.getWordRangeAtPosition(position, FLAG_KEY_REGEX);
-
+	if (!range || !range.start || range.start.character === 0) {
+		return false;
+	}
 	const c = new vscode.Range(
 		range.start.line,
 		candidateTextStartLocation(range.start.character),
@@ -91,7 +97,7 @@ export function isPrecedingCharStringDelimeter(document: vscode.TextDocument, po
 		range.start.character,
 	);
 	const candidate = document.getText(c).trim();
-	return STRING_DELIMETERS.indexOf(candidate) >= 0;
+	return STRING_DELIMETERS.indexOf(candidate) !== -1;
 }
 
 const candidateTextStartLocation = (char: number) => (char === 1 ? 0 : char - 2);
@@ -109,30 +115,29 @@ export class LDFlagManager implements IFlagManager {
 	constructor(ctx: vscode.ExtensionContext, settings: IConfiguration) {
 		this.settings = Object.assign({}, settings);
 		let config = this.config(settings);
-		if (settings.sdkKey) {
-			this.updateProcessor = StreamProcessor(settings.sdkKey, config, Requestor(settings.sdkKey, config));
-			this.start();
-		} else {
-			vscode.window.showWarningMessage(
-				'[LaunchDarkly] sdkKey is not set. LaunchDarkly language support is unavailable.',
-			);
+		if (!settings.sdkKey) {
+			console.warn('LaunchDarkly sdkKey is not set. Language support is unavailable.');
+			return;
 		}
+
+		this.updateProcessor = StreamProcessor(settings.sdkKey, config, Requestor(settings.sdkKey, config));
+		this.start();
 	}
 
 	start() {
 		this.updateProcessor &&
-			this.updateProcessor.start(function(err) {
+			this.updateProcessor.start(err => {
 				if (err) {
-					console.log(err);
-					let errMsg = `[LaunchDarkly] Unexpected error retrieving flags.${
-						this.settings.baseUri != DEFAULT_BASE_URI || this.settings.streamUri != DEFAULT_STREAM_URI
-							? ' Please make sure your configured base and stream URIs are correct'
-							: ''
-					}`;
-					vscode.window.showErrorMessage(errMsg);
-				} else {
-					process.nextTick(function() {});
+					let errMsg;
+					if (err.message) {
+						errMsg = `Error retrieving feature flags: ${err.message}.`;
+					} else {
+						console.error(err);
+						errMsg = `Unexpected error retrieving flags.`;
+					}
+					vscode.window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 				}
+				process.nextTick(function() {});
 			});
 	}
 
@@ -157,9 +162,9 @@ export class LDFlagManager implements IFlagManager {
 			streamUri: settings.streamUri,
 			featureStore: this.store,
 			logger: {
-				debug: msg => {
-					console.log(msg);
-				},
+				debug: console.log,
+				warn: console.warn,
+				error: console.error,
 			},
 			userAgent: 'VSCodeExtension/' + package_json.version,
 		};
