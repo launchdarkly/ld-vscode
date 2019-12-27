@@ -116,30 +116,29 @@ export class LDFlagManager implements IFlagManager {
 	constructor(ctx: vscode.ExtensionContext, settings: IConfiguration) {
 		this.settings = Object.assign({}, settings);
 		let config = this.config(settings);
-		if (settings.sdkKey) {
-			this.updateProcessor = StreamProcessor(settings.sdkKey, config, Requestor(settings.sdkKey, config));
-			this.start();
-		} else {
-			vscode.window.showWarningMessage(
-				'[LaunchDarkly] sdkKey is not set. LaunchDarkly language support is unavailable.',
-			);
+		if (!settings.sdkKey) {
+			console.warn('LaunchDarkly sdkKey is not set. Language support is unavailable.');
+			return;
 		}
+
+		this.updateProcessor = StreamProcessor(settings.sdkKey, config, Requestor(settings.sdkKey, config));
+		this.start();
 	}
 
 	start() {
 		this.updateProcessor &&
-			this.updateProcessor.start(function(err) {
+			this.updateProcessor.start(err => {
 				if (err) {
-					console.log(err);
-					let errMsg = `[LaunchDarkly] Unexpected error retrieving flags.${
-						this.settings.baseUri != DEFAULT_BASE_URI || this.settings.streamUri != DEFAULT_STREAM_URI
-							? ' Please make sure your configured base and stream URIs are correct'
-							: ''
-					}`;
-					vscode.window.showErrorMessage(errMsg);
-				} else {
-					process.nextTick(function() {});
+					let errMsg;
+					if (err.message) {
+						errMsg = `Error retrieving feature flags: ${err.message}.`;
+					} else {
+						console.error(err);
+						errMsg = `Unexpected error retrieving flags.`;
+					}
+					vscode.window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 				}
+				process.nextTick(function() {});
 			});
 	}
 
@@ -164,9 +163,7 @@ export class LDFlagManager implements IFlagManager {
 			streamUri: settings.streamUri,
 			featureStore: this.store,
 			logger: {
-				debug: msg => {
-					console.log(msg);
-				},
+				debug: console.log,
 			},
 			userAgent: 'VSCodeExtension/' + package_json.version,
 		};
