@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import * as request from 'request';
 import { kebabCase } from 'lodash';
-import { LDFlagValue, LDFeatureStore, LDStreamProcessor } from 'ldclient-node';
-import InMemoryFeatureStore = require('ldclient-node/feature_store');
-import StreamProcessor = require('ldclient-node/streaming');
-import Requestor = require('ldclient-node/requestor');
+import { LDFlagValue, LDFeatureStore, LDStreamProcessor } from 'launchdarkly-node-server-sdk';
+import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
+import StreamProcessor = require('launchdarkly-node-server-sdk/streaming');
+import Requestor = require('launchdarkly-node-server-sdk/requestor');
 import * as url from 'url';
 import opn = require('opn');
 
@@ -164,6 +164,8 @@ export class LDFlagManager implements IFlagManager {
 			featureStore: this.store,
 			logger: {
 				debug: console.log,
+				warn: console.warn,
+				error: console.error,
 			},
 			userAgent: 'VSCodeExtension/' + package_json.version,
 		};
