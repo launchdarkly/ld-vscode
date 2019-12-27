@@ -117,7 +117,7 @@ export class LDFlagManager implements IFlagManager {
 		this.settings = Object.assign({}, settings);
 		let config = this.config(settings);
 		if (!settings.sdkKey) {
-			console.error('LaunchDarkly sdkKey is not set. Language support is unavailable.');
+			console.warn('LaunchDarkly sdkKey is not set. Language support is unavailable.');
 			return;
 		}
 
