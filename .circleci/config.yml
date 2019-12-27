@@ -21,13 +21,16 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0
-            sh -e /etc/init.d/xvfb start; sleep 3
+            sudo cp test/xvfb.init /etc/init.d/xvfb
+            sudo chmod +x /etc/init.d/xvfb
+            sudo update-rc.d xvfb defaults
+            sudo service xvfb start
       - run:
           name: Build
           command: 'yarn run vscode:prepublish'
       - run:
           name: Test
-          command: 'DISPLAY=:10 yarn test'
+          command: 'DISPLAY=:1 yarn test'
       - run:
           name: Lint
           command: 'yarn run prettier:check'
