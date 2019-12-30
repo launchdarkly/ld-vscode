@@ -5,7 +5,7 @@ import { configuration } from './configuration';
 import { Flag } from './models';
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
-class LaunchDarklyAPI {
+export class LaunchDarklyAPI {
 	async getFeatureFlag(projectKey: string, flagKey: string, envKey?: string): Promise<Flag> {
 		const envParam = envKey ? '?env=' + envKey : '';
 		const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
@@ -22,5 +22,3 @@ class LaunchDarklyAPI {
 		};
 	}
 }
-
-export const api = new LaunchDarklyAPI();

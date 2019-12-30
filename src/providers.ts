@@ -18,7 +18,7 @@ import opn = require('opn');
 import { kebabCase } from 'lodash';
 
 import { configuration as config } from './configuration';
-import { api } from './api';
+import { LaunchDarklyAPI } from './api';
 import { Environment, FlagConfiguration } from './models';
 import { FlagStore } from './flagStore';
 
@@ -129,6 +129,7 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 }
 
 const openFlagInBrowser = async (key: string) => {
+	const api = new LaunchDarklyAPI();
 	const flag = await api.getFeatureFlag(config.project, key, config.env);
 
 	// Default to first environment
