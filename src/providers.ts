@@ -35,7 +35,7 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 			try {
 				const configurationMenu = new ConfigurationMenu(config, api);
 				await configurationMenu.configure();
-				if (configurationMenu.didChangeAccessToken) {
+				if (configurationMenu.didChangeAccessToken()) {
 					await flagStore.reload();
 				}
 				window.showInformationMessage('LaunchDarkly configured successfully');
