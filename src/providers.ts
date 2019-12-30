@@ -30,7 +30,12 @@ const LD_MODE: DocumentFilter = {
 
 export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore) {
 	ctx.subscriptions.push(
-		languages.registerCompletionItemProvider(LD_MODE, new LaunchDarklyCompletionItemProvider(config, flagStore), "'", '"'),
+		languages.registerCompletionItemProvider(
+			LD_MODE,
+			new LaunchDarklyCompletionItemProvider(config, flagStore),
+			"'",
+			'"',
+		),
 	);
 
 	ctx.subscriptions.push(languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore)));
@@ -80,8 +85,8 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 }
 
 class LaunchDarklyHoverProvider implements HoverProvider {
-	private readonly flagStore: FlagStore
-	private readonly config: Configuration
+	private readonly flagStore: FlagStore;
+	private readonly config: Configuration;
 
 	constructor(config: Configuration, flagStore: FlagStore) {
 		this.config = config;
@@ -106,8 +111,8 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 }
 
 class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
-	private readonly flagStore: FlagStore
-	private readonly config: Configuration
+	private readonly flagStore: FlagStore;
+	private readonly config: Configuration;
 
 	constructor(config: Configuration, flagStore: FlagStore) {
 		this.config = config;
