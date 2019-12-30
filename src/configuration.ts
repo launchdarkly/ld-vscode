@@ -3,7 +3,7 @@ import { WorkspaceConfiguration, workspace } from 'vscode';
 export const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
 export const DEFAULT_STREAM_URI = 'https://stream.launchdarkly.com';
 
-class Configuration {
+export class Configuration {
 	constructor() {
 		this.reload();
 	}
@@ -24,5 +24,3 @@ class Configuration {
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
 }
-
-export const configuration = new Configuration();

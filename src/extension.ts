@@ -3,10 +3,11 @@
 import { workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
 
 import { FlagStore } from './flagStore';
-import { configuration as config } from './configuration';
+import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 
-const flagStore = new FlagStore();
+const config = new Configuration();
+const flagStore = new FlagStore(config);
 
 export function activate(ctx: ExtensionContext) {
 	workspace.onDidChangeConfiguration((e: ConfigurationChangeEvent) => {
@@ -16,7 +17,7 @@ export function activate(ctx: ExtensionContext) {
 		}
 	});
 
-	registerProviders(ctx, flagStore);
+	registerProviders(ctx, config, flagStore);
 }
 
 export function deactivate() {

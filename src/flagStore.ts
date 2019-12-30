@@ -5,16 +5,18 @@ import StreamProcessor = require('launchdarkly-node-server-sdk/streaming');
 import Requestor = require('launchdarkly-node-server-sdk/requestor');
 
 import { FlagConfiguration } from './models';
-import { configuration as config } from './configuration';
+import { Configuration } from './configuration';
 
 const PACKAGE_JSON = require('../package.json');
 const DATA_KIND = { namespace: 'features' };
 
 export class FlagStore {
+	config: Configuration;
 	store: LDFeatureStore;
 	updateProcessor: LDStreamProcessor;
 
-	constructor() {
+	constructor(config: Configuration) {
+		this.config = config;
 		this.store = InMemoryFeatureStore();
 		this.start();
 	}
@@ -27,6 +29,7 @@ export class FlagStore {
 	}
 
 	start() {
+		const config = this.config;
 		if (!config.sdkKey || !config.baseUri || !config.streamUri) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return;
@@ -55,6 +58,7 @@ export class FlagStore {
 	}
 
 	private ldConfig(): any {
+		const config = this.config;
 		return {
 			timeout: 5,
 			baseUri: config.baseUri,
