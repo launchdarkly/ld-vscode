@@ -4,12 +4,17 @@ export class Resource {
 	tags: Array<string>;
 }
 
-export class Flag extends Resource {
-	environments: Map<String, Environment>;
+export class Project extends Resource {
+	environments: Array<Environment>;
 }
 
 export class Environment extends Resource {
+	apiKey: string;
 	_site: { href: string };
+}
+
+export class Flag extends Resource {
+	environments: Map<String, Environment>;
 }
 
 export class FlagConfiguration {
