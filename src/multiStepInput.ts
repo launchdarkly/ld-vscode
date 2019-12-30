@@ -1,4 +1,5 @@
 // https://github.com/microsoft/vscode-extension-samples/blob/master/quickinput-sample/src/multiStepInput.ts
+// LICENSE: https://github.com/microsoft/vscode-extension-samples/blob/master/LICENSE
 
 import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, QuickInputButtons } from 'vscode';
 
