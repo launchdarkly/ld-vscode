@@ -46,10 +46,8 @@ export class FlagStore {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return;
 		}
-		console.log('START', this.config.project);
-		console.log('API', this.api.config.project);
+
 		const sdkKey = await this.getLatestSDKKey();
-		console.log(sdkKey);
 		const ldConfig = this.ldConfig();
 		this.updateProcessor = StreamProcessor(sdkKey, ldConfig, Requestor(sdkKey, ldConfig));
 		return new Promise((resolve, reject) => {
