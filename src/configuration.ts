@@ -1,4 +1,4 @@
-import { WorkspaceConfiguration, commands, window, workspace, ExtensionContext } from 'vscode';
+import { WorkspaceConfiguration, workspace, ExtensionContext } from 'vscode';
 
 const package_json = require('../package.json');
 
