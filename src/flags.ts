@@ -1,72 +1,42 @@
-import * as vscode from 'vscode';
-import * as request from 'request';
+import {
+	DocumentFilter,
+	TextDocument,
+	Position,
+	Range,
+	ConfigurationChangeEvent,
+	HoverProvider,
+	Hover,
+	CompletionItem,
+	CompletionItemProvider,
+	CompletionItemKind,
+	ExtensionContext,
+	languages,
+	commands,
+	window,
+} from 'vscode';
 import { kebabCase } from 'lodash';
-import { LDFlagValue, LDFeatureStore, LDStreamProcessor } from 'launchdarkly-node-server-sdk';
+import { LDFeatureStore, LDStreamProcessor } from 'launchdarkly-node-server-sdk';
 import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
 import StreamProcessor = require('launchdarkly-node-server-sdk/streaming');
 import Requestor = require('launchdarkly-node-server-sdk/requestor');
 import * as url from 'url';
 import opn = require('opn');
 
-import { IConfiguration, DEFAULT_BASE_URI, DEFAULT_STREAM_URI } from './configuration';
+import { configuration as config } from './configuration';
+import { FlagConfiguration, Environment } from './models';
+import { api } from './api';
+
 const package_json = require('../package.json');
 
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const DATA_KIND = { namespace: 'features' };
-const LD_MODE: vscode.DocumentFilter = {
+const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
 
-function unexpectedError(flagKey: string) {
-	return vscode.window.showErrorMessage(
-		`[LaunchDarkly] Encountered an unexpected error retrieving the flag ${flagKey}`,
-	);
-}
-
-function getFeatureFlag(settings: IConfiguration, flagKey: string, cb: Function) {
-	let envParam = settings.env ? '?env=' + settings.env : '';
-	let options = {
-		url: url.resolve(settings.baseUri, `api/v2/flags/${settings.project}/${flagKey + envParam}`),
-		headers: {
-			Authorization: settings.accessToken,
-		},
-	};
-	request(options, (error, response, body) => {
-		if (!error) {
-			if (response.statusCode == 200) {
-				cb(JSON.parse(body));
-			} else if (response.statusCode == 404) {
-				// Try resolving the flag key to kebab case
-				options.url = url.resolve(
-					settings.baseUri,
-					`api/v2/flags/${settings.project}/${kebabCase(flagKey) + envParam}`,
-				);
-				request(options, (error, response, body) => {
-					if (!error) {
-						if (response.statusCode == 200) {
-							cb(JSON.parse(body));
-						} else if (response.statusCode == 404) {
-							vscode.window.showErrorMessage(`[LaunchDarkly] Could not find the flag ${flagKey}`);
-							return;
-						} else {
-							unexpectedError(flagKey);
-						}
-					} else {
-						unexpectedError(flagKey);
-					}
-				});
-			} else {
-				vscode.window.showErrorMessage(response.statusCode);
-			}
-		} else {
-			unexpectedError(flagKey);
-		}
-	});
-}
-
-export function generateHoverString(flag: LDFlagValue) {
+export function generateHoverString(flag: FlagConfiguration) {
 	return `**LaunchDarkly feature flag**\n
 	Key: ${flag.key}
 	Enabled: ${flag.on}
@@ -85,12 +55,12 @@ function plural(count: number, singular: string, plural: string) {
 	return count === 1 ? `1 ${singular}` : `${count} ${plural}`;
 }
 
-export function isPrecedingCharStringDelimeter(document: vscode.TextDocument, position: vscode.Position) {
+export function isPrecedingCharStringDelimeter(document: TextDocument, position: Position) {
 	const range = document.getWordRangeAtPosition(position, FLAG_KEY_REGEX);
 	if (!range || !range.start || range.start.character === 0) {
 		return false;
 	}
-	const c = new vscode.Range(
+	const c = new Range(
 		range.start.line,
 		candidateTextStartLocation(range.start.character),
 		range.start.line,
@@ -102,64 +72,75 @@ export function isPrecedingCharStringDelimeter(document: vscode.TextDocument, po
 
 const candidateTextStartLocation = (char: number) => (char === 1 ? 0 : char - 2);
 
-interface IFlagManager {
-	store: LDFeatureStore;
-	updateProcessor: LDStreamProcessor;
+async function openFlagInBrowser(key: string) {
+	const flag = await api.getFeatureFlag(config.project, key, config.env);
+
+	// Default to first environment
+	let env: Environment = Object.values(flag.environments)[0];
+	let sitePath = env._site.href;
+
+	if (!config.env) {
+		window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
+	} else if (!flag.environments[config.env]) {
+		window.showWarningMessage(
+			`[LaunchDarkly] Configured environment '${config.env}' has been deleted. Falling back to first environment.`,
+		);
+	} else {
+		env = flag.environments[config.env];
+		sitePath = env._site.href;
+	}
+	opn(url.resolve(config.baseUri, sitePath));
 }
 
-export class LDFlagManager implements IFlagManager {
-	store = InMemoryFeatureStore();
+class FlagStore {
+	store: LDFeatureStore;
 	updateProcessor: LDStreamProcessor;
-	private settings: IConfiguration;
 
-	constructor(ctx: vscode.ExtensionContext, settings: IConfiguration) {
-		this.settings = Object.assign({}, settings);
-		let config = this.config(settings);
-		if (!settings.sdkKey) {
-			console.warn('LaunchDarkly sdkKey is not set. Language support is unavailable.');
-			return;
-		}
-
-		this.updateProcessor = StreamProcessor(settings.sdkKey, config, Requestor(settings.sdkKey, config));
+	constructor() {
+		this.store = InMemoryFeatureStore();
 		this.start();
 	}
 
-	start() {
-		this.updateProcessor &&
-			this.updateProcessor.start(err => {
-				if (err) {
-					let errMsg;
-					if (err.message) {
-						errMsg = `Error retrieving feature flags: ${err.message}.`;
-					} else {
-						console.error(err);
-						errMsg = `Unexpected error retrieving flags.`;
-					}
-					vscode.window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
-				}
-				process.nextTick(function() {});
-			});
-	}
-
-	reload(newSettings: IConfiguration) {
-		if (
-			this.settings.sdkKey !== newSettings.sdkKey ||
-			this.settings.baseUri !== newSettings.baseUri ||
-			this.settings.streamUri !== newSettings.streamUri
-		) {
-			let config = this.config(newSettings);
-			this.updateProcessor && this.updateProcessor.stop();
-			this.updateProcessor = StreamProcessor(newSettings.sdkKey, config, Requestor(newSettings.sdkKey, config));
+	reload(e: ConfigurationChangeEvent) {
+		if (['sdkKey', 'baseUri', 'streamUri'].some(option => e.affectsConfiguration(`launchdarkly.${option}`))) {
+			this.stop();
 			this.start();
 		}
-		this.settings = newSettings;
 	}
 
-	config(settings: IConfiguration): any {
+	start() {
+		if (!config.sdkKey || !config.baseUri || !config.streamUri) {
+			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
+			return;
+		}
+
+		const ldConfig = this.ldConfig();
+		this.updateProcessor = StreamProcessor(config.sdkKey, ldConfig, Requestor(config.sdkKey, ldConfig));
+		this.updateProcessor.start(err => {
+			if (err) {
+				let errMsg: string;
+				if (err.message) {
+					errMsg = `Error retrieving feature flags: ${err.message}.`;
+				} else {
+					console.error(err);
+					errMsg = `Unexpected error retrieving flags.`;
+				}
+				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+			}
+			process.nextTick(function() {});
+		});
+	}
+
+	stop() {
+		this.updateProcessor && this.updateProcessor.stop();
+		this.store.init({}, () => {});
+	}
+
+	private ldConfig(): any {
 		return {
 			timeout: 5,
-			baseUri: settings.baseUri,
-			streamUri: settings.streamUri,
+			baseUri: config.baseUri,
+			streamUri: config.streamUri,
 			featureStore: this.store,
 			logger: {
 				debug: console.log,
@@ -170,92 +151,105 @@ export class LDFlagManager implements IFlagManager {
 		};
 	}
 
-	registerProviders(ctx: vscode.ExtensionContext, settings: IConfiguration) {
+	registerProviders(ctx: ExtensionContext) {
 		ctx.subscriptions.push(
-			vscode.languages.registerCompletionItemProvider(LD_MODE, new this.LaunchDarklyCompletionItemProvider(), "'", '"'),
+			languages.registerCompletionItemProvider(LD_MODE, new LaunchDarklyCompletionItemProvider(this.store), "'", '"'),
 		);
 
-		ctx.subscriptions.push(vscode.languages.registerHoverProvider(LD_MODE, new this.LaunchDarklyHoverProvider()));
+		ctx.subscriptions.push(languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(this.store)));
 
 		ctx.subscriptions.push(
-			vscode.commands.registerTextEditorCommand('extension.openInLaunchDarkly', editor => {
+			commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
 				let flagKey = editor.document.getText(
 					editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
 				);
 				if (!flagKey) {
-					vscode.window.showErrorMessage(
+					window.showErrorMessage(
 						'[LaunchDarkly] Error retrieving flag (current cursor position is not a feature flag).',
 					);
 					return;
 				}
 
-				if (!settings.accessToken) {
-					vscode.window.showErrorMessage('[LaunchDarkly] accessToken is not set.');
+				if (!config.accessToken) {
+					window.showErrorMessage('[LaunchDarkly] accessToken is not set.');
 					return;
 				}
 
-				if (!settings.project) {
-					vscode.window.showErrorMessage('[LaunchDarkly] project is not set.');
+				if (!config.project) {
+					window.showErrorMessage('[LaunchDarkly] project is not set.');
 					return;
 				}
 
-				getFeatureFlag(settings, flagKey, (flag: LDFlagValue) => {
-					if (!settings.env) {
-						vscode.window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
-						opn(url.resolve(settings.baseUri, flag.environments[Object.keys(flag.environments)[0]]._site.href));
-					} else {
-						opn(url.resolve(settings.baseUri, flag.environments[settings.env]._site.href));
+				try {
+					await openFlagInBrowser(flagKey);
+				} catch (err) {
+					let errMsg = `Encountered an unexpected error retrieving the flag ${flagKey}`;
+					if (err.statusCode == 404) {
+						// Try resolving the flag key to kebab case
+						try {
+							await openFlagInBrowser(kebabCase(flagKey));
+							return;
+						} catch (err) {
+							if (err.statusCode == 404) {
+								errMsg = `Could not find the flag ${flagKey}`;
+							}
+						}
 					}
-				});
+					console.error(err);
+					window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+				}
 			}),
 		);
 	}
+}
 
-	get LaunchDarklyHoverProvider() {
-		const settings = this.settings;
-		const store = this.store;
-		return class LaunchDarklyHoverProvider implements vscode.HoverProvider {
-			public provideHover(document: vscode.TextDocument, position: vscode.Position): Thenable<vscode.Hover> {
-				return new Promise((resolve, reject) => {
-					settings.enableHover
-						? store.all(DATA_KIND, flags => {
-								let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-								let flag = flags[candidate] || flags[kebabCase(candidate)];
-								if (flag) {
-									let hover = generateHoverString(flag);
-									resolve(new vscode.Hover(hover));
-									return;
-								}
-								reject();
-						  })
-						: reject();
-				});
-			}
-		};
+export const flagStore = new FlagStore();
+
+class LaunchDarklyHoverProvider implements HoverProvider {
+	store: LDFeatureStore;
+
+	constructor(store: LDFeatureStore) {
+		this.store = store;
 	}
 
-	get LaunchDarklyCompletionItemProvider() {
-		const settings = this.settings;
-		const store = this.store;
-		return class LaunchDarklyCompletionItemProvider implements vscode.CompletionItemProvider {
-			public provideCompletionItems(
-				document: vscode.TextDocument,
-				position: vscode.Position,
-			): Thenable<vscode.CompletionItem[]> {
-				if (isPrecedingCharStringDelimeter(document, position)) {
-					return new Promise(resolve => {
-						settings.enableAutocomplete
-							? store.all(DATA_KIND, flags => {
-									resolve(
-										Object.keys(flags).map(flag => {
-											return new vscode.CompletionItem(flag, vscode.CompletionItemKind.Field);
-										}),
-									);
-							  })
-							: resolve();
-					});
-				}
-			}
-		};
+	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
+		return new Promise((resolve, reject) => {
+			config.enableHover
+				? this.store.all(DATA_KIND, flags => {
+						let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
+						let flag = flags[candidate] || flags[kebabCase(candidate)];
+						if (flag) {
+							let hover = generateHoverString(flag);
+							resolve(new Hover(hover));
+							return;
+						}
+						reject();
+				  })
+				: reject();
+		});
+	}
+}
+
+class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
+	store: LDFeatureStore;
+
+	constructor(store: LDFeatureStore) {
+		this.store = store;
+	}
+
+	public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
+		if (isPrecedingCharStringDelimeter(document, position)) {
+			return new Promise(resolve => {
+				config.enableAutocomplete
+					? this.store.all(DATA_KIND, flags => {
+							resolve(
+								Object.keys(flags).map(flag => {
+									return new CompletionItem(flag, CompletionItemKind.Field);
+								}),
+							);
+					  })
+					: resolve();
+			});
+		}
 	}
 }
