@@ -1,10 +1,13 @@
-import { WorkspaceConfiguration, workspace } from 'vscode';
+import { WorkspaceConfiguration, workspace, ExtensionContext } from 'vscode';
 
 export const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
 export const DEFAULT_STREAM_URI = 'https://stream.launchdarkly.com';
 
 export class Configuration {
-	constructor() {
+	private readonly ctx: ExtensionContext;
+
+	constructor(ctx: ExtensionContext) {
+		this.ctx = ctx;
 		this.reload();
 	}
 
@@ -13,6 +16,13 @@ export class Configuration {
 		for (const option in this) {
 			this[option] = config.get(option);
 		}
+
+		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
+		this.accessToken = this.getState('accessToken') || this.accessToken;
+	}
+
+	private getState(key: string): string {
+		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
 	}
 
 	accessToken = '';

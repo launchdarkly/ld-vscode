@@ -6,10 +6,13 @@ import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 
-const config = new Configuration();
-const flagStore = new FlagStore(config);
+let config: Configuration;
+let flagStore: FlagStore;
 
 export function activate(ctx: ExtensionContext) {
+	config = new Configuration(ctx);
+	flagStore = new FlagStore(config);
+
 	workspace.onDidChangeConfiguration((e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
 			config.reload();
@@ -21,5 +24,5 @@ export function activate(ctx: ExtensionContext) {
 }
 
 export function deactivate() {
-	flagStore.stop();
+	flagStore && flagStore.stop();
 }
