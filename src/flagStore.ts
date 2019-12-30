@@ -30,7 +30,7 @@ export class FlagStore {
 		if (e && this.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
 			return;
 		}
-		await this.debouncedReload()
+		await this.debouncedReload();
 	}
 
 	private readonly debouncedReload = debounce(async () => {
