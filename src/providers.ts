@@ -18,6 +18,7 @@ import opn = require('opn');
 import { kebabCase } from 'lodash';
 
 import { Configuration } from './configuration';
+import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
 import { Environment, FlagConfiguration } from './models';
 import { FlagStore } from './flagStore';
@@ -28,7 +29,23 @@ const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
 
-export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore) {
+export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
+	ctx.subscriptions.push(
+		commands.registerCommand('extension.configureLaunchDarkly', async () => {
+			try {
+				const configurationMenu = new ConfigurationMenu(config, api);
+				await configurationMenu.configure();
+				if (configurationMenu.didChangeAccessToken) {
+					await flagStore.reload();
+				}
+				window.showInformationMessage('LaunchDarkly configured successfully');
+			} catch (err) {
+				console.error(err);
+				window.showErrorMessage('An unexpected error occured, please try again later.');
+			}
+		}),
+	);
+
 	ctx.subscriptions.push(
 		languages.registerCompletionItemProvider(
 			LD_MODE,
@@ -63,13 +80,13 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 			}
 
 			try {
-				await openFlagInBrowser(config, flagKey);
+				await openFlagInBrowser(config, flagKey, api);
 			} catch (err) {
 				let errMsg = `Encountered an unexpected error retrieving the flag ${flagKey}`;
 				if (err.statusCode == 404) {
 					// Try resolving the flag key to kebab case
 					try {
-						await openFlagInBrowser(config, kebabCase(flagKey));
+						await openFlagInBrowser(config, kebabCase(flagKey), api);
 						return;
 					} catch (err) {
 						if (err.statusCode == 404) {
@@ -137,8 +154,7 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 	}
 }
 
-const openFlagInBrowser = async (config: Configuration, flagKey: string) => {
-	const api = new LaunchDarklyAPI(config);
+const openFlagInBrowser = async (config: Configuration, flagKey: string, api: LaunchDarklyAPI) => {
 	const flag = await api.getFeatureFlag(config.project, flagKey, config.env);
 
 	// Default to first environment

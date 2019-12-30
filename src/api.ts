@@ -6,7 +6,7 @@ import { Resource, Project, Environment, Flag } from './models';
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
-	config: Configuration;
+	private readonly config: Configuration;
 
 	constructor(config: Configuration) {
 		this.config = config;
