@@ -10,7 +10,7 @@ import { configuration as config } from './configuration';
 const PACKAGE_JSON = require('../package.json');
 const DATA_KIND = { namespace: 'features' };
 
-class FlagStore {
+export class FlagStore {
 	store: LDFeatureStore;
 	updateProcessor: LDStreamProcessor;
 
@@ -75,5 +75,3 @@ class FlagStore {
 		});
 	}
 }
-
-export const flagStore = new FlagStore();

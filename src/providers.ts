@@ -20,7 +20,7 @@ import { kebabCase } from 'lodash';
 import { configuration as config } from './configuration';
 import { api } from './api';
 import { Environment, FlagConfiguration } from './models';
-import { flagStore } from './flagStore';
+import { FlagStore } from './flagStore';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
@@ -28,12 +28,12 @@ const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
 
-export function register(ctx: ExtensionContext) {
+export function register(ctx: ExtensionContext, flagStore: FlagStore) {
 	ctx.subscriptions.push(
-		languages.registerCompletionItemProvider(LD_MODE, new LaunchDarklyCompletionItemProvider(), "'", '"'),
+		languages.registerCompletionItemProvider(LD_MODE, new LaunchDarklyCompletionItemProvider(flagStore), "'", '"'),
 	);
 
-	ctx.subscriptions.push(languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider()));
+	ctx.subscriptions.push(languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(flagStore)));
 
 	ctx.subscriptions.push(
 		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
@@ -80,10 +80,16 @@ export function register(ctx: ExtensionContext) {
 }
 
 class LaunchDarklyHoverProvider implements HoverProvider {
+	private readonly flagStore: FlagStore
+
+	constructor(flagStore: FlagStore) {
+		this.flagStore = flagStore
+	}
+
 	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
 		return new Promise(async (resolve, reject) => {
 			if (config.enableHover) {
-				const flags = await flagStore.allFlags();
+				const flags = await this.flagStore.allFlags();
 				let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let flag = flags[candidate] || flags[kebabCase(candidate)];
 				if (flag) {
@@ -98,11 +104,17 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 }
 
 class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
+	private readonly flagStore: FlagStore
+
+	constructor(flagStore: FlagStore) {
+		this.flagStore = flagStore
+	}
+
 	public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
 		if (isPrecedingCharStringDelimeter(document, position)) {
 			return new Promise(async resolve => {
 				if (config.enableAutocomplete) {
-					const flags = await flagStore.allFlags();
+					const flags = await this.flagStore.allFlags();
 					resolve(
 						Object.keys(flags).map(flag => {
 							return new CompletionItem(flag, CompletionItemKind.Field);
