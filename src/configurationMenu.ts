@@ -7,7 +7,7 @@ import { Configuration } from './configuration';
 
 export class ConfigurationMenu {
 	private readonly config: Configuration;
-	private readonly api: LaunchDarklyAPI;
+	private api: LaunchDarklyAPI;
 	private title: string;
 	private totalSteps: number;
 	private currentAccessToken: string;
@@ -77,6 +77,9 @@ export class ConfigurationMenu {
 		});
 
 		try {
+			const configWithUpdatedToken = Object.assign({}, this.config);
+			configWithUpdatedToken.accessToken = this.accessToken;
+			this.api = new LaunchDarklyAPI(configWithUpdatedToken);
 			await this.api.getAccount();
 			return (input: MultiStepInput) => this.pickProject(input);
 		} catch (err) {
