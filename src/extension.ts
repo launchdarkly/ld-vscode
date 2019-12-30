@@ -2,7 +2,7 @@
 
 import { workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
 
-import { flagStore  } from './flags';
+import { flagStore } from './flags';
 import { configuration as config } from './configuration';
 
 export function activate(ctx: ExtensionContext) {
