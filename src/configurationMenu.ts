@@ -79,7 +79,7 @@ export class ConfigurationMenu {
 		});
 
 		try {
-			this.updateAPI()
+			this.updateAPI();
 			await this.api.getAccount();
 			return (input: MultiStepInput) => this.pickProject(input);
 		} catch (err) {
