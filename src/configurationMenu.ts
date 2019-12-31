@@ -60,12 +60,14 @@ export class ConfigurationMenu {
 
 		if (pick.label === existingTokenName) {
 			this.accessToken = this.currentAccessToken;
+			this.invalidAccessToken = '';
 			return (input: MultiStepInput) => this.pickProject(input);
 		}
 		return (input: MultiStepInput) => this.inputAccessToken(input);
 	}
 
 	async inputAccessToken(input: MultiStepInput) {
+		this.accessToken = '';
 		this.accessToken = await input.showInputBox({
 			title: this.title,
 			step: 1,
@@ -77,9 +79,7 @@ export class ConfigurationMenu {
 		});
 
 		try {
-			const configWithUpdatedToken = Object.assign({}, this.config);
-			configWithUpdatedToken.accessToken = this.accessToken;
-			this.api = new LaunchDarklyAPI(configWithUpdatedToken);
+			this.updateAPI()
 			await this.api.getAccount();
 			return (input: MultiStepInput) => this.pickProject(input);
 		} catch (err) {
@@ -95,6 +95,7 @@ export class ConfigurationMenu {
 	async pickProject(input: MultiStepInput) {
 		let projectOptions: QuickPickItem[];
 		try {
+			this.updateAPI();
 			const projects = await this.api.getProjects();
 			this.projects = projects;
 			projectOptions = projects.map(this.createQuickPickItem);
@@ -173,6 +174,11 @@ export class ConfigurationMenu {
 		return this.accessToken !== this.currentAccessToken;
 	}
 
+	updateAPI() {
+		const configWithUpdatedToken = Object.assign({}, this.config);
+		configWithUpdatedToken.accessToken = this.accessToken;
+		this.api = new LaunchDarklyAPI(configWithUpdatedToken);
+	}
 	async configure() {
 		await this.collectInputs();
 		['accessToken', 'project', 'env'].forEach(async option => {
