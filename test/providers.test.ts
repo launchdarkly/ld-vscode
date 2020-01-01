@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import * as flags from '../src/flags';
+import * as providers from '../src/providers';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -18,11 +18,11 @@ const flag = {
 
 let testPath = path.join(__dirname, '..', '..', 'test');
 
-suite('flags tests', () => {
+suite('provider utils tests', () => {
 	test('generateHoverString', () => {
 		assert.equal(
 			`**LaunchDarkly feature flag**\n\n\tKey: test\n\tEnabled: true\n\tDefault variation: "SomeVariation"\n\tOff variation: {"thisIsJson":"AnotherVariation"}\n\t1 prerequisite\n\t3 user targets\n\t0 rules`,
-			flags.generateHoverString(flag),
+			providers.generateHoverString(flag),
 		);
 	});
 
@@ -71,8 +71,7 @@ suite('flags tests', () => {
 		const document = await vscode.workspace.openTextDocument(uri);
 		tests.forEach(t => {
 			const pos = new vscode.Position(t.line, t.char);
-			assert.equal(flags.isPrecedingCharStringDelimeter(document, pos), t.expected, t.name);
+			assert.equal(providers.isPrecedingCharStringDelimeter(document, pos), t.expected, t.name);
 		});
-
 	});
 });
