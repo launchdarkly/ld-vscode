@@ -17,10 +17,10 @@ import * as url from 'url';
 import opn = require('opn');
 import { kebabCase } from 'lodash';
 
-import { configuration as config } from './configuration';
-import { api } from './api';
+import { Configuration } from './configuration';
+import { LaunchDarklyAPI } from './api';
 import { Environment, FlagConfiguration } from './models';
-import { flagStore } from './flagStore';
+import { FlagStore } from './flagStore';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
@@ -28,12 +28,17 @@ const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
 
-export function register(ctx: ExtensionContext) {
+export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore) {
 	ctx.subscriptions.push(
-		languages.registerCompletionItemProvider(LD_MODE, new LaunchDarklyCompletionItemProvider(), "'", '"'),
+		languages.registerCompletionItemProvider(
+			LD_MODE,
+			new LaunchDarklyCompletionItemProvider(config, flagStore),
+			"'",
+			'"',
+		),
 	);
 
-	ctx.subscriptions.push(languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider()));
+	ctx.subscriptions.push(languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore)));
 
 	ctx.subscriptions.push(
 		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
@@ -58,13 +63,13 @@ export function register(ctx: ExtensionContext) {
 			}
 
 			try {
-				await openFlagInBrowser(flagKey);
+				await openFlagInBrowser(config, flagKey);
 			} catch (err) {
 				let errMsg = `Encountered an unexpected error retrieving the flag ${flagKey}`;
 				if (err.statusCode == 404) {
 					// Try resolving the flag key to kebab case
 					try {
-						await openFlagInBrowser(kebabCase(flagKey));
+						await openFlagInBrowser(config, kebabCase(flagKey));
 						return;
 					} catch (err) {
 						if (err.statusCode == 404) {
@@ -80,10 +85,18 @@ export function register(ctx: ExtensionContext) {
 }
 
 class LaunchDarklyHoverProvider implements HoverProvider {
+	private readonly flagStore: FlagStore;
+	private readonly config: Configuration;
+
+	constructor(config: Configuration, flagStore: FlagStore) {
+		this.config = config;
+		this.flagStore = flagStore;
+	}
+
 	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
 		return new Promise(async (resolve, reject) => {
-			if (config.enableHover) {
-				const flags = await flagStore.allFlags();
+			if (this.config.enableHover) {
+				const flags = await this.flagStore.allFlags();
 				let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let flag = flags[candidate] || flags[kebabCase(candidate)];
 				if (flag) {
@@ -98,11 +111,19 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 }
 
 class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
+	private readonly flagStore: FlagStore;
+	private readonly config: Configuration;
+
+	constructor(config: Configuration, flagStore: FlagStore) {
+		this.config = config;
+		this.flagStore = flagStore;
+	}
+
 	public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
 		if (isPrecedingCharStringDelimeter(document, position)) {
 			return new Promise(async resolve => {
-				if (config.enableAutocomplete) {
-					const flags = await flagStore.allFlags();
+				if (this.config.enableAutocomplete) {
+					const flags = await this.flagStore.allFlags();
 					resolve(
 						Object.keys(flags).map(flag => {
 							return new CompletionItem(flag, CompletionItemKind.Field);
@@ -116,8 +137,9 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 	}
 }
 
-const openFlagInBrowser = async (key: string) => {
-	const flag = await api.getFeatureFlag(config.project, key, config.env);
+const openFlagInBrowser = async (config: Configuration, flagKey: string) => {
+	const api = new LaunchDarklyAPI(config);
+	const flag = await api.getFeatureFlag(config.project, flagKey, config.env);
 
 	// Default to first environment
 	let env: Environment = Object.values(flag.environments)[0];
