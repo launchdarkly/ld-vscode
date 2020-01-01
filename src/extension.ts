@@ -1,25 +1,21 @@
 'use strict';
 
-import * as vscode from 'vscode';
+import { workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
 
-import { LDFlagManager } from './flags';
-import { configuration as settings } from './configuration';
+import { flagStore } from './flags';
+import { configuration as config } from './configuration';
 
-// Handles changes in vscode configuration and registration of commands/providers
-let flagManager: LDFlagManager;
-
-export function activate(ctx: vscode.ExtensionContext) {
-	vscode.workspace.onDidChangeConfiguration((e: vscode.ConfigurationChangeEvent) => {
+export function activate(ctx: ExtensionContext) {
+	workspace.onDidChangeConfiguration((e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
-			settings.reload();
-			flagManager.reload(settings);
+			config.reload();
+			flagStore.reload(e);
 		}
 	});
 
-	flagManager = new LDFlagManager(ctx, settings);
-	flagManager.registerProviders(ctx, settings);
+	flagStore.registerProviders(ctx);
 }
 
 export function deactivate() {
-	flagManager.updateProcessor.stop();
+	flagStore.stop();
 }
