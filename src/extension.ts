@@ -1,25 +1,53 @@
 'use strict';
 
-import * as vscode from 'vscode';
+import { commands, window, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
 
-import { LDFlagManager } from './flags';
-import { configuration as settings } from './configuration';
+import { FlagStore } from './flagStore';
+import { Configuration } from './configuration';
+import { register as registerProviders } from './providers';
+import { LaunchDarklyAPI } from './api';
 
-// Handles changes in vscode configuration and registration of commands/providers
-let flagManager: LDFlagManager;
+let config: Configuration;
+let flagStore: FlagStore;
 
-export function activate(ctx: vscode.ExtensionContext) {
-	vscode.workspace.onDidChangeConfiguration((e: vscode.ConfigurationChangeEvent) => {
+export function activate(ctx: ExtensionContext) {
+	config = new Configuration(ctx);
+
+	const validationError = config.validate();
+	switch (validationError) {
+		case 'unconfigured':
+			window
+				.showInformationMessage('To enable the LaunchDarkly extension, select your desired environment.', 'Configure')
+				.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
+			break;
+		case 'legacy':
+			window
+				.showWarningMessage(
+					'Your LaunchDarkly extension configuration has been deprecated and may not work correctly. Please reconfigure the extension.',
+					'Configure',
+				)
+				.then(item => {
+					item === 'Configure'
+						? commands.executeCommand('extension.configureLaunchDarkly')
+						: ctx.globalState.update('legacyNotificationDismissed', true);
+				});
+			break;
+	}
+
+	const api = new LaunchDarklyAPI(config);
+	flagStore = new FlagStore(config, api);
+
+	// Handle manual changes to extension configuration
+	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
-			settings.reload();
-			flagManager.reload(settings);
+			await config.reload();
+			await flagStore.reload(e);
 		}
 	});
 
-	flagManager = new LDFlagManager(ctx, settings);
-	flagManager.registerProviders(ctx, settings);
+	registerProviders(ctx, config, flagStore, api);
 }
 
 export function deactivate() {
-	flagManager.updateProcessor.stop();
+	flagStore && flagStore.stop();
 }
