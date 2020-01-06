@@ -2,6 +2,17 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.2.0] - 2020-01-06
+
+### Added
+
+- The extension now contributes a `LaunchDarkly: Configure` command to configure or reconfigure the extension. The extension will prompt users to configure on installation or update, or on obsolete configurations (see Changed section)
+
+### Changed
+
+- It is now possible to configure the extension without storing secrets in `settings.json`. Use the `LaunchDarkly: Configure` command to configure the extension. With this change, the `accessToken` configuration option is now deprecated, and will be automatically cleared when the `LaunchDarkly: Configure` is ran and completed.
+- The `sdkKey` configuration option is now obsolete. The SDK key will now be inferred from the configured project and environment.
+
 ## [2.1.2] - 2019-12-26
 
 ### Fixed
