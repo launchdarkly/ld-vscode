@@ -185,9 +185,9 @@ export class ConfigurationMenu {
 		['accessToken', 'project', 'env'].forEach(async option => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
-		await this.config.update('sdkKey', '', true)
+		await this.config.update('sdkKey', '', true);
 		if (workspace.name) {
-			await this.config.update('sdkKey', '', false)
+			await this.config.update('sdkKey', '', false);
 		}
 	}
 
