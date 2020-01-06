@@ -85,6 +85,8 @@ export class MultiStepInput {
 		try {
 			return await new Promise<T | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
 				const input = window.createQuickPick<T>();
+				input.matchOnDescription = true;
+				input.matchOnDetail = true;
 				input.title = title;
 				input.step = step;
 				input.totalSteps = totalSteps;

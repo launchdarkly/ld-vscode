@@ -19,7 +19,7 @@ export function activate(ctx: ExtensionContext) {
 			window
 				.showInformationMessage('To enable the LaunchDarkly extension, select your desired environment.', 'Configure')
 				.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
-
+			break;
 		case 'legacy':
 			window
 				.showWarningMessage(
@@ -31,6 +31,7 @@ export function activate(ctx: ExtensionContext) {
 						? commands.executeCommand('extension.configureLaunchDarkly')
 						: ctx.globalState.update('legacyNotificationDismissed', true);
 				});
+			break;
 	}
 
 	const api = new LaunchDarklyAPI(config);

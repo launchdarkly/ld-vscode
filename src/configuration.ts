@@ -38,14 +38,15 @@ export class Configuration {
 		if (typeof this[key] !== typeof value) {
 			return;
 		}
-
+		
+		let config: WorkspaceConfiguration = workspace.getConfiguration('launchdarkly');
 		if (key === 'accessToken') {
 			const ctxState = global ? this.ctx.globalState : this.ctx.workspaceState;
 			await ctxState.update(key, value);
+			await config.update(key, '', global);
 			return;
 		}
 
-		let config: WorkspaceConfiguration = workspace.getConfiguration('launchdarkly');
 		await config.update(key, value, global);
 		config = workspace.getConfiguration('launchdarkly');
 
@@ -56,6 +57,7 @@ export class Configuration {
 	validate(): string {
 		const version = package_json.version;
 		const ctx = this.ctx;
+		ctx.globalState.update('version', undefined)
 		const storedVersion = ctx.globalState.get('version');
 
 		if (version !== storedVersion) {

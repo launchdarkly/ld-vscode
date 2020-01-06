@@ -131,7 +131,7 @@ export class ConfigurationMenu {
 			title: this.title,
 			step: 3,
 			totalSteps: this.totalSteps,
-			placeholder: 'select an environment',
+			placeholder: 'Select an environment',
 			items: environmentOptions,
 			activeItem: typeof this.env !== 'string' ? this.env : undefined,
 			shouldResume: this.shouldResume,
@@ -179,11 +179,16 @@ export class ConfigurationMenu {
 		configWithUpdatedToken.accessToken = this.accessToken;
 		this.api = new LaunchDarklyAPI(configWithUpdatedToken);
 	}
+
 	async configure() {
 		await this.collectInputs();
 		['accessToken', 'project', 'env'].forEach(async option => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
+		await this.config.update('sdkKey', '', true)
+		if (workspace.name) {
+			await this.config.update('sdkKey', '', false)
+		}
 	}
 
 	createQuickPickItem(resource: Resource): QuickPickItem {
