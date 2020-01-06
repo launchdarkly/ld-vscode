@@ -42,12 +42,16 @@ export class FlagStore {
 	}, 200);
 
 	async start() {
-		if (!this.config.accessToken || !this.config.baseUri || !this.config.streamUri) {
+		if (!['accessToken', 'baseUri', 'streamUri', 'project', 'env'].every(o => !!this.config[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return;
 		}
 
 		const sdkKey = await this.getLatestSDKKey();
+		if (!sdkKey) {
+			return;
+		}
+
 		const ldConfig = this.ldConfig();
 		this.updateProcessor = StreamProcessor(sdkKey, ldConfig, Requestor(sdkKey, ldConfig));
 		return new Promise((resolve, reject) => {
@@ -84,7 +88,7 @@ export class FlagStore {
 			if (err.statusCode === 404) {
 				window
 					.showErrorMessage(
-						'Your configured LaunchDarkly environment no longer exists. Please reconfigure the extension.',
+						'Your configured LaunchDarkly environment does not exist. Please reconfigure the extension.',
 						'Configure',
 					)
 					.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
