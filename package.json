@@ -22,16 +22,6 @@
 			"type": "object",
 			"title": "LaunchDarkly",
 			"properties": {
-				"launchdarkly.accessToken": {
-					"type": "string",
-					"default": "",
-					"description": "LaunchDarkly API access token"
-				},
-				"launchdarkly.sdkKey": {
-					"type": "string",
-					"default": "",
-					"description": "LaunchDarkly SDK key"
-				},
 				"launchdarkly.project": {
 					"type": "string",
 					"default": "",
@@ -61,6 +51,16 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Enable flag key autocompletion"
+				},
+				"launchdarkly.accessToken": {
+					"type": "string",
+					"default": "",
+					"description": "LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
+				},
+				"launchdarkly.sdkKey": {
+					"type": "string",
+					"default": "",
+					"description": "LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead."
 				}
 			}
 		},
@@ -69,6 +69,10 @@
 				"command": "extension.openInLaunchDarkly",
 				"title": "LaunchDarkly: Open in LaunchDarkly",
 				"when": "editorTextFocus"
+			},
+			{
+				"command": "extension.configureLaunchDarkly",
+				"title": "LaunchDarkly: Configure"
 			}
 		],
 		"menus": {
@@ -117,6 +121,7 @@
 		"@types/opn": "5.1.0",
 		"eventsource": "^1.0.5",
 		"launchdarkly-node-server-sdk": "5.10.0",
+		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
 		"opn": "5.3.0",
 		"request-promise-native": "1.0.8"
