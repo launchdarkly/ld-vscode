@@ -176,6 +176,7 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, api: La
 
 export function generateHoverString(flag: FlagConfiguration) {
 	return `**LaunchDarkly feature flag**\n
+        Name: ${flag.name}
 	Key: ${flag.key}
 	Enabled: ${flag.on}
 	Default variation: ${JSON.stringify(flag.variations[flag.fallthrough.variation])}
