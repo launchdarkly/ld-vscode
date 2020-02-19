@@ -20,7 +20,7 @@ import { kebabCase } from 'lodash';
 import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
-import { Environment, FlagConfiguration } from './models';
+import { Environment, Flag, FlagConfiguration } from './models';
 import { FlagStore } from './flagStore';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
@@ -80,13 +80,13 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 			}
 
 			try {
-				await openFlagInBrowser(config, flagKey, api);
+				await openFlagInBrowser(config, flagKey, flagStore);
 			} catch (err) {
 				let errMsg = `Encountered an unexpected error retrieving the flag ${flagKey}`;
 				if (err.statusCode == 404) {
 					// Try resolving the flag key to kebab case
 					try {
-						await openFlagInBrowser(config, kebabCase(flagKey), api);
+						await openFlagInBrowser(config, kebabCase(flagKey), flagStore);
 						return;
 					} catch (err) {
 						if (err.statusCode == 404) {
@@ -113,13 +113,16 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
-				const flags = await this.flagStore.allFlags();
 				let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-				let flag = flags[candidate] || flags[kebabCase(candidate)];
-				if (flag) {
-					let hover = generateHoverString(flag);
-					resolve(new Hover(hover));
-					return;
+				try { 
+					let data = await this.flagStore.getFeatureFlag(candidate) || await this.flagStore.getFeatureFlag(kebabCase(candidate));
+					if (data) {
+						let hover = generateHoverString(data.flag, data.config);
+						resolve(new Hover(hover));
+						return;
+					}
+				} catch(e) {
+					reject(e);
 				}
 			}
 			reject();
@@ -154,8 +157,8 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 	}
 }
 
-const openFlagInBrowser = async (config: Configuration, flagKey: string, api: LaunchDarklyAPI) => {
-	const flag = await api.getFeatureFlag(config.project, flagKey, config.env);
+const openFlagInBrowser = async (config: Configuration, flagKey: string, flagStore: FlagStore) => {
+	const { flag } = await flagStore.getFeatureFlag(flagKey);
 
 	// Default to first environment
 	let env: Environment = Object.values(flag.environments)[0];
@@ -174,20 +177,20 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, api: La
 	opn(url.resolve(config.baseUri, sitePath));
 };
 
-export function generateHoverString(flag: FlagConfiguration) {
+export function generateHoverString(flag: Flag, c: FlagConfiguration) {
 	return `**LaunchDarkly feature flag**\n
-        Name: ${flag.name}
-	Key: ${flag.key}
-	Enabled: ${flag.on}
-	Default variation: ${JSON.stringify(flag.variations[flag.fallthrough.variation])}
-	Off variation: ${JSON.stringify(flag.variations[flag.offVariation])}
-	${plural(flag.prerequisites.length, 'prerequisite', 'prerequisites')}
+	Name: ${flag.name}
+	Key: ${c.key}
+	Enabled: ${c.on}
+	Default variation: ${JSON.stringify(c.variations[c.fallthrough.variation])}
+	Off variation: ${JSON.stringify(c.variations[c.offVariation])}
+	${plural(c.prerequisites.length, 'prerequisite', 'prerequisites')}
 	${plural(
-		flag.targets.reduce((acc, curr) => acc + curr.values.length, 0),
+		c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
 		'user target',
 		'user targets',
 	)}
-	${plural(flag.rules.length, 'rule', 'rules')}`;
+	${plural(c.rules.length, 'rule', 'rules')}`;
 }
 
 function plural(count: number, singular: string, plural: string) {
