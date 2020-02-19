@@ -6,7 +6,7 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 
 ### Added
 
-- The hover display name surfaces the feature flag's name
+- The hover display surfaces the feature flag's name
 
 ## [2.2.0] - 2020-01-06
 
