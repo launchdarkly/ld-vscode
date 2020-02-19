@@ -15,8 +15,8 @@ const DATA_KIND = { namespace: 'features' };
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LDFeatureStore;
-	private readonly flagMetadata: {[key:string]: Flag} = {};
-	
+	private readonly flagMetadata: { [key: string]: Flag } = {};
+
 	private readonly api: LaunchDarklyAPI;
 	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 	private updateProcessor: LDStreamProcessor;
@@ -125,17 +125,17 @@ export class FlagStore {
 				}
 				if (!flag || flag.environments[this.config.env].version < res.version) {
 					try {
-						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env)
+						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
 						this.flagMetadata[key] = flag;
-						resolve({flag, config: res})
+						resolve({ flag, config: res });
 					} catch (e) {
-						console.error(`Could not retrieve feature flag metadata for ${key}: ${e}`)
-						reject(e)
+						console.error(`Could not retrieve feature flag metadata for ${key}: ${e}`);
+						reject(e);
 					}
 				}
-			})
-		})
-	} 
+			});
+		});
+	}
 
 	allFlags(): Promise<FlagConfiguration[]> {
 		return new Promise(resolve => {

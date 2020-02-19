@@ -114,14 +114,16 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
 				let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-				try { 
-					let data = await this.flagStore.getFeatureFlag(candidate) || await this.flagStore.getFeatureFlag(kebabCase(candidate));
+				try {
+					let data =
+						(await this.flagStore.getFeatureFlag(candidate)) ||
+						(await this.flagStore.getFeatureFlag(kebabCase(candidate)));
 					if (data) {
 						let hover = generateHoverString(data.flag, data.config);
 						resolve(new Hover(hover));
 						return;
 					}
-				} catch(e) {
+				} catch (e) {
 					reject(e);
 				}
 			}
