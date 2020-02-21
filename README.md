@@ -10,7 +10,6 @@ The LaunchDarkly VSCode extension provides some quality-of-life enhancements for
 
 ## Installation and configuration
 
-This extension contributes the following settings:
 On installation of the LaunchDarkly extension, VSCode will prompt you to configure the extension, selecting a LaunchDarkly project and environment for your workspace. To reconfigure the extension, run the "LaunchDarkly: Configure" command from your command pallete.
 This extension contributes the following additional settings:
 
