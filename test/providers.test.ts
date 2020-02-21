@@ -1,9 +1,18 @@
 import * as assert from 'assert';
-import * as providers from '../src/providers';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-const flag = {
+import * as providers from '../src/providers';
+import { Flag, FlagConfiguration } from '../src/models';
+
+const flag: Flag = {
+	name: "Test",
+	key: "test",
+	tags: [],
+	environments: null,
+}
+
+const flagConfig: FlagConfiguration = {
 	key: 'test',
 	on: true,
 	variations: ['SomeVariation', { thisIsJson: 'AnotherVariation' }],
@@ -14,6 +23,7 @@ const flag = {
 	prerequisites: ['something'],
 	targets: [{ values: ['user', 'anotheruser'] }, { values: ['someotheruser'] }],
 	rules: [],
+	version: 1,
 };
 
 let testPath = path.join(__dirname, '..', '..', 'test');
@@ -21,8 +31,8 @@ let testPath = path.join(__dirname, '..', '..', 'test');
 suite('provider utils tests', () => {
 	test('generateHoverString', () => {
 		assert.equal(
-			`**LaunchDarkly feature flag**\n\n\tKey: test\n\tEnabled: true\n\tDefault variation: "SomeVariation"\n\tOff variation: {"thisIsJson":"AnotherVariation"}\n\t1 prerequisite\n\t3 user targets\n\t0 rules`,
-			providers.generateHoverString(flag),
+			`**LaunchDarkly feature flag**\n\n\tName: Test\n\tKey: test\n\tEnabled: true\n\tDefault variation: "SomeVariation"\n\tOff variation: {"thisIsJson":"AnotherVariation"}\n\t1 prerequisite\n\t3 user targets\n\t0 rules`,
+			providers.generateHoverString(flag, flagConfig),
 		);
 	});
 

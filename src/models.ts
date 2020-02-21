@@ -10,6 +10,7 @@ export class Project extends Resource {
 
 export class Environment extends Resource {
 	apiKey: string;
+	version: number;
 	_site: { href: string };
 }
 
@@ -26,4 +27,10 @@ export class FlagConfiguration {
 	targets: any;
 	rules: Array<any>;
 	on: boolean;
+	version: number;
+}
+
+export class FlagWithConfiguration {
+	flag: Flag;
+	config: FlagConfiguration;
 }

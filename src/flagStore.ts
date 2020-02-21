@@ -5,7 +5,7 @@ import StreamProcessor = require('launchdarkly-node-server-sdk/streaming');
 import Requestor = require('launchdarkly-node-server-sdk/requestor');
 import { debounce } from 'lodash';
 
-import { FlagConfiguration } from './models';
+import { Flag, FlagConfiguration, FlagWithConfiguration } from './models';
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
 
@@ -15,6 +15,8 @@ const DATA_KIND = { namespace: 'features' };
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LDFeatureStore;
+	private readonly flagMetadata: { [key: string]: Flag } = {};
+
 	private readonly api: LaunchDarklyAPI;
 	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 	private updateProcessor: LDStreamProcessor;
@@ -112,6 +114,27 @@ export class FlagStore {
 			},
 			userAgent: 'VSCodeExtension/' + PACKAGE_JSON.version,
 		};
+	}
+
+	getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
+		let flag = this.flagMetadata[key];
+		return new Promise((resolve, reject) => {
+			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
+				if (!res) {
+					resolve(null);
+				}
+				if (!flag || flag.environments[this.config.env].version < res.version) {
+					try {
+						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
+						this.flagMetadata[key] = flag;
+						resolve({ flag, config: res });
+					} catch (e) {
+						console.error(`Could not retrieve feature flag metadata for ${key}: ${e}`);
+						reject(e);
+					}
+				}
+			});
+		});
 	}
 
 	allFlags(): Promise<FlagConfiguration[]> {
