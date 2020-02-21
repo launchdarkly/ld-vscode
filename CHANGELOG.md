@@ -2,7 +2,7 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
-## [2.2.1] - 2020-02-19
+## [2.2.1] - 2020-02-21
 
 ### Added
 
