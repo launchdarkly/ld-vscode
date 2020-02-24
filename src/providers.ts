@@ -191,7 +191,7 @@ export function generateHoverString(flag: Flag, c: FlagConfiguration) {
 		[
 			plural(
 				c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
-				'usertarget',
+				'user target',
 				'user targets',
 			),
 		],
