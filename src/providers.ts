@@ -188,7 +188,7 @@ export function generateHoverString(flag: Flag, c: FlagConfiguration) {
 		['Default variation', JSON.stringify(c.variations[c.fallthrough.variation], null, 2)],
 		['Off variation', JSON.stringify(c.variations[c.offVariation], null, 2)],
 		[plural(c.prerequisites.length, 'prerequisite', 'prerequisites')],
-		[ 
+		[
 			plural(
 				c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
 				'usertarget',
@@ -198,15 +198,13 @@ export function generateHoverString(flag: Flag, c: FlagConfiguration) {
 		[plural(c.rules.length, 'rule', 'rules')],
 	];
 	let hoverString = new MarkdownString(`**LaunchDarkly feature flag**`);
-	fields.forEach(
-		field => {
-				hoverString = hoverString.appendText('\n' + (`${field[0]}`))
-				if (field.length == 2) {
-					hoverString = hoverString.appendText(`: `)
-					hoverString = hoverString.appendCodeblock(`${field[1]}`)
-				}
-		},
-	);
+	fields.forEach(field => {
+		hoverString = hoverString.appendText('\n' + `${field[0]}`);
+		if (field.length == 2) {
+			hoverString = hoverString.appendText(`: `);
+			hoverString = hoverString.appendCodeblock(`${field[1]}`);
+		}
+	});
 	return hoverString;
 }
 

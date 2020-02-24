@@ -8,6 +8,7 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 
 - Improved formatting and readability of hover display
 - Feature flag metadata used for hover is now cached
+
 ## [2.2.1] - 2020-02-21
 
 ### Added
