@@ -12,6 +12,7 @@ import {
 	Position,
 	Range,
 	TextDocument,
+	MarkdownString,
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
@@ -113,13 +114,13 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
-				let candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
+				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				try {
-					let data =
+					const data =
 						(await this.flagStore.getFeatureFlag(candidate)) ||
 						(await this.flagStore.getFeatureFlag(kebabCase(candidate)));
 					if (data) {
-						let hover = generateHoverString(data.flag, data.config);
+						const hover = generateHoverString(data.flag, data.config);
 						resolve(new Hover(hover));
 						return;
 					}
@@ -180,19 +181,31 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 };
 
 export function generateHoverString(flag: Flag, c: FlagConfiguration) {
-	return `**LaunchDarkly feature flag**\n
-	Name: ${flag.name}
-	Key: ${c.key}
-	Enabled: ${c.on}
-	Default variation: ${JSON.stringify(c.variations[c.fallthrough.variation])}
-	Off variation: ${JSON.stringify(c.variations[c.offVariation])}
-	${plural(c.prerequisites.length, 'prerequisite', 'prerequisites')}
-	${plural(
-		c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
-		'user target',
-		'user targets',
-	)}
-	${plural(c.rules.length, 'rule', 'rules')}`;
+	const fields = [
+		['Name', flag.name],
+		['Key', c.key],
+		['Enabled', c.on],
+		['Default variation', JSON.stringify(c.variations[c.fallthrough.variation], null, 2)],
+		['Off variation', JSON.stringify(c.variations[c.offVariation], null, 2)],
+		[plural(c.prerequisites.length, 'prerequisite', 'prerequisites')],
+		[
+			plural(
+				c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
+				'user target',
+				'user targets',
+			),
+		],
+		[plural(c.rules.length, 'rule', 'rules')],
+	];
+	let hoverString = new MarkdownString(`**LaunchDarkly feature flag**`);
+	fields.forEach(field => {
+		hoverString = hoverString.appendText('\n' + `${field[0]}`);
+		if (field.length == 2) {
+			hoverString = hoverString.appendText(`: `);
+			hoverString = hoverString.appendCodeblock(`${field[1]}`);
+		}
+	});
+	return hoverString;
 }
 
 function plural(count: number, singular: string, plural: string) {
