@@ -39,7 +39,7 @@ export class LaunchDarklyAPI {
 		const envParam = envKey ? '?env=' + envKey : '';
 		const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
 		const data = await rp(options);
-		return JSON.parse(data);
+		return new Flag(JSON.parse(data));
 	}
 
 	private createOptions(path: string) {
