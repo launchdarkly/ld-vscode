@@ -122,17 +122,21 @@ export class FlagStore {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
 				if (!res) {
 					resolve(null);
+					return;
 				}
-				if (!flag || flag.environments[this.config.env].version < res.version) {
+
+				if (!flag || flag.environmentVersion(this.config.env) < res.version) {
 					try {
 						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
 						this.flagMetadata[key] = flag;
-						resolve({ flag, config: res });
 					} catch (e) {
 						console.error(`Could not retrieve feature flag metadata for ${key}: ${e}`);
 						reject(e);
+						return;
 					}
 				}
+
+				resolve({ flag, config: res });
 			});
 		});
 	}
