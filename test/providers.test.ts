@@ -4,8 +4,6 @@ import * as vscode from 'vscode';
 
 import * as providers from '../src/providers';
 import { Flag, FlagConfiguration } from '../src/models';
-import * as configs from '../src/configuration';
-import { ExtensionContext } from 'vscode';
 
 const flag = new Flag ({
 	name: "Test",
