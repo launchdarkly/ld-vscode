@@ -122,7 +122,7 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 					if (data) {
 						let env = data.flag.environments[this.config.env];
 						let sitePath = env._site.href;
-						let browserURL = url.resolve(this.config.baseUri, sitePath)
+						let browserURL = url.resolve(this.config.baseUri, sitePath);
 						const hover = generateHoverString(data.flag, data.config, browserURL);
 						resolve(new Hover(hover));
 						return;
@@ -209,9 +209,9 @@ export function generateHoverString(flag: Flag, c: FlagConfiguration, url?: stri
 		}
 	});
 	if (url) {
-		hoverString.appendText('\n')
-		hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`)
-		hoverString.isTrusted = true
+		hoverString.appendText('\n');
+		hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`);
+		hoverString.isTrusted = true;
 	}
 	return hoverString;
 }
