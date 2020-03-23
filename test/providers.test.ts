@@ -32,7 +32,7 @@ let testPath = path.join(__dirname, '..', '..', 'test');
 suite('provider utils tests', () => {
 	test('generateHoverString', () => {
 		assert.equal(
-			"**LaunchDarkly feature flag**\n\nName: \n```\nTest\n```\n\n\nKey: \n```\ntest\n```\n\n\nEnabled: \n```\ntrue\n```\n\n\nDefault variation: \n```\n\"SomeVariation\"\n```\n\n\nOff variation: \n```\n{\n  \"thisIsJson\": \"AnotherVariation\"\n}\n```\n\n\n1 prerequisite\n\n3 user targets\n\n0 rules\nOpen in browser",
+			"**LaunchDarkly feature flag**\n\nName: \n```\nTest\n```\n\n\nKey: \n```\ntest\n```\n\n\nEnabled: \n```\ntrue\n```\n\n\nDefault variation: \n```\n\"SomeVariation\"\n```\n\n\nOff variation: \n```\n{\n  \"thisIsJson\": \"AnotherVariation\"\n}\n```\n\n\n1 prerequisite\n\n3 user targets\n\n0 rules\n\n[Open in browser](http://app.launchdarkly.com/example)",
 			providers.generateHoverString(flag, flagConfig, "http://app.launchdarkly.com/example").value,
 		);
 	});
