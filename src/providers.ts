@@ -210,7 +210,7 @@ export function generateHoverString(flag: Flag, c: FlagConfiguration, url?: stri
 	});
 	if (url) {
 		hoverString.appendText('\n')
-		hoverString = hoverString.appendMarkdown(`[Open In Browser](${url})`)
+		hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`)
 		hoverString.isTrusted = true
 	}
 	return hoverString;
