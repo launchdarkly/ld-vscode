@@ -120,10 +120,10 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 						(await this.flagStore.getFeatureFlag(candidate)) ||
 						(await this.flagStore.getFeatureFlag(kebabCase(candidate)));
 					if (data) {
-						let env = data.flag.environments[this.config.env];
-						let sitePath = env._site.href;
-						let browserURL = url.resolve(this.config.baseUri, sitePath);
-						const hover = generateHoverString(data.flag, data.config, browserURL);
+						const env = data.flag.environments[this.config.env];
+						const sitePath = env._site.href;
+						const browserUrl = url.resolve(this.config.baseUri, sitePath);
+						const hover = generateHoverString(data.flag, data.config, browserUrl);
 						resolve(new Hover(hover));
 						return;
 					}
