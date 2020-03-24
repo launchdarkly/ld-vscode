@@ -120,7 +120,10 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 						(await this.flagStore.getFeatureFlag(candidate)) ||
 						(await this.flagStore.getFeatureFlag(kebabCase(candidate)));
 					if (data) {
-						const hover = generateHoverString(data.flag, data.config);
+						const env = data.flag.environments[this.config.env];
+						const sitePath = env._site.href;
+						const browserUrl = url.resolve(this.config.baseUri, sitePath);
+						const hover = generateHoverString(data.flag, data.config, browserUrl);
 						resolve(new Hover(hover));
 						return;
 					}
@@ -180,7 +183,7 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	opn(url.resolve(config.baseUri, sitePath));
 };
 
-export function generateHoverString(flag: Flag, c: FlagConfiguration) {
+export function generateHoverString(flag: Flag, c: FlagConfiguration, url?: string) {
 	const fields = [
 		['Name', flag.name],
 		['Key', c.key],
@@ -205,6 +208,11 @@ export function generateHoverString(flag: Flag, c: FlagConfiguration) {
 			hoverString = hoverString.appendCodeblock(`${field[1]}`);
 		}
 	});
+	if (url) {
+		hoverString.appendText('\n');
+		hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`);
+		hoverString.isTrusted = true;
+	}
 	return hoverString;
 }
 
