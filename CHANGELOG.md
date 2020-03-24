@@ -2,6 +2,12 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.2.3] - 2020-03-24
+
+### Added
+
+- Added "Open in browser" link to hover display
+
 ## [2.2.2] - 2020-02-24
 
 ### Changed
