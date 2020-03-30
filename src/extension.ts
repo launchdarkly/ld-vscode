@@ -3,6 +3,7 @@
 import { commands, window, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
 
 import { FlagStore } from './flagStore';
+import { ldFeatureFlagsProvider } from './flagsView'
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
@@ -36,6 +37,8 @@ export function activate(ctx: ExtensionContext) {
 
 	const api = new LaunchDarklyAPI(config);
 	flagStore = new FlagStore(config, api);
+
+
 
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {

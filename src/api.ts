@@ -2,7 +2,7 @@ import * as rp from 'request-promise-native';
 import * as url from 'url';
 
 import { Configuration } from './configuration';
-import { Resource, Project, Environment, Flag } from './models';
+import { Resource, Project, Environment, Flag, FeatureFlag } from './models';
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
@@ -40,6 +40,17 @@ export class LaunchDarklyAPI {
 		const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
 		const data = await rp(options);
 		return new Flag(JSON.parse(data));
+	}
+
+	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
+		const envParam = envKey ? '?env=' + envKey : '';
+		const options = this.createOptions(`flags/${projectKey}/${envParam}`);
+		const data = await rp(options);
+		const flags = JSON.parse(data).items;
+		flags.forEach((flag: FeatureFlag) => {
+			return flag
+		})
+		return flags;
 	}
 
 	private createOptions(path: string) {

@@ -1,4 +1,5 @@
 import {
+	env,
 	commands,
 	languages,
 	window,
@@ -13,6 +14,7 @@ import {
 	Range,
 	TextDocument,
 	MarkdownString,
+	Uri
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
@@ -23,6 +25,7 @@ import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
 import { Environment, Flag, FlagConfiguration } from './models';
 import { FlagStore } from './flagStore';
+import { ldFeatureFlagsProvider, FlagValue } from './flagsView';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
@@ -31,6 +34,17 @@ const LD_MODE: DocumentFilter = {
 };
 
 export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
+
+	const flagView = new ldFeatureFlagsProvider(api, config, flagStore)
+	window.registerTreeDataProvider(
+		'ldFeatureFlags', flagView
+	);
+
+	ctx.subscriptions.push(
+		commands.registerCommand('ldFeatureFlags.copyKey', (node: FlagValue) => env.clipboard.writeText(node.label.split(":")[1].trim())),
+		commands.registerCommand('ldFeatureFlags.openBrowser', (node: FlagValue) => env.openExternal(Uri.parse(node.uri)))
+	)
+
 	ctx.subscriptions.push(
 		commands.registerCommand('extension.configureLaunchDarkly', async () => {
 			try {
@@ -42,7 +56,7 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 				window.showInformationMessage('LaunchDarkly configured successfully');
 			} catch (err) {
 				console.error(err);
-				window.showErrorMessage('An unexpected error occured, please try again later.');
+				window.showErrorMessage('An unexpected error occurred, please try again later.');
 			}
 		}),
 	);
@@ -100,6 +114,12 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 			}
 		}),
 	);
+
+	ctx.subscriptions.push(
+		commands.registerCommand('ldFeatureFlags.refreshEntry', () =>
+		flagView.refresh()
+	  )
+	)
 }
 
 class LaunchDarklyHoverProvider implements HoverProvider {

@@ -73,6 +73,26 @@
 			{
 				"command": "extension.configureLaunchDarkly",
 				"title": "LaunchDarkly: Configure"
+			},
+            {
+                "command": "ldFeatureFlags.refreshEntry",
+                "title": "LaunchDarkly: Refresh Feature Flags",
+                "icon": {
+                    "light": "resources/light/refresh.svg",
+                    "dark": "resources/dark/refresh.svg"
+                }
+			},
+			{
+				"command": "ldFeatureFlags.copyKey",
+				"title": "LaunchDarkly: Copy Key to Clipboard",
+                "icon": {
+                    "light": "resources/light/files.svg",
+                    "dark": "resources/dark/files.svg"
+                }
+			},
+			{
+				"command": "ldFeatureFlags.openBrowser",
+				"title": "LD: Open in Browser"
 			}
 		],
 		"menus": {
@@ -81,7 +101,25 @@
 					"command": "extension.openInLaunchDarkly",
 					"when": "editorTextFocus",
 					"group": "LaunchDarkly"
+				}],
+			"view/title": [
+				{
+					"command": "ldFeatureFlags.refreshEntry",
+					"when": "view == ldFeatureFlags",
+					"group": "navigation"
 				}
+			],
+			"view/item/context": [
+				{
+				  "command": "ldFeatureFlags.copyKey",
+				  "when": "view == ldFeatureFlags && viewItem == flagViewKey",
+				  "group": "inline"
+				},
+				{
+					"command": "ldFeatureFlags.openBrowser",
+					"when": "view == ldFeatureFlags && viewItem == flagViewBrowser",
+					"group": "inline"
+				  }
 			]
 		},
 		"keybindings": [
@@ -91,7 +129,15 @@
 				"mac": "cmd+alt+g",
 				"when": "editorTextFocus"
 			}
-		]
+		],
+		"views": {
+			"explorer": [
+				{
+					"id": "ldFeatureFlags",
+					"name": "LaunchDarkly Feature Flags"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
