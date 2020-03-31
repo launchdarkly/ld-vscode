@@ -91,6 +91,14 @@
                 }
 			},
 			{
+				"command": "ldFeatureFlags.toggleFlag",
+				"title": "LaunchDarkly: Copy Key to Clipboard",
+                "icon": {
+                    "light": "resources/light/files.svg",
+                    "dark": "resources/dark/files.svg"
+                }
+			},
+			{
 				"command": "ldFeatureFlags.openBrowser",
 				"title": "LD: Open in Browser"
 			}
@@ -119,7 +127,12 @@
 					"command": "ldFeatureFlags.openBrowser",
 					"when": "view == ldFeatureFlags && viewItem == flagViewBrowser",
 					"group": "inline"
-				  }
+				},
+				{
+				"command": "ldFeatureFlags.toggleFlag",
+				"when": "view == ldFeatureFlags && viewItem == flagViewToggle",
+				"group": "inline"
+				}
 			]
 		},
 		"keybindings": [

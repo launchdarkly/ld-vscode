@@ -258,3 +258,13 @@ export class FeatureFlag {
     'archived'?: boolean;
 	'defaults'?: Defaults;
 }
+
+export class PatchOperation {
+    'op': string;
+    'path': string;
+	'value': any;
+}
+export class PatchComment {
+    'comment'?: string;
+	'patch'?: Array<PatchOperation>;
+}

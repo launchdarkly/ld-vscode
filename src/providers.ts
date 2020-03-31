@@ -35,14 +35,15 @@ const LD_MODE: DocumentFilter = {
 
 export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
 
-	const flagView = new ldFeatureFlagsProvider(api, config, flagStore)
+	const flagView = new ldFeatureFlagsProvider(api, config)
 	window.registerTreeDataProvider(
 		'ldFeatureFlags', flagView
 	);
 
 	ctx.subscriptions.push(
 		commands.registerCommand('ldFeatureFlags.copyKey', (node: FlagValue) => env.clipboard.writeText(node.label.split(":")[1].trim())),
-		commands.registerCommand('ldFeatureFlags.openBrowser', (node: FlagValue) => env.openExternal(Uri.parse(node.uri)))
+		commands.registerCommand('ldFeatureFlags.openBrowser', (node: FlagValue) => env.openExternal(Uri.parse(node.uri))),
+		commands.registerCommand('ldFeatureFlags.toggleFlag', (node: FlagValue) => flagView.toggleFlag(node))
 	)
 
 	ctx.subscriptions.push(

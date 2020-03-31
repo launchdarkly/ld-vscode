@@ -2,7 +2,7 @@ import * as rp from 'request-promise-native';
 import * as url from 'url';
 
 import { Configuration } from './configuration';
-import { Resource, Project, Environment, Flag, FeatureFlag } from './models';
+import { Resource, Project, Environment, Flag, FeatureFlag, PatchOperation, PatchComment } from './models';
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
@@ -42,6 +42,25 @@ export class LaunchDarklyAPI {
 		return new Flag(JSON.parse(data));
 	}
 
+	async patchFeatureFlag(projectKey: string, flagKey: string, envKey?: string, value?: PatchComment): Promise<Flag> {
+		const envParam = envKey ? '?env=' + envKey : '';
+		const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value);
+		const data = await rp(options);
+		return new Flag(JSON.parse(data));
+	}
+
+	async patchFeatureFlagOn(projectKey: string, flagKey: string, enabled: Boolean, envKey?: string) {
+		let patch = new PatchOperation
+		patch.path = `/environments/${this.config.env}/on`
+		patch.op = "replace"
+		patch.value = enabled
+		let patchOp = new PatchComment
+		patchOp.comment = "VS Code Updated"
+		patchOp.patch = [patch]
+		console.log(patchOp)
+		return this.patchFeatureFlag(projectKey, flagKey, '', patchOp)
+	}
+
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
 		const envParam = envKey ? '?env=' + envKey : '';
 		const options = this.createOptions(`flags/${projectKey}/${envParam}`);
@@ -53,13 +72,21 @@ export class LaunchDarklyAPI {
 		return flags;
 	}
 
-	private createOptions(path: string) {
-		return {
+	private createOptions(path: string, method: string = 'GET', body?: PatchComment) {
+		let options = {
+			method: method,
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
 			headers: {
 				Authorization: this.config.accessToken,
 			},
 		};
+
+		if (body) {
+			options.headers['content-type'] = 'application/json'
+			options["body"] = [JSON.stringify(body)]
+		}
+		console.log(options)
+		return options
 	}
 }
 
