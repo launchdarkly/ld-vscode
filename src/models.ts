@@ -202,6 +202,10 @@ export class Defaults {
 }
 
 export class FeatureFlag {
+	constructor(init?: Partial<FeatureFlag>) {
+		Object.assign(this, init);
+	}
+
     'key'?: string;
     /**
     * Name of the feature flag.
