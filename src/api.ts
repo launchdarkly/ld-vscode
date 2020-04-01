@@ -42,12 +42,12 @@ export class LaunchDarklyAPI {
 		return new Flag(JSON.parse(data));
 	}
 
-	// async getFeatureFlagNew(projectKey: string, flagKey: string, envKey?: string): Promise<FeatureFlag> {
-	// 	const envParam = envKey ? '?env=' + envKey : '';
-	// 	const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
-	// 	const data = await rp(options);
-	// 	return new FeatureFlag(JSON.parse(data));
-	// }
+	async getFeatureFlagNew(projectKey: string, flagKey: string, envKey?: string): Promise<FeatureFlag> {
+		const envParam = envKey ? '?env=' + envKey : '';
+		const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
+		const data = await rp(options);
+		return new FeatureFlag(JSON.parse(data));
+	}
 
 	async patchFeatureFlag(projectKey: string, flagKey: string, envKey?: string, value?: PatchComment): Promise<FeatureFlag> {
 		const envParam = envKey ? '?env=' + envKey : '';

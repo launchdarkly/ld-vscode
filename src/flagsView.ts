@@ -1,23 +1,28 @@
 import * as vscode from 'vscode';
-import { Flag, Rule, Clause, FeatureFlag } from './models';
-import { FlagStore } from './flagStore';
+import { FeatureFlag, Flag } from './models';
 import { LaunchDarklyAPI } from './api';
 import { Configuration } from './configuration';
-import { join } from 'path';
+import { FlagStore } from './flagStore';
+
 
 export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue> {
   private readonly api: LaunchDarklyAPI;
   private config: Configuration;
-  //private flags: Array<Flag>;
+  private flagStore: FlagStore;
   private flagValues: Array<FlagValue>;
+  private statusBar: vscode.StatusBarItem
   private _onDidChangeTreeData: vscode.EventEmitter<FlagValue | undefined> = new vscode.EventEmitter<FlagValue | undefined>();
 	readonly onDidChangeTreeData: vscode.Event<FlagValue | undefined> = this._onDidChangeTreeData.event;
 
-  constructor(api: LaunchDarklyAPI, config: Configuration, ) {
+  constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, statusBar: vscode.StatusBarItem) {
     this.api = api;
     this.config = config;
-    this.getFlags()
+    this.flagStore = flagStore;
+    this.statusBar = statusBar
+    this.start()
   }
+
+  	// create a new status bar item that we can now manage
 
 	refresh(): void {
 		this._onDidChangeTreeData.fire();
@@ -51,29 +56,50 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
     this.flagValues = flagValues
     this.refresh()
   }
-  async start() {
+
+  start() {
+    var that = this;
+    if (this.flagStore.ldClient === undefined) {
+      setTimeout(function() {
+      that.flagStore.ldClient.on('update', function (flags) {
+        that.api.getFeatureFlagNew(that.config.project, flags.key, that.config.env).then((flag) => {
+          for (let i = 0; i < that.flagValues.length; i++) {
+            if (that.flagValues[i].label === flag.name) {
+              that.flagValues[i] = that.flagToValues(flag)
+              that.refresh()
+              that.statusBar.text = `Feature Flag updated: ${flag.key}`;
+              that.statusBar.show()
+              setTimeout(function() {
+                that.statusBar.hide()
+              }, 3000)
+              break
+          }
+        }
+      })})
+    }, 5000)}
+
     this.getFlags()
+  }
+
+  updateStatusBarItem(updateText: string): void {
+    this.statusBar.text = updateText;
+    this.statusBar.show();
   }
 
   async toggleFlag(flag: FlagValue) {
     let curValue = JSON.parse(flag.label.split(":")[1].trim())
-    console.log(`toggling flag: ${flag.flagKey}, value: ${curValue}`)
     try {
       var updatedFlag = await this.api.patchFeatureFlagOn(this.config.project, flag.flagKey, !curValue, this.config.env)
     } catch(e) {
       vscode.window.showInformationMessage("LaunchDarkly Toggle Flag Error: " + e);
-      console.log(e)
     }
     for(let i = 0; i<this.flagValues.length; i++) {
-      console.log(flag.label)
-      console.log(this.flagValues[i].label)
       if (this.flagValues[i].label == flag.flagParentName) {
-        console.log(i)
         this.flagValues[i] = this.flagToValues(updatedFlag)
         break
       }
     }
-    vscode.window.showInformationMessage(`LaunchDarkly Toggled Flag: ${flag.flagKey}`);
+    this.statusBar.text = `LaunchDarkly Toggled Flag: ${flag.flagKey}`
     this.refresh()
   }
 
@@ -178,8 +204,4 @@ export class FlagValue extends vscode.TreeItem {
       return `${this.label}`
     }
 
-    // get description(): string {
-    //   return this.version;
-    // }
-
-  }
+}
