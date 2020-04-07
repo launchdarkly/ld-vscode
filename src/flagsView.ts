@@ -25,6 +25,11 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
 		this._onDidChangeTreeData.fire();
   }
 
+  reload(): void {
+    this.getFlags()
+    this.refresh()
+  }
+
   getTreeItem(element: FlagValue): vscode.TreeItem {
     return element;
   }
@@ -65,6 +70,7 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
 
     )
 
+    // Setup listener for flag changes
     var that = this;
     if (this.flagStore.ldClient === undefined) {
       setTimeout(function() {
@@ -208,7 +214,7 @@ export function registerTreeviewRefreshCommand(
 	return vscode.commands.registerCommand(
 	  'launchdarkly.treeviewrefresh',
 	  (): void => {
-		treeDataProvider.refresh();
+    treeDataProvider.reload();
 		vscode.commands.executeCommand(
 		  'setContext',
 		  'launchdarkly:enableTreeview',
@@ -216,4 +222,4 @@ export function registerTreeviewRefreshCommand(
     );
 	  }
 	);
-  }
+}
