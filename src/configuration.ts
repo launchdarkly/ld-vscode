@@ -13,6 +13,7 @@ export class Configuration {
 	env = '';
 	enableHover = true;
 	enableAutocomplete = true;
+	enableTreeview = true;
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
 
@@ -80,3 +81,9 @@ export class Configuration {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
 	}
 }
+
+export function getIsTreeviewEnabled(): boolean {
+	return workspace
+	  .getConfiguration('launchdarkly')
+	  .get<boolean>('enableTreeview', true);
+  }

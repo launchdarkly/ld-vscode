@@ -1,28 +1,25 @@
 import * as vscode from 'vscode';
-import { FeatureFlag, Flag } from './models';
+import { FeatureFlag } from './models';
 import { LaunchDarklyAPI } from './api';
-import { Configuration } from './configuration';
+import { Configuration, getIsTreeviewEnabled } from './configuration';
 import { FlagStore } from './flagStore';
-
 
 export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue> {
   private readonly api: LaunchDarklyAPI;
   private config: Configuration;
   private flagStore: FlagStore;
   private flagValues: Array<FlagValue>;
-  private statusBar: vscode.StatusBarItem
+  private ctx: vscode.ExtensionContext;
   private _onDidChangeTreeData: vscode.EventEmitter<FlagValue | undefined> = new vscode.EventEmitter<FlagValue | undefined>();
 	readonly onDidChangeTreeData: vscode.Event<FlagValue | undefined> = this._onDidChangeTreeData.event;
 
-  constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, statusBar: vscode.StatusBarItem) {
+  constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext) {
     this.api = api;
     this.config = config;
+    this.ctx = ctx;
     this.flagStore = flagStore;
-    this.statusBar = statusBar
     this.start()
   }
-
-  	// create a new status bar item that we can now manage
 
 	refresh(): void {
 		this._onDidChangeTreeData.fire();
@@ -57,7 +54,17 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
     this.refresh()
   }
 
-  start() {
+  async start() {
+
+    this.ctx.subscriptions.push(
+      vscode.commands.registerCommand('ldFeatureFlags.copyKey', (node: FlagValue) => vscode.env.clipboard.writeText(node.label.split(":")[1].trim())),
+      vscode.commands.registerCommand('ldFeatureFlags.openBrowser', (node: FlagValue) => vscode.env.openExternal(vscode.Uri.parse(node.uri))),
+      vscode.commands.registerCommand('ldFeatureFlags.toggleFlag', (node: FlagValue) => this.toggleFlag(node)),
+      vscode.commands.registerCommand('ldFeatureFlags.refreshEntry', () => this.refresh()),
+      registerTreeviewRefreshCommand(this)
+
+    )
+
     var that = this;
     if (this.flagStore.ldClient === undefined) {
       setTimeout(function() {
@@ -67,11 +74,6 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
             if (that.flagValues[i].label === flag.name) {
               that.flagValues[i] = that.flagToValues(flag)
               that.refresh()
-              that.statusBar.text = `Feature Flag updated: ${flag.key}`;
-              that.statusBar.show()
-              setTimeout(function() {
-                that.statusBar.hide()
-              }, 3000)
               break
           }
         }
@@ -79,11 +81,6 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
     }, 5000)}
 
     this.getFlags()
-  }
-
-  updateStatusBarItem(updateText: string): void {
-    this.statusBar.text = updateText;
-    this.statusBar.show();
   }
 
   async toggleFlag(flag: FlagValue) {
@@ -99,7 +96,6 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
         break
       }
     }
-    this.statusBar.text = `LaunchDarkly Toggled Flag: ${flag.flagKey}`
     this.refresh()
   }
 
@@ -205,3 +201,19 @@ export class FlagValue extends vscode.TreeItem {
     }
 
 }
+
+export function registerTreeviewRefreshCommand(
+	treeDataProvider: ldFeatureFlagsProvider
+  ): vscode.Disposable {
+	return vscode.commands.registerCommand(
+	  'launchdarkly.treeviewrefresh',
+	  (): void => {
+		treeDataProvider.refresh();
+		vscode.commands.executeCommand(
+		  'setContext',
+		  'launchdarkly:enableTreeview',
+		  getIsTreeviewEnabled()
+    );
+	  }
+	);
+  }

@@ -1,5 +1,4 @@
 import {
-	env,
 	commands,
 	languages,
 	window,
@@ -14,18 +13,17 @@ import {
 	Range,
 	TextDocument,
 	MarkdownString,
-	Uri
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
 import { kebabCase } from 'lodash';
 
-import { Configuration } from './configuration';
+import { Configuration, getIsTreeviewEnabled } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
 import { Environment, Flag, FlagConfiguration } from './models';
 import { FlagStore } from './flagStore';
-import { ldFeatureFlagsProvider, FlagValue } from './flagsView';
+import { ldFeatureFlagsProvider } from './flagsView';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
@@ -35,16 +33,19 @@ const LD_MODE: DocumentFilter = {
 
 export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
 
-	const flagView = new ldFeatureFlagsProvider(api, config)
+	const flagView = new ldFeatureFlagsProvider(api, config, flagStore, ctx)
+	if(getIsTreeviewEnabled()) {
+		commands.executeCommand(
+			'setContext',
+			'launchdarkly:enableTreeview',
+			true
+	  );
+
+	}
+
 	window.registerTreeDataProvider(
 		'ldFeatureFlags', flagView
 	);
-
-	ctx.subscriptions.push(
-		commands.registerCommand('ldFeatureFlags.copyKey', (node: FlagValue) => env.clipboard.writeText(node.label.split(":")[1].trim())),
-		commands.registerCommand('ldFeatureFlags.openBrowser', (node: FlagValue) => env.openExternal(Uri.parse(node.uri))),
-		commands.registerCommand('ldFeatureFlags.toggleFlag', (node: FlagValue) => flagView.toggleFlag(node))
-	)
 
 	ctx.subscriptions.push(
 		commands.registerCommand('extension.configureLaunchDarkly', async () => {
@@ -60,20 +61,13 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 				window.showErrorMessage('An unexpected error occurred, please try again later.');
 			}
 		}),
-	);
-
-	ctx.subscriptions.push(
 		languages.registerCompletionItemProvider(
 			LD_MODE,
 			new LaunchDarklyCompletionItemProvider(config, flagStore),
 			"'",
 			'"',
 		),
-	);
-
-	ctx.subscriptions.push(languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore)));
-
-	ctx.subscriptions.push(
+		languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore)),
 		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
 			let flagKey = editor.document.getText(
 				editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
@@ -115,12 +109,6 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 			}
 		}),
 	);
-
-	ctx.subscriptions.push(
-		commands.registerCommand('ldFeatureFlags.refreshEntry', () =>
-		flagView.refresh()
-	  )
-	)
 }
 
 class LaunchDarklyHoverProvider implements HoverProvider {

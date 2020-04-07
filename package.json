@@ -52,6 +52,11 @@
 					"default": true,
 					"description": "Enable flag key autocompletion"
 				},
+				"launchdarkly.enableTreeview": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable flag treeview"
+				},
 				"launchdarkly.accessToken": {
 					"type": "string",
 					"default": "",
@@ -89,6 +94,10 @@
 					"light": "resources/light/files.svg",
 					"dark": "resources/dark/files.svg"
 				}
+			},
+			{
+				"command": "launchdarkly.treeviewrefresh",
+				"title": "LD Refresh"
 			},
 			{
 				"command": "ldFeatureFlags.toggleFlag",
@@ -148,7 +157,8 @@
 			"explorer": [
 				{
 					"id": "ldFeatureFlags",
-					"name": "LaunchDarkly Feature Flags"
+					"name": "LaunchDarkly Feature Flags",
+					"when": "launchdarkly:enableTreeview"
 				}
 			]
 		}

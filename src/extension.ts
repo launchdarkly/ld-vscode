@@ -3,7 +3,6 @@
 import { commands, window, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
 
 import { FlagStore } from './flagStore';
-import { ldFeatureFlagsProvider } from './flagsView'
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
@@ -45,6 +44,9 @@ export function activate(ctx: ExtensionContext) {
 		if (e.affectsConfiguration('launchdarkly')) {
 			await config.reload();
 			await flagStore.reload(e);
+		if (e.affectsConfiguration('launchdarkly.enableTreeview')) {
+			commands.executeCommand('launchdarkly.treeviewrefresh');
+			}
 		}
 	});
 
