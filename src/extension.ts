@@ -37,8 +37,6 @@ export function activate(ctx: ExtensionContext) {
 	const api = new LaunchDarklyAPI(config);
 	flagStore = new FlagStore(config, api);
 
-
-
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
