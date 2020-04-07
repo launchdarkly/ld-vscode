@@ -54,8 +54,6 @@ export class FlagStore {
 		this.getLatestSDKKey().then((sdkKey) => {
 			sdkKey = sdkKey
 			const ldConfig = this.ldConfig();
-
-			console.log(sdkKey)
 			let ldClient: LaunchDarkly.LDClient = LaunchDarkly.init(sdkKey, ldConfig)
 			ldClient.waitForInitialization().then(client => {
 				this.ldClient = client
