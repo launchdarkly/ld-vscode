@@ -21,7 +21,7 @@ import { kebabCase } from 'lodash';
 import { Configuration, getIsTreeviewEnabled } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
-import { Environment, Flag, FlagConfiguration } from './models';
+import { Environment, FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
 import { FlagStore } from './flagStore';
 import { ldFeatureFlagsProvider } from './flagsView';
 
@@ -176,7 +176,7 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	const { flag } = await flagStore.getFeatureFlag(flagKey);
 
 	// Default to first environment
-	let env: Environment = Object.values(flag.environments)[0];
+	let env: FeatureFlagConfig = Object.values(flag.environments)[0];
 	let sitePath = env._site.href;
 
 	if (!config.env) {
@@ -192,7 +192,7 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	opn(url.resolve(config.baseUri, sitePath));
 };
 
-export function generateHoverString(flag: Flag, c: FlagConfiguration, url?: string) {
+export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url?: string) {
 	const fields = [
 		['Name', flag.name],
 		['Key', c.key],

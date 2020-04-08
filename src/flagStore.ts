@@ -4,7 +4,7 @@ import LaunchDarkly = require('launchdarkly-node-server-sdk');
 
 import { debounce } from 'lodash';
 
-import { Flag, FlagConfiguration, FlagWithConfiguration } from './models';
+import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
 
@@ -14,7 +14,7 @@ const DATA_KIND = { namespace: 'features' };
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
-	private readonly flagMetadata: { [key: string]: Flag } = {};
+	private readonly flagMetadata: { [key: string]: FeatureFlag } = {};
 
 	private readonly api: LaunchDarklyAPI;
 	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
@@ -107,9 +107,9 @@ export class FlagStore {
 					return;
 				}
 
-				if (!flag || flag.environmentVersion(this.config.env) < res.version) {
+				if (!flag) {
 					try {
-						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
+						flag = await this.api.getFeatureFlagNew(this.config.project, key, this.config.env);
 						this.flagMetadata[key] = flag;
 					} catch (e) {
 						console.error(`Could not retrieve feature flag metadata for ${key}: ${e}`);

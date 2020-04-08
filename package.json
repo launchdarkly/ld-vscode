@@ -109,7 +109,11 @@
 			},
 			{
 				"command": "ldFeatureFlags.openBrowser",
-				"title": "LD: Open in Browser"
+				"title": "LD: Open in Browser",
+				"icon": {
+					"light": "resources/light/link_external.svg",
+					"dark": "resources/dark/link_external.svg"
+				}
 			}
 		],
 		"menus": {
@@ -136,11 +140,6 @@
 				{
 					"command": "ldFeatureFlags.openBrowser",
 					"when": "view == ldFeatureFlags && viewItem == flagViewBrowser",
-					"group": "inline"
-				},
-				{
-					"command": "ldFeatureFlags.toggleFlag",
-					"when": "view == ldFeatureFlags && viewItem == flagViewToggle",
 					"group": "inline"
 				}
 			]

@@ -9,10 +9,131 @@ export class Project extends Resource {
 	environments: Array<Environment>;
 }
 
-export class Environment extends Resource {
-	apiKey: string;
-	version: number;
-	_site: { href: string };
+// export class Environment extends Resource {
+// 	apiKey: string;
+// 	version: number;
+// 	_site: { href: string };
+// }
+export class Environment {
+    links?: Links;
+    id?: Id;
+    /**
+    * The key for the environment.
+    */
+    key?: string;
+    /**
+    * The name of the environment.
+    */
+    name?: string;
+    /**
+    * The SDK key for backend LaunchDarkly SDKs.
+    */
+    apiKey?: string;
+    /**
+    * The SDK key for mobile LaunchDarkly SDKs.
+    */
+    mobileKey?: string;
+    /**
+    * The swatch color for the environment.
+    */
+    color?: string;
+    /**
+    * The default TTL.
+    */
+    defaultTtl?: number;
+    /**
+    * Determines if this environment is in safe mode.
+    */
+    secureMode?: boolean;
+    /**
+    * Set to true to send detailed event information for new flags.
+    */
+    defaultTrackEvents?: boolean;
+    /**
+    * An array of tags for this environment.
+    */
+    tags?: Array<string>;
+    /**
+    * Determines if this environment requires comments for flag and segment changes.
+    */
+    requireComments?: boolean;
+    /**
+    * Determines if this environment requires confirmation for flag and segment changes.
+    */
+    confirmChanges?: boolean;
+
+    static discriminator: string | undefined = undefined;
+
+    static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
+        {
+            "name": "links",
+            "baseName": "_links",
+            "type": "Links"
+        },
+        {
+            "name": "id",
+            "baseName": "_id",
+            "type": "Id"
+        },
+        {
+            "name": "key",
+            "baseName": "key",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "baseName": "name",
+            "type": "string"
+        },
+        {
+            "name": "apiKey",
+            "baseName": "apiKey",
+            "type": "string"
+        },
+        {
+            "name": "mobileKey",
+            "baseName": "mobileKey",
+            "type": "string"
+        },
+        {
+            "name": "color",
+            "baseName": "color",
+            "type": "string"
+        },
+        {
+            "name": "defaultTtl",
+            "baseName": "defaultTtl",
+            "type": "number"
+        },
+        {
+            "name": "secureMode",
+            "baseName": "secureMode",
+            "type": "boolean"
+        },
+        {
+            "name": "defaultTrackEvents",
+            "baseName": "defaultTrackEvents",
+            "type": "boolean"
+        },
+        {
+            "name": "tags",
+            "baseName": "tags",
+            "type": "Array<string>"
+        },
+        {
+            "name": "requireComments",
+            "baseName": "requireComments",
+            "type": "boolean"
+        },
+        {
+            "name": "confirmChanges",
+            "baseName": "confirmChanges",
+            "type": "boolean"
+        }    ];
+
+    static getAttributeTypeMap() {
+        return Environment.attributeTypeMap;
+    }
 }
 
 export class Flag extends Resource {
@@ -44,7 +165,7 @@ export class FlagConfiguration {
 }
 
 export class FlagWithConfiguration {
-	flag: Flag;
+	flag: FeatureFlag;
 	config: FlagConfiguration;
 }
 
@@ -95,8 +216,8 @@ export class Rule {
 }
 
 export class Fallthrough {
-    variation?: number;
-	rollout?: Rollout
+    variation?: number | undefined;
+	rollout?: Rollout | undefined;
 }
 
 export class Prerequisite {
