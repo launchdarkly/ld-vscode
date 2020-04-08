@@ -95,8 +95,8 @@ export class Rule {
 }
 
 export class Fallthrough {
-    variation?: number;
-	rollout?: Rollout
+    variation?: number | undefined;
+	rollout?: Rollout | undefined;
 }
 
 export class Prerequisite {

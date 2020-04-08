@@ -3,6 +3,7 @@ import { FeatureFlag } from './models';
 import { LaunchDarklyAPI } from './api';
 import { Configuration, getIsTreeviewEnabled } from './configuration';
 import { FlagStore } from './flagStore';
+import * as path from 'path';
 
 export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue> {
   private readonly api: LaunchDarklyAPI;
@@ -36,7 +37,7 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
 
   getChildren(element?: FlagValue): Thenable<FlagValue[]> {
     if (!this.flagValues) {
-      return Promise.resolve([new FlagValue('No Flags Found.',vscode.TreeItemCollapsibleState.None)]);
+      return Promise.resolve([new FlagValue(this.ctx, 'No Flags Found.',vscode.TreeItemCollapsibleState.None)]);
     }
 
     if (element) {
@@ -49,7 +50,7 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
   }
 
   async getFlags() {
-    const flags = await this.api.getFeatureFlags(this.config.project)
+    const flags = await this.api.getFeatureFlags(this.config.project, this.config.env)
     let flagValues = []
     for (const flag of flags) {
       let item = this.flagToValues(flag)
@@ -107,41 +108,64 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
 
   private flagToValues(flag: FeatureFlag): FlagValue {
     let flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href
-    let item = new FlagValue(flag.name, vscode.TreeItemCollapsibleState.Collapsed,
+    var item = new FlagValue(this.ctx, flag.name, vscode.TreeItemCollapsibleState.Collapsed,
       [
-        new FlagValue(`Open in Browser`, vscode.TreeItemCollapsibleState.None, [], "flagViewBrowser", flagUri),
-        new FlagValue(`key: ${flag.key}`, vscode.TreeItemCollapsibleState.None, [], "flagViewKey"),
-        new FlagValue(`on: ${flag.environments[this.config.env].on}`, vscode.TreeItemCollapsibleState.None, [], "flagViewToggle", "", flag.key, flag.name),
-        new FlagValue(`description: ${flag.description ? flag.description : ""}`, vscode.TreeItemCollapsibleState.None),
-        new FlagValue(`prerequisites: ${flag.environments[this.config.env].prerequisites}`, vscode.TreeItemCollapsibleState.None),
-      ]
+        new FlagValue(this.ctx, `Open in Browser`, vscode.TreeItemCollapsibleState.None, [], "flagViewBrowser", flagUri),
+        new FlagValue(this.ctx, `Key: ${flag.key}`, vscode.TreeItemCollapsibleState.None, [], "flagViewKey"),
+        new FlagValue(this.ctx, `On: ${flag.environments[this.config.env].on}`, vscode.TreeItemCollapsibleState.None, [], "flagViewToggle", "", flag.key, flag.name),
+
+      ],
+      "flagParentItem"
     )
+    if (flag.description) {
+      item.children.push(new FlagValue(this.ctx, `Description: ${flag.description ? flag.description : ""}`, vscode.TreeItemCollapsibleState.None, [], "flagDescription"))
+    }
+
+    if (flag.tags) {
+      let tags: Array<FlagValue> = []
+      for(let i = 0; i<flag.tags.length; i++) {
+        tags.push(new FlagValue(this.ctx, flag.tags[i], vscode.TreeItemCollapsibleState.None, tags, "flagTagItem"))
+      }
+      item.children.push(new FlagValue(this.ctx, `Tags:`, vscode.TreeItemCollapsibleState.Collapsed, tags, "flagTags"))
+    }
+    var prereqs: Array<FlagValue> = []
+    let flagPrereqs = flag.environments[this.config.env].prerequisites
+    if (typeof flagPrereqs !== "undefined" && flagPrereqs.length > 0) {
+      for(let i = 0; i<flag.environments[this.config.env].prerequisites.length; i++) {
+        prereqs.push(new FlagValue(this.ctx, `Flag: ${flag.environments[this.config.env].prerequisites[i].key}`, vscode.TreeItemCollapsibleState.None))
+        prereqs.push(new FlagValue(this.ctx, `Variation: ${flag.environments[this.config.env].prerequisites[i].variation}`, vscode.TreeItemCollapsibleState.None))
+      }
+      item.children.push(new FlagValue(this.ctx, `Prerequisites: `, prereqs.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None, prereqs))
+    }
+
 
     var targets: Array<FlagValue> = []
-    if (flag.environments[this.config.env].targets) {
-    for(let i = 0; i<flag.environments[this.config.env].targets.length; i++) {
-        let curTarget = flag.environments[this.config.env].targets[i]
-        targets.push(
-          new FlagValue(`variation: ${flag.variations[curTarget.variation].name ? flag.variations[curTarget.variation].name : flag.variations[curTarget.variation].value}`, vscode.TreeItemCollapsibleState.None),
-          new FlagValue(`values: ${curTarget.values}`, vscode.TreeItemCollapsibleState.None),
+    var flagTargets = flag.environments[this.config.env].targets
+    if (typeof flagTargets !== "undefined" && flagTargets.length > 0) {
+    for(let i = 0; i<flagTargets.length; i++) {
+        let curTarget = flagTargets[i]
+          targets.push(new FlagValue(this.ctx, `Variation: ${flag.variations[curTarget.variation].name ? flag.variations[curTarget.variation].name : flag.variations[curTarget.variation].value}`, vscode.TreeItemCollapsibleState.None),
+          new FlagValue(this.ctx, `Values: ${curTarget.values}`, vscode.TreeItemCollapsibleState.None),
         )
       }
+    item.children.push(new FlagValue(this.ctx, `Targets:`, targets.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None, targets))
     }
-    item.children.push(new FlagValue(`targets:`, targets.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None, targets))
 
     var variations: Array<FlagValue> = []
     for(let i = 0; i<flag.variations.length; i++) {
       variations.push(
-        new FlagValue(`name: ${flag.variations[i].name ? flag.variations[i].name : flag.variations[i].value}`, vscode.TreeItemCollapsibleState.None),
-        new FlagValue(`value: ${flag.variations[i].value}`, vscode.TreeItemCollapsibleState.None),
-        new FlagValue(`description: ${flag.variations[i].description ? flag.variations[i].description : ""}`, vscode.TreeItemCollapsibleState.None)
+        new FlagValue(this.ctx, `Name: ${flag.variations[i].name ? flag.variations[i].name : flag.variations[i].value}`, vscode.TreeItemCollapsibleState.None),
+        new FlagValue(this.ctx, `Value: ${flag.variations[i].value}`, vscode.TreeItemCollapsibleState.None)
       )
+      if (flag.variations[i].description) {
+        variations.push(new FlagValue(this.ctx, `Description: ${flag.variations[i].description ? flag.variations[i].description : ""}`, vscode.TreeItemCollapsibleState.None, [], "flagDescription"))
+      }
     }
-    item.children.push(new FlagValue(`variations:`, vscode.TreeItemCollapsibleState.Collapsed, variations))
+    item.children.push(new FlagValue(this.ctx, `Variations:`, vscode.TreeItemCollapsibleState.Collapsed, variations))
 
     var rules: Array<FlagValue> = []
     let parseRules = flag.environments[this.config.env].rules
-    if (parseRules) {
+    if (typeof parseRules !== "undefined" && parseRules.length > 0) {
       for(let i = 0;i<parseRules.length;i++){
         let curRule = parseRules[i]
         var clauses: Array<FlagValue> = []
@@ -149,27 +173,60 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
           for (let j = 0; j<curRule.clauses.length;j++) {
             let clause = curRule.clauses[j]
             clauses.push(
-              new FlagValue(`attribute: ${clause.attribute}`, vscode.TreeItemCollapsibleState.None),
-              new FlagValue(`op: ${clause.op}`, vscode.TreeItemCollapsibleState.None),
-              new FlagValue(`values: ${clause.values}`, vscode.TreeItemCollapsibleState.None),
-              new FlagValue(`negate: ${clause.negate}`, vscode.TreeItemCollapsibleState.None),
+              new FlagValue(this.ctx, `Attribute: ${clause.attribute}`, vscode.TreeItemCollapsibleState.None),
+              new FlagValue(this.ctx, `Op: ${clause.op}`, vscode.TreeItemCollapsibleState.None, [], 'clauseOp'),
+              new FlagValue(this.ctx, `Values: ${clause.values}`, vscode.TreeItemCollapsibleState.None),
+              new FlagValue(this.ctx, `Negate: ${clause.negate}`, vscode.TreeItemCollapsibleState.None),
               )
           }
         }
-        rules.push(new FlagValue(`clauses:`, vscode.TreeItemCollapsibleState.Collapsed, clauses))
-        if (flag.variations[curRule.variation]) {
-          rules.push(new FlagValue(`variation: ${flag.variations[curRule.variation].name ? flag.variations[curRule.variation].name : flag.variations[curRule.variation].value}`, vscode.TreeItemCollapsibleState.None))
+        rules.push(new FlagValue(this.ctx, `Clauses:`, vscode.TreeItemCollapsibleState.Collapsed, clauses))
+        if (typeof curRule.variation !== "undefined") {
+          if (flag.variations[curRule.variation]) {
+            rules.push(new FlagValue(this.ctx, `Variation: ${flag.variations[curRule.variation].name ? flag.variations[curRule.variation].name : flag.variations[curRule.variation].value}`, vscode.TreeItemCollapsibleState.None))
+          } else {
+            rules.push(new FlagValue(this.ctx, `Variation: ${curRule.variation}`, vscode.TreeItemCollapsibleState.None))
+          }
         } else {
-          rules.push(new FlagValue(`variation: ${curRule.variation}`, vscode.TreeItemCollapsibleState.None))
+          let rollout: Array<FlagValue> = [new FlagValue(this.ctx, `BucketBy: ${curRule.rollout.bucketBy ? curRule.rollout.bucketBy : 'key'}`, vscode.TreeItemCollapsibleState.None)]
+          rollout.push()
+          for (let k = 0; k < curRule.rollout.variations.length; k++) {
+            let weight = curRule.rollout.variations[k].weight / 1000
+            rollout.push(
+              new FlagValue(this.ctx, `Weight: ${weight}%`, vscode.TreeItemCollapsibleState.None, [], 'rolloutWeight'),
+              new FlagValue(this.ctx, `Variation: ${flag.variations[curRule.rollout.variations[k].variation].name ? flag.variations[curRule.rollout.variations[k].variation].name : flag.variations[curRule.rollout.variations[k].variation].value}`, vscode.TreeItemCollapsibleState.None)
+            )
+          }
+
+          rules.push(new FlagValue(this.ctx, `Rollout:`, vscode.TreeItemCollapsibleState.Collapsed, rollout))
         }
       }
+      item.children.push(new FlagValue(this.ctx, `Rules:`, rules.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None, rules, "flagRules"))
     }
-    item.children.push(new FlagValue(`rules:`, rules.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None , rules))
+
+    let fallThrough = flag.environments[this.config.env].fallthrough
+    if (fallThrough.variation !== undefined) {
+      item.children.push(new FlagValue(this.ctx, `Default Variation: ${flag.variations[fallThrough.variation].name ? flag.variations[fallThrough.variation].name : flag.variations[fallThrough.variation].value }`, vscode.TreeItemCollapsibleState.None))
+    } else if (fallThrough.rollout) {
+      let fallThroughRollout: Array<FlagValue> = [new FlagValue(this.ctx, `BucketBy: ${fallThrough.rollout.bucketBy ? fallThrough.rollout.bucketBy : 'key'}`, vscode.TreeItemCollapsibleState.None)]
+      for (let k = 0; k < fallThrough.rollout.variations.length; k++) {
+        let weight = fallThrough.rollout.variations[k].weight / 1000
+        fallThroughRollout.push(
+          new FlagValue(this.ctx, `Weight: ${weight}%`, vscode.TreeItemCollapsibleState.None, [], 'rolloutWeight'),
+          new FlagValue(this.ctx, `Variation: ${flag.variations[fallThrough.rollout.variations[k].variation].name ?  flag.variations[fallThrough.rollout.variations[k].variation].name : flag.variations[fallThrough.rollout.variations[k].variation].value }`, vscode.TreeItemCollapsibleState.None)
+        )
+      }
+      item.children.push(new FlagValue(this.ctx, `Default Rollout:`, vscode.TreeItemCollapsibleState.Collapsed, fallThroughRollout))
+    }
+
+    if (flag.environments[this.config.env].offVariation !== undefined) {
+      item.children.push(new FlagValue(this.ctx, `Off Variation: ${flag.variations[flag.environments[this.config.env].offVariation].name ? flag.variations[flag.environments[this.config.env].offVariation].name : flag.variations[flag.environments[this.config.env].offVariation].value}`, vscode.TreeItemCollapsibleState.None))
+    }
 
     if (flag.defaults !== undefined) {
-      item.children.push(new FlagValue(`defaults:`, vscode.TreeItemCollapsibleState.Collapsed, [
-        new FlagValue(`onVariation: ${flag.defaults.onVariation}`, vscode.TreeItemCollapsibleState.None),
-        new FlagValue(`offVariation: ${flag.defaults.offVariation}`, vscode.TreeItemCollapsibleState.None),
+      item.children.push(new FlagValue(this.ctx, `Defaults:`, vscode.TreeItemCollapsibleState.Collapsed, [
+        new FlagValue(this.ctx, `OnVariation: ${flag.variations[flag.defaults.onVariation].name ? flag.variations[flag.defaults.onVariation].name : flag.variations[flag.defaults.onVariation].value }`, vscode.TreeItemCollapsibleState.None),
+        new FlagValue(this.ctx, `OffVariation: ${flag.variations[flag.defaults.offVariation].name ? flag.variations[flag.defaults.offVariation].name : flag.variations[flag.defaults.offVariation].value}`, vscode.TreeItemCollapsibleState.None),
         ])
       )
     }
@@ -186,13 +243,14 @@ export class FlagValue extends vscode.TreeItem {
     flagParentName?: string
 
     constructor(
+      ctx: vscode.ExtensionContext,
       public readonly label: string,
       public readonly collapsibleState: vscode.TreeItemCollapsibleState,
       children?: FlagValue[],
       contextValue?: string,
       uri?: string,
       flagKey?: string,
-      flagParentName?: string
+      flagParentName?: string,
     ) {
       super(label, collapsibleState);
       this.contextValue = contextValue
@@ -200,12 +258,57 @@ export class FlagValue extends vscode.TreeItem {
       this.uri = uri
       this.flagKey = flagKey
       this.flagParentName = flagParentName
+      this.conditionalIcon(ctx, this.contextValue, this.label)
     }
 
     get tooltip(): string {
       return `${this.label}`
+    };
+
+    private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string) {
+      if (contextValue == 'flagViewToggle' && label.split(":")[1].trim() == 'false') {
+        this.setIcon(ctx, 'toggleoff_new.svg')
+      } else if (this.contextValue == 'flagViewToggle') {
+        this.setIcon(ctx, 'toggleon_new.svg')
+      }
+      switch (contextValue) {
+        case 'flagViewBrowser':
+          this.setIcon(ctx, 'link_external.svg')
+          break
+        case 'flagViewKey':
+          this.setIcon(ctx, 'key.svg')
+          break
+        case 'flagDescription':
+          this.setIcon(ctx, 'info.svg')
+          break
+        case 'flagRules':
+          this.setIcon(ctx, 'list_tree.svg')
+          break
+        case 'clauseOp':
+          this.setIcon(ctx, 'op.svg')
+          break
+        case 'flagTags':
+          this.setIcon(ctx, 'tag.svg')
+          break
+        case 'flagParentItem':
+          this.setIcon(ctx, 'rocket.svg')
+          break
+        case 'rolloutWeight':
+          this.setIcon(ctx, 'weight.svg')
+          break
+      }
     }
 
+    private setIcon(ctx: vscode.ExtensionContext, fileName: string): vscode.ThemeIcon {
+      return this.iconPath = {
+        light: ctx.asAbsolutePath(
+          path.join('resources', 'light', fileName)
+        ),
+        dark: ctx.asAbsolutePath(
+          path.join('resources', 'dark', fileName)
+        ),
+      }
+    }
 }
 
 export function registerTreeviewRefreshCommand(

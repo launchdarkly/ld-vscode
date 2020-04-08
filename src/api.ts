@@ -49,8 +49,7 @@ export class LaunchDarklyAPI {
 		return new FeatureFlag(JSON.parse(data));
 	}
 
-	async patchFeatureFlag(projectKey: string, flagKey: string, envKey?: string, value?: PatchComment): Promise<FeatureFlag> {
-		const envParam = envKey ? '?env=' + envKey : '';
+	async patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag> {
 		const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value);
 		const data = await rp(options);
 		return new FeatureFlag(JSON.parse(data));
@@ -64,13 +63,12 @@ export class LaunchDarklyAPI {
 		let patchOp = new PatchComment
 		patchOp.comment = "VS Code Updated"
 		patchOp.patch = [patch]
-		console.log(patchOp)
-		return this.patchFeatureFlag(projectKey, flagKey, '', patchOp)
+		return this.patchFeatureFlag(projectKey, flagKey, patchOp)
 	}
 
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
 		const envParam = envKey ? '?env=' + envKey : '';
-		const options = this.createOptions(`flags/${projectKey}/${envParam}`);
+		const options = this.createOptions(`flags/${projectKey}/${envParam}&summary=false`);
 		const data = await rp(options);
 		const flags = JSON.parse(data).items;
 		flags.forEach((flag: FeatureFlag) => {
@@ -92,7 +90,7 @@ export class LaunchDarklyAPI {
 			options.headers['content-type'] = 'application/json'
 			options["body"] = [JSON.stringify(body)]
 		}
-		console.log(options)
+
 		return options
 	}
 }
