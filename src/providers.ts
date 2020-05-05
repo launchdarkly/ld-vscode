@@ -21,7 +21,7 @@ import { kebabCase } from 'lodash';
 import { Configuration, getIsTreeviewEnabled } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
-import { Environment, FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
+import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
 import { FlagStore } from './flagStore';
 import { ldFeatureFlagsProvider } from './flagsView';
 

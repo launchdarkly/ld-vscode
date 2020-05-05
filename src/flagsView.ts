@@ -80,7 +80,8 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
 		//var that = this;
 		if (this.flagStore.ldClient === undefined) {
 			setTimeout(() => {
-				this.flagStore.ldClient.on('update', function(flags) {
+				console.log(this.flagStore.ldClient);
+				this.flagStore.ldClient.on('update', flags => {
 					this.api.getFeatureFlagNew(this.config.project, flags.key, this.config.env).then(flag => {
 						for (let i = 0; i < this.flagValues.length; i++) {
 							if (this.flagValues[i].label === flag.name) {
