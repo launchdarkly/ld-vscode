@@ -18,7 +18,7 @@ export class FlagStore {
 
 	private readonly api: LaunchDarklyAPI;
 	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-	public ldClient: LaunchDarkly.LDClient
+	public ldClient: LaunchDarkly.LDClient;
 
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
@@ -43,23 +43,22 @@ export class FlagStore {
 	}, 200);
 
 	start(): LaunchDarkly.LDClient {
-
 		if (!['accessToken', 'baseUri', 'streamUri', 'project', 'env'].every(o => !!this.config[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return;
 		}
 
-		var sdkKey: string
+		var sdkKey: string;
 
-		this.getLatestSDKKey().then((sdkKey) => {
-			sdkKey = sdkKey
+		this.getLatestSDKKey().then(sdkKey => {
+			sdkKey = sdkKey;
 			const ldConfig = this.ldConfig();
-			let ldClient: LaunchDarkly.LDClient = LaunchDarkly.init(sdkKey, ldConfig)
+			let ldClient: LaunchDarkly.LDClient = LaunchDarkly.init(sdkKey, ldConfig);
 			ldClient.waitForInitialization().then(client => {
-				this.ldClient = client
-				return client
-			})
-		})
+				this.ldClient = client;
+				return client;
+			});
+		});
 	}
 
 	stop(): Promise<void> {
@@ -72,7 +71,7 @@ export class FlagStore {
 	private async getLatestSDKKey() {
 		try {
 			const env = await this.api.getEnvironment(this.config.project, this.config.env);
-			console.log(env)
+			console.log(env);
 			return env.apiKey;
 		} catch (err) {
 			if (err.statusCode === 404) {

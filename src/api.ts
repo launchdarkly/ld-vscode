@@ -56,14 +56,14 @@ export class LaunchDarklyAPI {
 	}
 
 	async patchFeatureFlagOn(projectKey: string, flagKey: string, enabled: Boolean, envKey?: string) {
-		let patch = new PatchOperation
-		patch.path = `/environments/${this.config.env}/on`
-		patch.op = "replace"
-		patch.value = enabled
-		let patchOp = new PatchComment
-		patchOp.comment = "VS Code Updated"
-		patchOp.patch = [patch]
-		return this.patchFeatureFlag(projectKey, flagKey, patchOp)
+		let patch = new PatchOperation();
+		patch.path = `/environments/${this.config.env}/on`;
+		patch.op = 'replace';
+		patch.value = enabled;
+		let patchOp = new PatchComment();
+		patchOp.comment = 'VS Code Updated';
+		patchOp.patch = [patch];
+		return this.patchFeatureFlag(projectKey, flagKey, patchOp);
 	}
 
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
@@ -72,8 +72,8 @@ export class LaunchDarklyAPI {
 		const data = await rp(options);
 		const flags = JSON.parse(data).items;
 		flags.forEach((flag: FeatureFlag) => {
-			return flag
-		})
+			return flag;
+		});
 		return flags;
 	}
 
@@ -87,11 +87,11 @@ export class LaunchDarklyAPI {
 		};
 
 		if (body) {
-			options.headers['content-type'] = 'application/json'
-			options["body"] = [JSON.stringify(body)]
+			options.headers['content-type'] = 'application/json';
+			options['body'] = [JSON.stringify(body)];
 		}
 
-		return options
+		return options;
 	}
 }
 

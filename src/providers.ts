@@ -32,20 +32,12 @@ const LD_MODE: DocumentFilter = {
 };
 
 export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
-
-	const flagView = new ldFeatureFlagsProvider(api, config, flagStore, ctx)
-	if(getIsTreeviewEnabled()) {
-		commands.executeCommand(
-			'setContext',
-			'launchdarkly:enableTreeview',
-			true
-	  );
-
+	const flagView = new ldFeatureFlagsProvider(api, config, flagStore, ctx);
+	if (getIsTreeviewEnabled()) {
+		commands.executeCommand('setContext', 'launchdarkly:enableTreeview', true);
 	}
 
-	window.registerTreeDataProvider(
-		'ldFeatureFlags', flagView
-	);
+	window.registerTreeDataProvider('ldFeatureFlags', flagView);
 
 	ctx.subscriptions.push(
 		commands.registerCommand('extension.configureLaunchDarkly', async () => {

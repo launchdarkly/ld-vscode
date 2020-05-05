@@ -83,7 +83,5 @@ export class Configuration {
 }
 
 export function getIsTreeviewEnabled(): boolean {
-	return workspace
-	  .getConfiguration('launchdarkly')
-	  .get<boolean>('enableTreeview', true);
-  }
+	return workspace.getConfiguration('launchdarkly').get<boolean>('enableTreeview', true);
+}
