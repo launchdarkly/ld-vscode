@@ -108,7 +108,7 @@ export class FlagStore {
 
 				if (!flag) {
 					try {
-						flag = await this.api.getFeatureFlagNew(this.config.project, key, this.config.env);
+						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
 						this.flagMetadata[key] = flag;
 					} catch (e) {
 						console.error(`Could not retrieve feature flag metadata for ${key}: ${e}`);
