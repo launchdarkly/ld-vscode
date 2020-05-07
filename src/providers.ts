@@ -23,7 +23,7 @@ import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
 import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
 import { FlagStore } from './flagStore';
-import { ldFeatureFlagsProvider } from './flagsView';
+import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
@@ -32,7 +32,7 @@ const LD_MODE: DocumentFilter = {
 };
 
 export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
-	const flagView = new ldFeatureFlagsProvider(api, config, flagStore, ctx);
+	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
 	if (getIsTreeviewEnabled()) {
 		commands.executeCommand('setContext', 'launchdarkly:enableTreeview', true);
 	}

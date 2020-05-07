@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { FeatureFlag } from './models';
-import { LaunchDarklyAPI } from './api';
-import { Configuration, getIsTreeviewEnabled } from './configuration';
-import { FlagStore } from './flagStore';
+import { FeatureFlag } from '../models';
+import { LaunchDarklyAPI } from '../api';
+import { Configuration, getIsTreeviewEnabled } from '../configuration';
+import { FlagStore } from '../flagStore';
 import * as path from 'path';
 
-export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue> {
+export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<FlagValue> {
 	private readonly api: LaunchDarklyAPI;
 	private config: Configuration;
 	private flagStore: FlagStore;
@@ -443,7 +443,7 @@ export class FlagValue extends vscode.TreeItem {
 	}
 }
 
-export function registerTreeviewRefreshCommand(treeDataProvider: ldFeatureFlagsProvider): vscode.Disposable {
+export function registerTreeviewRefreshCommand(treeDataProvider: LaunchDarklyTreeViewProvider): vscode.Disposable {
 	return vscode.commands.registerCommand('launchdarkly.treeviewrefresh', (): void => {
 		treeDataProvider.reload();
 		vscode.commands.executeCommand('setContext', 'launchdarkly:enableTreeview', getIsTreeviewEnabled());
