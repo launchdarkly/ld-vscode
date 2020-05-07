@@ -2,7 +2,7 @@ import * as rp from 'request-promise-native';
 import * as url from 'url';
 
 import { Configuration } from './configuration';
-import { Resource, Project, Environment, Flag, FeatureFlag, PatchOperation, PatchComment } from './models';
+import { Resource, Project, Environment, FeatureFlag } from './models';
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
@@ -53,7 +53,7 @@ export class LaunchDarklyAPI {
 		return flags;
 	}
 
-	private createOptions(path: string, method: string = 'GET', body?: PatchComment) {
+	private createOptions(path: string, method: string = 'GET') {
 		let options = {
 			method: method,
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
@@ -61,11 +61,6 @@ export class LaunchDarklyAPI {
 				Authorization: this.config.accessToken,
 			},
 		};
-
-		if (body) {
-			options.headers['content-type'] = 'application/json';
-			options['body'] = [JSON.stringify(body)];
-		}
 
 		return options;
 	}
