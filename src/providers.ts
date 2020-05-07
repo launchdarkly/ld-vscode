@@ -37,7 +37,7 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 		commands.executeCommand('setContext', 'launchdarkly:enableTreeview', true);
 	}
 
-	window.registerTreeDataProvider('ldFeatureFlags', flagView);
+	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 
 	ctx.subscriptions.push(
 		commands.registerCommand('extension.configureLaunchDarkly', async () => {

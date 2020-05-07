@@ -66,13 +66,13 @@ export class ldFeatureFlagsProvider implements vscode.TreeDataProvider<FlagValue
 
 	async start() {
 		this.ctx.subscriptions.push(
-			vscode.commands.registerCommand('ldFeatureFlags.copyKey', (node: FlagValue) =>
+			vscode.commands.registerCommand('launchdarkly.copyKey', (node: FlagValue) =>
 				vscode.env.clipboard.writeText(node.label.split(':')[1].trim()),
 			),
-			vscode.commands.registerCommand('ldFeatureFlags.openBrowser', (node: FlagValue) =>
+			vscode.commands.registerCommand('launchdarkly.openBrowser', (node: FlagValue) =>
 				vscode.env.openExternal(vscode.Uri.parse(node.uri)),
 			),
-			vscode.commands.registerCommand('ldFeatureFlags.refreshEntry', () => this.refresh()),
+			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.refresh()),
 			registerTreeviewRefreshCommand(this),
 		);
 

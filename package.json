@@ -80,7 +80,7 @@
 				"title": "LaunchDarkly: Configure"
 			},
 			{
-				"command": "ldFeatureFlags.refreshEntry",
+				"command": "launchdarkly.refreshEntry",
 				"title": "LaunchDarkly: Refresh Feature Flags",
 				"icon": {
 					"light": "resources/light/refresh.svg",
@@ -88,7 +88,7 @@
 				}
 			},
 			{
-				"command": "ldFeatureFlags.copyKey",
+				"command": "launchdarkly.copyKey",
 				"title": "LaunchDarkly: Copy Key to Clipboard",
 				"icon": {
 					"light": "resources/light/files.svg",
@@ -100,15 +100,7 @@
 				"title": "LD Refresh"
 			},
 			{
-				"command": "ldFeatureFlags.toggleFlag",
-				"title": "LaunchDarkly: Copy Key to Clipboard",
-				"icon": {
-					"light": "resources/light/files.svg",
-					"dark": "resources/dark/files.svg"
-				}
-			},
-			{
-				"command": "ldFeatureFlags.openBrowser",
+				"command": "launchdarkly.openBrowser",
 				"title": "LD: Open in Browser",
 				"icon": {
 					"light": "resources/light/link_external.svg",
@@ -126,20 +118,20 @@
 			],
 			"view/title": [
 				{
-					"command": "ldFeatureFlags.refreshEntry",
-					"when": "view == ldFeatureFlags",
+					"command": "launchdarkly.refreshEntry",
+					"when": "view == launchdarkly",
 					"group": "navigation"
 				}
 			],
 			"view/item/context": [
 				{
-					"command": "ldFeatureFlags.copyKey",
-					"when": "view == ldFeatureFlags && viewItem == flagViewKey",
+					"command": "launchdarkly.copyKey",
+					"when": "view == launchdarkly && viewItem == flagViewKey",
 					"group": "inline"
 				},
 				{
-					"command": "ldFeatureFlags.openBrowser",
-					"when": "view == ldFeatureFlags && viewItem == flagViewBrowser",
+					"command": "launchdarkly.openBrowser",
+					"when": "view == launchdarkly && viewItem == flagViewBrowser",
 					"group": "inline"
 				}
 			]
@@ -155,7 +147,7 @@
 		"views": {
 			"explorer": [
 				{
-					"id": "ldFeatureFlags",
+					"id": "launchdarklyFeatureFlags",
 					"name": "LaunchDarkly Feature Flags",
 					"when": "launchdarkly:enableTreeview"
 				}
