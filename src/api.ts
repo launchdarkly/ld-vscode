@@ -47,9 +47,6 @@ export class LaunchDarklyAPI {
 		const options = this.createOptions(`flags/${projectKey}/${envParam}&summary=false`);
 		const data = await rp(options);
 		const flags = JSON.parse(data).items;
-		flags.forEach((flag: FeatureFlag) => {
-			return flag;
-		});
 		return flags;
 	}
 
