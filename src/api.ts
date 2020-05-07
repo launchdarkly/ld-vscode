@@ -42,23 +42,6 @@ export class LaunchDarklyAPI {
 		return new FeatureFlag(JSON.parse(data));
 	}
 
-	async patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag> {
-		const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value);
-		const data = await rp(options);
-		return new FeatureFlag(JSON.parse(data));
-	}
-
-	async patchFeatureFlagOn(projectKey: string, flagKey: string, enabled: Boolean, envKey?: string) {
-		let patch = new PatchOperation();
-		patch.path = `/environments/${this.config.env}/on`;
-		patch.op = 'replace';
-		patch.value = enabled;
-		let patchOp = new PatchComment();
-		patchOp.comment = 'VS Code Updated';
-		patchOp.patch = [patch];
-		return this.patchFeatureFlag(projectKey, flagKey, patchOp);
-	}
-
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
 		const envParam = envKey ? '?env=' + envKey : '';
 		const options = this.createOptions(`flags/${projectKey}/${envParam}&summary=false`);
