@@ -109,6 +109,15 @@
 			}
 		],
 		"menus": {
+			"commandPalette": [
+			  {
+				"command": "launchdarkly.copyKey",
+				"when": "false"
+			  },
+			  {
+				"command": "launchdarkly.openBrowser",
+				"when": "false"
+			  }],
 			"editor/context": [
 				{
 					"command": "extension.openInLaunchDarkly",
@@ -126,12 +135,12 @@
 			"view/item/context": [
 				{
 					"command": "launchdarkly.copyKey",
-					"when": "view == launchdarkly && viewItem == flagViewKey",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewKey",
 					"group": "inline"
 				},
 				{
 					"command": "launchdarkly.openBrowser",
-					"when": "view == launchdarkly && viewItem == flagViewBrowser",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser",
 					"group": "inline"
 				}
 			]
