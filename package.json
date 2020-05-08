@@ -97,7 +97,7 @@
 			},
 			{
 				"command": "launchdarkly.treeviewrefresh",
-				"title": "LD Refresh"
+				"title": "LaunchDarkly Toggle Treeview"
 			},
 			{
 				"command": "launchdarkly.openBrowser",
@@ -117,6 +117,14 @@
 			  {
 				"command": "launchdarkly.openBrowser",
 				"when": "false"
+			  },
+			  {
+				"command": "launchdarkly.refreshEntry",
+				"when": "false"
+			  },
+			  {
+				"command": "launchdarkly.treeviewrefresh",
+				"when": "false"
 			  }],
 			"editor/context": [
 				{
@@ -128,7 +136,7 @@
 			"view/title": [
 				{
 					"command": "launchdarkly.refreshEntry",
-					"when": "view == launchdarkly",
+					"when": "view == launchdarklyFeatureFlags",
 					"group": "navigation"
 				}
 			],
