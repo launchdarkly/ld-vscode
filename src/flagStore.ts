@@ -11,6 +11,8 @@ import { LaunchDarklyAPI } from './api';
 const PACKAGE_JSON = require('../package.json');
 const DATA_KIND = { namespace: 'features' };
 
+type FlagUpdateCallback = (flag: FeatureFlag) => void;
+
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
@@ -36,29 +38,30 @@ export class FlagStore {
 
 	private readonly debouncedReload = debounce(async () => {
 		await this.stop();
-		const err = await this.start();
-		if (err) {
+		try {
+			await this.start();
+		} catch (err) {
 			window.showErrorMessage(`[LaunchDarkly] ${err}`);
 		}
 	}, 200);
 
-	start(): LaunchDarkly.LDClient {
+	async start() {
 		if (!['accessToken', 'baseUri', 'streamUri', 'project', 'env'].every(o => !!this.config[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return;
 		}
 
-		var sdkKey: string;
+		const sdkKey = await this.getLatestSDKKey();
+		const ldConfig = this.ldConfig();
+		this.ldClient = LaunchDarkly.init(sdkKey, ldConfig);
+	}
 
-		this.getLatestSDKKey().then(sdkKey => {
-			sdkKey = sdkKey;
-			const ldConfig = this.ldConfig();
-			let ldClient: LaunchDarkly.LDClient = LaunchDarkly.init(sdkKey, ldConfig);
-			ldClient.waitForInitialization().then(client => {
-				this.ldClient = client;
-				return client;
-			});
-		});
+	async on(event: string, cb: FlagUpdateCallback) {
+		if (!this.ldClient) {
+			await require('util').promisify(setTimeout)(5000)
+		}
+		await this.ldClient.waitForInitialization();
+		this.ldClient.on(event, cb);
 	}
 
 	stop(): Promise<void> {
@@ -71,7 +74,6 @@ export class FlagStore {
 	private async getLatestSDKKey() {
 		try {
 			const env = await this.api.getEnvironment(this.config.project, this.config.env);
-			console.log(env);
 			return env.apiKey;
 		} catch (err) {
 			if (err.statusCode === 404) {
