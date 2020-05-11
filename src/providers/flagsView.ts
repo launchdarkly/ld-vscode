@@ -82,8 +82,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				const updatedFlag = await this.api.getFeatureFlag(this.config.project, flag.key, this.config.env);
 				const updatedIdx = this.flagValues.findIndex(v => v.label === updatedFlag.name);
 				this.flagValues[updatedIdx] = this.flagToValues(updatedFlag);
-				this.refresh()
-			} catch(err) {
+				this.refresh();
+			} catch (err) {
 				console.log(err);
 				// TODO: handle error
 			}

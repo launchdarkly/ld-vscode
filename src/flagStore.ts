@@ -58,7 +58,7 @@ export class FlagStore {
 
 	async on(event: string, cb: FlagUpdateCallback) {
 		if (!this.ldClient) {
-			await require('util').promisify(setTimeout)(5000)
+			await require('util').promisify(setTimeout)(5000);
 		}
 		await this.ldClient.waitForInitialization();
 		this.ldClient.on(event, cb);
