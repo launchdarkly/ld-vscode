@@ -80,7 +80,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		this.flagStore.on('update', async flag => {
 			try {
 				const updatedFlag = await this.api.getFeatureFlag(this.config.project, flag.key, this.config.env);
-				const updatedIdx = this.flagValues.findIndex(v => v.label === updatedFlag.name);
+				const updatedIdx = this.flagValues.findIndex(v => v.flagKey === updatedFlag.key);
 				this.flagValues[updatedIdx] = this.flagToValues(updatedFlag);
 				this.refresh();
 			} catch (err) {
@@ -120,6 +120,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				),
 			],
 			'flagParentItem',
+			'',
+			flag.key,
 		);
 		if (flag.description) {
 			item.children.push(

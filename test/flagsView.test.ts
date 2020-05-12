@@ -13,11 +13,19 @@ const flag = new FeatureFlag({
 });
 
 suite('flagsView tests', () => {
-	test('testFlagValue', () => {
-		let flagValue = new flagsView.FlagValue(null, flag.name, vscode.TreeItemCollapsibleState.None, [], "testContext")
+	let flagValue = new flagsView.FlagValue(null, flag.name, vscode.TreeItemCollapsibleState.None, [], "testContext")
+
+	test('testFlagValue label', () => {
 		assert.equal(
 			flagValue.label,
 			"Test"
+		);
+	});
+
+	test('testFlagValue children', () => {
+		assert.equal(
+			flagValue.children.length,
+			0
 		);
 	});
 
