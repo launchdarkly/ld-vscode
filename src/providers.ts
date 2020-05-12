@@ -34,7 +34,7 @@ const LD_MODE: DocumentFilter = {
 export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
 	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
 	if (getIsTreeviewEnabled()) {
-		commands.executeCommand('setContext', 'launchdarkly:enableTreeview', true);
+		commands.executeCommand('setContext', 'launchdarkly:enableFlagTreeview', true);
 	}
 
 	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);

@@ -23,6 +23,7 @@ This extension contributes the following additional settings:
 | `launchdarkly.enableAutocomplete` |                                  Enable flag key autocompletion.                                   |                            `true` |
 | `launchdarkly.sdkKey`             |      Your LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead.       |                       `undefined` |
 | `launchdarkly.accessToken`        | Your LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead. |                       `undefined` |
+| `launchdarkly.enableFlagTreeview`	| 			Show all of the feature flags for the configured environment within the project.		 |							  `true` |
 
 **Note:** If you use quick suggestions to autocomplete words, LaunchDarkly autocomplete functionality requires the `editor.quickSuggestions.strings` setting to be enabled. Otherwise, you'll need to press `Ctrl+Space` (default binding) to see your flag key suggestions.
 

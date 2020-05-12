@@ -46,7 +46,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return Promise.resolve(element.children);
 		} else {
 			return Promise.resolve(
-				this.flagValues.map(function(flag) {
+				this.flagValues.map(function (flag) {
 					return flag;
 				}),
 			);
@@ -135,7 +135,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			);
 		}
 
-		if (flag.tags) {
+		if (flag.tags.length > 0) {
 			let tags: Array<FlagValue> = [];
 			for (let i = 0; i < flag.tags.length; i++) {
 				tags.push(new FlagValue(this.ctx, flag.tags[i], vscode.TreeItemCollapsibleState.None, tags, 'flagTagItem'));
@@ -167,6 +167,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					`Prerequisites`,
 					prereqs.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
 					prereqs,
+					'prereq',
 				),
 			);
 		}
@@ -180,9 +181,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					new FlagValue(
 						this.ctx,
 						`Variation: ${
-							flag.variations[curTarget.variation].name
-								? flag.variations[curTarget.variation].name
-								: flag.variations[curTarget.variation].value
+						flag.variations[curTarget.variation].name
+							? flag.variations[curTarget.variation].name
+							: flag.variations[curTarget.variation].value
 						}`,
 						vscode.TreeItemCollapsibleState.None,
 						[],
@@ -197,6 +198,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					`Targets`,
 					targets.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
 					targets,
+					'targets',
 				),
 			);
 		}
@@ -255,9 +257,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				new FlagValue(
 					this.ctx,
 					`Default Variation: ${
-						flag.variations[fallThrough.variation].name
-							? flag.variations[fallThrough.variation].name
-							: flag.variations[fallThrough.variation].value
+					flag.variations[fallThrough.variation].name
+						? flag.variations[fallThrough.variation].name
+						: flag.variations[fallThrough.variation].value
 					}`,
 					vscode.TreeItemCollapsibleState.None,
 					[],
@@ -276,9 +278,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					new FlagValue(
 						this.ctx,
 						`Variation: ${
-							flag.variations[fallThrough.rollout.variations[k].variation].name
-								? flag.variations[fallThrough.rollout.variations[k].variation].name
-								: flag.variations[fallThrough.rollout.variations[k].variation].value
+						flag.variations[fallThrough.rollout.variations[k].variation].name
+							? flag.variations[fallThrough.rollout.variations[k].variation].name
+							: flag.variations[fallThrough.rollout.variations[k].variation].value
 						}`,
 						vscode.TreeItemCollapsibleState.None,
 						[],
@@ -302,9 +304,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				new FlagValue(
 					this.ctx,
 					`Off Variation: ${
-						flag.variations[flag.environments[this.config.env].offVariation].name
-							? flag.variations[flag.environments[this.config.env].offVariation].name
-							: flag.variations[flag.environments[this.config.env].offVariation].value
+					flag.variations[flag.environments[this.config.env].offVariation].name
+						? flag.variations[flag.environments[this.config.env].offVariation].name
+						: flag.variations[flag.environments[this.config.env].offVariation].value
 					}`,
 					vscode.TreeItemCollapsibleState.None,
 					[],
@@ -319,9 +321,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					new FlagValue(
 						this.ctx,
 						`OnVariation: ${
-							flag.variations[flag.defaults.onVariation].name
-								? flag.variations[flag.defaults.onVariation].name
-								: flag.variations[flag.defaults.onVariation].value
+						flag.variations[flag.defaults.onVariation].name
+							? flag.variations[flag.defaults.onVariation].name
+							: flag.variations[flag.defaults.onVariation].value
 						}`,
 						vscode.TreeItemCollapsibleState.None,
 						[],
@@ -330,9 +332,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					new FlagValue(
 						this.ctx,
 						`OffVariation: ${
-							flag.variations[flag.defaults.offVariation].name
-								? flag.variations[flag.defaults.offVariation].name
-								: flag.variations[flag.defaults.offVariation].value
+						flag.variations[flag.defaults.offVariation].name
+							? flag.variations[flag.defaults.offVariation].name
+							: flag.variations[flag.defaults.offVariation].value
 						}`,
 						vscode.TreeItemCollapsibleState.None,
 						[],
@@ -377,66 +379,18 @@ export class FlagValue extends vscode.TreeItem {
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string) {
 		if (contextValue == 'flagViewToggle' && label.split(':')[1].trim() == 'false') {
-			this.setIcon(ctx, 'toggleoff.svg');
+			this.setIcon(ctx, 'toggleoff');
 		} else if (this.contextValue == 'flagViewToggle') {
-			this.setIcon(ctx, 'toggleon.svg');
-		}
-		switch (contextValue) {
-			case 'flagViewKey':
-				this.setIcon(ctx, 'key.svg');
-				break;
-			case 'flagDescription':
-				this.setIcon(ctx, 'info.svg');
-				break;
-			case 'flagRules':
-				this.setIcon(ctx, 'list_tree.svg');
-				break;
-			case 'clauseOp':
-				this.setIcon(ctx, 'op.svg');
-				break;
-			case 'flagTags':
-				this.setIcon(ctx, 'tag.svg');
-				break;
-			case 'flagParentItem':
-				this.setIcon(ctx, 'rocket.svg');
-				break;
-			case 'rolloutWeight':
-				this.setIcon(ctx, 'weight.svg');
-				break;
-			case 'name':
-				this.setIcon(ctx, 'name.svg');
-				break;
-			case 'value':
-				this.setIcon(ctx, 'value.svg');
-				break;
-			case 'variation':
-				this.setIcon(ctx, 'variation.svg');
-				break;
-			case 'rollout':
-				this.setIcon(ctx, 'rollout.svg');
-				break;
-			case 'clause':
-				this.setIcon(ctx, 'clause.svg');
-				break;
-			case 'attribute':
-				this.setIcon(ctx, 'attribute.svg');
-				break;
-			case 'negate':
-				this.setIcon(ctx, 'negate.svg');
-				break;
-			case 'variationDefault':
-				this.setIcon(ctx, 'variation_default.svg');
-				break;
-			case 'variationOff':
-				this.setIcon(ctx, 'variation_off.svg');
-				break;
+			this.setIcon(ctx, 'toggleon');
+		} else {
+			this.setIcon(ctx, contextValue);
 		}
 	}
 
 	private setIcon(ctx: vscode.ExtensionContext, fileName: string): vscode.ThemeIcon {
 		return (this.iconPath = {
-			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName)),
-			dark: ctx.asAbsolutePath(path.join('resources', 'dark', fileName)),
+			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName + '.svg')),
+			dark: ctx.asAbsolutePath(path.join('resources', 'dark', fileName + '.svg')),
 		});
 	}
 }
@@ -444,6 +398,6 @@ export class FlagValue extends vscode.TreeItem {
 export function registerTreeviewRefreshCommand(treeDataProvider: LaunchDarklyTreeViewProvider): vscode.Disposable {
 	return vscode.commands.registerCommand('launchdarkly.treeviewrefresh', (): void => {
 		treeDataProvider.reload();
-		vscode.commands.executeCommand('setContext', 'launchdarkly:enableTreeview', getIsTreeviewEnabled());
+		vscode.commands.executeCommand('setContext', 'launchdarkly:enableFlagTreeview', getIsTreeviewEnabled());
 	});
 }

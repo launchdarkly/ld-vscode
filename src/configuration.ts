@@ -13,7 +13,7 @@ export class Configuration {
 	env = '';
 	enableHover = true;
 	enableAutocomplete = true;
-	enableTreeview = true;
+	enableFlagTreeview = true;
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
 
@@ -83,5 +83,5 @@ export class Configuration {
 }
 
 export function getIsTreeviewEnabled(): boolean {
-	return workspace.getConfiguration('launchdarkly').get<boolean>('enableTreeview', true);
+	return workspace.getConfiguration('launchdarkly').get<boolean>('enableFlagTreeview', true);
 }

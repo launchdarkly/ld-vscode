@@ -52,7 +52,7 @@
 					"default": true,
 					"description": "Enable flag key autocompletion"
 				},
-				"launchdarkly.enableTreeview": {
+				"launchdarkly.enableFlagTreeview": {
 					"type": "boolean",
 					"default": true,
 					"description": "Enable flag treeview"
@@ -110,22 +110,23 @@
 		],
 		"menus": {
 			"commandPalette": [
-			  {
-				"command": "launchdarkly.copyKey",
-				"when": "false"
-			  },
-			  {
-				"command": "launchdarkly.openBrowser",
-				"when": "false"
-			  },
-			  {
-				"command": "launchdarkly.refreshEntry",
-				"when": "false"
-			  },
-			  {
-				"command": "launchdarkly.treeviewrefresh",
-				"when": "false"
-			  }],
+				{
+					"command": "launchdarkly.copyKey",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.openBrowser",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.refreshEntry",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.treeviewrefresh",
+					"when": "false"
+				}
+			],
 			"editor/context": [
 				{
 					"command": "extension.openInLaunchDarkly",
@@ -166,7 +167,7 @@
 				{
 					"id": "launchdarklyFeatureFlags",
 					"name": "LaunchDarkly Feature Flags",
-					"when": "launchdarkly:enableTreeview"
+					"when": "launchdarkly:enableFlagTreeview"
 				}
 			]
 		}
