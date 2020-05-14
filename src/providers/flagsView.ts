@@ -11,10 +11,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private flagStore: FlagStore;
 	private flagValues: Array<FlagValue>;
 	private ctx: vscode.ExtensionContext;
-	private _onDidChangeTreeData: vscode.EventEmitter<FlagValue | undefined> = new vscode.EventEmitter<
-		FlagValue | undefined
-	>();
-	readonly onDidChangeTreeData: vscode.Event<FlagValue | undefined> = this._onDidChangeTreeData.event;
+	private _onDidChangeTreeData: vscode.EventEmitter<FlagValue | void> = new vscode.EventEmitter<
+		FlagValue | void>();
+	readonly onDidChangeTreeData: vscode.Event<FlagValue | void> = this._onDidChangeTreeData.event;
 
 	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext) {
 		this.api = api;
@@ -25,7 +24,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	refresh(): void {
-		this._onDidChangeTreeData.fire();
+		this._onDidChangeTreeData.fire(null);
 	}
 
 	reload(): void {
