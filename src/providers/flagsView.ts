@@ -11,8 +11,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private flagStore: FlagStore;
 	private flagValues: Array<FlagValue>;
 	private ctx: vscode.ExtensionContext;
-	private _onDidChangeTreeData: vscode.EventEmitter<FlagValue | void> = new vscode.EventEmitter<
-		FlagValue | void>();
+	private _onDidChangeTreeData: vscode.EventEmitter<FlagValue | void> = new vscode.EventEmitter<FlagValue | void>();
 	readonly onDidChangeTreeData: vscode.Event<FlagValue | void> = this._onDidChangeTreeData.event;
 
 	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext) {
@@ -45,7 +44,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return Promise.resolve(element.children);
 		} else {
 			return Promise.resolve(
-				this.flagValues.map(function (flag) {
+				this.flagValues.map(function(flag) {
 					return flag;
 				}),
 			);
@@ -180,9 +179,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					new FlagValue(
 						this.ctx,
 						`Variation: ${
-						flag.variations[curTarget.variation].name
-							? flag.variations[curTarget.variation].name
-							: flag.variations[curTarget.variation].value
+							flag.variations[curTarget.variation].name
+								? flag.variations[curTarget.variation].name
+								: flag.variations[curTarget.variation].value
 						}`,
 						vscode.TreeItemCollapsibleState.None,
 						[],
@@ -256,9 +255,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				new FlagValue(
 					this.ctx,
 					`Default Variation: ${
-					flag.variations[fallThrough.variation].name
-						? flag.variations[fallThrough.variation].name
-						: flag.variations[fallThrough.variation].value
+						flag.variations[fallThrough.variation].name
+							? flag.variations[fallThrough.variation].name
+							: flag.variations[fallThrough.variation].value
 					}`,
 					vscode.TreeItemCollapsibleState.None,
 					[],
@@ -277,9 +276,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					new FlagValue(
 						this.ctx,
 						`Variation: ${
-						flag.variations[fallThrough.rollout.variations[k].variation].name
-							? flag.variations[fallThrough.rollout.variations[k].variation].name
-							: flag.variations[fallThrough.rollout.variations[k].variation].value
+							flag.variations[fallThrough.rollout.variations[k].variation].name
+								? flag.variations[fallThrough.rollout.variations[k].variation].name
+								: flag.variations[fallThrough.rollout.variations[k].variation].value
 						}`,
 						vscode.TreeItemCollapsibleState.None,
 						[],
@@ -303,9 +302,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				new FlagValue(
 					this.ctx,
 					`Off Variation: ${
-					flag.variations[flag.environments[this.config.env].offVariation].name
-						? flag.variations[flag.environments[this.config.env].offVariation].name
-						: flag.variations[flag.environments[this.config.env].offVariation].value
+						flag.variations[flag.environments[this.config.env].offVariation].name
+							? flag.variations[flag.environments[this.config.env].offVariation].name
+							: flag.variations[flag.environments[this.config.env].offVariation].value
 					}`,
 					vscode.TreeItemCollapsibleState.None,
 					[],
@@ -320,9 +319,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					new FlagValue(
 						this.ctx,
 						`OnVariation: ${
-						flag.variations[flag.defaults.onVariation].name
-							? flag.variations[flag.defaults.onVariation].name
-							: flag.variations[flag.defaults.onVariation].value
+							flag.variations[flag.defaults.onVariation].name
+								? flag.variations[flag.defaults.onVariation].name
+								: flag.variations[flag.defaults.onVariation].value
 						}`,
 						vscode.TreeItemCollapsibleState.None,
 						[],
@@ -331,9 +330,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					new FlagValue(
 						this.ctx,
 						`OffVariation: ${
-						flag.variations[flag.defaults.offVariation].name
-							? flag.variations[flag.defaults.offVariation].name
-							: flag.variations[flag.defaults.offVariation].value
+							flag.variations[flag.defaults.offVariation].name
+								? flag.variations[flag.defaults.offVariation].name
+								: flag.variations[flag.defaults.offVariation].value
 						}`,
 						vscode.TreeItemCollapsibleState.None,
 						[],
