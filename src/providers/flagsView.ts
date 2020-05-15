@@ -47,7 +47,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return Promise.resolve(element.children);
 		} else {
 			return Promise.resolve(
-				this.flagValues.map(function (flag) {
+				this.flagValues.map(flag => {
 					return flag;
 				}),
 			);
@@ -60,7 +60,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		flags.map(flag => {
 			let item = this.flagToValues(flag);
 			flagValues.push(item);
-		})
+		});
 		this.flagValues = flagValues;
 		this.refresh();
 	}
@@ -93,58 +93,76 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		this.getFlags();
 	}
 
+	private flagFactory({
+		ctx = this.ctx,
+		label = '',
+		collapsed = NON_COLLAPSED,
+		children = [],
+		ctxValue = '',
+		uri = '',
+		flagKey = '',
+		flagParentName = '',
+	}) {
+		return flagValueFactory({
+			ctx: this.ctx,
+			label: label,
+			collapsed: collapsed,
+			children: children,
+			ctxValue: ctxValue,
+			uri: uri,
+			flagKey: flagKey,
+			flagParentName: flagParentName,
+		});
+	}
+
 	private flagToValues(flag: FeatureFlag): FlagValue {
 		let flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
-		var item = new FlagValue(
-			this.ctx,
-			flag.name,
-			COLLAPSED,
-			[
-				new FlagValue(this.ctx, `Open in Browser`, NON_COLLAPSED, [], 'flagViewBrowser', flagUri),
-				new FlagValue(this.ctx, `Key: ${flag.key}`, NON_COLLAPSED, [], 'flagViewKey'),
-				new FlagValue(
-					this.ctx,
-					`On: ${flag.environments[this.config.env].on}`,
-					NON_COLLAPSED,
-					[],
-					'flagViewToggle',
-					'',
-					flag.key,
-					flag.name,
-				),
+		var item = this.flagFactory({
+			label: flag.name,
+			collapsed: COLLAPSED,
+			children: [
+				this.flagFactory({ label: `Open in Browser`, ctxValue: 'flagViewBrowser', uri: flagUri }),
+				this.flagFactory({ label: `Key: ${flag.key}`, ctxValue: 'flagViewKey' }),
+				this.flagFactory({
+					label: `On: ${flag.environments[this.config.env].on}`,
+					ctxValue: 'flagViewToggle',
+					flagKey: flag.key,
+					flagParentName: flag.name,
+				}),
 			],
-			'flagParentItem',
-			'',
-			flag.key,
-		);
+			ctxValue: 'flagParentItem',
+			flagKey: flag.key,
+		});
 		if (flag.description) {
 			item.children.push(
-				new FlagValue(
-					this.ctx,
-					`Description: ${flag.description ? flag.description : ''}`,
-					NON_COLLAPSED,
-					[],
-					'flagDescription',
-				),
+				this.flagFactory({
+					label: `Description: ${flag.description ? flag.description : ''}`,
+					ctxValue: 'flagDescription',
+				}),
 			);
 		}
 
 		if (flag.tags.length > 0) {
 			let tags: Array<FlagValue> = [];
 			flag.tags.map(tag => {
-				tags.push(new FlagValue(this.ctx, tag, NON_COLLAPSED, tags, 'flagTagItem'));
+				tags.push(this.flagFactory({ label: tag, children: tags, ctxValue: 'flagTagItem' }));
 			});
-			item.children.push(new FlagValue(this.ctx, `Tags`, COLLAPSED, tags, 'flagTags'));
+			item.children.push(this.flagFactory({ label: `Tags`, children: tags, ctxValue: 'flagTags' }));
 		}
 		var prereqs: Array<FlagValue> = [];
 		let flagPrereqs = flag.environments[this.config.env].prerequisites;
 		if (typeof flagPrereqs !== 'undefined' && flagPrereqs.length > 0) {
 			flag.environments[this.config.env].prerequisites.map(prereq => {
-				prereqs.push(new FlagValue(this.ctx, `Flag: ${prereq.key}`, NON_COLLAPSED));
-				prereqs.push(new FlagValue(this.ctx, `Variation: ${prereq.variation}`, NON_COLLAPSED));
+				prereqs.push(this.flagFactory({ label: `Flag: ${prereq.key}`, collapsed: NON_COLLAPSED }));
+				prereqs.push(this.flagFactory({ label: `Variation: ${prereq.variation}`, collapsed: NON_COLLAPSED }));
 			});
 			item.children.push(
-				new FlagValue(this.ctx, `Prerequisites`, prereqs.length > 0 ? COLLAPSED : NON_COLLAPSED, prereqs, 'prereq'),
+				this.flagFactory({
+					label: `Prerequisites`,
+					collapsed: prereqs.length > 0 ? COLLAPSED : NON_COLLAPSED,
+					children: prereqs,
+					ctxValue: 'prereq',
+				}),
 			);
 		}
 
@@ -153,22 +171,24 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		if (typeof flagTargets !== 'undefined' && flagTargets.length > 0) {
 			flagTargets.map(target => {
 				targets.push(
-					new FlagValue(
-						this.ctx,
-						`Variation: ${
-						flag.variations[target.variation].name
-							? flag.variations[target.variation].name
-							: flag.variations[target.variation].value
+					this.flagFactory({
+						label: `Variation: ${
+							flag.variations[target.variation].name
+								? flag.variations[target.variation].name
+								: flag.variations[target.variation].value
 						}`,
-						NON_COLLAPSED,
-						[],
-						'variation',
-					),
-					new FlagValue(this.ctx, `Values: ${target.values}`, NON_COLLAPSED, [], 'value'),
+						ctxValue: 'variation',
+					}),
+					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
 				);
 			});
 			item.children.push(
-				new FlagValue(this.ctx, `Targets`, targets.length > 0 ? COLLAPSED : NON_COLLAPSED, targets, 'targets'),
+				this.flagFactory({
+					label: `Targets`,
+					collapsed: targets.length > 0 ? COLLAPSED : NON_COLLAPSED,
+					children: targets,
+					ctxValue: 'targets',
+				}),
 			);
 		}
 
@@ -177,55 +197,47 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			var variationValue: FlagValue[];
 			const flagName = variation.name;
 			if (flagName) {
-				variationValue = [new FlagValue(this.ctx, `${variation.value}`, NON_COLLAPSED, [], 'value')];
+				variationValue = [this.flagFactory({ label: `${variation.value}`, ctxValue: 'value' })];
 			}
 
 			variations.push(
-				new FlagValue(
-					this.ctx,
-					`${flagName ? flagName : variation.value}`,
-					flagName ? COLLAPSED : NON_COLLAPSED,
-					variationValue,
-					'name',
-				),
+				this.flagFactory({
+					label: `${flagName ? flagName : variation.value}`,
+					collapsed: flagName ? COLLAPSED : NON_COLLAPSED,
+					children: variationValue,
+					ctxValue: 'name',
+				}),
 			);
 
 			const flagDescription = variation.description;
 			if (flagDescription) {
 				variations.push(
-					new FlagValue(
-						this.ctx,
-						`Description: ${flagDescription ? flagDescription : ''}`,
-						NON_COLLAPSED,
-						[],
-						'flagDescription',
-					),
+					this.flagFactory({
+						label: `Description: ${flagDescription ? flagDescription : ''}`,
+						ctxValue: 'flagDescription',
+					}),
 				);
 			}
 		});
-		item.children.push(new FlagValue(this.ctx, `Variations`, COLLAPSED, variations, 'variation'));
+		item.children.push(
+			this.flagFactory({ label: `Variations`, collapsed: COLLAPSED, children: variations, ctxValue: 'variation' }),
+		);
 
 		item.children.push(
-			new FlagValue(
-				this.ctx,
-				`Rule Count: ${flag.environments[this.config.env].rules.length}`,
-				NON_COLLAPSED,
-				[],
-				'flagRules',
-			),
+			this.flagFactory({
+				label: `Rule Count: ${flag.environments[this.config.env].rules.length}`,
+				ctxValue: 'flagRules',
+			}),
 		);
 
 		let fallThrough = flag.environments[this.config.env].fallthrough;
 		if (fallThrough.variation !== undefined) {
 			const fallThroughVar = flag.variations[fallThrough.variation];
 			item.children.push(
-				new FlagValue(
-					this.ctx,
-					`Default Variation: ${fallThroughVar.name ? fallThroughVar.name : fallThroughVar.value}`,
-					NON_COLLAPSED,
-					[],
-					'variationDefault',
-				),
+				this.flagFactory({
+					label: `Default Variation: ${fallThroughVar.name ? fallThroughVar.name : fallThroughVar.value}`,
+					ctxValue: 'variationDefault',
+				}),
 			);
 		} else if (fallThrough.rollout) {
 			let fallThroughRollout: Array<FlagValue> = [];
@@ -236,29 +248,30 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				let weight = variation.weight / 1000;
 				const flagVariation = flag.variations[variation.variation];
 				fallThroughRollout.push(
-					new FlagValue(this.ctx, `Weight: ${weight}%`, NON_COLLAPSED, [], 'rolloutWeight'),
-					new FlagValue(
-						this.ctx,
-						`Variation: ${flagVariation.name ? flagVariation.name : flagVariation.value}`,
-						NON_COLLAPSED,
-						[],
-						'variation',
-					),
+					this.flagFactory({ label: `Weight: ${weight}%`, ctxValue: 'weight' }),
+					this.flagFactory({
+						label: `Variation: ${flagVariation.name ? flagVariation.name : flagVariation.value}`,
+						ctxValue: 'variation',
+					}),
 				);
 			});
-			item.children.push(new FlagValue(this.ctx, `Default Rollout`, COLLAPSED, fallThroughRollout, 'rollout'));
+			item.children.push(
+				this.flagFactory({
+					label: `Default Rollout`,
+					collapsed: COLLAPSED,
+					children: fallThroughRollout,
+					ctxValue: 'rollout',
+				}),
+			);
 		}
 
 		if (flag.environments[this.config.env].offVariation !== undefined) {
 			const offVar = flag.variations[flag.environments[this.config.env].offVariation];
 			item.children.push(
-				new FlagValue(
-					this.ctx,
-					`Off Variation: ${offVar.name ? offVar.name : offVar.value}`,
-					NON_COLLAPSED,
-					[],
-					'variationOff',
-				),
+				this.flagFactory({
+					label: `Off Variation: ${offVar.name ? offVar.name : offVar.value}`,
+					ctxValue: 'variationOff',
+				}),
 			);
 		}
 
@@ -266,26 +279,37 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			const defOnVar = flag.variations[flag.defaults.onVariation];
 			const defOffVar = flag.variations[flag.defaults.offVariation];
 			item.children.push(
-				new FlagValue(this.ctx, `Defaults`, COLLAPSED, [
-					new FlagValue(
-						this.ctx,
-						`OnVariation: ${defOnVar.name ? defOnVar.name : defOnVar.value}`,
-						NON_COLLAPSED,
-						[],
-						'variation',
-					),
-					new FlagValue(
-						this.ctx,
-						`OffVariation: ${defOffVar.name ? defOffVar.name : defOffVar.value}`,
-						NON_COLLAPSED,
-						[],
-						'variation',
-					),
-				]),
+				this.flagFactory({
+					label: `Defaults`,
+					collapsed: COLLAPSED,
+					children: [
+						this.flagFactory({
+							label: `OnVariation: ${defOnVar.name ? defOnVar.name : defOnVar.value}`,
+							ctxValue: 'variation',
+						}),
+						this.flagFactory({
+							label: `OffVariation: ${defOffVar.name ? defOffVar.name : defOffVar.value}`,
+							ctxValue: 'variation',
+						}),
+					],
+				}),
 			);
 		}
 		return item;
 	}
+}
+
+function flagValueFactory({
+	ctx = null,
+	label = '',
+	collapsed = NON_COLLAPSED,
+	children = [],
+	ctxValue = '',
+	uri = '',
+	flagKey = '',
+	flagParentName = '',
+}) {
+	return new FlagValue(ctx, label, collapsed, children, ctxValue, uri, flagKey, flagParentName);
 }
 
 export class FlagValue extends vscode.TreeItem {
