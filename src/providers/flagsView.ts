@@ -44,21 +44,15 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 
 		if (element) {
-			return Promise.resolve(element.children);
-		} else {
-			return Promise.resolve(
-				this.flagValues.map(flag => {
-					return flag;
-				}),
-			);
+			return Promise.resolve(element ? element.children : this.flagValues);
 		}
 	}
 
 	async getFlags() {
 		const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-		let flagValues = [];
+		const flagValues = [];
 		flags.map(flag => {
-			let item = this.flagToValues(flag);
+			const item = this.flagToValues(flag);
 			flagValues.push(item);
 		});
 		this.flagValues = flagValues;
@@ -116,7 +110,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	private flagToValues(flag: FeatureFlag): FlagValue {
-		let flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
+		const flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
 		var item = this.flagFactory({
 			label: flag.name,
 			collapsed: COLLAPSED,
@@ -142,15 +136,14 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			);
 		}
 
-		if (flag.tags.length > 0) {
-			let tags: Array<FlagValue> = [];
-			flag.tags.map(tag => {
-				tags.push(this.flagFactory({ label: tag, children: tags, ctxValue: 'flagTagItem' }));
-			});
-			item.children.push(this.flagFactory({ label: `Tags`, children: tags, ctxValue: 'flagTags' }));
-		}
+		const tags: Array<FlagValue> = [];
+		flag.tags.map(tag => {
+			tags.push(this.flagFactory({ label: tag, children: tags, ctxValue: 'flagTagItem' }));
+		});
+		item.children.push(this.flagFactory({ label: `Tags`, children: tags, ctxValue: 'flagTags' }));
+
 		var prereqs: Array<FlagValue> = [];
-		let flagPrereqs = flag.environments[this.config.env].prerequisites;
+		const flagPrereqs = flag.environments[this.config.env].prerequisites;
 		if (typeof flagPrereqs !== 'undefined' && flagPrereqs.length > 0) {
 			flag.environments[this.config.env].prerequisites.map(prereq => {
 				prereqs.push(this.flagFactory({ label: `Flag: ${prereq.key}`, collapsed: NON_COLLAPSED }));
@@ -176,7 +169,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-						}`,
+							}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -230,7 +223,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}),
 		);
 
-		let fallThrough = flag.environments[this.config.env].fallthrough;
+		const fallThrough = flag.environments[this.config.env].fallthrough;
 		if (fallThrough.variation !== undefined) {
 			const fallThroughVar = flag.variations[fallThrough.variation];
 			item.children.push(
@@ -240,12 +233,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				}),
 			);
 		} else if (fallThrough.rollout) {
-			let fallThroughRollout: Array<FlagValue> = [];
+			const fallThroughRollout: Array<FlagValue> = [];
 			if (fallThrough.rollout.bucketBy) {
 				new FlagValue(this.ctx, `BucketBy: ${fallThrough.rollout.bucketBy}`, NON_COLLAPSED);
 			}
 			fallThrough.rollout.variations.map(variation => {
-				let weight = variation.weight / 1000;
+				const weight = variation.weight / 1000;
 				const flagVariation = flag.variations[variation.variation];
 				fallThroughRollout.push(
 					this.flagFactory({ label: `Weight: ${weight}%`, ctxValue: 'weight' }),
