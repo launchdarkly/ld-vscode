@@ -14,8 +14,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private flagStore: FlagStore;
 	private flagValues: Array<FlagValue>;
 	private ctx: vscode.ExtensionContext;
-	private _onDidChangeTreeData: vscode.EventEmitter<FlagValue | void> = new vscode.EventEmitter<FlagValue | void>();
-	readonly onDidChangeTreeData: vscode.Event<FlagValue | void> = this._onDidChangeTreeData.event;
+	private _onDidChangeTreeData: vscode.EventEmitter<FlagValue | null | void> = new vscode.EventEmitter<FlagValue | null | void>();
+	readonly onDidChangeTreeData: vscode.Event<FlagValue | null | void> = this._onDidChangeTreeData.event;
 
 	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext) {
 		this.api = api;
@@ -44,7 +44,13 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 
 		if (element) {
-			return Promise.resolve(element ? element.children : this.flagValues);
+			return Promise.resolve(element.children);
+		} else {
+			return Promise.resolve(
+				this.flagValues.map(function(flag) {
+					return flag;
+				}),
+			);
 		}
 	}
 
@@ -88,7 +94,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	private flagFactory({
-		ctx = this.ctx,
 		label = '',
 		collapsed = NON_COLLAPSED,
 		children = [],
@@ -169,7 +174,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-							}`,
+						}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
