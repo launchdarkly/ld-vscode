@@ -289,7 +289,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 }
 
-function flagValueFactory({
+export function flagValueFactory({
 	ctx = null,
 	label = '',
 	collapsed = NON_COLLAPSED,
