@@ -18,7 +18,7 @@ import * as url from 'url';
 import opn = require('opn');
 import { kebabCase } from 'lodash';
 
-import { Configuration, getIsTreeviewEnabled } from './configuration';
+import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
 import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
@@ -33,7 +33,7 @@ const LD_MODE: DocumentFilter = {
 
 export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
 	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
-	if (getIsTreeviewEnabled()) {
+	if (config.enableFlagTreeview) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagTreeview', true);
 	}
 

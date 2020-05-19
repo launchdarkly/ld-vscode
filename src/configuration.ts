@@ -14,6 +14,7 @@ export class Configuration {
 	enableHover = true;
 	enableAutocomplete = true;
 	enableFlagTreeview = true;
+	enableMetricTreeview = true;
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
 
@@ -52,7 +53,7 @@ export class Configuration {
 		config = workspace.getConfiguration('launchdarkly');
 
 		this[key] = value;
-		process.nextTick(function() {});
+		process.nextTick(function () { });
 	}
 
 	validate(): string {
@@ -80,8 +81,4 @@ export class Configuration {
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
 	}
-}
-
-export function getIsTreeviewEnabled(): boolean {
-	return workspace.getConfiguration('launchdarkly').get<boolean>('enableFlagTreeview', true);
 }
