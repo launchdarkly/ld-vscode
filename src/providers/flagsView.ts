@@ -34,15 +34,19 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		await this.debouncedReload();
 	}
 
-	private readonly debouncedReload = debounce(async () => {
-		try {
-			await this.flagStore.removeAll()
-			await this.getFlags();
-			await this.flagUpdateListener();
-		} catch (err) {
-			console.error(err)
-		}
-	}, 200, { leading: false, trailing: true });
+	private readonly debouncedReload = debounce(
+		async () => {
+			try {
+				await this.flagStore.removeAll();
+				await this.getFlags();
+				await this.flagUpdateListener();
+			} catch (err) {
+				console.error(err);
+			}
+		},
+		200,
+		{ leading: false, trailing: true },
+	);
 
 	getTreeItem(element: FlagNode): vscode.TreeItem {
 		return element;
@@ -62,7 +66,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.flagNodes = flags.map(flag => this.flagToValues(flag));
 			this.refresh();
 		} catch (err) {
-			console.error(err)
+			console.error(err);
 		}
 	}
 
@@ -85,7 +89,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.registerTreeviewRefreshCommand(),
 		);
 
-		await this.flagUpdateListener()
+		await this.flagUpdateListener();
 
 		this.getFlags();
 	}
@@ -154,7 +158,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 
 		const tags: Array<FlagNode> = flag.tags.map(tag => this.flagFactory({ label: tag, ctxValue: 'flagTagItem' }));
-		renderedFlagFields.push(this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'flagTags' }));
+		renderedFlagFields.push(
+			this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'flagTags' }),
+		);
 
 		var prereqs: Array<FlagNode> = [];
 		const flagPrereqs = flag.environments[this.config.env].prerequisites;
@@ -183,7 +189,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-							}`,
+						}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -201,7 +207,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 		const renderedVariations: Array<FlagNode> = [];
 		flag.variations.forEach(variation => {
-			const variationValue = variation.name ? [this.flagFactory({ label: `${JSON.stringify(variation.value)}`, ctxValue: 'value' })] : [];
+			const variationValue = variation.name
+				? [this.flagFactory({ label: `${JSON.stringify(variation.value)}`, ctxValue: 'value' })]
+				: [];
 			renderedVariations.push(
 				this.flagFactory({
 					label: `${variation.name ? variation.name : JSON.stringify(variation.value)}`,
@@ -222,7 +230,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		});
 
 		renderedFlagFields.push(
-			this.flagFactory({ label: `Variations`, collapsed: COLLAPSED, children: renderedVariations, ctxValue: 'variation' }),
+			this.flagFactory({
+				label: `Variations`,
+				collapsed: COLLAPSED,
+				children: renderedVariations,
+				ctxValue: 'variation',
+			}),
 		);
 
 		renderedFlagFields.push(
@@ -237,7 +250,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			const fallThroughVar = flag.variations[fallThrough.variation];
 			renderedFlagFields.push(
 				this.flagFactory({
-					label: `Default Variation: ${fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)}`,
+					label: `Default Variation: ${
+						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
+					}`,
 					ctxValue: 'variationDefault',
 				}),
 			);

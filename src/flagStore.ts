@@ -36,14 +36,18 @@ export class FlagStore {
 		await this.debouncedReload();
 	}
 
-	private readonly debouncedReload = debounce(async () => {
-		try {
-			await this.stop();
-			await this.start();
-		} catch (err) {
-			window.showErrorMessage(`[LaunchDarkly] ${err}`);
-		}
-	}, 200, { leading: false, trailing: true });
+	private readonly debouncedReload = debounce(
+		async () => {
+			try {
+				await this.stop();
+				await this.start();
+			} catch (err) {
+				window.showErrorMessage(`[LaunchDarkly] ${err}`);
+			}
+		},
+		200,
+		{ leading: false, trailing: true },
+	);
 
 	async start() {
 		if (!['accessToken', 'baseUri', 'streamUri', 'project', 'env'].every(o => !!this.config[o])) {
@@ -65,12 +69,12 @@ export class FlagStore {
 			const sdkKey = await this.getLatestSDKKey();
 			await this.ldClient.on(event, cb);
 		} catch (err) {
-			console.error(err)
+			console.error(err);
 		}
 	}
 
 	async removeAll() {
-		await this.ldClient.removeAllListeners('update')
+		await this.ldClient.removeAllListeners('update');
 	}
 
 	stop(): Promise<void> {
