@@ -13,8 +13,8 @@ const flag = new FeatureFlag({
 });
 
 suite('flagsView tests', () => {
-	let flagValue = new flagsView.FlagValue(null, flag.name, vscode.TreeItemCollapsibleState.None, [], "testContext")
-	let flagFunc = flagsView.flagValueFactory({ label: "test-label", uri: "/test", flagKey: "flag-key" })
+	let flagValue = new flagsView.FlagNode(null, flag.name, vscode.TreeItemCollapsibleState.None, [], "testContext")
+	let flagFunc = flagsView.flagNodeFactory({ label: "test-label", uri: "/test", flagKey: "flag-key" })
 	test('testFlagValue label', () => {
 		assert.equal(
 			flagValue.label,
@@ -41,7 +41,7 @@ suite('flagsView tests', () => {
 		);
 
 		assert.equal(
-			flagFunc instanceof flagsView.FlagValue,
+			flagFunc instanceof flagsView.FlagNode,
 			true
 		)
 	});
