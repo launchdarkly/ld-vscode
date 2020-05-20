@@ -198,7 +198,6 @@
 	"dependencies": {
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
-		"eventsource": "^1.0.5",
 		"launchdarkly-node-server-sdk": "^5.13.1",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",

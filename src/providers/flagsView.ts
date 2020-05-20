@@ -4,6 +4,7 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import * as path from 'path';
+import { debounce } from 'lodash';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -29,9 +30,19 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		this._onDidChangeTreeData.fire(null);
 	}
 
-	reload(): void {
-		this.getFlags();
+	async reload() {
+		await this.debouncedReload();
 	}
+
+	private readonly debouncedReload = debounce(async () => {
+		try {
+			await this.flagStore.removeAll()
+			await this.getFlags();
+			await this.flagUpdateListener();
+		} catch (err) {
+			console.error(err)
+		}
+	}, 200, { leading: false, trailing: true });
 
 	getTreeItem(element: FlagValue): vscode.TreeItem {
 		return element;
@@ -51,8 +62,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.flagValues = flags.map(flag => this.flagToValues(flag));
 			this.refresh();
 		} catch (err) {
-			console.log(err)
-			vscode.window.showInformationMessage("Problem retrieving LaunchDarkly flags: ", err)
+			console.error(err)
 		}
 	}
 
@@ -75,6 +85,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.registerTreeviewRefreshCommand(),
 		);
 
+		await this.flagUpdateListener()
+
+		this.getFlags();
+	}
+
+	private async flagUpdateListener() {
 		// Setup listener for flag changes
 		this.flagStore.on('update', async flag => {
 			try {
@@ -86,8 +102,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				console.error('Failed to update LaunchDarkly flag tree view:', err);
 			}
 		});
-
-		this.getFlags();
 	}
 
 	private flagFactory({

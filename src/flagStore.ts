@@ -37,13 +37,13 @@ export class FlagStore {
 	}
 
 	private readonly debouncedReload = debounce(async () => {
-		await this.stop();
 		try {
+			await this.stop();
 			await this.start();
 		} catch (err) {
 			window.showErrorMessage(`[LaunchDarkly] ${err}`);
 		}
-	}, 200);
+	}, 200, { leading: false, trailing: true });
 
 	async start() {
 		if (!['accessToken', 'baseUri', 'streamUri', 'project', 'env'].every(o => !!this.config[o])) {
@@ -60,8 +60,17 @@ export class FlagStore {
 		if (!this.ldClient) {
 			await require('util').promisify(setTimeout)(5000);
 		}
-		await this.ldClient.waitForInitialization();
-		this.ldClient.on(event, cb);
+		try {
+			await this.ldClient.waitForInitialization();
+			const sdkKey = await this.getLatestSDKKey();
+			await this.ldClient.on(event, cb);
+		} catch (err) {
+			console.error(err)
+		}
+	}
+
+	async removeAll() {
+		await this.ldClient.removeAllListeners('update')
 	}
 
 	stop(): Promise<void> {
