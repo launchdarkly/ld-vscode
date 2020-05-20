@@ -46,6 +46,7 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 				await configurationMenu.configure();
 				if (configurationMenu.didChangeAccessToken()) {
 					await flagStore.reload();
+					await flagView.reload();
 				}
 				window.showInformationMessage('LaunchDarkly configured successfully');
 			} catch (err) {
