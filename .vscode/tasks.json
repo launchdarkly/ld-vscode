@@ -39,7 +39,7 @@
             "problemMatcher": "$tsc-watch"
         },
         {
-            "type": "yarn",
+            "type": "npm",
             "script": "watch",
             "problemMatcher": [
                 "$ts-webpack-watch",

@@ -163,7 +163,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			renderedFlagFields.push(
 				this.flagFactory({
 					label: `Description: ${flag.description ? flag.description : ''}`,
-					ctxValue: 'flagDescription',
+					ctxValue: 'description',
 				}),
 			);
 		}
@@ -171,10 +171,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		/**
 		 * Build list of tags under "Tags" label
 		 */
-		const tags: Array<FlagNode> = flag.tags.map(tag => this.flagFactory({ label: tag, ctxValue: 'flagTagItem' }));
-		renderedFlagFields.push(
-			this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'flagTags' }),
-		);
+		if (flag.tags.length > 0) {
+			const tags: Array<FlagNode> = flag.tags.map(tag => this.flagFactory({ label: tag, ctxValue: 'flagTagItem' }));
+			renderedFlagFields.push(
+				this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }),
+			);
+		}
 
 		/**
 		 * Build view for any Flag Prerequisites
@@ -415,6 +417,7 @@ export class FlagNode extends vscode.TreeItem {
 		} else if (this.contextValue == 'flagViewToggle') {
 			this.setIcon(ctx, 'toggleon');
 		} else if (ctx) {
+			console.log(contextValue)
 			this.setIcon(ctx, contextValue);
 		}
 	}

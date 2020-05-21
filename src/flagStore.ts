@@ -71,7 +71,6 @@ export class FlagStore {
 		try {
 			const ldClient = await this.ldClient;
 			const sdkKey = await this.getLatestSDKKey();
-			window.showErrorMessage('adding event listener')
 			await ldClient.on(event, cb);
 		} catch (err) {
 			console.error(err);
@@ -92,7 +91,6 @@ export class FlagStore {
 			Promise.race([promise1, this.ldClient]).then((ldClient: LaunchDarkly.LDClient) => {
 				ldClient.close();
 				this.ldClient = new Promise((resolve) => { this.resolveLDClient = resolve; })
-				window.showErrorMessage('stopped ldclient')
 			})
 		} catch (err) {
 			console.log("store not setup")
