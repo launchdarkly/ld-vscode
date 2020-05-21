@@ -67,6 +67,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.refresh();
 		} catch (err) {
 			console.error(err);
+			this.flagNodes = [this.flagFactory({ label: `Error retrieving Flags` })]
 		}
 	}
 
@@ -130,6 +131,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	private flagToValues(flag: FeatureFlag): FlagNode {
+		/**
+		 * Get Link for Open Browser and build base flag node.
+		 */
 		const flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
 		var item = this.flagFactory({
 			label: flag.name,
@@ -147,7 +151,14 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			ctxValue: 'flagParentItem',
 			flagKey: flag.key,
 		});
+		/**
+		 * User friendly name for building nested children under parent FlagNode
+		 */
 		const renderedFlagFields = item.children;
+
+		/**
+		 * Check flag description
+		 */
 		if (flag.description) {
 			renderedFlagFields.push(
 				this.flagFactory({
@@ -157,11 +168,17 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			);
 		}
 
+		/**
+		 * Build list of tags under "Tags" label
+		 */
 		const tags: Array<FlagNode> = flag.tags.map(tag => this.flagFactory({ label: tag, ctxValue: 'flagTagItem' }));
 		renderedFlagFields.push(
 			this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'flagTags' }),
 		);
 
+		/**
+		 * Build view for any Flag Prerequisites
+		 */
 		var prereqs: Array<FlagNode> = [];
 		const flagPrereqs = flag.environments[this.config.env].prerequisites;
 		if (typeof flagPrereqs !== 'undefined' && flagPrereqs.length > 0) {
@@ -179,6 +196,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			);
 		}
 
+		/**
+		 * Build individual targeting section for variation and targets assigned to each.
+		 */
 		var targets: Array<FlagNode> = [];
 		var flagTargets = flag.environments[this.config.env].targets;
 		if (typeof flagTargets !== 'undefined' && flagTargets.length > 0) {
@@ -189,7 +209,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-						}`,
+							}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -205,6 +225,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			);
 		}
 
+		/**
+		 * Build Flag Variations
+		 */
 		const renderedVariations: Array<FlagNode> = [];
 		flag.variations.forEach(variation => {
 			const variationValue = variation.name
@@ -228,7 +251,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				);
 			}
 		});
-
 		renderedFlagFields.push(
 			this.flagFactory({
 				label: `Variations`,
@@ -238,6 +260,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}),
 		);
 
+		/**
+		 * Show number of rules on the Flag
+		 */
 		renderedFlagFields.push(
 			this.flagFactory({
 				label: `Rule Count: ${flag.environments[this.config.env].rules.length}`,
@@ -245,6 +270,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}),
 		);
 
+		/**
+		 * Build Fallthrough view
+		 */
 		const fallThrough = flag.environments[this.config.env].fallthrough;
 		if (fallThrough.variation !== undefined) {
 			const fallThroughVar = flag.variations[fallThrough.variation];
@@ -252,7 +280,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({
 					label: `Default Variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-					}`,
+						}`,
 					ctxValue: 'variationDefault',
 				}),
 			);
@@ -282,6 +310,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			);
 		}
 
+		/**
+		 * Build Off Variation view.
+		 * TODO: Render even if undefined since that is valid option.
+		 */
 		if (flag.environments[this.config.env].offVariation !== undefined) {
 			const offVar = flag.variations[flag.environments[this.config.env].offVariation];
 			renderedFlagFields.push(
@@ -292,6 +324,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			);
 		}
 
+		/**
+		 * Flag Defaults view for new Environments.
+		 */
 		if (flag.defaults !== undefined) {
 			const defOnVar = flag.variations[flag.defaults.onVariation];
 			const defOffVar = flag.variations[flag.defaults.offVariation];
@@ -316,6 +351,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 }
 
+/**
+ * Factory function to generate FlagNode
+ */
 export function flagNodeFactory({
 	ctx = null,
 	label = '',
@@ -329,13 +367,25 @@ export function flagNodeFactory({
 	return new FlagNode(ctx, label, collapsed, children, ctxValue, uri, flagKey, flagParentName);
 }
 
+/**
+ * Class representing a Feature flag as vscode TreeItem
+ * It is a nested array of FlagNode's to build the view
+ */
 export class FlagNode extends vscode.TreeItem {
 	children: FlagNode[] | undefined;
 	contextValue?: string;
 	uri?: string;
 	flagKey?: string;
 	flagParentName?: string;
-
+	/**
+	 * @param label will be shown in the Treeview
+	 * @param collapsibleState is initial state collapsible state
+	 * @param children array of FlagNode's building nested view
+	 * @param contextValue maps to svg resources to show icons
+	 * @param uri URI to build link for Open Browser
+	 * @param flagKey reference to which flag key the treeview item is associated with
+	 * @param flagParentName will match the flag name for top level tree item
+	 */
 	constructor(
 		ctx: vscode.ExtensionContext,
 		public readonly label: string,

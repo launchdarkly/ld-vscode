@@ -12,6 +12,7 @@ const PACKAGE_JSON = require('../package.json');
 const DATA_KIND = { namespace: 'features' };
 
 type FlagUpdateCallback = (flag: FeatureFlag) => void;
+type LDClientResolve = (resolve: LaunchDarkly.LDClient) => void;
 
 export class FlagStore {
 	private readonly config: Configuration;
@@ -20,7 +21,9 @@ export class FlagStore {
 
 	private readonly api: LaunchDarklyAPI;
 	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-	public ldClient: LaunchDarkly.LDClient;
+
+	private resolveLDClient: LDClientResolve;
+	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve) => { this.resolveLDClient = resolve; });
 
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
@@ -29,7 +32,7 @@ export class FlagStore {
 		this.start();
 	}
 
-	async reload(e?: ConfigurationChangeEvent) {
+	async reload(e?: ConfigurationChangeEvent | undefined) {
 		if (e && this.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
 			return;
 		}
@@ -50,38 +53,59 @@ export class FlagStore {
 	);
 
 	async start() {
-		if (!['accessToken', 'baseUri', 'streamUri', 'project', 'env'].every(o => !!this.config[o])) {
+		if (!this.streamingConfigOptions.every(o => !!this.config[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return;
 		}
-
-		const sdkKey = await this.getLatestSDKKey();
-		const ldConfig = this.ldConfig();
-		this.ldClient = LaunchDarkly.init(sdkKey, ldConfig);
+		try {
+			const sdkKey = await this.getLatestSDKKey();
+			const ldConfig = this.ldConfig();
+			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
+			this.resolveLDClient(ldClient)
+		} catch (err) {
+			console.error(err);
+		}
 	}
 
 	async on(event: string, cb: FlagUpdateCallback) {
-		if (!this.ldClient) {
-			await require('util').promisify(setTimeout)(5000);
-		}
 		try {
-			await this.ldClient.waitForInitialization();
+			const ldClient = await this.ldClient;
 			const sdkKey = await this.getLatestSDKKey();
-			await this.ldClient.on(event, cb);
+			window.showErrorMessage('adding event listener')
+			await ldClient.on(event, cb);
 		} catch (err) {
 			console.error(err);
 		}
 	}
 
 	async removeAll() {
-		await this.ldClient.removeAllListeners('update');
+		const ldClient = await this.ldClient;
+		await ldClient.removeAllListeners('update');
 	}
 
-	stop(): Promise<void> {
-		return new Promise(resolve => {
-			this.ldClient && this.ldClient.close();
-			this.store.init({ features: [] }, resolve);
-		});
+	async stop() {
+		try {
+			const promise1 = new Promise((resolve, reject) => {
+				setTimeout(resolve, 1000, 'one');
+			});
+
+			Promise.race([promise1, this.ldClient]).then((ldClient: LaunchDarkly.LDClient) => {
+				ldClient.close();
+				this.ldClient = new Promise((resolve) => { this.resolveLDClient = resolve; })
+				window.showErrorMessage('stopped ldclient')
+			})
+		} catch (err) {
+			console.log("store not setup")
+		}
+		//this.store.init({ features: [] }, resolve)
+		// return new Promise(async resolve => {
+		// 	console.log("stopping")
+		// 	const ldClient = await this.ldClient;
+		// 	this.ldClient.close();
+		// 	this.ldClient = new Promise((resolve) => { this.resolveLDClient = resolve; })
+		// 	window.showErrorMessage('stopped ldclient')
+		// 	this.store.init({ features: [] }, resolve);
+		// });
 	}
 
 	private async getLatestSDKKey() {

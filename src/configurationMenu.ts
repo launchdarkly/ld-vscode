@@ -39,7 +39,7 @@ export class ConfigurationMenu {
 	shouldResume() {
 		// Required by multiStepInput
 		// Could show a notification with the option to resume.
-		return new Promise<boolean>(() => {});
+		return new Promise<boolean>(() => { });
 	}
 
 	async pickCurrentOrNewAccessToken(input: MultiStepInput) {
@@ -168,10 +168,6 @@ export class ConfigurationMenu {
 		if (token === invalidAccessToken) {
 			return 'Invalid access token.';
 		}
-	}
-
-	didChangeAccessToken(): boolean {
-		return this.accessToken !== this.currentAccessToken;
 	}
 
 	updateAPI() {
