@@ -12,7 +12,8 @@ const PACKAGE_JSON = require('../package.json');
 const DATA_KIND = { namespace: 'features' };
 
 type FlagUpdateCallback = (flag: FeatureFlag) => void;
-type LDClientResolve = (resolve: LaunchDarkly.LDClient) => void;
+type LDClientResolve = (LDClient: LaunchDarkly.LDClient) => void;
+type LDClientReject = () => void;
 
 export class FlagStore {
 	private readonly config: Configuration;
@@ -23,7 +24,11 @@ export class FlagStore {
 	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 
 	private resolveLDClient: LDClientResolve;
-	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve) => { this.resolveLDClient = resolve; });
+	private rejectLDClient: LDClientReject;
+	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve, reject) => {
+		this.resolveLDClient = resolve;
+		this.rejectLDClient = reject;
+	});
 
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
@@ -63,6 +68,7 @@ export class FlagStore {
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient)
 		} catch (err) {
+			this.rejectLDClient();
 			console.error(err);
 		}
 	}
@@ -70,28 +76,34 @@ export class FlagStore {
 	async on(event: string, cb: FlagUpdateCallback) {
 		try {
 			const ldClient = await this.ldClient;
-			const sdkKey = await this.getLatestSDKKey();
 			await ldClient.on(event, cb);
 		} catch (err) {
-			console.error(err);
+			// do nothing, ldclient does not exist
 		}
 	}
 
 	async removeAll() {
-		const ldClient = await this.ldClient;
-		await ldClient.removeAllListeners('update');
+		try {
+			const ldClient = await this.ldClient;
+			await ldClient.removeAllListeners('update');
+		} catch (err) {
+			// do nothing, ldclient does not exist
+		}
 	}
 
 	async stop() {
 		try {
-			const promise1 = new Promise((resolve, reject) => {
-				setTimeout(resolve, 1000, 'one');
+			// const promise1 = new Promise((resolve, reject) => {
+			// 	setTimeout(resolve, 1000, 'one');
+			// });
+			const ldClient = await this.ldClient
+			///Promise.race([promise1, this.ldClient]).then((ldClient: LaunchDarkly.LDClient) => {
+			ldClient.close();
+			this.ldClient = new Promise((resolve, reject) => {
+				this.resolveLDClient = resolve;
+				this.rejectLDClient = reject;
 			});
-
-			Promise.race([promise1, this.ldClient]).then((ldClient: LaunchDarkly.LDClient) => {
-				ldClient.close();
-				this.ldClient = new Promise((resolve) => { this.resolveLDClient = resolve; })
-			})
+			//	})
 		} catch (err) {
 			console.log("store not setup")
 		}
@@ -118,10 +130,8 @@ export class FlagStore {
 						'Configure',
 					)
 					.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
-				return;
 			}
-			console.error(`Failed to retrieve LaunchDarkly SDK Key: ${err}`);
-			return;
+			throw (err);
 		}
 	}
 

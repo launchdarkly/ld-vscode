@@ -44,9 +44,11 @@ export class ConfigurationMenu {
 
 	async pickCurrentOrNewAccessToken(input: MultiStepInput) {
 		const existingTokenName = 'Use the existing access token';
+		const removeToken = 'Remove existing token'
 		const options = [
 			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
 			{ name: 'Enter a new access token' },
+			{ name: removeToken }
 		].map(this.createQuickPickItem);
 
 		const pick = await input.showQuickPick({
@@ -62,6 +64,12 @@ export class ConfigurationMenu {
 			this.accessToken = this.currentAccessToken;
 			this.invalidAccessToken = '';
 			return (input: MultiStepInput) => this.pickProject(input);
+		}
+
+		if (pick.label === removeToken) {
+			this.config.setState('accessToken')
+			this.accessToken = '';
+			this.currentAccessToken = '';
 		}
 		return (input: MultiStepInput) => this.inputAccessToken(input);
 	}

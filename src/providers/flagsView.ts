@@ -15,6 +15,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private flagStore: FlagStore;
 	private flagNodes: Array<FlagNode>;
 	private ctx: vscode.ExtensionContext;
+	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 	private _onDidChangeTreeData: vscode.EventEmitter<FlagNode | null | void> = new vscode.EventEmitter<FlagNode | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<FlagNode | null | void> = this._onDidChangeTreeData.event;
 
@@ -30,7 +31,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		this._onDidChangeTreeData.fire(null);
 	}
 
-	async reload() {
+	async reload(e?: vscode.ConfigurationChangeEvent | undefined) {
+		if (e && this.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+			return;
+		}
 		await this.debouncedReload();
 	}
 
@@ -64,11 +68,19 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		try {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagNodes = flags.map(flag => this.flagToValues(flag));
-			this.refresh();
+			console.log("getting flags")
+
 		} catch (err) {
 			console.error(err);
-			this.flagNodes = [this.flagFactory({ label: `Error retrieving Flags` })]
+			let message = 'Error retrieving Flags';
+			if (err.statusCode === 401) {
+				message = 'Unauthorized'
+			} else if (err.statusCode === 404 || (err.statusCode === 400 && err.message.includes("Unknown environment key"))) {
+				message = 'Configured environment does not exist.';
+			}
+			this.flagNodes = [this.flagFactory({ label: message })]
 		}
+		this.refresh();
 	}
 
 	registerTreeviewRefreshCommand(): vscode.Disposable {
@@ -78,7 +90,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		});
 	}
 
-	async start() {
+	async registerCommands() {
 		this.ctx.subscriptions.push(
 			vscode.commands.registerCommand('launchdarkly.copyKey', (node: FlagNode) =>
 				vscode.env.clipboard.writeText(node.label.split(':')[1].trim()),
@@ -89,7 +101,13 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.reload()),
 			this.registerTreeviewRefreshCommand(),
 		);
+	}
 
+	async start() {
+		if (!this.streamingConfigOptions.every(o => !!this.config[o])) {
+			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
+			return;
+		}
 		await this.flagUpdateListener();
 
 		this.getFlags();
@@ -417,7 +435,6 @@ export class FlagNode extends vscode.TreeItem {
 		} else if (this.contextValue == 'flagViewToggle') {
 			this.setIcon(ctx, 'toggleon');
 		} else if (ctx) {
-			console.log(contextValue)
 			this.setIcon(ctx, contextValue);
 		}
 	}

@@ -7,6 +7,9 @@ The LaunchDarkly VSCode extension provides some quality-of-life enhancements for
 - Flag details tooltip on hover
 - Flag name autocomplete
 - Open feature flags in LaunchDarkly (Default keybind: `ctrl+alt+g`/`⌘+alt+g`)
+- Feature flag explorer: view a list of your feature flags and their settings in the explorer view.
+
+The feature flag explorer will automatically refresh whenever environment-specific configuration updates are made, like turning on your flag or adding a rule. For any changes that affect all environments, such as adding tags, the explorer can be manually refreshed.
 
 ## Installation and configuration
 
@@ -21,13 +24,15 @@ This extension contributes the following additional settings:
 | `launchdarkly.streamUri`          |                         The LaunchDarkly stream uri to be used. Optional.                          | `https://stream.launchdarkly.com` |
 | `launchdarkly.enableHover`        |                  Enables flag info to be displayed on hover of a valid flag key.                   |                            `true` |
 | `launchdarkly.enableAutocomplete` |                                  Enable flag key autocompletion.                                   |                            `true` |
+| `launchdarkly.enableFlagTreeview`	|           Show all of the feature flags for the configured environment within the project.         |                            `true` |
 | `launchdarkly.sdkKey`             |      Your LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead.       |                       `undefined` |
 | `launchdarkly.accessToken`        | Your LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead. |                       `undefined` |
-| `launchdarkly.enableFlagTreeview`	| 			Show all of the feature flags for the configured environment within the project.		 |							  `true` |
 
-**Note:** If you use quick suggestions to autocomplete words, LaunchDarkly autocomplete functionality requires the `editor.quickSuggestions.strings` setting to be enabled. Otherwise, you'll need to press `Ctrl+Space` (default binding) to see your flag key suggestions.
+
 
 Here's an example configuration with quick suggestions enabled:
+
+**Note:** If you use quick suggestions to autocomplete words, LaunchDarkly autocomplete functionality requires the `editor.quickSuggestions.strings` setting to be enabled. Otherwise, you'll need to press `Ctrl+Space` (default binding) to see your flag key suggestions.
 
 ```json
 {

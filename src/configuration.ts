@@ -53,7 +53,7 @@ export class Configuration {
 		config = workspace.getConfiguration('launchdarkly');
 
 		this[key] = value;
-		process.nextTick(function() {});
+		process.nextTick(function () { });
 	}
 
 	validate(): string {
@@ -80,5 +80,9 @@ export class Configuration {
 
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
+	}
+
+	setState(key: string) {
+		return this.ctx.globalState.update(key, undefined)
 	}
 }
