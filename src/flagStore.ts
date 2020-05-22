@@ -66,7 +66,7 @@ export class FlagStore {
 			const sdkKey = await this.getLatestSDKKey();
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
-			this.resolveLDClient(ldClient)
+			this.resolveLDClient(ldClient);
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
@@ -95,7 +95,7 @@ export class FlagStore {
 		try {
 			// Optimistically reject, if already resolved this has no effect
 			this.rejectLDClient();
-			const ldClient = await this.ldClient
+			const ldClient = await this.ldClient;
 			ldClient.close();
 		} catch {
 			// ldClient was rejected, nothing to do
@@ -119,7 +119,7 @@ export class FlagStore {
 					)
 					.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
 			}
-			throw (err);
+			throw err;
 		}
 	}
 

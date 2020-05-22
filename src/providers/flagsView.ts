@@ -69,16 +69,18 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		try {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagNodes = flags.map(flag => this.flagToValues(flag));
-
 		} catch (err) {
 			console.error(err);
 			let message = 'Error retrieving Flags';
 			if (err.statusCode === 401) {
-				message = 'Unauthorized'
-			} else if (err.statusCode === 404 || (err.statusCode === 400 && err.message.includes("Unknown environment key"))) {
+				message = 'Unauthorized';
+			} else if (
+				err.statusCode === 404 ||
+				(err.statusCode === 400 && err.message.includes('Unknown environment key'))
+			) {
 				message = 'Configured environment does not exist.';
 			}
-			this.flagNodes = [this.flagFactory({ label: message })]
+			this.flagNodes = [this.flagFactory({ label: message })];
 		}
 		this.refresh();
 	}
@@ -109,7 +111,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return;
 		}
 
-		await this.reload()
+		await this.reload();
 	}
 
 	private async flagUpdateListener() {
@@ -228,7 +230,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-							}`,
+						}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -299,7 +301,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({
 					label: `Default Variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-						}`,
+					}`,
 					ctxValue: 'variationDefault',
 				}),
 			);
