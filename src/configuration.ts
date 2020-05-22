@@ -13,7 +13,7 @@ export class Configuration {
 	env = '';
 	enableHover = true;
 	enableAutocomplete = true;
-	enableFlagTreeview = true;
+	enableFlagExplorer = true;
 	enableMetricTreeview = true;
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
@@ -53,7 +53,7 @@ export class Configuration {
 		config = workspace.getConfiguration('launchdarkly');
 
 		this[key] = value;
-		process.nextTick(function() {});
+		process.nextTick(function () { });
 	}
 
 	validate(): string {

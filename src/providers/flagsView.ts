@@ -88,7 +88,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	registerTreeviewRefreshCommand(): vscode.Disposable {
 		return vscode.commands.registerCommand('launchdarkly.treeviewrefresh', (): void => {
 			this.reload();
-			vscode.commands.executeCommand('setContext', 'launchdarkly:enableFlagTreeview', this.config.enableFlagTreeview);
+			vscode.commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', this.config.enableFlagExplorer);
 		});
 	}
 
@@ -230,7 +230,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-						}`,
+							}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -301,7 +301,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({
 					label: `Default Variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-					}`,
+						}`,
 					ctxValue: 'variationDefault',
 				}),
 			);

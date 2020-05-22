@@ -24,7 +24,7 @@ This extension contributes the following additional settings:
 | `launchdarkly.streamUri`          |                         The LaunchDarkly stream uri to be used. Optional.                          | `https://stream.launchdarkly.com` |
 | `launchdarkly.enableHover`        |                  Enables flag info to be displayed on hover of a valid flag key.                   |                            `true` |
 | `launchdarkly.enableAutocomplete` |                                  Enable flag key autocompletion.                                   |                            `true` |
-| `launchdarkly.enableFlagTreeview`	|           Show all of the feature flags for the configured environment within the project.         |                            `true` |
+| `launchdarkly.enableFlagExplorer`	|           Show all of the feature flags for the configured environment within the project.         |                            `true` |
 | `launchdarkly.sdkKey`             |      Your LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead.       |                       `undefined` |
 | `launchdarkly.accessToken`        | Your LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead. |                       `undefined` |
 

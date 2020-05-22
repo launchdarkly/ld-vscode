@@ -52,10 +52,10 @@
 					"default": true,
 					"description": "Enable flag key autocompletion"
 				},
-				"launchdarkly.enableFlagTreeview": {
+				"launchdarkly.enableFlagExplorer": {
 					"type": "boolean",
 					"default": true,
-					"description": "Enable flag treeview"
+					"description": "Enable flag explorer"
 				},
 				"launchdarkly.accessToken": {
 					"type": "string",
@@ -167,7 +167,7 @@
 				{
 					"id": "launchdarklyFeatureFlags",
 					"name": "LaunchDarkly Feature Flags",
-					"when": "launchdarkly:enableFlagTreeview"
+					"when": "launchdarkly:enableFlagExplorer"
 				}
 			]
 		}
