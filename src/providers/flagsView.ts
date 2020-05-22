@@ -24,6 +24,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		this.config = config;
 		this.ctx = ctx;
 		this.flagStore = flagStore;
+		this.registerCommands();
 		this.start();
 	}
 
@@ -68,7 +69,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		try {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagNodes = flags.map(flag => this.flagToValues(flag));
-			console.log("getting flags")
 
 		} catch (err) {
 			console.error(err);
@@ -108,9 +108,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return;
 		}
-		await this.flagUpdateListener();
 
-		this.getFlags();
+		await this.reload()
 	}
 
 	private async flagUpdateListener() {

@@ -93,29 +93,17 @@ export class FlagStore {
 
 	async stop() {
 		try {
-			// const promise1 = new Promise((resolve, reject) => {
-			// 	setTimeout(resolve, 1000, 'one');
-			// });
+			// Optimistically reject, if already resolved this has no effect
+			this.rejectLDClient();
 			const ldClient = await this.ldClient
-			///Promise.race([promise1, this.ldClient]).then((ldClient: LaunchDarkly.LDClient) => {
 			ldClient.close();
-			this.ldClient = new Promise((resolve, reject) => {
-				this.resolveLDClient = resolve;
-				this.rejectLDClient = reject;
-			});
-			//	})
-		} catch (err) {
-			console.log("store not setup")
+		} catch {
+			// ldClient was rejected, nothing to do
 		}
-		//this.store.init({ features: [] }, resolve)
-		// return new Promise(async resolve => {
-		// 	console.log("stopping")
-		// 	const ldClient = await this.ldClient;
-		// 	this.ldClient.close();
-		// 	this.ldClient = new Promise((resolve) => { this.resolveLDClient = resolve; })
-		// 	window.showErrorMessage('stopped ldclient')
-		// 	this.store.init({ features: [] }, resolve);
-		// });
+		this.ldClient = new Promise((resolve, reject) => {
+			this.resolveLDClient = resolve;
+			this.rejectLDClient = reject;
+		});
 	}
 
 	private async getLatestSDKKey() {
