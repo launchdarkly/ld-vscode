@@ -53,7 +53,7 @@ export class Configuration {
 		config = workspace.getConfiguration('launchdarkly');
 
 		this[key] = value;
-		process.nextTick(function () { });
+		process.nextTick(function() {});
 	}
 
 	validate(): string {
