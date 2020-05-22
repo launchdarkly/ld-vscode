@@ -39,16 +39,14 @@ export class ConfigurationMenu {
 	shouldResume() {
 		// Required by multiStepInput
 		// Could show a notification with the option to resume.
-		return new Promise<boolean>(() => {});
+		return new Promise<boolean>(() => { });
 	}
 
 	async pickCurrentOrNewAccessToken(input: MultiStepInput) {
 		const existingTokenName = 'Use the existing access token';
-		const removeToken = 'Remove existing token';
 		const options = [
 			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
 			{ name: 'Enter a new access token' },
-			{ name: removeToken },
 		].map(this.createQuickPickItem);
 
 		const pick = await input.showQuickPick({
@@ -66,11 +64,6 @@ export class ConfigurationMenu {
 			return (input: MultiStepInput) => this.pickProject(input);
 		}
 
-		if (pick.label === removeToken) {
-			this.config.setState('accessToken');
-			this.accessToken = '';
-			this.currentAccessToken = '';
-		}
 		return (input: MultiStepInput) => this.inputAccessToken(input);
 	}
 
