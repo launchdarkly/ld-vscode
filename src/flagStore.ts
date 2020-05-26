@@ -20,7 +20,6 @@ export class FlagStore {
 	private readonly flagMetadata: { [key: string]: FeatureFlag } = {};
 
 	private readonly api: LaunchDarklyAPI;
-	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
@@ -37,7 +36,7 @@ export class FlagStore {
 	}
 
 	async reload(e?: ConfigurationChangeEvent) {
-		if (e && this.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+		if (e && this.config.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
 			return;
 		}
 		await this.debouncedReload();
@@ -57,7 +56,7 @@ export class FlagStore {
 	);
 
 	async start() {
-		if (!this.streamingConfigOptions.every(o => !!this.config[o])) {
+		if (!this.config.streamingConfigOptions.every(o => !!this.config[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return;
 		}

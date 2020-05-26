@@ -7,6 +7,7 @@ const DEFAULT_STREAM_URI = 'https://stream.launchdarkly.com';
 
 export class Configuration {
 	private readonly ctx: ExtensionContext;
+	public readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 	accessToken = '';
 	sdkKey = '';
 	project = '';

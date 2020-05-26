@@ -15,7 +15,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private flagStore: FlagStore;
 	private flagNodes: Array<FlagNode>;
 	private ctx: vscode.ExtensionContext;
-	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 	private _onDidChangeTreeData: vscode.EventEmitter<FlagNode | null | void> = new vscode.EventEmitter<FlagNode | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<FlagNode | null | void> = this._onDidChangeTreeData.event;
 
@@ -33,7 +32,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	async reload(e?: vscode.ConfigurationChangeEvent | undefined) {
-		if (e && this.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+		if (e && this.config.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
 			return;
 		}
 		await this.debouncedReload();
@@ -106,7 +105,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	async start() {
-		if (!this.streamingConfigOptions.every(o => !!this.config[o])) {
+		if (!this.config.streamingConfigOptions.every(o => !!this.config[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return;
 		}
