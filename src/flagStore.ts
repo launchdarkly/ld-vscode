@@ -8,7 +8,6 @@ import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models'
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
 
-const PACKAGE_JSON = require('../package.json');
 const DATA_KIND = { namespace: 'features' };
 
 type FlagUpdateCallback = (flag: FeatureFlag) => void;

@@ -4,6 +4,8 @@ import * as url from 'url';
 import { Configuration } from './configuration';
 import { Resource, Project, Environment, FeatureFlag } from './models';
 
+const PACKAGE_JSON = require('../package.json');
+
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
 	private readonly config: Configuration;
@@ -56,6 +58,7 @@ export class LaunchDarklyAPI {
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
 			headers: {
 				Authorization: this.config.accessToken,
+				UserAgent: 'VSCodeExtension/' + PACKAGE_JSON.version,
 			},
 		};
 
