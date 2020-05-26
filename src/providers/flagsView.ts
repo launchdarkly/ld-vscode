@@ -42,7 +42,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private readonly debouncedReload = debounce(
 		async () => {
 			try {
-				await this.flagStore.removeAll();
+				await this.flagStore.removeAllListeners();
 				await this.getFlags();
 				await this.flagUpdateListener();
 			} catch (err) {
@@ -230,7 +230,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-						}`,
+							}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -301,7 +301,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({
 					label: `Default Variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-					}`,
+						}`,
 					ctxValue: 'variationDefault',
 				}),
 			);
@@ -316,7 +316,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				fallThroughRollout.push(
 					this.flagFactory({ label: `Weight: ${weight} % `, ctxValue: 'weight' }),
 					this.flagFactory({
-						label: `Variation: ${flagVariation.name ? flagVariation.name : JSON.stringify(flagVariation.value)}`,
+						label: `Variation: ${flagVariation.name || JSON.stringify(flagVariation.value)}`,
 						ctxValue: 'variation',
 					}),
 				);

@@ -37,7 +37,7 @@ export class FlagStore {
 		this.start();
 	}
 
-	async reload(e?: ConfigurationChangeEvent | undefined) {
+	async reload(e?: ConfigurationChangeEvent) {
 		if (e && this.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
 			return;
 		}
@@ -82,7 +82,7 @@ export class FlagStore {
 		}
 	}
 
-	async removeAll() {
+	async removeAllListeners() {
 		try {
 			const ldClient = await this.ldClient;
 			await ldClient.removeAllListeners('update');
