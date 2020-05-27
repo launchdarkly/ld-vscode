@@ -32,7 +32,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	async reload(e?: vscode.ConfigurationChangeEvent | undefined) {
-		if (e && this.config.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+		if (e && this.config.streamingConfigReloadCheck(e)) {
 			return;
 		}
 		await this.debouncedReload();
@@ -105,12 +105,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	async start() {
-		if (!this.config.streamingConfigOptions.every(o => !!this.config[o])) {
-			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
-			return;
+		if (!this.config.streamingConfigStartCheck()) {
+			return
 		}
-
 		await this.reload();
+
 	}
 
 	private async flagUpdateListener() {
@@ -229,7 +228,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-						}`,
+							}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -300,7 +299,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({
 					label: `Default Variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-					}`,
+						}`,
 					ctxValue: 'variationDefault',
 				}),
 			);

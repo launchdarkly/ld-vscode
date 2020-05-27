@@ -36,7 +36,7 @@ export class FlagStore {
 	}
 
 	async reload(e?: ConfigurationChangeEvent) {
-		if (e && this.config.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+		if (e && this.config.streamingConfigReloadCheck(e)) {
 			return;
 		}
 		await this.debouncedReload();
@@ -56,8 +56,7 @@ export class FlagStore {
 	);
 
 	async start() {
-		if (!this.config.streamingConfigOptions.every(o => !!this.config[o])) {
-			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
+		if (!this.config.streamingConfigStartCheck()) {
 			return;
 		}
 		try {
