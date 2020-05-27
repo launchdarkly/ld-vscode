@@ -16,7 +16,7 @@
 	"activationEvents": [
 		"*"
 	],
-	"main": "./dist/extension",
+	"main": "./out/src/extension",
 	"contributes": {
 		"configuration": {
 			"type": "object",
