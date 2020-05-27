@@ -106,10 +106,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	async start() {
 		if (!this.config.streamingConfigStartCheck()) {
-			return
+			return;
 		}
 		await this.reload();
-
 	}
 
 	private async flagUpdateListener() {
@@ -228,7 +227,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-							}`,
+						}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -299,7 +298,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({
 					label: `Default Variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-						}`,
+					}`,
 					ctxValue: 'variationDefault',
 				}),
 			);

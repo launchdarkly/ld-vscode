@@ -52,25 +52,25 @@ export class Configuration {
 		config = workspace.getConfiguration('launchdarkly');
 
 		this[key] = value;
-		process.nextTick(function () { });
+		process.nextTick(function() {});
 	}
 
 	public streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
-		let streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env']
+		let streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 		if (streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return true;
 		}
-		return false
+		return false;
 	}
 
 	public streamingConfigStartCheck(): boolean {
-		let streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env']
+		let streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 		if (!streamingConfigOptions.every(o => !!this[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return false;
 		}
-		return true
+		return true;
 	}
 
 	validate(): string {
