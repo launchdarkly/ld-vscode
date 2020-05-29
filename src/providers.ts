@@ -13,6 +13,8 @@ import {
 	Range,
 	TextDocument,
 	MarkdownString,
+	workspace,
+	ConfigurationChangeEvent
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
@@ -31,7 +33,26 @@ const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
 
-export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
+export async function register(ctx: ExtensionContext, config: Configuration, api: LaunchDarklyAPI) {
+	var flagStore
+	const flags = await api.getFeatureFlags(config.project, config.env)
+	const arrayToObject = (array: Array<FeatureFlag>): Object =>
+		array.reduce((obj, item) => {
+			obj[item.key] = item
+			return obj
+		}, {})
+	let intFlags = arrayToObject(flags)
+	flagStore = new FlagStore(config, api, intFlags);
+
+	// Handle manual changes to extension configuration
+	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
+		if (e.affectsConfiguration('launchdarkly')) {
+			await config.reload();
+			await flagStore.reload(e);
+			await commands.executeCommand('launchdarkly.treeviewrefresh');
+		}
+	});
+
 	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);

@@ -7,6 +7,7 @@ import { debounce } from 'lodash';
 import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
+import { resolveCname } from 'dns';
 
 const DATA_KIND = { namespace: 'features' };
 
@@ -17,10 +18,8 @@ type LDClientReject = () => void;
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
-	private readonly flagMetadata: { [key: string]: FeatureFlag } = {};
-
-	private readonly api: LaunchDarklyAPI;
-
+	public flagMetadata: Object
+	private readonly api: LaunchDarklyAPI
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
 	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve, reject) => {
@@ -28,11 +27,12 @@ export class FlagStore {
 		this.rejectLDClient = reject;
 	});
 
-	constructor(config: Configuration, api: LaunchDarklyAPI) {
+	constructor(config: Configuration, api: LaunchDarklyAPI, flagMetadata: Object) {
 		this.config = config;
 		this.api = api;
 		this.store = InMemoryFeatureStore();
 		this.start();
+		this.flagMetadata = flagMetadata
 	}
 
 	async reload(e?: ConfigurationChangeEvent) {
@@ -101,6 +101,27 @@ export class FlagStore {
 			this.resolveLDClient = resolve;
 			this.rejectLDClient = reject;
 		});
+	}
+
+	public async clientInitialized() {
+		const ldClient = await this.ldClient
+		const initialized = await ldClient.initialized
+
+		return initialized
+	}
+
+	public async featureStore(): Promise<boolean> {
+		await this.start()
+		if (this.flagMetadata !== undefined && Object.keys(this.flagMetadata).length > 0) {
+			console.log("wut")
+			return true
+		}
+		// await new Promise(resolve => {
+		// 	setTimeout(resolve, 5000)
+		// })
+		console.log(this.flagMetadata["chatbox"])
+		console.log("return true")
+		return true
 	}
 
 	private async getLatestSDKKey() {

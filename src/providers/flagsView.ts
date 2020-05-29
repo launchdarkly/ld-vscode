@@ -13,7 +13,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private readonly api: LaunchDarklyAPI;
 	private config: Configuration;
 	private flagStore: FlagStore;
-	private flagNodes: Array<FlagNode>;
+	private flagNodes: Array<FlagNode> = [];
 	private ctx: vscode.ExtensionContext;
 	private _onDidChangeTreeData: vscode.EventEmitter<FlagNode | null | void> = new vscode.EventEmitter<FlagNode | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<FlagNode | null | void> = this._onDidChangeTreeData.event;
@@ -36,13 +36,16 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return;
 		}
 		await this.debouncedReload();
+		console.log("reloading & refreshing")
+		this.refresh()
+
 	}
 
 	private readonly debouncedReload = debounce(
 		async () => {
 			try {
 				await this.flagStore.removeAllListeners();
-				await this.getFlags();
+				this.load(this.flagStore.flagMetadata)
 				await this.flagUpdateListener();
 			} catch (err) {
 				console.error(err);
@@ -56,6 +59,24 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		return element;
 	}
 
+	// async load(flags): Promise<Array<FlagNode>> {
+	// 	return new Promise(resolve => {
+	// 		const parsedFlags: Array<FlagNode> = []
+	// 		Object.keys(this.flagStore.flagMetadata).map(key => {
+	// 			parsedFlags.push(this.flagToValues(this.flagStore.flagMetadata[key]));
+	// 		});
+	// 		return resolve(parsedFlags)
+	// 	})
+	// }
+
+	private load(flags): Array<FlagNode> {
+		const parsedFlags: Array<FlagNode> = []
+		Object.keys(this.flagStore.flagMetadata).map(key => {
+			this.flagNodes.push(this.flagToValues(this.flagStore.flagMetadata[key]));
+		});
+		return parsedFlags
+	}
+
 	getChildren(element?: FlagNode): Thenable<FlagNode[]> {
 		if (!this.flagNodes) {
 			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
@@ -64,25 +85,26 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		return Promise.resolve(element ? element.children : this.flagNodes);
 	}
 
-	async getFlags() {
-		try {
-			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-			this.flagNodes = flags.map(flag => this.flagToValues(flag));
-		} catch (err) {
-			console.error(err);
-			let message = 'Error retrieving Flags';
-			if (err.statusCode === 401) {
-				message = 'Unauthorized';
-			} else if (
-				err.statusCode === 404 ||
-				(err.statusCode === 400 && err.message.includes('Unknown environment key'))
-			) {
-				message = 'Configured environment does not exist.';
-			}
-			this.flagNodes = [this.flagFactory({ label: message })];
-		}
-		this.refresh();
-	}
+	// async getFlags() {
+	// 	try {
+	// 		const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+	// 		this.flagNodes = flags.map(flag => this.flagToValues(flag));
+	// 		console.log('GOT HERE', this.flagNodes.length);
+	// 	} catch (err) {
+	// 		console.error(err);
+	// 		let message = 'Error retrieving Flags';
+	// 		if (err.statusCode === 401) {
+	// 			message = 'Unauthorized';
+	// 		} else if (
+	// 			err.statusCode === 404 ||
+	// 			(err.statusCode === 400 && err.message.includes('Unknown environment key'))
+	// 		) {
+	// 			message = 'Configured environment does not exist.';
+	// 		}
+	// 		this.flagNodes = [this.flagFactory({ label: message })];
+	// 	}
+	// 	this.refresh();
+	// }
 
 	registerTreeviewRefreshCommand(): vscode.Disposable {
 		return vscode.commands.registerCommand('launchdarkly.treeviewrefresh', (): void => {
@@ -227,7 +249,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-						}`,
+							}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -298,7 +320,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({
 					label: `Default Variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-					}`,
+						}`,
 					ctxValue: 'variationDefault',
 				}),
 			);
