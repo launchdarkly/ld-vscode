@@ -227,7 +227,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-						}`,
+							}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -298,7 +298,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({
 					label: `Default Variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-					}`,
+						}`,
 					ctxValue: 'variationDefault',
 				}),
 			);
@@ -428,11 +428,17 @@ export class FlagNode extends vscode.TreeItem {
 	}
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string) {
+		/**
+		 * Special handling for open browser. Called in package.json
+		 */
+		if (contextValue == 'flagViewBrowser') {
+			return
+		}
 		if (contextValue == 'flagViewToggle' && label.split(':')[1].trim() == 'false') {
 			this.setIcon(ctx, 'toggleoff');
 		} else if (this.contextValue == 'flagViewToggle') {
 			this.setIcon(ctx, 'toggleon');
-		} else if (ctx) {
+		} else if (ctx && contextValue) {
 			this.setIcon(ctx, contextValue);
 		}
 	}
