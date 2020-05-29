@@ -98,8 +98,4 @@ export class Configuration {
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
 	}
-
-	setState(key: string) {
-		return this.ctx.globalState.update(key, undefined);
-	}
 }
