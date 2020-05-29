@@ -98,5 +98,4 @@ export class Configuration {
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
 	}
-
 }
