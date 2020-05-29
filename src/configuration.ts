@@ -78,8 +78,6 @@ export class Configuration {
 		const ctx = this.ctx;
 		ctx.globalState.update('version', undefined);
 		const storedVersion = ctx.globalState.get('version');
-		const project = ctx.globalState.get('project') || ctx.workspaceState.get('project');
-		const env = ctx.globalState.get('env') || ctx.workspaceState.get('env');
 
 		if (version !== storedVersion) {
 			ctx.globalState.update('version', version);
@@ -93,10 +91,6 @@ export class Configuration {
 		// Only recommend configuring the extension on install and update
 		const configured = !!this.accessToken;
 		if (version != storedVersion && !configured) {
-			return 'unconfigured';
-		}
-
-		if (!project || !env) {
 			return 'unconfigured';
 		}
 	}

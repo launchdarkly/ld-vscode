@@ -28,7 +28,7 @@ export class ConfigurationMenu {
 	}
 
 	async collectInputs() {
-		if (this.currentAccessToken || this.project || this.env) {
+		if (this.currentAccessToken) {
 			await MultiStepInput.run(input => this.pickCurrentOrNewAccessToken(input));
 			return;
 		}
