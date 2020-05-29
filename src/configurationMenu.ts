@@ -63,6 +63,7 @@ export class ConfigurationMenu {
 			this.invalidAccessToken = '';
 			return (input: MultiStepInput) => this.pickProject(input);
 		}
+
 		return (input: MultiStepInput) => this.inputAccessToken(input);
 	}
 
@@ -168,10 +169,6 @@ export class ConfigurationMenu {
 		if (token === invalidAccessToken) {
 			return 'Invalid access token.';
 		}
-	}
-
-	didChangeAccessToken(): boolean {
-		return this.accessToken !== this.currentAccessToken;
 	}
 
 	updateAPI() {

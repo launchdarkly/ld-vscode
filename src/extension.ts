@@ -42,6 +42,7 @@ export function activate(ctx: ExtensionContext) {
 		if (e.affectsConfiguration('launchdarkly')) {
 			await config.reload();
 			await flagStore.reload(e);
+			await commands.executeCommand('launchdarkly.treeviewrefresh');
 		}
 	});
 

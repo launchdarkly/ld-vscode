@@ -5,7 +5,6 @@
 // ${fileDirname}: the current opened file's dirname
 // ${fileExtname}: the current opened file's extension
 // ${cwd}: the current working directory of the spawned process
-
 // A task runner that calls a custom npm script that compiles the extension.
 {
     "version": "2.0.0",
@@ -17,7 +16,12 @@
             "presentation": {
                 "reveal": "silent"
             },
-            "args": ["run", "compile", "--loglevel", "silent"],
+            "args": [
+                "run",
+                "compile",
+                "--loglevel",
+                "silent"
+            ],
             "isBackground": true,
             "problemMatcher": "$tsc-watch"
         },
@@ -28,9 +32,27 @@
             "presentation": {
                 "reveal": "silent"
             },
-            "args": ["test-compile"],
+            "args": [
+                "test-compile"
+            ],
             "isBackground": true,
             "problemMatcher": "$tsc-watch"
+        },
+        {
+            "type": "npm",
+            "script": "watch",
+            "problemMatcher": [
+                "$ts-webpack-watch",
+                "$tslint-webpack-watch"
+            ],
+            "isBackground": true,
+            "presentation": {
+                "reveal": "never"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }

@@ -2,10 +2,10 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "View LaunchDarkly feature flags in your editor.",
-	"version": "2.2.3",
+	"version": "2.3.0",
 	"publisher": "launchdarkly",
 	"engines": {
-		"vscode": "^1.34.0"
+		"vscode": "^1.45.0"
 	},
 	"repository": "https://github.com/launchdarkly/ld-vscode",
 	"categories": [
@@ -52,6 +52,11 @@
 					"default": true,
 					"description": "Enable flag key autocompletion"
 				},
+				"launchdarkly.enableFlagExplorer": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable flag explorer"
+				},
 				"launchdarkly.accessToken": {
 					"type": "string",
 					"default": "",
@@ -73,14 +78,79 @@
 			{
 				"command": "extension.configureLaunchDarkly",
 				"title": "LaunchDarkly: Configure"
+			},
+			{
+				"command": "launchdarkly.refreshEntry",
+				"title": "LaunchDarkly: Refresh Feature Flags",
+				"icon": {
+					"light": "resources/light/refresh.svg",
+					"dark": "resources/dark/refresh.svg"
+				}
+			},
+			{
+				"command": "launchdarkly.copyKey",
+				"title": "LaunchDarkly: Copy Key to Clipboard",
+				"icon": {
+					"light": "resources/light/files.svg",
+					"dark": "resources/dark/files.svg"
+				}
+			},
+			{
+				"command": "launchdarkly.treeviewrefresh",
+				"title": "LaunchDarkly Toggle Treeview"
+			},
+			{
+				"command": "launchdarkly.openBrowser",
+				"title": "LD: Open in Browser",
+				"icon": {
+					"light": "resources/light/link_external.svg",
+					"dark": "resources/dark/link_external.svg"
+				}
 			}
 		],
 		"menus": {
+			"commandPalette": [
+				{
+					"command": "launchdarkly.copyKey",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.openBrowser",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.refreshEntry",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.treeviewrefresh",
+					"when": "false"
+				}
+			],
 			"editor/context": [
 				{
 					"command": "extension.openInLaunchDarkly",
 					"when": "editorTextFocus",
 					"group": "LaunchDarkly"
+				}
+			],
+			"view/title": [
+				{
+					"command": "launchdarkly.refreshEntry",
+					"when": "view == launchdarklyFeatureFlags",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "launchdarkly.copyKey",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewKey",
+					"group": "inline"
+				},
+				{
+					"command": "launchdarkly.openBrowser",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser",
+					"group": "inline"
 				}
 			]
 		},
@@ -91,12 +161,21 @@
 				"mac": "cmd+alt+g",
 				"when": "editorTextFocus"
 			}
-		]
+		],
+		"views": {
+			"explorer": [
+				{
+					"id": "launchdarklyFeatureFlags",
+					"name": "LaunchDarkly Feature Flags",
+					"when": "launchdarkly:enableFlagExplorer"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
 		"compile": "webpack --mode none",
-		"watch": "webpack --mode none --watch",
+		"watch": "webpack --mode none --watch --info-verbosity verbose",
 		"test-compile": "tsc -p ./ && cp ./package.json ./out/package.json",
 		"test": "yarn run test-compile && node ./out/test/runTest.js",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,tests}/**/*.ts\"",
@@ -105,7 +184,7 @@
 	"devDependencies": {
 		"@types/mocha": "^2.2.32",
 		"@types/node": "^6.0.40",
-		"@types/vscode": "1.34.0",
+		"@types/vscode": "1.45.0",
 		"glob": "7.1.6",
 		"mocha": "5.2.0",
 		"prettier": "^1.5.3",
@@ -119,11 +198,11 @@
 	"dependencies": {
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
-		"eventsource": "^1.0.5",
-		"launchdarkly-node-server-sdk": "5.10.0",
+		"launchdarkly-node-server-sdk": "^5.13.1",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
 		"opn": "5.3.0",
+		"request": "^2.34",
 		"request-promise-native": "1.0.8"
 	},
 	"resolutions": {

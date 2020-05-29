@@ -1,4 +1,4 @@
-import { WorkspaceConfiguration, workspace, ExtensionContext } from 'vscode';
+import { WorkspaceConfiguration, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
 
 const package_json = require('../package.json');
 
@@ -13,6 +13,7 @@ export class Configuration {
 	env = '';
 	enableHover = true;
 	enableAutocomplete = true;
+	enableFlagExplorer = true;
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
 
@@ -54,6 +55,24 @@ export class Configuration {
 		process.nextTick(function() {});
 	}
 
+	public streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
+		let streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
+		if (streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
+			return true;
+		}
+		return false;
+	}
+
+	public streamingConfigStartCheck(): boolean {
+		let streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
+		if (!streamingConfigOptions.every(o => !!this[o])) {
+			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
+			return false;
+		}
+		return true;
+	}
+
 	validate(): string {
 		const version = package_json.version;
 		const ctx = this.ctx;
@@ -78,5 +97,9 @@ export class Configuration {
 
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
+	}
+
+	setState(key: string) {
+		return this.ctx.globalState.update(key, undefined);
 	}
 }
