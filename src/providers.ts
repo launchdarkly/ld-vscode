@@ -21,8 +21,9 @@ import { kebabCase } from 'lodash';
 import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
-import { Environment, Flag, FlagConfiguration } from './models';
+import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
 import { FlagStore } from './flagStore';
+import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
@@ -31,34 +32,33 @@ const LD_MODE: DocumentFilter = {
 };
 
 export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
+	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
+	if (config.enableFlagExplorer) {
+		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
+	}
+
+	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
+
 	ctx.subscriptions.push(
 		commands.registerCommand('extension.configureLaunchDarkly', async () => {
 			try {
 				const configurationMenu = new ConfigurationMenu(config, api);
 				await configurationMenu.configure();
-				if (configurationMenu.didChangeAccessToken()) {
-					await flagStore.reload();
-				}
+				await flagStore.reload();
+				await flagView.reload();
 				window.showInformationMessage('LaunchDarkly configured successfully');
 			} catch (err) {
 				console.error(err);
-				window.showErrorMessage('An unexpected error occured, please try again later.');
+				window.showErrorMessage('An unexpected error occurred, please try again later.');
 			}
 		}),
-	);
-
-	ctx.subscriptions.push(
 		languages.registerCompletionItemProvider(
 			LD_MODE,
 			new LaunchDarklyCompletionItemProvider(config, flagStore),
 			"'",
 			'"',
 		),
-	);
-
-	ctx.subscriptions.push(languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore)));
-
-	ctx.subscriptions.push(
+		languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore)),
 		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
 			let flagKey = editor.document.getText(
 				editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
@@ -167,7 +167,7 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	const { flag } = await flagStore.getFeatureFlag(flagKey);
 
 	// Default to first environment
-	let env: Environment = Object.values(flag.environments)[0];
+	let env: FeatureFlagConfig = Object.values(flag.environments)[0];
 	let sitePath = env._site.href;
 
 	if (!config.env) {
@@ -183,7 +183,7 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	opn(url.resolve(config.baseUri, sitePath));
 };
 
-export function generateHoverString(flag: Flag, c: FlagConfiguration, url?: string) {
+export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url?: string) {
 	const fields = [
 		['Name', flag.name],
 		['Key', c.key],

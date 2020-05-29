@@ -1,25 +1,32 @@
 import { ConfigurationChangeEvent, commands, window } from 'vscode';
-import { LDFeatureStore, LDStreamProcessor } from 'launchdarkly-node-server-sdk';
 import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
-import StreamProcessor = require('launchdarkly-node-server-sdk/streaming');
-import Requestor = require('launchdarkly-node-server-sdk/requestor');
+import LaunchDarkly = require('launchdarkly-node-server-sdk');
+
 import { debounce } from 'lodash';
 
-import { Flag, FlagConfiguration, FlagWithConfiguration } from './models';
+import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
 
-const PACKAGE_JSON = require('../package.json');
 const DATA_KIND = { namespace: 'features' };
+
+type FlagUpdateCallback = (flag: FeatureFlag) => void;
+type LDClientResolve = (LDClient: LaunchDarkly.LDClient) => void;
+type LDClientReject = () => void;
 
 export class FlagStore {
 	private readonly config: Configuration;
-	private readonly store: LDFeatureStore;
-	private readonly flagMetadata: { [key: string]: Flag } = {};
+	private readonly store: LaunchDarkly.LDFeatureStore;
+	private readonly flagMetadata: { [key: string]: FeatureFlag } = {};
 
 	private readonly api: LaunchDarklyAPI;
-	private readonly streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-	private updateProcessor: LDStreamProcessor;
+
+	private resolveLDClient: LDClientResolve;
+	private rejectLDClient: LDClientReject;
+	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve, reject) => {
+		this.resolveLDClient = resolve;
+		this.rejectLDClient = reject;
+	});
 
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
@@ -29,56 +36,70 @@ export class FlagStore {
 	}
 
 	async reload(e?: ConfigurationChangeEvent) {
-		if (e && this.streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+		if (e && this.config.streamingConfigReloadCheck(e)) {
 			return;
 		}
 		await this.debouncedReload();
 	}
 
-	private readonly debouncedReload = debounce(async () => {
-		await this.stop();
-		const err = await this.start();
-		if (err) {
-			window.showErrorMessage(`[LaunchDarkly] ${err}`);
-		}
-	}, 200);
+	private readonly debouncedReload = debounce(
+		async () => {
+			try {
+				await this.stop();
+				await this.start();
+			} catch (err) {
+				window.showErrorMessage(`[LaunchDarkly] ${err}`);
+			}
+		},
+		200,
+		{ leading: false, trailing: true },
+	);
 
 	async start() {
-		if (!['accessToken', 'baseUri', 'streamUri', 'project', 'env'].every(o => !!this.config[o])) {
-			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
+		if (!this.config.streamingConfigStartCheck()) {
 			return;
 		}
-
-		const sdkKey = await this.getLatestSDKKey();
-		if (!sdkKey) {
-			return;
+		try {
+			const sdkKey = await this.getLatestSDKKey();
+			const ldConfig = this.ldConfig();
+			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
+			this.resolveLDClient(ldClient);
+		} catch (err) {
+			this.rejectLDClient();
+			console.error(err);
 		}
-
-		const ldConfig = this.ldConfig();
-		this.updateProcessor = StreamProcessor(sdkKey, ldConfig, Requestor(sdkKey, ldConfig));
-		return new Promise((resolve, reject) => {
-			this.updateProcessor.start(err => {
-				if (err) {
-					let errMsg: string;
-					if (err.message) {
-						errMsg = `Error retrieving feature flags: ${err.message}.`;
-					} else {
-						console.error(err);
-						errMsg = `Unexpected error retrieving flags.`;
-					}
-					reject(errMsg);
-					return;
-				}
-				resolve();
-				process.nextTick(function() {});
-			});
-		});
 	}
 
-	stop(): Promise<void> {
-		return new Promise(resolve => {
-			this.updateProcessor && this.updateProcessor.stop();
-			this.store.init({ features: [] }, resolve);
+	async on(event: string, cb: FlagUpdateCallback) {
+		try {
+			const ldClient = await this.ldClient;
+			await ldClient.on(event, cb);
+		} catch (err) {
+			// do nothing, ldclient does not exist
+		}
+	}
+
+	async removeAllListeners() {
+		try {
+			const ldClient = await this.ldClient;
+			await ldClient.removeAllListeners('update');
+		} catch (err) {
+			// do nothing, ldclient does not exist
+		}
+	}
+
+	async stop() {
+		try {
+			// Optimistically reject, if already resolved this has no effect
+			this.rejectLDClient();
+			const ldClient = await this.ldClient;
+			ldClient.close();
+		} catch {
+			// ldClient was rejected, nothing to do
+		}
+		this.ldClient = new Promise((resolve, reject) => {
+			this.resolveLDClient = resolve;
+			this.rejectLDClient = reject;
 		});
 	}
 
@@ -94,10 +115,8 @@ export class FlagStore {
 						'Configure',
 					)
 					.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
-				return;
 			}
-			console.error(`Failed to retrieve LaunchDarkly SDK Key: ${err}`);
-			return;
+			throw err;
 		}
 	}
 
@@ -107,12 +126,6 @@ export class FlagStore {
 			baseUri: this.config.baseUri,
 			streamUri: this.config.streamUri,
 			featureStore: this.store,
-			logger: {
-				debug: console.log,
-				warn: console.warn,
-				error: console.error,
-			},
-			userAgent: 'VSCodeExtension/' + PACKAGE_JSON.version,
 		};
 	}
 
@@ -125,7 +138,7 @@ export class FlagStore {
 					return;
 				}
 
-				if (!flag || flag.environmentVersion(this.config.env) < res.version) {
+				if (!flag) {
 					try {
 						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
 						this.flagMetadata[key] = flag;

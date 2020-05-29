@@ -2,7 +2,9 @@ import * as rp from 'request-promise-native';
 import * as url from 'url';
 
 import { Configuration } from './configuration';
-import { Resource, Project, Environment, Flag } from './models';
+import { Resource, Project, Environment, FeatureFlag } from './models';
+
+const PACKAGE_JSON = require('../package.json');
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
@@ -35,20 +37,32 @@ export class LaunchDarklyAPI {
 		return JSON.parse(data);
 	}
 
-	async getFeatureFlag(projectKey: string, flagKey: string, envKey?: string): Promise<Flag> {
+	async getFeatureFlag(projectKey: string, flagKey: string, envKey?: string): Promise<FeatureFlag> {
 		const envParam = envKey ? '?env=' + envKey : '';
 		const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
 		const data = await rp(options);
-		return new Flag(JSON.parse(data));
+		return new FeatureFlag(JSON.parse(data));
 	}
 
-	private createOptions(path: string) {
-		return {
+	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
+		const envParam = envKey ? 'env=' + envKey : '';
+		const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=false&sort=name`);
+		const data = await rp(options);
+		const flags = JSON.parse(data).items;
+		return flags;
+	}
+
+	private createOptions(path: string, method: string = 'GET') {
+		let options = {
+			method: method,
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
 			headers: {
 				Authorization: this.config.accessToken,
+				UserAgent: 'VSCodeExtension/' + PACKAGE_JSON.version,
 			},
 		};
+
+		return options;
 	}
 }
 
