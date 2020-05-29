@@ -57,7 +57,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	getChildren(element?: FlagNode): Thenable<FlagNode[]> {
-		console.log('children', this.flagNodes && this.flagNodes.length);
 		if (!this.flagNodes) {
 			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
 		}
