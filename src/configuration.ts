@@ -99,7 +99,4 @@ export class Configuration {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
 	}
 
-	setState(key: string) {
-		return this.ctx.globalState.update(key, undefined);
-	}
 }
