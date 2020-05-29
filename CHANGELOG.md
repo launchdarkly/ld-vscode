@@ -2,6 +2,12 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.3.0] - 2020-05-29
+
+### Added
+
+- Added "Feature Flag Explorer" to Explorer Container. Provides a list view of all feature flags and their targeting in current environment.
+
 ## [2.2.3] - 2020-03-24
 
 ### Added
