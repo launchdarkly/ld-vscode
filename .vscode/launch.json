@@ -12,7 +12,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
-      "preLaunchTask": "tsc: build - tsconfig.json"
+      "preLaunchTask": "test-compile"
 		},
 		{
 			"name": "Launch Tests",

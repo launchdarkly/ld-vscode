@@ -16,6 +16,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private flagNodes: Array<FlagNode>;
 	private ctx: vscode.ExtensionContext;
 	private _onDidChangeTreeData: vscode.EventEmitter<FlagNode | null | void> = new vscode.EventEmitter<FlagNode | null | void>();
+	readonly onDidChangeTreeData: vscode.Event<FlagNode | null | void> = this._onDidChangeTreeData.event;
 
 	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext) {
 		this.api = api;
@@ -56,6 +57,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	getChildren(element?: FlagNode): Thenable<FlagNode[]> {
+		console.log("children", this.flagNodes && this.flagNodes.length)
 		if (!this.flagNodes) {
 			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
 		}
@@ -67,6 +69,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		try {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagNodes = flags.map(flag => this.flagToValues(flag));
+			console.log("GOT HERE", this.flagNodes.length)
 		} catch (err) {
 			console.error(err);
 			let message = 'Error retrieving Flags';
