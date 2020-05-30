@@ -12,7 +12,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
-      "preLaunchTask": "test-compile"
+      "preLaunchTask": "${defaultBuildTask}"
 		},
 		{
 			"name": "Launch Tests",
