@@ -35,13 +35,10 @@ export async function activate(ctx: ExtensionContext) {
 			break;
 	}
 
-	const api = new LaunchDarklyAPI(config)
+	const api = new LaunchDarklyAPI(config);
 
-	await registerProviders(ctx, config, api)
+	await registerProviders(ctx, config, api);
 }
-
-
-
 
 export function deactivate() {
 	flagStore && flagStore.stop();

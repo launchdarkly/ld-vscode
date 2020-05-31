@@ -5,7 +5,6 @@ import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import * as path from 'path';
 import { debounce } from 'lodash';
-const onChange = require('on-change');
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -37,9 +36,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return;
 		}
 		await this.debouncedReload();
-		console.log("reloading & refreshing")
-		this.refresh()
-
+		this.refresh();
 	}
 
 	private readonly debouncedReload = debounce(
@@ -47,8 +44,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			try {
 				await this.flagStore.removeAllListeners();
 				// Clear existing nodes
-				this.flagNodes = []
-				this.load(this.flagStore.flagMetadata)
+				this.flagNodes = [];
+				this.load(this.flagStore.flagMetadata);
 				await this.flagUpdateListener();
 			} catch (err) {
 				console.error(err);
@@ -62,25 +59,15 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		return element;
 	}
 
-	// async load(flags): Promise<Array<FlagNode>> {
-	// 	return new Promise(resolve => {
-	// 		const parsedFlags: Array<FlagNode> = []
-	// 		Object.keys(this.flagStore.flagMetadata).map(key => {
-	// 			parsedFlags.push(this.flagToValues(this.flagStore.flagMetadata[key]));
-	// 		});
-	// 		return resolve(parsedFlags)
-	// 	})
-	// }
-
 	private load(flags): Array<FlagNode> {
-		const parsedFlags: Array<FlagNode> = []
-		Object.keys(this.flagStore.flagMetadata).map((key, idx, arr)=> {
+		const parsedFlags: Array<FlagNode> = [];
+		Object.keys(this.flagStore.flagMetadata).map((key, idx, arr) => {
 			this.flagNodes.push(this.flagToValues(this.flagStore.flagMetadata[key]));
 			if (idx == arr.length - 1) {
-				this.refresh()
+				this.refresh();
 			}
 		});
-		return parsedFlags
+		return parsedFlags;
 	}
 
 	getChildren(element?: FlagNode): Thenable<FlagNode[]> {
@@ -90,27 +77,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 		return Promise.resolve(element ? element.children : this.flagNodes);
 	}
-
-	// async getFlags() {
-	// 	try {
-	// 		const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-	// 		this.flagNodes = flags.map(flag => this.flagToValues(flag));
-	// 		console.log('GOT HERE', this.flagNodes.length);
-	// 	} catch (err) {
-	// 		console.error(err);
-	// 		let message = 'Error retrieving Flags';
-	// 		if (err.statusCode === 401) {
-	// 			message = 'Unauthorized';
-	// 		} else if (
-	// 			err.statusCode === 404 ||
-	// 			(err.statusCode === 400 && err.message.includes('Unknown environment key'))
-	// 		) {
-	// 			message = 'Configured environment does not exist.';
-	// 		}
-	// 		this.flagNodes = [this.flagFactory({ label: message })];
-	// 	}
-	// 	this.refresh();
-	// }
 
 	registerTreeviewRefreshCommand(): vscode.Disposable {
 		return vscode.commands.registerCommand('launchdarkly.treeviewrefresh', (): void => {
@@ -141,27 +107,15 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	private async flagUpdateListener() {
 		// Setup listener for flag changes
-		onChange(this.flagStore.flagMetadata, function(path, value, previousValue) {
-			console.log(path)
-			const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === this.flagStore.flagMetadata[path].key);
+		this.flagStore.storeUpdates.event(flag => {
+			const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag);
 			if (updatedIdx === -1) {
-				this.flagNodes.push(this.flagToValues(this.flagStore.flagMetadata[path]))
-			} else{
-				this.flagNodes[updatedIdx] = this.flagToValues(this.flagStore.flagMetadata[path]);
-
+				this.flagNodes.push(this.flagToValues(this.flagStore.flagMetadata[flag]));
+			} else {
+				this.flagNodes[updatedIdx] = this.flagToValues(this.flagStore.flagMetadata[flag]);
 			}
-			this.refresh()
-		})
-		// this.flagStore.on('update', async flag => {
-		// 	try {
-		// 		const updatedFlag = await this.api.getFeatureFlag(this.config.project, flag.key, this.config.env);
-		// 		const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === updatedFlag.key);
-		// 		this.flagNodes[updatedIdx] = this.flagToValues(updatedFlag);
-		// 		this.refresh();
-		// 	} catch (err) {
-		// 		console.error('Failed to update LaunchDarkly flag tree view:', err);
-		// 	}
-		// });
+			this.refresh();
+		});
 	}
 
 	private flagFactory({
@@ -266,7 +220,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 							flag.variations[target.variation].name
 								? flag.variations[target.variation].name
 								: flag.variations[target.variation].value
-							}`,
+						}`,
 						ctxValue: 'variation',
 					}),
 					this.flagFactory({ label: `Values: ${target.values}`, ctxValue: 'value' }),
@@ -337,7 +291,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({
 					label: `Default Variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-						}`,
+					}`,
 					ctxValue: 'variationDefault',
 				}),
 			);

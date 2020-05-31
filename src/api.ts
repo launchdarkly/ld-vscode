@@ -32,24 +32,47 @@ export class LaunchDarklyAPI {
 	}
 
 	async getEnvironment(projectKey: string, envKey: string): Promise<Environment> {
-		const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
-		const data = await rp(options);
-		return JSON.parse(data);
+		try {
+			const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
+			const data = await rp(options);
+			return JSON.parse(data);
+		} catch (err) {
+			return Promise.reject(this.errHandle(err));
+		}
 	}
 
 	async getFeatureFlag(projectKey: string, flagKey: string, envKey?: string): Promise<FeatureFlag> {
-		const envParam = envKey ? '?env=' + envKey : '';
-		const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
-		const data = await rp(options);
-		return new FeatureFlag(JSON.parse(data));
+		try {
+			const envParam = envKey ? '?env=' + envKey : '';
+			const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
+			const data = await rp(options);
+			return new FeatureFlag(JSON.parse(data));
+		} catch (err) {
+			return Promise.reject(this.errHandle(err));
+		}
 	}
 
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
-		const envParam = envKey ? 'env=' + envKey : '';
-		const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=false&sort=name`);
-		const data = await rp(options);
-		const flags = JSON.parse(data).items;
-		return flags;
+		try {
+			const envParam = envKey ? 'env=' + envKey : '';
+			const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=false&sort=name`);
+			const data = await rp(options);
+			const flags = JSON.parse(data).items;
+			return flags;
+		} catch (err) {
+			return Promise.reject(this.errHandle(err));
+		}
+	}
+
+	private errHandle(err): string {
+		let message = 'Error retrieving Flags';
+		if (err.statusCode === 401) {
+			message = 'Unauthorized';
+		} else if (err.statusCode === 404 || (err.statusCode === 400 && err.message.includes('Unknown environment key'))) {
+			message = 'Configured environment does not exist.';
+		}
+
+		return message;
 	}
 
 	private createOptions(path: string, method: string = 'GET') {

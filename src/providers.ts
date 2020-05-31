@@ -14,7 +14,7 @@ import {
 	TextDocument,
 	MarkdownString,
 	workspace,
-	ConfigurationChangeEvent
+	ConfigurationChangeEvent,
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
@@ -26,6 +26,7 @@ import { LaunchDarklyAPI } from './api';
 import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
 import { FlagStore } from './flagStore';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
+import { downloadAndUnzipVSCode } from 'vscode-test';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
@@ -34,15 +35,20 @@ const LD_MODE: DocumentFilter = {
 };
 
 export async function register(ctx: ExtensionContext, config: Configuration, api: LaunchDarklyAPI) {
-	var flagStore
-	const flags = await api.getFeatureFlags(config.project, config.env)
-	const arrayToObject = (array: Array<FeatureFlag>): Object =>
-		array.reduce((obj, item) => {
-			obj[item.key] = item
-			return obj
-		}, {})
-	let intFlags = arrayToObject(flags)
-	flagStore = new FlagStore(config, api, intFlags);
+	var flagStore;
+
+	try {
+		const flags = await api.getFeatureFlags(config.project, config.env);
+		const arrayToObject = (array: Array<FeatureFlag>): Object =>
+			array.reduce((obj, item) => {
+				obj[item.key] = item;
+				return obj;
+			}, {});
+		let intFlags = arrayToObject(flags);
+		flagStore = new FlagStore(config, api, intFlags);
+	} catch (err) {
+		window.showErrorMessage(err);
+	}
 
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {

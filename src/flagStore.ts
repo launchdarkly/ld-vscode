@@ -1,4 +1,4 @@
-import { ConfigurationChangeEvent, commands, window } from 'vscode';
+import { ConfigurationChangeEvent, commands, window, EventEmitter } from 'vscode';
 import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
 import LaunchDarkly = require('launchdarkly-node-server-sdk');
 
@@ -7,7 +7,6 @@ import { debounce } from 'lodash';
 import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
-import { resolveCname } from 'dns';
 
 const DATA_KIND = { namespace: 'features' };
 
@@ -18,21 +17,22 @@ type LDClientReject = () => void;
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
-	public flagMetadata: Object
-	private readonly api: LaunchDarklyAPI
+	public flagMetadata: Object;
+	private readonly api: LaunchDarklyAPI;
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
 	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve, reject) => {
 		this.resolveLDClient = resolve;
 		this.rejectLDClient = reject;
 	});
+	public storeUpdates: EventEmitter<string> = new EventEmitter();
 
 	constructor(config: Configuration, api: LaunchDarklyAPI, flagMetadata: Object) {
 		this.config = config;
 		this.api = api;
 		this.store = InMemoryFeatureStore();
 		this.start();
-		this.flagMetadata = flagMetadata
+		this.flagMetadata = flagMetadata;
 	}
 
 	async reload(e?: ConfigurationChangeEvent) {
@@ -65,10 +65,10 @@ export class FlagStore {
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
 			this.on('update', async flag => {
-				console.log("updated flag")
 				try {
 					const updatedFlag = await this.api.getFeatureFlag(this.config.project, flag.key, this.config.env);
 					this.flagMetadata[updatedFlag.key] = updatedFlag;
+					this.storeUpdates.fire(flag.key);
 				} catch (err) {
 					console.error('Failed to update LaunchDarkly flag store.', err);
 				}
@@ -79,7 +79,7 @@ export class FlagStore {
 		}
 	}
 
-	async on(event: string, cb: FlagUpdateCallback) {
+	private async on(event: string, cb: FlagUpdateCallback) {
 		try {
 			const ldClient = await this.ldClient;
 			await ldClient.on(event, cb);
