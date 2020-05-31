@@ -64,6 +64,15 @@ export class FlagStore {
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
+			this.on('update', async flag => {
+				console.log("updated flag")
+				try {
+					const updatedFlag = await this.api.getFeatureFlag(this.config.project, flag.key, this.config.env);
+					this.flagMetadata[updatedFlag.key] = updatedFlag;
+				} catch (err) {
+					console.error('Failed to update LaunchDarkly flag store.', err);
+				}
+			});
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
@@ -101,27 +110,6 @@ export class FlagStore {
 			this.resolveLDClient = resolve;
 			this.rejectLDClient = reject;
 		});
-	}
-
-	public async clientInitialized() {
-		const ldClient = await this.ldClient
-		const initialized = await ldClient.initialized
-
-		return initialized
-	}
-
-	public async featureStore(): Promise<boolean> {
-		await this.start()
-		if (this.flagMetadata !== undefined && Object.keys(this.flagMetadata).length > 0) {
-			console.log("wut")
-			return true
-		}
-		// await new Promise(resolve => {
-		// 	setTimeout(resolve, 5000)
-		// })
-		console.log(this.flagMetadata["chatbox"])
-		console.log("return true")
-		return true
 	}
 
 	private async getLatestSDKKey() {

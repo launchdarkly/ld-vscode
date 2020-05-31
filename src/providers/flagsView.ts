@@ -5,6 +5,7 @@ import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import * as path from 'path';
 import { debounce } from 'lodash';
+const onChange = require('on-change');
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -45,6 +46,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		async () => {
 			try {
 				await this.flagStore.removeAllListeners();
+				// Clear existing nodes
+				this.flagNodes = []
 				this.load(this.flagStore.flagMetadata)
 				await this.flagUpdateListener();
 			} catch (err) {
@@ -71,8 +74,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	private load(flags): Array<FlagNode> {
 		const parsedFlags: Array<FlagNode> = []
-		Object.keys(this.flagStore.flagMetadata).map(key => {
+		Object.keys(this.flagStore.flagMetadata).map((key, idx, arr)=> {
 			this.flagNodes.push(this.flagToValues(this.flagStore.flagMetadata[key]));
+			if (idx == arr.length - 1) {
+				this.refresh()
+			}
 		});
 		return parsedFlags
 	}
@@ -135,16 +141,27 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	private async flagUpdateListener() {
 		// Setup listener for flag changes
-		this.flagStore.on('update', async flag => {
-			try {
-				const updatedFlag = await this.api.getFeatureFlag(this.config.project, flag.key, this.config.env);
-				const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === updatedFlag.key);
-				this.flagNodes[updatedIdx] = this.flagToValues(updatedFlag);
-				this.refresh();
-			} catch (err) {
-				console.error('Failed to update LaunchDarkly flag tree view:', err);
+		onChange(this.flagStore.flagMetadata, function(path, value, previousValue) {
+			console.log(path)
+			const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === this.flagStore.flagMetadata[path].key);
+			if (updatedIdx === -1) {
+				this.flagNodes.push(this.flagToValues(this.flagStore.flagMetadata[path]))
+			} else{
+				this.flagNodes[updatedIdx] = this.flagToValues(this.flagStore.flagMetadata[path]);
+
 			}
-		});
+			this.refresh()
+		})
+		// this.flagStore.on('update', async flag => {
+		// 	try {
+		// 		const updatedFlag = await this.api.getFeatureFlag(this.config.project, flag.key, this.config.env);
+		// 		const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === updatedFlag.key);
+		// 		this.flagNodes[updatedIdx] = this.flagToValues(updatedFlag);
+		// 		this.refresh();
+		// 	} catch (err) {
+		// 		console.error('Failed to update LaunchDarkly flag tree view:', err);
+		// 	}
+		// });
 	}
 
 	private flagFactory({
