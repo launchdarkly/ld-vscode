@@ -112,27 +112,6 @@ export class FlagStore {
 		});
 	}
 
-	public async clientInitialized() {
-		const ldClient = await this.ldClient
-		const initialized = await ldClient.initialized
-
-		return initialized
-	}
-
-	public async featureStore(): Promise<boolean> {
-		await this.start()
-		if (this.flagMetadata !== undefined && Object.keys(this.flagMetadata).length > 0) {
-			console.log("wut")
-			return true
-		}
-		// await new Promise(resolve => {
-		// 	setTimeout(resolve, 5000)
-		// })
-		console.log(this.flagMetadata["chatbox"])
-		console.log("return true")
-		return true
-	}
-
 	private async getLatestSDKKey() {
 		try {
 			const env = await this.api.getEnvironment(this.config.project, this.config.env);
