@@ -43,7 +43,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		async () => {
 			try {
 				await this.flagStore.removeAllListeners();
-				this.load(this.flagStore.flagMetadata);
+				const getFlags = await this.flagStore.allFlags()
+				this.load(getFlags)
 				await this.flagUpdateListener();
 			} catch (err) {
 				console.error(err);
@@ -61,8 +62,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		const parsedFlags: Array<FlagNode> = [];
 		// clear all existing nodes
 		this.flagNodes = []
-		Object.keys(this.flagStore.flagMetadata).map((key, idx, arr) => {
-			this.flagNodes.push(this.flagToValues(this.flagStore.flagMetadata[key]));
+		//Object.keys(this.flagStore.flagMetadata).map((key, idx, arr) => {
+		console.log("here")
+		Object.keys(flags).map((key, idx, arr) => {
+			this.flagNodes.push(this.flagToValues(flags[key]));
 			if (idx == arr.length - 1) {
 				this.refresh();
 			}
@@ -326,7 +329,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * Build Off Variation view.
 		 * TODO: Render even if undefined since that is valid option.
 		 */
-		if (flag.environments[this.config.env].offVariation !== undefined) {
+		if (flag.environments[this.config.env].offVariation !== undefined && flag.environments[this.config.env].offVariation !== null) {
 			const offVar = flag.variations[flag.environments[this.config.env].offVariation];
 			renderedFlagFields.push(
 				this.flagFactory({

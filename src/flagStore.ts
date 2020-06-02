@@ -157,15 +157,41 @@ export class FlagStore {
 						return;
 					}
 				}
-
+				let retFlag = Object.assign(this.flagMetadata[key], res)
 				resolve({ flag, config: res });
 			});
 		});
 	}
 
-	allFlags(): Promise<FlagConfiguration[]> {
+	async allFlags(): Promise<Object> {
+		await this.ldClient
 		return new Promise(resolve => {
-			this.store.all(DATA_KIND, resolve);
-		});
+			return this.store.all(DATA_KIND, async (res: Object) => {
+				resolve(await this.merge(this.flagMetadata, res))
+			}
+		);
+		})
 	}
+
+	async merge(flags, targeting) {
+		var env = this.config.env
+		let newObj = {}
+		Object.keys(flags).map((key, idx, arr) => {
+			//console.log(flags[key])
+			//console.log("Blah")
+			var tempSpot = flags[key]["environments"]
+			delete flags[key]["environments"]
+			newObj[key] = {
+				...flags[key],
+				"environments": {
+					[env]: {
+						...tempSpot[this.config.env],
+						...targeting[key]
+					}
+				}
+			}
+		})
+		return newObj
+	}
+
 }
