@@ -68,10 +68,12 @@ export class FlagStore {
 			this.on('update', async flag => {
 				try {
 					const updatedFlag = await this.getFeatureFlag(flag.key);
-					Object.keys(updatedFlag).map(flag => {
-						this.flagMetadata[flag] = updatedFlag[flag];
-					this.storeUpdates.fire(flag);
-					})
+					//Object.keys(updatedFlag).map(flag => {
+						//this.flagMetadata[flag] = updatedFlag[flag];
+						console.log("flag updated")
+						console.log(updatedFlag.key)
+						this.storeUpdates.fire(updatedFlag.key);
+					//})
 				} catch (err) {
 					console.error('Failed to update LaunchDarkly flag store.', err);
 				}
@@ -200,6 +202,7 @@ export class FlagStore {
 		var env = this.config.env
 		let newEnv = Object.assign({}, flag["environments"][env], targeting)
 		flag["environments"][env] = newEnv
+		console.log(flag)
 		return flag
 	}
 }

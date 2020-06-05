@@ -224,8 +224,8 @@ export function generateHoverString(flag: FeatureFlag, env: string, url?: string
 		['Name', flag.name],
 		['Key', flag.key],
 		['Enabled', curEnv.on],
-		['Default variation', JSON.stringify(flag.variations[curEnv.fallthrough.variation], null, 2)],
-		['Off variation', JSON.stringify(flag.variations[curEnv.offVariation], null, 2)],
+		['Default variation', JSON.stringify(flag.variations[curEnv.fallthrough.variation].value)],
+		['Off variation', JSON.stringify(flag.variations[curEnv.offVariation].value)],
 		[plural(curEnv.prerequisites.length, 'prerequisite', 'prerequisites')],
 		[
 			plural(

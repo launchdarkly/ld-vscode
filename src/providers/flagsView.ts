@@ -108,13 +108,15 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	private async flagUpdateListener() {
 		// Setup listener for flag changes
-		this.flagStore.storeUpdates.event(flag => {
+		this.flagStore.storeUpdates.event(async flag => {
+			console.log(`store ${flag}`)
 			const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag);
 			if (updatedIdx === -1) {
 				// Reload all flags for correct sorting of new one.
-				this.load(this.flagStore.flagMetadata)
+				this.load(this.flagStore.allFlags())
 			} else {
-				this.flagNodes[updatedIdx] = this.flagToValues(this.flagStore.flagMetadata[flag]);
+				let updatedFlag = await this.flagStore.getFeatureFlag(flag)
+				this.flagNodes[updatedIdx] = this.flagToValues(updatedFlag);
 			}
 			this.refresh();
 		});
