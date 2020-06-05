@@ -325,7 +325,7 @@ export class FeatureFlag {
 		Object.assign(this, init);
 	}
 
-	key?: string;
+	key: string;
 	/**
 	 * Name of the feature flag.
 	 */
@@ -370,7 +370,7 @@ export class FeatureFlag {
 	customProperties?: { [key: string]: CustomProperty };
 	links?: Links;
 	maintainer?: Member;
-	environments?: { [key: string]: FeatureFlagConfig };
+	environments?: FeatureFlagConfig | FlagConfiguration;
 	/**
 	 * A unix epoch time in milliseconds specifying the archived time of this flag.
 	 */

@@ -4,7 +4,7 @@ import LaunchDarkly = require('launchdarkly-node-server-sdk');
 
 import { debounce } from 'lodash';
 
-import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
+import { FeatureFlag, FlagConfiguration, FlagWithConfiguration, FeatureFlagConfig } from './models';
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
 
@@ -13,11 +13,12 @@ const DATA_KIND = { namespace: 'features' };
 type FlagUpdateCallback = (flag: FeatureFlag) => void;
 type LDClientResolve = (LDClient: LaunchDarkly.LDClient) => void;
 type LDClientReject = () => void;
+export type FlagMap = { [key: string]: FeatureFlag }
 
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
-	public flagMetadata: Object;
+	public flagMetadata: FlagMap;
 	private readonly api: LaunchDarklyAPI;
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
@@ -27,7 +28,7 @@ export class FlagStore {
 	});
 	public storeUpdates: EventEmitter<string> = new EventEmitter();
 
-	constructor(config: Configuration, api: LaunchDarklyAPI, flagMetadata: Object) {
+	constructor(config: Configuration, api: LaunchDarklyAPI, flagMetadata: FlagMap) {
 		this.config = config;
 		this.api = api;
 		this.store = InMemoryFeatureStore();
@@ -66,9 +67,11 @@ export class FlagStore {
 			this.resolveLDClient(ldClient);
 			this.on('update', async flag => {
 				try {
-					const updatedFlag = await this.api.getFeatureFlag(this.config.project, flag.key, this.config.env);
-					this.flagMetadata[updatedFlag.key] = updatedFlag;
-					this.storeUpdates.fire(flag.key);
+					const updatedFlag = await this.getFeatureFlag(flag.key);
+					Object.keys(updatedFlag).map(flag => {
+						this.flagMetadata[flag] = updatedFlag[flag];
+					this.storeUpdates.fire(flag);
+					})
 				} catch (err) {
 					console.error('Failed to update LaunchDarkly flag store.', err);
 				}
@@ -138,8 +141,8 @@ export class FlagStore {
 		};
 	}
 
-	getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
-		let flag = this.flagMetadata[key];
+	getFeatureFlag(key: string): Promise<FeatureFlag> {
+		let flag = JSON.parse(JSON.stringify(this.flagMetadata[key]));
 		return new Promise((resolve, reject) => {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
 				if (!res) {
@@ -157,28 +160,27 @@ export class FlagStore {
 						return;
 					}
 				}
-				let retFlag = Object.assign(this.flagMetadata[key], res)
-				resolve({ flag, config: res });
+				const retFlag = await this.mergeFlag(flag, res)
+				resolve(retFlag)
 			});
 		});
 	}
 
 	async allFlags(): Promise<Object> {
 		await this.ldClient
+		var flagDeepClone = JSON.parse(JSON.stringify(this.flagMetadata))
 		return new Promise(resolve => {
 			return this.store.all(DATA_KIND, async (res: Object) => {
-				resolve(await this.merge(this.flagMetadata, res))
+				resolve(await this.mergeAll(flagDeepClone, res))
 			}
 		);
 		})
 	}
 
-	async merge(flags, targeting) {
+	async mergeAll(flags, targeting): Promise<FlagMap> {
 		var env = this.config.env
 		let newObj = {}
 		Object.keys(flags).map((key, idx, arr) => {
-			//console.log(flags[key])
-			//console.log("Blah")
 			var tempSpot = flags[key]["environments"]
 			delete flags[key]["environments"]
 			newObj[key] = {
@@ -194,4 +196,10 @@ export class FlagStore {
 		return newObj
 	}
 
+	async mergeFlag(flag: FeatureFlag, targeting: FlagConfiguration): Promise<FeatureFlag> {
+		var env = this.config.env
+		let newEnv = Object.assign({}, flag["environments"][env], targeting)
+		flag["environments"][env] = newEnv
+		return flag
+	}
 }
