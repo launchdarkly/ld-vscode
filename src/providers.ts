@@ -15,8 +15,6 @@ import {
 	MarkdownString,
 	workspace,
 	ConfigurationChangeEvent,
-	FileChangeType,
-	DebugConsoleMode,
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
@@ -25,8 +23,8 @@ import { kebabCase } from 'lodash';
 import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
-import { FeatureFlag, FlagConfiguration, FeatureFlagConfig, Environment } from './models';
-import { FlagStore, FlagMap } from './flagStore';
+import { FeatureFlag, FeatureFlagConfig } from './models';
+import { FlagStore } from './flagStore';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 
 const STRING_DELIMETERS = ['"', "'", '`'];

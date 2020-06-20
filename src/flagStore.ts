@@ -4,7 +4,7 @@ import LaunchDarkly = require('launchdarkly-node-server-sdk');
 
 import { debounce } from 'lodash';
 
-import { FeatureFlag, FlagConfiguration, FlagWithConfiguration, FeatureFlagConfig } from './models';
+import { FeatureFlag, FlagConfiguration } from './models';
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
 import * as cron from 'cron';
@@ -174,10 +174,16 @@ export class FlagStore {
 					try {
 						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
 						this.flagMetadata[key] = flag;
-					} catch (e) {
-						console.error(`Could not retrieve feature flag metadata for ${key}: ${e}`);
-						reject(e);
-						return;
+					} catch (err) {
+						let message = 'Error retrieving Flags';
+						if (err.statusCode === 401) {
+							message = 'Unauthorized';
+						} else if (
+							err.statusCode === 404 ||
+							(err.statusCode === 400 && err.message.includes('Unknown environment key'))
+						) {
+							message = 'Configured environment does not exist.';
+						}
 					}
 				}
 				const retFlag = await this.mergeFlag(flag, res);
@@ -228,14 +234,24 @@ export class FlagStore {
 
 	private readonly debounceUpdate = debounce(
 		async () => {
-			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-			const arrayToObject = (array: Array<FeatureFlag>) =>
-				array.reduce((obj: { [key: string]: FeatureFlag }, item): { [key: string]: FeatureFlag } => {
-					obj[item.key] = item;
-					return obj;
-				}, {});
-			this.flagMetadata = arrayToObject(flags);
-			this.storeUpdates.fire(null);
+			try {
+				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				const arrayToObject = (array: Array<FeatureFlag>) =>
+					array.reduce((obj: { [key: string]: FeatureFlag }, item): { [key: string]: FeatureFlag } => {
+						obj[item.key] = item;
+						return obj;
+					}, {});
+				this.flagMetadata = arrayToObject(flags);
+				this.storeUpdates.fire(null);
+			} catch (err) {
+				let errMsg;
+				if (err.statusCode == 404) {
+					errMsg = `Project does not exist`;
+				} else if (err.statusCode == 401) {
+					errMsg = `Unauthorized`;
+				}
+				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+			}
 		},
 		5000,
 		{ leading: true, trailing: true },
