@@ -11,6 +11,7 @@ export class Configuration {
 	sdkKey = '';
 	project = '';
 	env = '';
+	refreshCron = '';
 	enableHover = true;
 	enableAutocomplete = true;
 	enableFlagExplorer = true;
@@ -97,5 +98,13 @@ export class Configuration {
 
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
+	}
+
+	//https://stackoverflow.com/questions/52189713/regular-expression-for-cron-expression-in-javascript
+	validateCron(cron): Boolean {
+		var cronregex = new RegExp(
+			/^(\*|([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (\*|([0-9]|1[0-9]|2[0-3])|\*\/([0-9]|1[0-9]|2[0-3])) (\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/([1-9]|1[0-9]|2[0-9]|3[0-1])) (\*|([1-9]|1[0-2])|\*\/([1-9]|1[0-2])) (\*|([0-6])|\*\/([0-6]))$/,
+		);
+		return cronregex.test(cron);
 	}
 }

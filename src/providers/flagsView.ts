@@ -43,8 +43,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		async () => {
 			try {
 				await this.flagStore.removeAllListeners();
-				const getFlags = await this.flagStore.allFlags()
-				this.load(getFlags)
+				const getFlags = await this.flagStore.allFlags();
+				this.load(getFlags);
 				await this.flagUpdateListener();
 			} catch (err) {
 				console.error(err);
@@ -61,11 +61,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private load(flags: Object): Array<FlagNode> {
 		const parsedFlags: Array<FlagNode> = [];
 		// clear all existing nodes
-		this.flagNodes = []
+		this.flagNodes = [];
 		Object.keys(flags).map((key, idx, arr) => {
 			this.flagNodes.push(this.flagToValues(flags[key]));
 			if (idx == arr.length - 1) {
-				console.log("load refresh")
+				console.log('load refresh');
 				this.refresh();
 			}
 		});
@@ -95,7 +95,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			vscode.commands.registerCommand('launchdarkly.openBrowser', (node: FlagNode) =>
 				vscode.env.openExternal(vscode.Uri.parse(node.uri)),
 			),
-			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.reload()),
+			vscode.commands.registerCommand('launchdarkly.refreshEntry', async () => {
+				await this.flagStore.updateFlags();
+			}),
 			this.registerTreeviewRefreshCommand(),
 		);
 	}
@@ -111,17 +113,17 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		// Setup listener for flag changes
 		this.flagStore.storeUpdates.event(async flag => {
 			if (flag == null) {
-				console.log("refreshing")
-				const flags = await this.flagStore.allFlags()
-				this.load(flags)
+				console.log('refreshing');
+				const flags = await this.flagStore.allFlags();
+				this.load(flags);
 			} else {
-				console.log(`store ${flag}`)
+				console.log(`store ${flag}`);
 				const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag);
 				if (updatedIdx === -1) {
 					// Reload all flags for correct sorting of new one.
-					this.load(this.flagStore.allFlags())
+					this.load(this.flagStore.allFlags());
 				} else {
-					let updatedFlag = await this.flagStore.getFeatureFlag(flag)
+					let updatedFlag = await this.flagStore.getFeatureFlag(flag);
 					this.flagNodes[updatedIdx] = this.flagToValues(updatedFlag);
 				}
 				this.refresh();
@@ -336,7 +338,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * Build Off Variation view.
 		 * TODO: Render even if undefined since that is valid option.
 		 */
-		if (flag.environments[this.config.env].offVariation !== undefined && flag.environments[this.config.env].offVariation !== null) {
+		if (
+			flag.environments[this.config.env].offVariation !== undefined &&
+			flag.environments[this.config.env].offVariation !== null
+		) {
 			const offVar = flag.variations[flag.environments[this.config.env].offVariation];
 			renderedFlagFields.push(
 				this.flagFactory({

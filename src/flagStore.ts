@@ -1,4 +1,4 @@
-import { ConfigurationChangeEvent, commands, window, EventEmitter } from 'vscode';
+import { ConfigurationChangeEvent, commands, window, EventEmitter, workspace } from 'vscode';
 import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
 import LaunchDarkly = require('launchdarkly-node-server-sdk');
 
@@ -14,7 +14,7 @@ const DATA_KIND = { namespace: 'features' };
 type FlagUpdateCallback = (flag: FeatureFlag) => void;
 type LDClientResolve = (LDClient: LaunchDarkly.LDClient) => void;
 type LDClientReject = () => void;
-export type FlagMap = { [key: string]: FeatureFlag }
+export type FlagMap = { [key: string]: FeatureFlag };
 
 export class FlagStore {
 	private readonly config: Configuration;
@@ -69,38 +69,37 @@ export class FlagStore {
 			this.on('update', async flag => {
 				try {
 					const updatedFlag = await this.getFeatureFlag(flag.key);
-					//Object.keys(updatedFlag).map(flag => {
-						//this.flagMetadata[flag] = updatedFlag[flag];
-						console.log("flag updated")
-						console.log(updatedFlag.key)
-						this.storeUpdates.fire(updatedFlag.key);
-					//})
+					this.storeUpdates.fire(updatedFlag.key);
 				} catch (err) {
 					console.error('Failed to update LaunchDarkly flag store.', err);
 				}
 			});
-			this.cron()
+			if (this.config.refreshCron) {
+				if (this.config.validateCron(this.config.refreshCron)) {
+					this.cron(this.config.refreshCron);
+				} else {
+					window.showErrorMessage(
+						`Invalid cron expression: '${this.config.refreshCron}' needs to be 5 field cron format.`,
+					);
+				}
+			}
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
 		}
 	}
 
-	private async cron() {
+	private async cron(exp: string) {
 		var CronJob = cron.CronJob;
-			var job = new CronJob('*/2 * * * *', async () => {
-				console.log('Fetching Feature Flags');
-				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-				const arrayToObject = (array: Array<FeatureFlag>) =>
-					array.reduce((obj: { [key: string]: FeatureFlag }, item):  { [key: string]: FeatureFlag } => {
-						obj[item.key] = item;
-						return obj;
-					}, {});
-				this.flagMetadata = arrayToObject(flags);
-				console.log(this.flagMetadata["time-to-turn-on"])
-				this.storeUpdates.fire(null)
-			}, null, true, 'America/Los_Angeles');
-			job.start();
+		var job = new CronJob(
+			exp,
+			async () => {
+				this.updateFlags();
+			},
+			null,
+			true,
+		);
+		job.start();
 	}
 
 	private async on(event: string, cb: FlagUpdateCallback) {
@@ -181,47 +180,64 @@ export class FlagStore {
 						return;
 					}
 				}
-				const retFlag = await this.mergeFlag(flag, res)
-				resolve(retFlag)
+				const retFlag = await this.mergeFlag(flag, res);
+				resolve(retFlag);
 			});
 		});
 	}
 
 	async allFlags(): Promise<Object> {
-		await this.ldClient
-		var flagDeepClone = JSON.parse(JSON.stringify(this.flagMetadata))
+		await this.ldClient;
+		var flagDeepClone = JSON.parse(JSON.stringify(this.flagMetadata));
 		return new Promise(resolve => {
 			return this.store.all(DATA_KIND, async (res: Object) => {
-				resolve(await this.mergeAll(flagDeepClone, res))
-			}
-		);
-		})
+				resolve(await this.mergeAll(flagDeepClone, res));
+			});
+		});
 	}
 
-	async mergeAll(flags, targeting): Promise<FlagMap> {
-		var env = this.config.env
-		let newObj = {}
+	private async mergeAll(flags, targeting): Promise<FlagMap> {
+		var env = this.config.env;
+		let newObj = {};
 		Object.keys(flags).map((key, idx, arr) => {
-			var tempSpot = flags[key]["environments"]
-			delete flags[key]["environments"]
+			var tempSpot = flags[key]['environments'];
+			delete flags[key]['environments'];
 			newObj[key] = {
 				...flags[key],
-				"environments": {
+				environments: {
 					[env]: {
 						...tempSpot[this.config.env],
-						...targeting[key]
-					}
-				}
-			}
-		})
-		return newObj
+						...targeting[key],
+					},
+				},
+			};
+		});
+		return newObj;
 	}
 
-	async mergeFlag(flag: FeatureFlag, targeting: FlagConfiguration): Promise<FeatureFlag> {
-		var env = this.config.env
-		let newEnv = Object.assign({}, flag["environments"][env], targeting)
-		flag["environments"][env] = newEnv
-		console.log(flag)
-		return flag
+	private async mergeFlag(flag: FeatureFlag, targeting: FlagConfiguration): Promise<FeatureFlag> {
+		var env = this.config.env;
+		let newEnv = Object.assign({}, flag['environments'][env], targeting);
+		flag['environments'][env] = newEnv;
+		return flag;
 	}
+
+	async updateFlags() {
+		await this.debounceUpdate();
+	}
+
+	private readonly debounceUpdate = debounce(
+		async () => {
+			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+			const arrayToObject = (array: Array<FeatureFlag>) =>
+				array.reduce((obj: { [key: string]: FeatureFlag }, item): { [key: string]: FeatureFlag } => {
+					obj[item.key] = item;
+					return obj;
+				}, {});
+			this.flagMetadata = arrayToObject(flags);
+			this.storeUpdates.fire(null);
+		},
+		5000,
+		{ leading: true, trailing: true },
+	);
 }

@@ -66,6 +66,11 @@
 					"type": "string",
 					"default": "",
 					"description": "LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead."
+				},
+				"launchdarkly.refreshCron": {
+					"type": "string",
+					"default": "* */2 * * *",
+					"description": "Cron Expression for how often to query LaunchDarkly API for metadata."
 				}
 			}
 		},

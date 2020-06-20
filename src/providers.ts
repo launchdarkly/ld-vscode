@@ -25,7 +25,7 @@ import { kebabCase } from 'lodash';
 import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
-import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
+import { FeatureFlag, FlagConfiguration, FeatureFlagConfig, Environment } from './models';
 import { FlagStore, FlagMap } from './flagStore';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 
@@ -41,7 +41,7 @@ export async function register(ctx: ExtensionContext, config: Configuration, api
 	try {
 		const flags = await api.getFeatureFlags(config.project, config.env);
 		const arrayToObject = (array: Array<FeatureFlag>) =>
-			array.reduce((obj: { [key: string]: FeatureFlag }, item):  { [key: string]: FeatureFlag } => {
+			array.reduce((obj: { [key: string]: FeatureFlag }, item): { [key: string]: FeatureFlag } => {
 				obj[item.key] = item;
 				return obj;
 			}, {});
@@ -108,24 +108,24 @@ export async function register(ctx: ExtensionContext, config: Configuration, api
 				return;
 			}
 
-			// try {
-			// 	await openFlagInBrowser(config, flagKey, flagStore);
-			// } catch (err) {
-			// 	let errMsg = `Encountered an unexpected error retrieving the flag ${flagKey}`;
-			// 	if (err.statusCode == 404) {
-			// 		// Try resolving the flag key to kebab case
-			// 		try {
-			// 			await openFlagInBrowser(config, kebabCase(flagKey), flagStore);
-			// 			return;
-			// 		} catch (err) {
-			// 			if (err.statusCode == 404) {
-			// 				errMsg = `Could not find the flag ${flagKey}`;
-			// 			}
-			// 		}
-			// 	}
-			// 	console.error(err);
-			// 	window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
-			// }
+			try {
+				await openFlagInBrowser(config, flagKey, flagStore);
+			} catch (err) {
+				let errMsg = `Encountered an unexpected error retrieving the flag ${flagKey}`;
+				if (err.statusCode == 404) {
+					// Try resolving the flag key to kebab case
+					try {
+						await openFlagInBrowser(config, kebabCase(flagKey), flagStore);
+						return;
+					} catch (err) {
+						if (err.statusCode == 404) {
+							errMsg = `Could not find the flag ${flagKey}`;
+						}
+					}
+				}
+				console.error(err);
+				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+			}
 		}),
 	);
 }
@@ -143,24 +143,18 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-				console.log(`candidate: ${candidate}`)
+				console.log(`candidate: ${candidate}`);
 				try {
-					const data = await this.flagStore.getFeatureFlag(candidate) //||
-						//(await this.flagStore.getFeatureFlag(kebabCase(candidate)));
-					console.log(`data: ${data.key}`)
+					const data = await this.flagStore.getFeatureFlag(candidate); //||
 					if (data) {
-						console.log(`wtf: ${JSON.stringify(data)}`)
-						console.log(this.config.env)
 						const env = data.environments[this.config.env];
-						console.log(`Env: ${JSON.stringify(env)}`)
 						const sitePath = env._site.href;
 						const browserUrl = url.resolve(this.config.baseUri, sitePath);
-						//console.log(`provider: ${data[env]}`)
 						const hover = generateHoverString(JSON.parse(JSON.stringify(data)), this.config.env, browserUrl);
 						resolve(new Hover(hover));
 						return;
 					} else {
-						console.log("no data")
+						console.log('no data');
 					}
 				} catch (e) {
 					reject(e);
@@ -198,28 +192,31 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 	}
 }
 
-// const openFlagInBrowser = async (config: Configuration, flagKey: string, flagStore: FlagStore) => {
-// 	const flag = await flagStore.getFeatureFlag(flagKey);
+const openFlagInBrowser = async (config: Configuration, flagKey: string, flagStore: FlagStore) => {
+	const flag = await flagStore.getFeatureFlag(flagKey);
 
-// 	// Default to first environment
-// 	let env = Object.values(flag.environments);
-// 	let sitePath = env._site.href;
+	// Default to first environment
+	let env = <Array<FeatureFlagConfig>>Object.values(flag.environments);
+	let sitePath = env[0]._site.href;
+	console.log(sitePath);
 
-// 	if (!config.env) {
-// 		window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
-// 	} else if (!flag.environments[config.env]) {
-// 		window.showWarningMessage(
-// 			`[LaunchDarkly] Configured environment '${config.env}' has been deleted. Falling back to first environment.`,
-// 		);
-// 	} else {
-// 		env = flag.environments[config.env];
-// 		sitePath = env._site.href;
-// 	}
-// 	opn(url.resolve(config.baseUri, sitePath));
-// };
+	if (!config.env) {
+		window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
+	} else if (!flag.environments[config.env]) {
+		window.showWarningMessage(
+			`[LaunchDarkly] Configured environment '${config.env}' has been deleted. Falling back to first environment.`,
+		);
+	} else {
+		env[0] = <FeatureFlagConfig>flag.environments[config.env];
+		sitePath = env[0]._site.href;
+		console.log('2');
+		console.log(sitePath);
+	}
+	opn(url.resolve(config.baseUri, sitePath));
+};
 
 export function generateHoverString(flag: FeatureFlag, env: string, url?: string) {
-	var curEnv = flag.environments[env]
+	var curEnv = flag.environments[env];
 	const fields = [
 		['Name', flag.name],
 		['Key', flag.key],
@@ -249,7 +246,7 @@ export function generateHoverString(flag: FeatureFlag, env: string, url?: string
 		hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`);
 		hoverString.isTrusted = true;
 	}
-	console.log(hoverString)
+	console.log(hoverString);
 	return hoverString;
 }
 
