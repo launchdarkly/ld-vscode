@@ -3,19 +3,11 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as providers from '../src/providers';
-import { FeatureFlag, FlagConfiguration } from '../src/models';
-
-const flag = new FeatureFlag ({
-	name: "Test",
-	key: "test",
-	tags: [],
-	environments: null,
-});
+import { FeatureFlag, FlagConfiguration, Environment } from '../src/models';
 
 const flagConfig: FlagConfiguration = {
 	key: 'test',
 	on: true,
-	variations: ['SomeVariation', { thisIsJson: 'AnotherVariation' }],
 	fallthrough: {
 		variation: 0,
 	},
@@ -26,13 +18,23 @@ const flagConfig: FlagConfiguration = {
 	version: 1,
 };
 
+const flag = new FeatureFlag ({
+	name: "Test",
+	key: "test",
+	tags: [],
+	environments: {
+		"testEnv": flagConfig
+	},
+	variations: [{value: 'SomeVariation'}, {value: { thisIsJson: 'AnotherVariation' }}],
+});
+
 let testPath = path.join(__dirname, '..', '..', 'test');
 
 suite('provider utils tests', () => {
 	test('generateHoverString', () => {
 		assert.equal(
-			"**LaunchDarkly feature flag**\n\nName: \n```\nTest\n```\n\n\nKey: \n```\ntest\n```\n\n\nEnabled: \n```\ntrue\n```\n\n\nDefault variation: \n```\n\"SomeVariation\"\n```\n\n\nOff variation: \n```\n{\n  \"thisIsJson\": \"AnotherVariation\"\n}\n```\n\n\n1 prerequisite\n\n3 user targets\n\n0 rules\n\n[Open in browser](http://app.launchdarkly.com/example)",
-			providers.generateHoverString(flag, flagConfig, "http://app.launchdarkly.com/example").value,
+			"**LaunchDarkly feature flag**\n\nName: \n```\nTest\n```\n\n\nKey: \n```\ntest\n```\n\n\nEnabled: \n```\ntrue\n```\n\n\nDefault variation: \n```\n\"SomeVariation\"\n```\n\n\nOff variation: \n```\n{\"thisIsJson\":\"AnotherVariation\"}\n```\n\n\n1 prerequisite\n\n3 user targets\n\n0 rules\n\n[Open in browser](http://app.launchdarkly.com/example)",
+			providers.generateHoverString(flag, "testEnv", "http://app.launchdarkly.com/example").value,
 		);
 	});
 

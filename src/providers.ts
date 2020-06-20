@@ -141,11 +141,10 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-				console.log(`candidate: ${candidate}`);
 				try {
 					const data = await this.flagStore.getFeatureFlag(candidate); //||
 					if (data) {
-						const env = data.environments[this.config.env];
+						const env = <FeatureFlagConfig>data.environments[this.config.env];
 						const sitePath = env._site.href;
 						const browserUrl = url.resolve(this.config.baseUri, sitePath);
 						const hover = generateHoverString(JSON.parse(JSON.stringify(data)), this.config.env, browserUrl);
@@ -196,7 +195,6 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	// Default to first environment
 	let env = <Array<FeatureFlagConfig>>Object.values(flag.environments);
 	let sitePath = env[0]._site.href;
-	console.log(sitePath);
 
 	if (!config.env) {
 		window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
@@ -207,8 +205,6 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	} else {
 		env[0] = <FeatureFlagConfig>flag.environments[config.env];
 		sitePath = env[0]._site.href;
-		console.log('2');
-		console.log(sitePath);
 	}
 	opn(url.resolve(config.baseUri, sitePath));
 };
@@ -244,7 +240,6 @@ export function generateHoverString(flag: FeatureFlag, env: string, url?: string
 		hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`);
 		hoverString.isTrusted = true;
 	}
-	console.log(hoverString);
 	return hoverString;
 }
 

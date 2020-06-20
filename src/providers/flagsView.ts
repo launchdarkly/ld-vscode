@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { FeatureFlag } from '../models';
+import { FeatureFlag, FeatureFlagConfig } from '../models';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
@@ -156,7 +156,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		/**
 		 * Get Link for Open Browser and build base flag node.
 		 */
-		const flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
+		var env = <FeatureFlagConfig>flag.environments[this.config.env];
+		const flagUri = this.config.baseUri + env._site.href;
 		var item = this.flagFactory({
 			label: flag.name,
 			collapsed: COLLAPSED,

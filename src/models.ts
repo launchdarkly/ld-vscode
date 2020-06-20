@@ -155,7 +155,6 @@ export class Flag extends Resource {
 
 export class FlagConfiguration {
 	key: string;
-	variations: Array<any>;
 	offVariation: any;
 	fallthrough: any;
 	prerequisites: any;
@@ -320,6 +319,9 @@ export class Defaults {
 	}
 }
 
+export class EnvironmentMap {
+	[key: string]: FeatureFlagConfig | FlagConfiguration;
+}
 export class FeatureFlag {
 	constructor(init?: Partial<FeatureFlag>) {
 		Object.assign(this, init);
@@ -370,7 +372,7 @@ export class FeatureFlag {
 	customProperties?: { [key: string]: CustomProperty };
 	links?: Links;
 	maintainer?: Member;
-	environments?: FeatureFlagConfig | FlagConfiguration;
+	environments?: EnvironmentMap;
 	/**
 	 * A unix epoch time in milliseconds specifying the archived time of this flag.
 	 */

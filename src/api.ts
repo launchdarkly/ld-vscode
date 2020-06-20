@@ -32,25 +32,25 @@ export class LaunchDarklyAPI {
 	}
 
 	async getEnvironment(projectKey: string, envKey: string): Promise<Environment> {
-			const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
-			const data = await rp(options);
-			return JSON.parse(data);
+		const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
+		const data = await rp(options);
+		return JSON.parse(data);
 	}
 
 	async getFeatureFlag(projectKey: string, flagKey: string, envKey?: string): Promise<FeatureFlag> {
-			const envParam = envKey ? '?env=' + envKey : '';
-			const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
-			const data = await rp(options);
-			return new FeatureFlag(JSON.parse(data));
+		const envParam = envKey ? '?env=' + envKey : '';
+		const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
+		const data = await rp(options);
+		return new FeatureFlag(JSON.parse(data));
 	}
 
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
-			const envParam = envKey ? 'env=' + envKey : '';
-			//const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=false&sort=name`);
-			const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=true&sort=name`);
-			const data = await rp(options);
-			const flags = JSON.parse(data).items;
-			return flags;
+		const envParam = envKey ? 'env=' + envKey : '';
+		//const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=false&sort=name`);
+		const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=true&sort=name`);
+		const data = await rp(options);
+		const flags = JSON.parse(data).items;
+		return flags;
 	}
 
 	private createOptions(path: string, method: string = 'GET') {

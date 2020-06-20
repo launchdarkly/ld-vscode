@@ -3,7 +3,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/node:8
+      - image: circleci/node:erbium
     steps:
       - checkout
       - run: echo "Node version:" `node --version`
@@ -34,6 +34,9 @@ jobs:
       - run:
           name: Lint
           command: 'yarn run prettier:check'
+
+      - store_artifacts:
+          path: out/
 workflows:
   version: 2
   test:
