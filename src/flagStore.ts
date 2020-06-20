@@ -7,6 +7,7 @@ import { debounce } from 'lodash';
 import { FeatureFlag, FlagConfiguration, FlagWithConfiguration, FeatureFlagConfig } from './models';
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
+import * as cron from 'cron';
 
 const DATA_KIND = { namespace: 'features' };
 
@@ -26,7 +27,7 @@ export class FlagStore {
 		this.resolveLDClient = resolve;
 		this.rejectLDClient = reject;
 	});
-	public storeUpdates: EventEmitter<string> = new EventEmitter();
+	public storeUpdates: EventEmitter<string | null> = new EventEmitter();
 
 	constructor(config: Configuration, api: LaunchDarklyAPI, flagMetadata: FlagMap) {
 		this.config = config;
@@ -78,10 +79,28 @@ export class FlagStore {
 					console.error('Failed to update LaunchDarkly flag store.', err);
 				}
 			});
+			this.cron()
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
 		}
+	}
+
+	private async cron() {
+		var CronJob = cron.CronJob;
+			var job = new CronJob('*/2 * * * *', async () => {
+				console.log('Fetching Feature Flags');
+				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				const arrayToObject = (array: Array<FeatureFlag>) =>
+					array.reduce((obj: { [key: string]: FeatureFlag }, item):  { [key: string]: FeatureFlag } => {
+						obj[item.key] = item;
+						return obj;
+					}, {});
+				this.flagMetadata = arrayToObject(flags);
+				console.log(this.flagMetadata["time-to-turn-on"])
+				this.storeUpdates.fire(null)
+			}, null, true, 'America/Los_Angeles');
+			job.start();
 	}
 
 	private async on(event: string, cb: FlagUpdateCallback) {

@@ -58,13 +58,14 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		return element;
 	}
 
-	private load(flags): Array<FlagNode> {
+	private load(flags: Object): Array<FlagNode> {
 		const parsedFlags: Array<FlagNode> = [];
 		// clear all existing nodes
 		this.flagNodes = []
 		Object.keys(flags).map((key, idx, arr) => {
 			this.flagNodes.push(this.flagToValues(flags[key]));
 			if (idx == arr.length - 1) {
+				console.log("load refresh")
 				this.refresh();
 			}
 		});
@@ -109,16 +110,22 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private async flagUpdateListener() {
 		// Setup listener for flag changes
 		this.flagStore.storeUpdates.event(async flag => {
-			console.log(`store ${flag}`)
-			const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag);
-			if (updatedIdx === -1) {
-				// Reload all flags for correct sorting of new one.
-				this.load(this.flagStore.allFlags())
+			if (flag == null) {
+				console.log("refreshing")
+				const flags = await this.flagStore.allFlags()
+				this.load(flags)
 			} else {
-				let updatedFlag = await this.flagStore.getFeatureFlag(flag)
-				this.flagNodes[updatedIdx] = this.flagToValues(updatedFlag);
+				console.log(`store ${flag}`)
+				const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag);
+				if (updatedIdx === -1) {
+					// Reload all flags for correct sorting of new one.
+					this.load(this.flagStore.allFlags())
+				} else {
+					let updatedFlag = await this.flagStore.getFeatureFlag(flag)
+					this.flagNodes[updatedIdx] = this.flagToValues(updatedFlag);
+				}
+				this.refresh();
 			}
-			this.refresh();
 		});
 	}
 
