@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as providers from '../src/providers';
-import { FeatureFlag, FlagConfiguration, Environment } from '../src/models';
+import { FeatureFlag, FlagConfiguration } from '../src/models';
 
 const flagConfig: FlagConfiguration = {
 	key: 'test',

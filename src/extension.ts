@@ -6,7 +6,6 @@ import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
-import { FeatureFlag } from './models';
 
 let config: Configuration;
 let flagStore: FlagStore;
