@@ -142,7 +142,7 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				try {
-					const data = await this.flagStore.getFeatureFlag(candidate); //||
+					const data = await this.flagStore.getFeatureFlag(candidate);
 					if (data) {
 						const env = <FeatureFlagConfig>data.environments[this.config.env];
 						const sitePath = env._site.href;
