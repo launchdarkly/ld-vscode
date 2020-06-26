@@ -7,7 +7,6 @@ import { debounce } from 'lodash';
 import { FeatureFlag, FlagConfiguration } from './models';
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
-import * as cron from 'cron';
 
 const DATA_KIND = { namespace: 'features' };
 
@@ -73,12 +72,12 @@ export class FlagStore {
 					console.error('Failed to update LaunchDarkly flag store.', err);
 				}
 			});
-			if (this.config.refreshCron) {
-				if (this.config.validateCron(this.config.refreshCron)) {
-					this.cron(this.config.refreshCron);
+			if (this.config.refreshRate) {
+				if (this.config.validateCron(this.config.refreshRate)) {
+					this.cron(this.config.refreshRate);
 				} else {
 					window.showErrorMessage(
-						`Invalid cron expression: '${this.config.refreshCron}' needs to be 5 field cron format.`,
+						`Invalid cron expression: '${this.config.refreshRate}' needs to be 5 field cron format.`,
 					);
 				}
 			}
@@ -88,17 +87,9 @@ export class FlagStore {
 		}
 	}
 
-	private async cron(exp: string) {
-		var CronJob = cron.CronJob;
-		var job = new CronJob(
-			exp,
-			async () => {
-				this.updateFlags();
-			},
-			null,
-			true,
-		);
-		job.start();
+	private async cron(exp: number) {
+		const ms = exp * 60 * 1000
+		setInterval(() => {console.log("refreshing"); this.updateFlags()}, ms)
 	}
 
 	private async on(event: string, cb: FlagUpdateCallback) {

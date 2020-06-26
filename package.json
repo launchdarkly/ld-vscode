@@ -67,10 +67,10 @@
 					"default": "",
 					"description": "LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead."
 				},
-				"launchdarkly.refreshCron": {
-					"type": "string",
-					"default": "0 */2 * * *",
-					"description": "Cron Expression for how often to query LaunchDarkly API for metadata."
+				"launchdarkly.refreshRate": {
+					"type": "number",
+					"default": 120,
+					"description": "How often in minutes to query LaunchDarkly API for updated metadata."
 				}
 			}
 		},
@@ -204,7 +204,6 @@
 		"@types/cron": "^1.7.2",
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
-		"cron": "^1.8.2",
 		"launchdarkly-node-server-sdk": "^5.13.1",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
