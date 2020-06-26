@@ -201,7 +201,6 @@
 		"webpack-cli": "3.3.5"
 	},
 	"dependencies": {
-		"@types/cron": "^1.7.2",
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
 		"launchdarkly-node-server-sdk": "^5.13.1",
