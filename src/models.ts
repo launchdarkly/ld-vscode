@@ -319,9 +319,10 @@ export class Defaults {
 	}
 }
 
-export class EnvironmentMap {
+class EnvironmentMap {
 	[key: string]: FeatureFlagConfig | FlagConfiguration;
 }
+
 export class FeatureFlag {
 	constructor(init?: Partial<FeatureFlag>) {
 		Object.assign(this, init);
