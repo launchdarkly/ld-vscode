@@ -65,7 +65,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		Object.keys(flags).map((key, idx, arr) => {
 			this.flagNodes.push(this.flagToValues(flags[key]));
 			if (idx == arr.length - 1) {
-				console.log('load refresh');
 				this.refresh();
 			}
 		});

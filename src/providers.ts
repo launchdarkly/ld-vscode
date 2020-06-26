@@ -147,7 +147,7 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 						const env = <FeatureFlagConfig>data.environments[this.config.env];
 						const sitePath = env._site.href;
 						const browserUrl = url.resolve(this.config.baseUri, sitePath);
-						const hover = generateHoverString(JSON.parse(JSON.stringify(data)), this.config.env, browserUrl);
+						const hover = generateHoverString(data, this.config.env, browserUrl);
 						resolve(new Hover(hover));
 						return;
 					} else {
