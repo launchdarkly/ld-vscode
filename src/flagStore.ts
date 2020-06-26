@@ -88,8 +88,11 @@ export class FlagStore {
 	}
 
 	private async cron(exp: number) {
-		const ms = exp * 60 * 1000
-		setInterval(() => {console.log("refreshing"); this.updateFlags()}, ms)
+		const ms = exp * 60 * 1000;
+		setInterval(() => {
+			console.log('refreshing');
+			this.updateFlags();
+		}, ms);
 	}
 
 	private async on(event: string, cb: FlagUpdateCallback) {
