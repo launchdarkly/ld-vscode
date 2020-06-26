@@ -62,10 +62,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		const parsedFlags: Array<FlagNode> = [];
 		// clear all existing nodes
 		this.flagNodes = [];
-		Object.keys(flags).map((key) => {
+		Object.keys(flags).map(key => {
 			this.flagNodes.push(this.flagToValues(flags[key]));
 		});
-		this.refresh()
+		this.refresh();
 		return parsedFlags;
 	}
 
@@ -116,7 +116,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag);
 				if (updatedIdx === -1) {
 					// Reload all flags for correct sorting of new one.
-					const flags = await this.flagStore.allFlags()
+					const flags = await this.flagStore.allFlags();
 					this.load(flags);
 				} else {
 					let updatedFlag = await this.flagStore.getFeatureFlag(flag);

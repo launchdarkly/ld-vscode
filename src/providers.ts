@@ -193,7 +193,7 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	const flag = await flagStore.getFeatureFlag(flagKey);
 
 	// Default to first environment
-	let env = <FeatureFlagConfig> <unknown> Object.values(flag.environments);
+	let env = <FeatureFlagConfig>(<unknown>Object.values(flag.environments));
 	let sitePath = env._site.href;
 
 	if (!config.env) {
