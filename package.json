@@ -69,7 +69,7 @@
 				},
 				"launchdarkly.refreshCron": {
 					"type": "string",
-					"default": "* */2 * * *",
+					"default": "0 */2 * * *",
 					"description": "Cron Expression for how often to query LaunchDarkly API for metadata."
 				}
 			}

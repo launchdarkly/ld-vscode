@@ -68,8 +68,7 @@ export class FlagStore {
 			this.resolveLDClient(ldClient);
 			this.on('update', async flag => {
 				try {
-					const updatedFlag = await this.getFeatureFlag(flag.key);
-					this.storeUpdates.fire(updatedFlag.key);
+					this.storeUpdates.fire(flag.key);
 				} catch (err) {
 					console.error('Failed to update LaunchDarkly flag store.', err);
 				}
@@ -202,7 +201,7 @@ export class FlagStore {
 		});
 	}
 
-	private async mergeAll(flags, targeting): Promise<FlagMap> {
+	private mergeAll(flags, targeting): FlagMap {
 		var env = this.config.env;
 		let newObj = {};
 		Object.keys(flags).map((key, idx, arr) => {
@@ -221,7 +220,7 @@ export class FlagStore {
 		return newObj;
 	}
 
-	private async mergeFlag(flag: FeatureFlag, targeting: FlagConfiguration): Promise<FeatureFlag> {
+	private mergeFlag(flag: FeatureFlag, targeting: FlagConfiguration): FeatureFlag {
 		var env = this.config.env;
 		let newEnv = Object.assign({}, flag['environments'][env], targeting);
 		flag['environments'][env] = newEnv;
