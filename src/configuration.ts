@@ -23,7 +23,7 @@ export class Configuration {
 		this.reload();
 	}
 
-	reload(): Promise<void> {
+	reload(): void {
 		const config = workspace.getConfiguration('launchdarkly');
 		for (const option in this) {
 			if (option === 'ctx') {
@@ -36,7 +36,7 @@ export class Configuration {
 		this.accessToken = this.getState('accessToken') || this.accessToken;
 	}
 
-	async update(key: string, value: string | boolean, global: boolean): Promise<Void> {
+	async update(key: string, value: string | boolean, global: boolean): Promise<void> {
 		if (typeof this[key] !== typeof value) {
 			return;
 		}

@@ -120,7 +120,7 @@ export class FlagStore {
 		}
 	}
 
-	private ldConfig(): Record<string, unknown> {
+	private ldConfig(): Record<string, number | string | LaunchDarkly.LDFeatureStore> {
 		return {
 			timeout: 5,
 			baseUri: this.config.baseUri,

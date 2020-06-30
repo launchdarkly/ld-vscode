@@ -70,6 +70,7 @@ export class MultiStepInput {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>({
 		title,
 		step,
@@ -79,7 +80,7 @@ export class MultiStepInput {
 		placeholder,
 		buttons,
 		shouldResume,
-	}: P): Promise<T | (P extends { buttons: (infer I)[] } ? I : never)> {
+	}: P) {
 		const disposables: Disposable[] = [];
 		try {
 			return await new Promise<T | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
@@ -122,6 +123,7 @@ export class MultiStepInput {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	async showInputBox<P extends InputBoxParameters>({
 		title,
 		step,
@@ -131,7 +133,7 @@ export class MultiStepInput {
 		validate,
 		buttons,
 		shouldResume,
-	}: P): Promise<string | (P extends { buttons: (infer I)[] } ? I : never)> {
+	}: P) {
 		const disposables: Disposable[] = [];
 		try {
 			return await new Promise<string | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {

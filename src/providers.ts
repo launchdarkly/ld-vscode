@@ -36,7 +36,7 @@ export function register(
 	config: Configuration,
 	flagStore: FlagStore,
 	api: LaunchDarklyAPI,
-): Promise<void> {
+): void {
 	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
