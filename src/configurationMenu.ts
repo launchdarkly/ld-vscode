@@ -28,7 +28,7 @@ export class ConfigurationMenu {
 		this.currentAccessToken = config.accessToken;
 	}
 
-	async collectInputs(): NextStep {
+	async collectInputs() {
 		if (this.currentAccessToken) {
 			await MultiStepInput.run(input => this.pickCurrentOrNewAccessToken(input));
 			return;
