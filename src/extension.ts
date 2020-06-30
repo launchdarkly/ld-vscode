@@ -10,7 +10,7 @@ import { LaunchDarklyAPI } from './api';
 let config: Configuration;
 let flagStore: FlagStore;
 
-export function activate(ctx: ExtensionContext) {
+export function activate(ctx: ExtensionContext): void {
 	config = new Configuration(ctx);
 
 	const validationError = config.validate();
@@ -49,6 +49,6 @@ export function activate(ctx: ExtensionContext) {
 	registerProviders(ctx, config, flagStore, api);
 }
 
-export function deactivate() {
+export function deactivate(): void {
 	flagStore && flagStore.stop();
 }

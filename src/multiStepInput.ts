@@ -4,7 +4,6 @@
 import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, QuickInputButtons } from 'vscode';
 
 class InputFlowAction {
-	private constructor() {}
 	static back = new InputFlowAction();
 	static cancel = new InputFlowAction();
 	static resume = new InputFlowAction();
@@ -35,7 +34,7 @@ interface InputBoxParameters {
 }
 
 export class MultiStepInput {
-	static async run<T>(start: InputStep) {
+	static async run<T>(start: InputStep): Promise<void> {
 		const input = new MultiStepInput();
 		return input.stepThrough(start);
 	}
@@ -43,7 +42,7 @@ export class MultiStepInput {
 	private current?: QuickInput;
 	private steps: InputStep[] = [];
 
-	private async stepThrough<T>(start: InputStep) {
+	private async stepThrough<T>(start: InputStep): Promise<void> {
 		let step: InputStep | void = start;
 		while (step) {
 			this.steps.push(step);
@@ -80,7 +79,7 @@ export class MultiStepInput {
 		placeholder,
 		buttons,
 		shouldResume,
-	}: P) {
+	}: P): Promise<T | (P extends { buttons: (infer I)[] } ? I : never)> {
 		const disposables: Disposable[] = [];
 		try {
 			return await new Promise<T | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
@@ -101,6 +100,7 @@ export class MultiStepInput {
 						if (item === QuickInputButtons.Back) {
 							reject(InputFlowAction.back);
 						} else {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							resolve(<any>item);
 						}
 					}),
@@ -131,7 +131,7 @@ export class MultiStepInput {
 		validate,
 		buttons,
 		shouldResume,
-	}: P) {
+	}: P): Promise<string | (P extends { buttons: (infer I)[] } ? I : never)> {
 		const disposables: Disposable[] = [];
 		try {
 			return await new Promise<string | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
@@ -148,6 +148,7 @@ export class MultiStepInput {
 						if (item === QuickInputButtons.Back) {
 							reject(InputFlowAction.back);
 						} else {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							resolve(<any>item);
 						}
 					}),

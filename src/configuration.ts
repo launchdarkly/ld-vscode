@@ -1,5 +1,6 @@
 import { WorkspaceConfiguration, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const package_json = require('../package.json');
 
 const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
@@ -22,7 +23,7 @@ export class Configuration {
 		this.reload();
 	}
 
-	reload() {
+	reload(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
 		for (const option in this) {
 			if (option === 'ctx') {
@@ -35,7 +36,7 @@ export class Configuration {
 		this.accessToken = this.getState('accessToken') || this.accessToken;
 	}
 
-	async update(key: string, value: string | boolean, global: boolean) {
+	async update(key: string, value: string | boolean, global: boolean): Promise<Void> {
 		if (typeof this[key] !== typeof value) {
 			return;
 		}
@@ -52,11 +53,12 @@ export class Configuration {
 		config = workspace.getConfiguration('launchdarkly');
 
 		this[key] = value;
-		process.nextTick(function() {});
+		// eslint-disable-next-line @typescript-eslint/no-empty-function
+		process.nextTick(() => {});
 	}
 
 	public streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
-		let streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
+		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 		if (streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return true;
@@ -65,7 +67,7 @@ export class Configuration {
 	}
 
 	public streamingConfigStartCheck(): boolean {
-		let streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
+		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
 		if (!streamingConfigOptions.every(o => !!this[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return false;

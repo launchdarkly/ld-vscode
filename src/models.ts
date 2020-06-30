@@ -132,13 +132,13 @@ export class Environment {
 		},
 	];
 
-	static getAttributeTypeMap() {
+	static getAttributeTypeMap(): Array<{ name: string; baseName: string; type: string }> {
 		return Environment.attributeTypeMap;
 	}
 }
 
 export class Flag extends Resource {
-	environments: Map<String, Environment>;
+	environments: Map<string, Environment>;
 
 	constructor(init?: Partial<Flag>) {
 		super();
@@ -153,6 +153,7 @@ export class Flag extends Resource {
 	}
 }
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 export class FlagConfiguration {
 	key: string;
 	variations: Array<any>;
@@ -164,6 +165,7 @@ export class FlagConfiguration {
 	on: boolean;
 	version: number;
 }
+/* eslint-enable  @typescript-eslint/no-explicit-any */
 
 export class FlagWithConfiguration {
 	flag: FeatureFlag;
@@ -173,6 +175,7 @@ export class FlagWithConfiguration {
 export class Variation {
 	name?: string;
 	description?: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 }
 
@@ -205,6 +208,7 @@ export class WeightedVariation {
 export class Clause {
 	attribute?: string;
 	op?: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	values?: Array<any>;
 	negate?: boolean;
 }
@@ -263,7 +267,7 @@ export class Id {
 
 	static attributeTypeMap: Array<{ name: string; baseName: string; type: string }> = [];
 
-	static getAttributeTypeMap() {
+	static getAttributeTypeMap(): Array<{ name: string; baseName: string; type: string }> {
 		return Id.attributeTypeMap;
 	}
 }
@@ -273,7 +277,7 @@ export class Role {
 
 	static attributeTypeMap: Array<{ name: string; baseName: string; type: string }> = [];
 
-	static getAttributeTypeMap() {
+	static getAttributeTypeMap(): Array<{ name: string; baseName: string; type: string }> {
 		return Role.attributeTypeMap;
 	}
 }
@@ -315,7 +319,7 @@ export class Defaults {
 		},
 	];
 
-	static getAttributeTypeMap() {
+	static getAttributeTypeMap(): Array<{ name: string; baseName: string; type: string }> {
 		return Defaults.attributeTypeMap;
 	}
 }

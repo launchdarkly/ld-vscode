@@ -26,12 +26,17 @@ import { FlagStore } from './flagStore';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
-const FLAG_KEY_REGEX = /[A-Za-z0-9][\.A-Za-z_\-0-9]*/;
+const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
 
-export function register(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore, api: LaunchDarklyAPI) {
+export function register(
+	ctx: ExtensionContext,
+	config: Configuration,
+	flagStore: FlagStore,
+	api: LaunchDarklyAPI,
+): Promise<void> {
 	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
@@ -60,7 +65,7 @@ export function register(ctx: ExtensionContext, config: Configuration, flagStore
 		),
 		languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore)),
 		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
-			let flagKey = editor.document.getText(
+			const flagKey = editor.document.getText(
 				editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
 			);
 			if (!flagKey) {
@@ -112,6 +117,7 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 	}
 
 	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
+		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
@@ -147,6 +153,7 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 
 	public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
 		if (isPrecedingCharStringDelimeter(document, position)) {
+			// eslint-disable-next-line no-async-promise-executor
 			return new Promise(async resolve => {
 				if (this.config.enableAutocomplete) {
 					const flags = await this.flagStore.allFlags();
@@ -183,7 +190,7 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	opn(url.resolve(config.baseUri, sitePath));
 };
 
-export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url?: string) {
+export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url?: string): MarkdownString {
 	const fields = [
 		['Name', flag.name],
 		['Key', c.key],
@@ -220,7 +227,7 @@ function plural(count: number, singular: string, plural: string) {
 	return count === 1 ? `1 ${singular}` : `${count} ${plural}`;
 }
 
-export function isPrecedingCharStringDelimeter(document: TextDocument, position: Position) {
+export function isPrecedingCharStringDelimeter(document: TextDocument, position: Position): boolean {
 	const range = document.getWordRangeAtPosition(position, FLAG_KEY_REGEX);
 	if (!range || !range.start || range.start.character === 0) {
 		return false;
