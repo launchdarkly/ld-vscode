@@ -1,9 +1,8 @@
 import * as assert from 'assert';
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as flagsView from '../src/providers/flagsView';
-import { FeatureFlag, FlagConfiguration } from '../src/models';
+import { FeatureFlag } from '../src/models';
 
 const flag = new FeatureFlag({
 	name: "Test",
@@ -13,8 +12,8 @@ const flag = new FeatureFlag({
 });
 
 suite('flagsView tests', () => {
-	let flagValue = new flagsView.FlagNode(null, flag.name, vscode.TreeItemCollapsibleState.None, [], "testContext")
-	let flagFunc = flagsView.flagNodeFactory({ label: "test-label", uri: "/test", flagKey: "flag-key" })
+	const flagValue = new flagsView.FlagNode(null, flag.name, vscode.TreeItemCollapsibleState.None, [], "testContext")
+	const flagFunc = flagsView.flagNodeFactory({ label: "test-label", uri: "/test", flagKey: "flag-key" })
 	test('testFlagValue label', () => {
 		assert.equal(
 			flagValue.label,

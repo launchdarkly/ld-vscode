@@ -35,7 +35,7 @@ export class FlagStore {
 		this.start();
 	}
 
-	async reload(e?: ConfigurationChangeEvent) {
+	async reload(e?: ConfigurationChangeEvent): Promise<void> {
 		if (e && this.config.streamingConfigReloadCheck(e)) {
 			return;
 		}
@@ -55,7 +55,7 @@ export class FlagStore {
 		{ leading: false, trailing: true },
 	);
 
-	async start() {
+	async start(): Promise<void> {
 		if (!this.config.streamingConfigStartCheck()) {
 			return;
 		}
@@ -70,7 +70,7 @@ export class FlagStore {
 		}
 	}
 
-	async on(event: string, cb: FlagUpdateCallback) {
+	async on(event: string, cb: FlagUpdateCallback): Promise<void> {
 		try {
 			const ldClient = await this.ldClient;
 			await ldClient.on(event, cb);
@@ -79,7 +79,7 @@ export class FlagStore {
 		}
 	}
 
-	async removeAllListeners() {
+	async removeAllListeners(): Promise<void> {
 		try {
 			const ldClient = await this.ldClient;
 			await ldClient.removeAllListeners('update');
@@ -88,7 +88,7 @@ export class FlagStore {
 		}
 	}
 
-	async stop() {
+	async stop(): Promise<void> {
 		try {
 			// Optimistically reject, if already resolved this has no effect
 			this.rejectLDClient();
@@ -103,7 +103,7 @@ export class FlagStore {
 		});
 	}
 
-	private async getLatestSDKKey() {
+	private async getLatestSDKKey(): Promise<string> {
 		try {
 			const env = await this.api.getEnvironment(this.config.project, this.config.env);
 			return env.apiKey;
@@ -120,7 +120,7 @@ export class FlagStore {
 		}
 	}
 
-	private ldConfig(): any {
+	private ldConfig(): Record<string, number | string | LaunchDarkly.LDFeatureStore> {
 		return {
 			timeout: 5,
 			baseUri: this.config.baseUri,

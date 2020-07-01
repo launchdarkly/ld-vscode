@@ -3,7 +3,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/node:8
+      - image: circleci/node:12
     steps:
       - checkout
       - run: echo "Node version:" `node --version`
@@ -32,8 +32,11 @@ jobs:
           name: Test
           command: 'DISPLAY=:1 yarn test'
       - run:
-          name: Lint
+          name: Prettier
           command: 'yarn run prettier:check'
+      - run:
+          name: Lint
+          command: 'yarn run lint'
 workflows:
   version: 2
   test:
