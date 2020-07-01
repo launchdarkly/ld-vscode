@@ -4,6 +4,7 @@ import * as url from 'url';
 import { Configuration } from './configuration';
 import { Resource, Project, Environment, FeatureFlag } from './models';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const PACKAGE_JSON = require('../package.json');
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
@@ -14,7 +15,8 @@ export class LaunchDarklyAPI {
 		this.config = config;
 	}
 
-	async getAccount() {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	async getAccount(): Promise<any> {
 		const options = this.createOptions('account');
 		const account = await rp(options);
 		return JSON.parse(account);
@@ -52,8 +54,8 @@ export class LaunchDarklyAPI {
 		return flags;
 	}
 
-	private createOptions(path: string, method: string = 'GET') {
-		let options = {
+	private createOptions(path: string, method = 'GET') {
+		const options = {
 			method: method,
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
 			headers: {

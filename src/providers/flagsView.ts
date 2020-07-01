@@ -31,7 +31,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		this._onDidChangeTreeData.fire(null);
 	}
 
-	async reload(e?: vscode.ConfigurationChangeEvent | undefined) {
+	async reload(e?: vscode.ConfigurationChangeEvent | undefined): Promise<void> {
 		if (e && this.config.streamingConfigReloadCheck(e)) {
 			return;
 		}
@@ -64,7 +64,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		return Promise.resolve(element ? element.children : this.flagNodes);
 	}
 
-	async getFlags() {
+	async getFlags(): Promise<void> {
 		try {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagNodes = flags.map(flag => this.flagToValues(flag));
@@ -91,7 +91,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		});
 	}
 
-	async registerCommands() {
+	async registerCommands(): Promise<void> {
 		this.ctx.subscriptions.push(
 			vscode.commands.registerCommand('launchdarkly.copyKey', (node: FlagNode) =>
 				vscode.env.clipboard.writeText(node.label.split(':')[1].trim()),
@@ -104,7 +104,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		);
 	}
 
-	async start() {
+	async start(): Promise<void> {
 		if (!this.config.streamingConfigStartCheck()) {
 			return;
 		}
@@ -151,7 +151,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * Get Link for Open Browser and build base flag node.
 		 */
 		const flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
-		var item = this.flagFactory({
+		const item = this.flagFactory({
 			label: flag.name,
 			collapsed: COLLAPSED,
 			children: [
@@ -197,7 +197,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		/**
 		 * Build view for any Flag Prerequisites
 		 */
-		var prereqs: Array<FlagNode> = [];
+		const prereqs: Array<FlagNode> = [];
 		const flagPrereqs = flag.environments[this.config.env].prerequisites;
 		if (typeof flagPrereqs !== 'undefined' && flagPrereqs.length > 0) {
 			flag.environments[this.config.env].prerequisites.map(prereq => {
@@ -217,8 +217,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		/**
 		 * Build individual targeting section for variation and targets assigned to each.
 		 */
-		var targets: Array<FlagNode> = [];
-		var flagTargets = flag.environments[this.config.env].targets;
+		const targets: Array<FlagNode> = [];
+		const flagTargets = flag.environments[this.config.env].targets;
 		if (typeof flagTargets !== 'undefined' && flagTargets.length > 0) {
 			flagTargets.map(target => {
 				targets.push(
@@ -372,6 +372,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 /**
  * Factory function to generate FlagNode
  */
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 export function flagNodeFactory({
 	ctx = null,
 	label = '',
@@ -381,10 +382,10 @@ export function flagNodeFactory({
 	uri = '',
 	flagKey = '',
 	flagParentName = '',
-}) {
+}): FlagNode {
 	return new FlagNode(ctx, label, collapsed, children, ctxValue, uri, flagKey, flagParentName);
 }
-
+/* eslint-enable @typescript-eslint/explicit-module-boundary-types */
 /**
  * Class representing a Feature flag as vscode TreeItem
  * It is a nested array of FlagNode's to build the view

@@ -26,7 +26,7 @@ const flagConfig: FlagConfiguration = {
 	version: 1,
 };
 
-let testPath = path.join(__dirname, '..', '..', 'test');
+const testPath = path.join(__dirname, '..', '..', 'test');
 
 suite('provider utils tests', () => {
 	test('generateHoverString', () => {
