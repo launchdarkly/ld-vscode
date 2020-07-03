@@ -38,7 +38,7 @@ export async function register(
 	config: Configuration,
 	api: LaunchDarklyAPI,
 ): Promise<void> {
-	var flagStore;
+	let flagStore;
 
 	try {
 		const flags = await api.getFeatureFlags(config.project, config.env);
@@ -47,7 +47,7 @@ export async function register(
 				obj[item.key] = item;
 				return obj;
 			}, {});
-		let intFlags = arrayToObject(flags);
+		const intFlags = arrayToObject(flags);
 		flagStore = new FlagStore(config, api, intFlags);
 	} catch (err) {
 		window.showErrorMessage(err);
@@ -216,8 +216,8 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	opn(url.resolve(config.baseUri, sitePath));
 };
 
-export function generateHoverString(flag: FeatureFlag, env: string, url?: string) {
-	var curEnv = flag.environments[env];
+export function generateHoverString(flag: FeatureFlag, env: string, url?: string): MarkdownString {
+	const curEnv = flag.environments[env];
 	const fields = [
 		['Name', flag.name],
 		['Key', flag.key],

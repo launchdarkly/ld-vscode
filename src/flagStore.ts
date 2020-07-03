@@ -1,4 +1,4 @@
-import { ConfigurationChangeEvent, commands, window, EventEmitter, workspace } from 'vscode';
+import { ConfigurationChangeEvent, commands, window, EventEmitter } from 'vscode';
 import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
 import LaunchDarkly = require('launchdarkly-node-server-sdk');
 
@@ -73,11 +73,11 @@ export class FlagStore {
 				}
 			});
 			if (this.config.refreshRate) {
-				if (this.config.validateCron(this.config.refreshRate)) {
-					this.cron(this.config.refreshRate);
+				if (this.config.validateRefreshInterval(this.config.refreshRate)) {
+					this.startGlobalFlagUpdateTask(this.config.refreshRate);
 				} else {
 					window.showErrorMessage(
-						`Invalid cron expression: '${this.config.refreshRate}' needs to be 5 field cron format.`,
+						`Invalid Refresh time(in Minutes): '${this.config.refreshRate}'. 0 is off, up to 1440 for one day.`,
 					);
 				}
 			}
@@ -87,10 +87,9 @@ export class FlagStore {
 		}
 	}
 
-	private async cron(exp: number) {
-		const ms = exp * 60 * 1000;
+	private async startGlobalFlagUpdateTask(interval: number) {
+		const ms = interval * 60 * 1000;
 		setInterval(() => {
-			console.log('refreshing');
 			this.updateFlags();
 		}, ms);
 	}
@@ -156,7 +155,7 @@ export class FlagStore {
 
 	getFeatureFlag(key: string): Promise<FeatureFlag> {
 		let flag = JSON.parse(JSON.stringify(this.flagMetadata[key]));
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
 				if (!res) {
 					resolve(null);
@@ -185,21 +184,21 @@ export class FlagStore {
 		});
 	}
 
-	async allFlags(): Promise<Object> {
+	async allFlags(): Promise<Record<string, FeatureFlag>> {
 		await this.ldClient;
-		var flagDeepClone = JSON.parse(JSON.stringify(this.flagMetadata));
+		const flagDeepClone = JSON.parse(JSON.stringify(this.flagMetadata));
 		return new Promise(resolve => {
-			return this.store.all(DATA_KIND, async (res: Object) => {
+			return this.store.all(DATA_KIND, async (res: Record<string, FlagConfiguration>) => {
 				resolve(await this.mergeAll(flagDeepClone, res));
 			});
 		});
 	}
 
 	private mergeAll(flags, targeting): FlagMap {
-		var env = this.config.env;
-		let newObj = {};
-		Object.keys(flags).map((key, idx, arr) => {
-			var tempSpot = flags[key]['environments'];
+		const env = this.config.env;
+		const newObj = {};
+		Object.keys(flags).map((key) => {
+			const tempSpot = flags[key]['environments'];
 			delete flags[key]['environments'];
 			newObj[key] = {
 				...flags[key],
@@ -215,13 +214,13 @@ export class FlagStore {
 	}
 
 	private mergeFlag(flag: FeatureFlag, targeting: FlagConfiguration): FeatureFlag {
-		var env = this.config.env;
-		let newEnv = Object.assign({}, flag['environments'][env], targeting);
+		const env = this.config.env;
+		const newEnv = Object.assign({}, flag['environments'][env], targeting);
 		flag['environments'][env] = newEnv;
 		return flag;
 	}
 
-	async updateFlags() {
+	async updateFlags(): Promise<void> {
 		await this.debounceUpdate();
 	}
 

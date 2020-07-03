@@ -28,7 +28,7 @@ const flag = new FeatureFlag ({
 	variations: [{value: 'SomeVariation'}, {value: { thisIsJson: 'AnotherVariation' }}],
 });
 
-let testPath = path.join(__dirname, '..', '..', 'test');
+const testPath = path.join(__dirname, '..', '..', 'test');
 
 suite('provider utils tests', () => {
 	test('generateHoverString', () => {

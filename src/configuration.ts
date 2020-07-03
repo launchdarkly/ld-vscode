@@ -12,7 +12,7 @@ export class Configuration {
 	sdkKey = '';
 	project = '';
 	env = '';
-	refreshRate = 0;
+	refreshRate = 120;
 	enableHover = true;
 	enableAutocomplete = true;
 	enableFlagExplorer = true;
@@ -102,7 +102,7 @@ export class Configuration {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
 	}
 
-	validateCron(cron): Boolean {
-		return 0 <= cron && cron <= 1440;
+	validateRefreshInterval(interval: number): boolean {
+		return 0 <= interval && interval <= 1440;
 	}
 }

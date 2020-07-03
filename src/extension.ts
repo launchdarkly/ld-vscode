@@ -1,7 +1,6 @@
 'use strict';
 
-import { commands, window, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
-
+import { commands, window, ExtensionContext } from 'vscode';
 import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
@@ -10,7 +9,7 @@ import { LaunchDarklyAPI } from './api';
 let config: Configuration;
 let flagStore: FlagStore;
 
-export async function activate(ctx: ExtensionContext) {
+export async function activate(ctx: ExtensionContext): Promise<void> {
 	config = new Configuration(ctx);
 
 	const validationError = config.validate();

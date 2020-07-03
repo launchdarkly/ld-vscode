@@ -58,7 +58,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		return element;
 	}
 
-	private load(flags: Object): Array<FlagNode> {
+	private load(flags: Record<string, FeatureFlag>): Array<FlagNode> {
 		const parsedFlags: Array<FlagNode> = [];
 		// clear all existing nodes
 		this.flagNodes = [];
@@ -119,7 +119,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					const flags = await this.flagStore.allFlags();
 					this.load(flags);
 				} else {
-					let updatedFlag = await this.flagStore.getFeatureFlag(flag);
+					const updatedFlag = await this.flagStore.getFeatureFlag(flag);
 					this.flagNodes[updatedIdx] = this.flagToValues(updatedFlag);
 				}
 				this.refresh();
@@ -152,9 +152,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		/**
 		 * Get Link for Open Browser and build base flag node.
 		 */
-		var env = <FeatureFlagConfig>flag.environments[this.config.env];
+		const env = <FeatureFlagConfig>flag.environments[this.config.env];
 		const flagUri = this.config.baseUri + env._site.href;
-		var item = this.flagFactory({
+		const item = this.flagFactory({
 			label: flag.name,
 			collapsed: COLLAPSED,
 			children: [
