@@ -18,7 +18,7 @@ import {
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
-import { kebabCase } from 'lodash';
+import { kebabCase, keyBy } from 'lodash';
 
 import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
@@ -42,13 +42,7 @@ export async function register(
 
 	try {
 		const flags = await api.getFeatureFlags(config.project, config.env);
-		const arrayToObject = (array: Array<FeatureFlag>) =>
-			array.reduce((obj: { [key: string]: FeatureFlag }, item): { [key: string]: FeatureFlag } => {
-				obj[item.key] = item;
-				return obj;
-			}, {});
-		const intFlags = arrayToObject(flags);
-		flagStore = new FlagStore(config, api, intFlags);
+		flagStore = new FlagStore(config, api, keyBy(flags, 'key'));
 	} catch (err) {
 		window.showErrorMessage(err);
 	}

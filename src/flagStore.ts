@@ -2,7 +2,7 @@ import { ConfigurationChangeEvent, commands, window, EventEmitter } from 'vscode
 import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
 import LaunchDarkly = require('launchdarkly-node-server-sdk');
 
-import { debounce } from 'lodash';
+import { debounce, keyBy } from 'lodash';
 
 import { FeatureFlag, FlagConfiguration } from './models';
 import { Configuration } from './configuration';
@@ -228,12 +228,7 @@ export class FlagStore {
 		async () => {
 			try {
 				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-				const arrayToObject = (array: Array<FeatureFlag>) =>
-					array.reduce((obj: { [key: string]: FeatureFlag }, item): { [key: string]: FeatureFlag } => {
-						obj[item.key] = item;
-						return obj;
-					}, {});
-				this.flagMetadata = arrayToObject(flags);
+				this.flagMetadata = keyBy(flags, 'key');
 				this.storeUpdates.fire(null);
 			} catch (err) {
 				let errMsg;
