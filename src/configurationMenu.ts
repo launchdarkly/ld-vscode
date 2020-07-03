@@ -5,6 +5,7 @@ import { LaunchDarklyAPI } from './api';
 import { Resource, Project } from './models';
 import { Configuration } from './configuration';
 
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 export class ConfigurationMenu {
 	private readonly config: Configuration;
 	private api: LaunchDarklyAPI;
@@ -36,9 +37,10 @@ export class ConfigurationMenu {
 		await MultiStepInput.run(input => this.inputAccessToken(input));
 	}
 
-	shouldResume() {
+	shouldResume(): Promise<boolean> {
 		// Required by multiStepInput
 		// Could show a notification with the option to resume.
+		//eslint-disable-next-line @typescript-eslint/no-empty-function
 		return new Promise<boolean>(() => {});
 	}
 

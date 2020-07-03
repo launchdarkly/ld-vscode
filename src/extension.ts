@@ -39,6 +39,6 @@ export async function activate(ctx: ExtensionContext) {
 	await registerProviders(ctx, config, api);
 }
 
-export function deactivate() {
+export function deactivate(): void {
 	flagStore && flagStore.stop();
 }
