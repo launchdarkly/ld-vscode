@@ -155,7 +155,7 @@ export class FlagStore {
 
 	getFeatureFlag(key: string): Promise<FeatureFlag> {
 		let flag = JSON.parse(JSON.stringify(this.flagMetadata[key]));
-		return new Promise((resolve) => {
+		return new Promise(resolve => {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
 				if (!res) {
 					resolve(null);
@@ -198,7 +198,7 @@ export class FlagStore {
 	private mergeAll(flags, targeting): FlagMap {
 		const env = this.config.env;
 		const newObj = {};
-		Object.keys(flags).map((key) => {
+		Object.keys(flags).map(key => {
 			const tempSpot = flags[key]['environments'];
 			delete flags[key]['environments'];
 			newObj[key] = {

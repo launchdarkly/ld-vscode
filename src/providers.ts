@@ -33,11 +33,7 @@ const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
 
-export async function register(
-	ctx: ExtensionContext,
-	config: Configuration,
-	api: LaunchDarklyAPI,
-): Promise<void> {
+export async function register(ctx: ExtensionContext, config: Configuration, api: LaunchDarklyAPI): Promise<void> {
 	let flagStore;
 
 	try {
@@ -55,7 +51,6 @@ export async function register(
 			await commands.executeCommand('launchdarkly.treeviewrefresh');
 		}
 	});
-
 
 	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
 	if (config.enableFlagExplorer) {
