@@ -25,7 +25,7 @@ This extension contributes the following additional settings:
 | `launchdarkly.enableHover`        |                  Enables flag info to be displayed on hover of a valid flag key.                   |                            `true` |
 | `launchdarkly.enableAutocomplete` |                                  Enable flag key autocompletion.                                   |                            `true` |
 | `launchdarkly.enableFlagExplorer`	|           Show all of the feature flags for the configured environment within the project.         |                            `true` |
-| `launchdarkly.refreshRate`		|		How often in minutes to refresh feature flag metadata via API. If `0` global flag metadata do not update. | `120` |
+| `launchdarkly.refreshRate`		|		How often in minutes to refresh feature flag metadata via API. If `0` global flag metadata do not update. Max is 1440(1 Day). | `120` |
 | `launchdarkly.sdkKey`             |      Your LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead.       |                       `undefined` |
 | `launchdarkly.accessToken`        | Your LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead. |                       `undefined` |
 

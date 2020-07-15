@@ -167,15 +167,16 @@ export class FlagStore {
 						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
 						this.flagMetadata[key] = flag;
 					} catch (err) {
-						let message = 'Error retrieving Flags';
+						let errMsg = 'Error retrieving Flags';
 						if (err.statusCode === 401) {
-							message = 'Unauthorized';
+							errMsg = 'Unauthorized';
 						} else if (
 							err.statusCode === 404 ||
 							(err.statusCode === 400 && err.message.includes('Unknown environment key'))
 						) {
-							message = 'Configured environment does not exist.';
+							errMsg = 'Configured environment does not exist.';
 						}
+						window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 					}
 				}
 				const retFlag = await this.mergeFlag(flag, res);
