@@ -189,8 +189,8 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	const flag = await flagStore.getFeatureFlag(flagKey);
 
 	// Default to first environment
-	let env = <Array<FeatureFlagConfig>>Object.values(flag.environments);
-	let sitePath = env[0]._site.href;
+	let env = <FeatureFlagConfig>flag.environments[Object.keys(flag.environments)[0]];
+	let sitePath = env._site.href;
 
 	if (!config.env) {
 		window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
