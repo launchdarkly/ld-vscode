@@ -77,7 +77,7 @@ export class FlagStore {
 					this.startGlobalFlagUpdateTask(this.config.refreshRate);
 				} else {
 					window.showErrorMessage(
-						`Invalid Refresh time(in Minutes): '${this.config.refreshRate}'. 0 is off, up to 1440 for one day.`,
+						`Invalid Refresh time (in Minutes): '${this.config.refreshRate}'. 0 is off, up to 1440 for one day.`,
 					);
 				}
 			}
