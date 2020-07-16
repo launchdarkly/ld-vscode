@@ -144,11 +144,12 @@ export class FlagStore {
 		}
 	}
 
-	private ldConfig(): Record<string, number | string | LaunchDarkly.LDFeatureStore> {
+	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
 		return {
 			timeout: 5,
 			baseUri: this.config.baseUri,
 			streamUri: this.config.streamUri,
+			sendEvents: false,
 			featureStore: this.store,
 		};
 	}
