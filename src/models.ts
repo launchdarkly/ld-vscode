@@ -377,7 +377,7 @@ export class FeatureFlag {
 	customProperties?: { [key: string]: CustomProperty };
 	links?: Links;
 	maintainer?: Member;
-	environments?: EnvironmentMap;
+	environments: EnvironmentMap;
 	/**
 	 * A unix epoch time in milliseconds specifying the archived time of this flag.
 	 */

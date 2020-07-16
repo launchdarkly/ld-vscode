@@ -155,7 +155,7 @@ export class FlagStore {
 	}
 
 	getFeatureFlag(key: string): Promise<FeatureFlag> {
-		let flag = JSON.parse(JSON.stringify(this.flagMetadata[key]));
+		let flag = this.flagMetadata[key];
 		return new Promise(resolve => {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
 				if (!res) {
@@ -188,7 +188,7 @@ export class FlagStore {
 
 	async allFlags(): Promise<Record<string, FeatureFlag>> {
 		await this.ldClient;
-		const flagDeepClone = JSON.parse(JSON.stringify(this.flagMetadata));
+		const flagDeepClone = this.flagMetadata;
 		return new Promise(resolve => {
 			return this.store.all(DATA_KIND, async (res: Record<string, FlagConfiguration>) => {
 				resolve(await this.mergeAll(flagDeepClone, res));
@@ -196,12 +196,11 @@ export class FlagStore {
 		});
 	}
 
-	private mergeAll(flags, targeting): FlagMap {
+	private mergeAll(flags: FlagMap, targeting): FlagMap {
 		const env = this.config.env;
 		const newObj = {};
 		Object.keys(flags).map(key => {
 			const tempSpot = flags[key]['environments'];
-			delete flags[key]['environments'];
 			newObj[key] = {
 				...flags[key],
 				environments: {

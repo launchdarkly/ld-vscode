@@ -145,8 +145,6 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 						const hover = generateHoverString(data, this.config.env, browserUrl);
 						resolve(new Hover(hover));
 						return;
-					} else {
-						console.log('no data');
 					}
 				} catch (e) {
 					reject(e);
