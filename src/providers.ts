@@ -189,8 +189,8 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	const flag = await flagStore.getFeatureFlag(flagKey);
 
 	// Default to first environment
-	let env = <FeatureFlagConfig>(<unknown>Object.values(flag.environments));
-	let sitePath = env._site.href;
+	let env = <Array<FeatureFlagConfig>>Object.values(flag.environments);
+	let sitePath = env[0]._site.href;
 
 	if (!config.env) {
 		window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
@@ -199,8 +199,8 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 			`[LaunchDarkly] Configured environment '${config.env}' has been deleted. Falling back to first environment.`,
 		);
 	} else {
-		env = <FeatureFlagConfig>flag.environments[config.env];
-		sitePath = env._site.href;
+		const siteEnv = <FeatureFlagConfig>flag.environments[config.env];
+		sitePath = siteEnv._site.href;
 	}
 	opn(url.resolve(config.baseUri, sitePath));
 };
