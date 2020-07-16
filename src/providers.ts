@@ -199,8 +199,8 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 			`[LaunchDarkly] Configured environment '${config.env}' has been deleted. Falling back to first environment.`,
 		);
 	} else {
-		const siteEnv = <FeatureFlagConfig>flag.environments[config.env];
-		sitePath = siteEnv._site.href;
+		env = <FeatureFlagConfig>flag.environments[config.env];
+		sitePath = env._site.href;
 	}
 	opn(url.resolve(config.baseUri, sitePath));
 };
