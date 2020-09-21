@@ -17,7 +17,7 @@ type LDClientReject = () => void;
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
-	flagMetadata: Dictionary<FeatureFlag>;
+	private flagMetadata: Dictionary<FeatureFlag>;
 	public readonly storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
 
 	private readonly api: LaunchDarklyAPI;
@@ -182,10 +182,8 @@ export class FlagStore {
 		});
 	}
 
-	allFlagsConfig(): Promise<FlagConfiguration[]> {
-		return new Promise(resolve => {
-			this.store.all(DATA_KIND, resolve);
-		});
+	allFlagsMetadata(): Dictionary<FeatureFlag> {
+		return this.flagMetadata;
 	}
 
 	private readonly debounceUpdate = debounce(

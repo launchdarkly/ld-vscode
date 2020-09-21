@@ -67,7 +67,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	async getFlags(): Promise<void> {
 		try {
 			const nodes = [];
-			_.map(this.flagStore.flagMetadata, value => {
+			_.map(this.flagStore.allFlagsMetadata(), value => {
 				this.flagToValues(value).then(node => {
 					nodes.push(node);
 				});
@@ -124,7 +124,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		this.flagStore.on('update', async (keys: string) => {
 			try {
 				const flagKeys = Object.values(keys);
-				console.log(flagKeys);
 				flagKeys.map(key => {
 					this.flagStore.getFeatureFlag(key).then(updatedFlag => {
 						const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === key);
@@ -140,12 +139,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}
 		});
 		this.flagStore.storeUpdates.event(async () => {
-			const flags = this.flagStore.flagMetadata;
-			//this.load(flags);
-			console.log('store updates');
+			const flags = this.flagStore.allFlagsMetadata();
 			if (flags.length != this.flagNodes.length) {
 				const nodes = [];
-				_.map(this.flagStore.flagMetadata, value => {
+				_.map(this.flagStore.allFlagsMetadata(), value => {
 					this.flagToValues(value).then(node => {
 						nodes.push(node);
 					});
@@ -155,9 +152,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				_.map(flags, async flag => {
 					const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag.key);
 					if (this.flagNodes[updatedIdx].flagVersion < flag._version) {
-						console.log('current version lower, updating');
-						console.log(flag);
-						//const updatedFlag = await this.flagStore.getFeatureFlag(flag);
 						this.flagNodes[updatedIdx] = await this.flagToValues(flag);
 					}
 				});
