@@ -1,12 +1,10 @@
 import * as vscode from 'vscode';
-import { FeatureFlag, FeatureFlagConfig, FlagConfiguration, FlagWithConfiguration } from '../models';
+import { FeatureFlag, FlagConfiguration } from '../models';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import * as path from 'path';
 import * as _ from 'lodash';
-import { isPrecedingCharStringDelimeter } from '../providers';
-import { update } from 'lodash';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
