@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
-import { FeatureFlag } from '../models';
+import { FeatureFlag, FeatureFlagConfig, FlagConfiguration, FlagWithConfiguration } from '../models';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import * as path from 'path';
-import { debounce } from 'lodash';
+import * as _ from 'lodash';
+import { isPrecedingCharStringDelimeter } from '../providers';
+import { update } from 'lodash';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -38,7 +40,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		await this.debouncedReload();
 	}
 
-	private readonly debouncedReload = debounce(
+	private readonly debouncedReload = _.debounce(
 		async () => {
 			try {
 				await this.flagStore.removeAllListeners();
@@ -66,8 +68,16 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	async getFlags(): Promise<void> {
 		try {
-			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-			this.flagNodes = flags.map(flag => this.flagToValues(flag));
+			const nodes = []
+			_.map(this.flagStore.flagMetadata, (value) => {
+				this.flagToValues(value).then(node => {
+					nodes.push(node)
+				})
+				//nodes.push(await this.flagToValues(value))
+			});
+			this.flagNodes = nodes
+			//
+		//}
 		} catch (err) {
 			console.error(err);
 			let message = 'Error retrieving Flags';
@@ -113,17 +123,50 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	private async flagUpdateListener() {
 		// Setup listener for flag changes
-		this.flagStore.on('update', async flag => {
+		this.flagStore.on('update', async (keys: string) => {
 			try {
-				const updatedFlag = await this.api.getFeatureFlag(this.config.project, flag.key, this.config.env);
-				const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === updatedFlag.key);
-				this.flagNodes[updatedIdx] = this.flagToValues(updatedFlag);
+				const flagKeys = Object.values(keys);
+				console.log(flagKeys)
+				flagKeys.map(key => {
+					this.flagStore.getFeatureFlag(key).then(updatedFlag => {
+						const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === key);
+						this.flagToValues(updatedFlag.flag, updatedFlag.config).then(newFlagValue => {
+							this.flagNodes[updatedIdx] = newFlagValue
+						})
+					})
+				})
+
 				this.refresh();
 			} catch (err) {
 				console.error('Failed to update LaunchDarkly flag tree view:', err);
 			}
 		});
-	}
+		this.flagStore.storeUpdates.event(async ()=> {
+			const flags = this.flagStore.flagMetadata
+			//this.load(flags);
+			console.log("store updates")
+			if (flags.length != this.flagNodes.length) {
+				const nodes = []
+				_.map(this.flagStore.flagMetadata, (value) => {
+					this.flagToValues(value).then(node => {
+						nodes.push(node)
+					})
+				})
+				this.flagNodes = nodes
+			} else {
+				_.map(flags, async (flag) => {
+					const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag.key);
+					if (this.flagNodes[updatedIdx].flagVersion < flag._version) {
+						console.log("current version lower, updating")
+						console.log(flag)
+						//const updatedFlag = await this.flagStore.getFeatureFlag(flag);
+						this.flagNodes[updatedIdx] = await this.flagToValues(flag);
+					}
+				})
+			}
+				this.refresh();
+			})
+		}
 
 	private flagFactory({
 		label = '',
@@ -133,6 +176,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		uri = '',
 		flagKey = '',
 		flagParentName = '',
+		flagVersion = 0
 	}) {
 		return flagNodeFactory({
 			ctx: this.ctx,
@@ -143,13 +187,22 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			uri: uri,
 			flagKey: flagKey,
 			flagParentName: flagParentName,
+			flagVersion: flagVersion
 		});
 	}
 
-	private flagToValues(flag: FeatureFlag): FlagNode {
+	private async flagToValues(flag: FeatureFlag, env: FlagConfiguration = null): Promise<FlagNode> {
 		/**
 		 * Get Link for Open Browser and build base flag node.
 		 */
+		let envConfig
+		if (env != null) {
+			envConfig = env
+		} else {
+			const env = await this.flagStore.getFeatureFlag(flag.key)
+			envConfig = env.config
+		}
+
 		const flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
 		const item = this.flagFactory({
 			label: flag.name,
@@ -158,7 +211,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({ label: `Open in Browser`, ctxValue: 'flagViewBrowser', uri: flagUri }),
 				this.flagFactory({ label: `Key: ${flag.key}`, ctxValue: 'flagViewKey' }),
 				this.flagFactory({
-					label: `On: ${flag.environments[this.config.env].on}`,
+					label: `On: ${envConfig.on}`,
 					ctxValue: 'flagViewToggle',
 					flagKey: flag.key,
 					flagParentName: flag.name,
@@ -166,6 +219,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			],
 			ctxValue: 'flagParentItem',
 			flagKey: flag.key,
+			flagVersion: flag._version
 		});
 		/**
 		 * User friendly name for building nested children under parent FlagNode
@@ -198,9 +252,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * Build view for any Flag Prerequisites
 		 */
 		const prereqs: Array<FlagNode> = [];
-		const flagPrereqs = flag.environments[this.config.env].prerequisites;
+		const flagPrereqs = envConfig.prerequisites;
 		if (typeof flagPrereqs !== 'undefined' && flagPrereqs.length > 0) {
-			flag.environments[this.config.env].prerequisites.map(prereq => {
+			flagPrereqs.map(prereq => {
 				prereqs.push(this.flagFactory({ label: `Flag: ${prereq.key}`, collapsed: NON_COLLAPSED }));
 				prereqs.push(this.flagFactory({ label: `Variation: ${prereq.variation}`, collapsed: NON_COLLAPSED }));
 			});
@@ -218,7 +272,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * Build individual targeting section for variation and targets assigned to each.
 		 */
 		const targets: Array<FlagNode> = [];
-		const flagTargets = flag.environments[this.config.env].targets;
+		const flagTargets = envConfig.targets;
 		if (typeof flagTargets !== 'undefined' && flagTargets.length > 0) {
 			flagTargets.map(target => {
 				targets.push(
@@ -283,7 +337,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 */
 		renderedFlagFields.push(
 			this.flagFactory({
-				label: `Rule Count: ${flag.environments[this.config.env].rules.length}`,
+				label: `Rule Count: ${envConfig.rules.length}`,
 				ctxValue: 'flagRules',
 			}),
 		);
@@ -291,7 +345,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		/**
 		 * Build Fallthrough view
 		 */
-		const fallThrough = flag.environments[this.config.env].fallthrough;
+		const fallThrough = envConfig.fallthrough;
 		if (fallThrough.variation !== undefined) {
 			const fallThroughVar = flag.variations[fallThrough.variation];
 			renderedFlagFields.push(
@@ -382,8 +436,9 @@ export function flagNodeFactory({
 	uri = '',
 	flagKey = '',
 	flagParentName = '',
+	flagVersion = 0
 }): FlagNode {
-	return new FlagNode(ctx, label, collapsed, children, ctxValue, uri, flagKey, flagParentName);
+	return new FlagNode(ctx, label, collapsed, children, ctxValue, uri, flagKey, flagParentName, flagVersion);
 }
 /* eslint-enable @typescript-eslint/explicit-module-boundary-types */
 /**
@@ -396,6 +451,7 @@ export class FlagNode extends vscode.TreeItem {
 	uri?: string;
 	flagKey?: string;
 	flagParentName?: string;
+	flagVersion: number;
 	/**
 	 * @param label will be shown in the Treeview
 	 * @param collapsibleState is initial state collapsible state
@@ -414,6 +470,7 @@ export class FlagNode extends vscode.TreeItem {
 		uri?: string,
 		flagKey?: string,
 		flagParentName?: string,
+		flagVersion?: number
 	) {
 		super(label, collapsibleState);
 		this.contextValue = contextValue;
@@ -421,11 +478,8 @@ export class FlagNode extends vscode.TreeItem {
 		this.uri = uri;
 		this.flagKey = flagKey;
 		this.flagParentName = flagParentName;
+		this.flagVersion = flagVersion
 		this.conditionalIcon(ctx, this.contextValue, this.label);
-	}
-
-	get tooltip(): string {
-		return `${this.label}`;
 	}
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string) {

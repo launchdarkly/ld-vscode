@@ -6,11 +6,13 @@ import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
+import { FeatureFlag } from './models';
+import * as _ from 'lodash';
 
 let config: Configuration;
 let flagStore: FlagStore;
 
-export function activate(ctx: ExtensionContext): void {
+export async function activate(ctx: ExtensionContext): Promise<void> {
 	config = new Configuration(ctx);
 
 	const validationError = config.validate();
@@ -35,8 +37,9 @@ export function activate(ctx: ExtensionContext): void {
 	}
 
 	const api = new LaunchDarklyAPI(config);
-	flagStore = new FlagStore(config, api);
-
+	const flags = await api.getFeatureFlags(config.project, config.env)
+	const flagMap = _.keyBy(flags, 'key')
+	flagStore = new FlagStore(config, api, flagMap);
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {

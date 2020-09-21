@@ -1,8 +1,8 @@
-import { ConfigurationChangeEvent, commands, window } from 'vscode';
+import { ConfigurationChangeEvent, commands, EventEmitter, window } from 'vscode';
 import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
 import LaunchDarkly = require('launchdarkly-node-server-sdk');
 
-import { debounce } from 'lodash';
+import { debounce, Dictionary, keyBy } from 'lodash';
 
 import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
 import { Configuration } from './configuration';
@@ -10,14 +10,15 @@ import { LaunchDarklyAPI } from './api';
 
 const DATA_KIND = { namespace: 'features' };
 
-type FlagUpdateCallback = (flag: FeatureFlag) => void;
+type FlagUpdateCallback = (Object: string) => void;
 type LDClientResolve = (LDClient: LaunchDarkly.LDClient) => void;
 type LDClientReject = () => void;
 
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
-	private readonly flagMetadata: { [key: string]: FeatureFlag } = {};
+	flagMetadata: Dictionary<FeatureFlag>
+	public storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
 
 	private readonly api: LaunchDarklyAPI;
 
@@ -28,11 +29,12 @@ export class FlagStore {
 		this.rejectLDClient = reject;
 	});
 
-	constructor(config: Configuration, api: LaunchDarklyAPI) {
+	constructor(config: Configuration, api: LaunchDarklyAPI, flagMetadata: Dictionary<FeatureFlag> ) {
 		this.config = config;
 		this.api = api;
 		this.store = InMemoryFeatureStore();
 		this.start();
+		this.flagMetadata = flagMetadata
 	}
 
 	async reload(e?: ConfigurationChangeEvent): Promise<void> {
@@ -64,10 +66,30 @@ export class FlagStore {
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
+			if (this.config.refreshRate) {
+				if (this.config.validateRefreshInterval(this.config.refreshRate)) {
+					this.startGlobalFlagUpdateTask(this.config.refreshRate);
+				} else {
+					window.showErrorMessage(
+						`Invalid Refresh time (in Minutes): '${this.config.refreshRate}'. 0 is off, up to 1440 for one day.`,
+					);
+				}
+			}
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
 		}
+	}
+
+	private async startGlobalFlagUpdateTask(interval: number) {
+		const ms = interval * 60 * 1000;
+		setInterval(() => {
+			this.updateFlags();
+		}, ms);
+	}
+
+	async updateFlags(): Promise<void> {
+		await this.debounceUpdate();
 	}
 
 	async on(event: string, cb: FlagUpdateCallback): Promise<void> {
@@ -148,7 +170,8 @@ export class FlagStore {
 						return;
 					}
 				}
-
+				//console.log(flag)
+				console.log(res)
 				resolve({ flag, config: res });
 			});
 		});
@@ -159,4 +182,30 @@ export class FlagStore {
 			this.store.all(DATA_KIND, resolve);
 		});
 	}
+
+	allFlagsConfig(): Promise<FlagConfiguration[]> {
+		return new Promise(resolve => {
+			this.store.all(DATA_KIND, resolve);
+		});
+	}
+
+	private readonly debounceUpdate = debounce(
+		async () => {
+			try {
+				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				this.flagMetadata = keyBy(flags, 'key');
+				this.storeUpdates.fire(true);
+			} catch (err) {
+				let errMsg;
+				if (err.statusCode == 404) {
+					errMsg = `Project does not exist`;
+				} else if (err.statusCode == 401) {
+					errMsg = `Unauthorized`;
+				}
+				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+			}
+		},
+		5000,
+		{ leading: true, trailing: true },
+	);
 }

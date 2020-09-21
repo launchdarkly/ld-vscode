@@ -66,6 +66,11 @@
 					"type": "string",
 					"default": "",
 					"description": "LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead."
+				},
+				"launchdarkly.refreshRate": {
+					"type": "number",
+					"default": 120,
+					"description": "How often in minutes to refresh feature flag metadata via API. If `0` global flag metadata does not update. Max is 1440 (1 Day)."
 				}
 			}
 		},
