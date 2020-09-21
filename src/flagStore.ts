@@ -170,8 +170,6 @@ export class FlagStore {
 						return;
 					}
 				}
-				//console.log(flag)
-				console.log(res);
 				resolve({ flag, config: res });
 			});
 		});
