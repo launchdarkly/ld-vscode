@@ -68,16 +68,16 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	async getFlags(): Promise<void> {
 		try {
-			const nodes = []
-			_.map(this.flagStore.flagMetadata, (value) => {
+			const nodes = [];
+			_.map(this.flagStore.flagMetadata, value => {
 				this.flagToValues(value).then(node => {
-					nodes.push(node)
-				})
+					nodes.push(node);
+				});
 				//nodes.push(await this.flagToValues(value))
 			});
-			this.flagNodes = nodes
+			this.flagNodes = nodes;
 			//
-		//}
+			//}
 		} catch (err) {
 			console.error(err);
 			let message = 'Error retrieving Flags';
@@ -126,47 +126,47 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		this.flagStore.on('update', async (keys: string) => {
 			try {
 				const flagKeys = Object.values(keys);
-				console.log(flagKeys)
+				console.log(flagKeys);
 				flagKeys.map(key => {
 					this.flagStore.getFeatureFlag(key).then(updatedFlag => {
 						const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === key);
 						this.flagToValues(updatedFlag.flag, updatedFlag.config).then(newFlagValue => {
-							this.flagNodes[updatedIdx] = newFlagValue
-						})
-					})
-				})
+							this.flagNodes[updatedIdx] = newFlagValue;
+						});
+					});
+				});
 
 				this.refresh();
 			} catch (err) {
 				console.error('Failed to update LaunchDarkly flag tree view:', err);
 			}
 		});
-		this.flagStore.storeUpdates.event(async ()=> {
-			const flags = this.flagStore.flagMetadata
+		this.flagStore.storeUpdates.event(async () => {
+			const flags = this.flagStore.flagMetadata;
 			//this.load(flags);
-			console.log("store updates")
+			console.log('store updates');
 			if (flags.length != this.flagNodes.length) {
-				const nodes = []
-				_.map(this.flagStore.flagMetadata, (value) => {
+				const nodes = [];
+				_.map(this.flagStore.flagMetadata, value => {
 					this.flagToValues(value).then(node => {
-						nodes.push(node)
-					})
-				})
-				this.flagNodes = nodes
+						nodes.push(node);
+					});
+				});
+				this.flagNodes = nodes;
 			} else {
-				_.map(flags, async (flag) => {
+				_.map(flags, async flag => {
 					const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag.key);
 					if (this.flagNodes[updatedIdx].flagVersion < flag._version) {
-						console.log("current version lower, updating")
-						console.log(flag)
+						console.log('current version lower, updating');
+						console.log(flag);
 						//const updatedFlag = await this.flagStore.getFeatureFlag(flag);
 						this.flagNodes[updatedIdx] = await this.flagToValues(flag);
 					}
-				})
+				});
 			}
-				this.refresh();
-			})
-		}
+			this.refresh();
+		});
+	}
 
 	private flagFactory({
 		label = '',
@@ -176,7 +176,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		uri = '',
 		flagKey = '',
 		flagParentName = '',
-		flagVersion = 0
+		flagVersion = 0,
 	}) {
 		return flagNodeFactory({
 			ctx: this.ctx,
@@ -187,7 +187,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			uri: uri,
 			flagKey: flagKey,
 			flagParentName: flagParentName,
-			flagVersion: flagVersion
+			flagVersion: flagVersion,
 		});
 	}
 
@@ -195,12 +195,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		/**
 		 * Get Link for Open Browser and build base flag node.
 		 */
-		let envConfig
+		let envConfig;
 		if (env != null) {
-			envConfig = env
+			envConfig = env;
 		} else {
-			const env = await this.flagStore.getFeatureFlag(flag.key)
-			envConfig = env.config
+			const env = await this.flagStore.getFeatureFlag(flag.key);
+			envConfig = env.config;
 		}
 
 		const flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
@@ -219,7 +219,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			],
 			ctxValue: 'flagParentItem',
 			flagKey: flag.key,
-			flagVersion: flag._version
+			flagVersion: flag._version,
 		});
 		/**
 		 * User friendly name for building nested children under parent FlagNode
@@ -436,7 +436,7 @@ export function flagNodeFactory({
 	uri = '',
 	flagKey = '',
 	flagParentName = '',
-	flagVersion = 0
+	flagVersion = 0,
 }): FlagNode {
 	return new FlagNode(ctx, label, collapsed, children, ctxValue, uri, flagKey, flagParentName, flagVersion);
 }
@@ -470,7 +470,7 @@ export class FlagNode extends vscode.TreeItem {
 		uri?: string,
 		flagKey?: string,
 		flagParentName?: string,
-		flagVersion?: number
+		flagVersion?: number,
 	) {
 		super(label, collapsibleState);
 		this.contextValue = contextValue;
@@ -478,7 +478,7 @@ export class FlagNode extends vscode.TreeItem {
 		this.uri = uri;
 		this.flagKey = flagKey;
 		this.flagParentName = flagParentName;
-		this.flagVersion = flagVersion
+		this.flagVersion = flagVersion;
 		this.conditionalIcon(ctx, this.contextValue, this.label);
 	}
 

@@ -17,7 +17,7 @@ type LDClientReject = () => void;
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
-	flagMetadata: Dictionary<FeatureFlag>
+	flagMetadata: Dictionary<FeatureFlag>;
 	public storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
 
 	private readonly api: LaunchDarklyAPI;
@@ -29,12 +29,12 @@ export class FlagStore {
 		this.rejectLDClient = reject;
 	});
 
-	constructor(config: Configuration, api: LaunchDarklyAPI, flagMetadata: Dictionary<FeatureFlag> ) {
+	constructor(config: Configuration, api: LaunchDarklyAPI, flagMetadata: Dictionary<FeatureFlag>) {
 		this.config = config;
 		this.api = api;
 		this.store = InMemoryFeatureStore();
 		this.start();
-		this.flagMetadata = flagMetadata
+		this.flagMetadata = flagMetadata;
 	}
 
 	async reload(e?: ConfigurationChangeEvent): Promise<void> {
@@ -171,7 +171,7 @@ export class FlagStore {
 					}
 				}
 				//console.log(flag)
-				console.log(res)
+				console.log(res);
 				resolve({ flag, config: res });
 			});
 		});

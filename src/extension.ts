@@ -37,8 +37,8 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	}
 
 	const api = new LaunchDarklyAPI(config);
-	const flags = await api.getFeatureFlags(config.project, config.env)
-	const flagMap = _.keyBy(flags, 'key')
+	const flags = await api.getFeatureFlags(config.project, config.env);
+	const flagMap = _.keyBy(flags, 'key');
 	flagStore = new FlagStore(config, api, flagMap);
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
