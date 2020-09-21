@@ -18,7 +18,7 @@ export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
 	flagMetadata: Dictionary<FeatureFlag>;
-	public storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
+	public readonly storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
 
 	private readonly api: LaunchDarklyAPI;
 
