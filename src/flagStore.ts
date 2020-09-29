@@ -119,15 +119,6 @@ export class FlagStore {
 		}
 	}
 
-	async listenerCount(): Promise<number> {
-		try {
-			const ldClient = await this.ldClient;
-			return ldClient.listenerCount('update');
-		} catch (err) {
-			// do nothing, ldclient does not exist
-		}
-	}
-
 	async stop(): Promise<void> {
 		try {
 			// Optimistically reject, if already resolved this has no effect
