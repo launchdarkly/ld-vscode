@@ -66,7 +66,6 @@ export class FlagStore {
 
 	async start(): Promise<void> {
 		if (!this.config.streamingConfigStartCheck()) {
-			console.log("return")
 			return;
 		}
 
