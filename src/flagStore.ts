@@ -22,7 +22,6 @@ export class FlagStore {
 	//public readonly isInitialized: EventEmitter<null> = new EventEmitter();
 	public isInitialized: Promise<boolean>;
 	private readonly api: LaunchDarklyAPI;
-	private ldClientStatus = false;
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
 	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve, reject) => {
@@ -59,10 +58,6 @@ export class FlagStore {
 		200,
 		{ leading: false, trailing: true },
 	);
-
-	ldStatus(): boolean {
-		return this.ldClientStatus;
-	}
 
 	async start(): Promise<void> {
 		if (!this.config.streamingConfigStartCheck()) {
@@ -139,7 +134,6 @@ export class FlagStore {
 			this.rejectLDClient();
 			const ldClient = await this.ldClient;
 			ldClient.close();
-			this.ldClientStatus = false;
 		} catch {
 			// ldClient was rejected, nothing to do
 		}
