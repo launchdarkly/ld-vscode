@@ -6,7 +6,6 @@ import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
-import * as _ from 'lodash';
 
 let config: Configuration;
 let flagStore: FlagStore;
@@ -36,15 +35,20 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	}
 
 	const api = new LaunchDarklyAPI(config);
-	const flags = await api.getFeatureFlags(config.project, config.env);
-	const flagMap = _.keyBy(flags, 'key');
-	flagStore = new FlagStore(config, api, flagMap);
+	let flagStore: FlagStore;
+	if (validationError != 'unconfigured') {
+		flagStore = new FlagStore(config, api);
+	}
+
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
 			await config.reload();
+			if (flagStore == undefined) {
+				const newApi = new LaunchDarklyAPI(config);
+				flagStore = new FlagStore(config, newApi);
+			}
 			await flagStore.reload(e);
-			await commands.executeCommand('launchdarkly.treeviewrefresh');
 		}
 	});
 

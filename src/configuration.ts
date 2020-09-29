@@ -47,6 +47,7 @@ export class Configuration {
 			const ctxState = global ? this.ctx.globalState : this.ctx.workspaceState;
 			await ctxState.update(key, value);
 			await config.update(key, '', global);
+			console.log('updating access toekn');
 			return;
 		}
 
@@ -76,6 +77,14 @@ export class Configuration {
 		return true;
 	}
 
+	public basicConfigStartCheck(): boolean {
+		const streamingConfigOptions = ['accessToken'];
+		if (!streamingConfigOptions.every(o => !!this[o])) {
+			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
+			return false;
+		}
+		return true;
+	}
 	validate(): string {
 		const version = package_json.version;
 		const ctx = this.ctx;

@@ -19,9 +19,10 @@ export class FlagStore {
 	private readonly store: LaunchDarkly.LDFeatureStore;
 	private flagMetadata: Dictionary<FeatureFlag>;
 	public readonly storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
-
+	//public readonly isInitialized: EventEmitter<null> = new EventEmitter();
+	public isInitialized: Promise<boolean>;
 	private readonly api: LaunchDarklyAPI;
-
+	private ldClientStatus = false;
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
 	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve, reject) => {
@@ -29,12 +30,14 @@ export class FlagStore {
 		this.rejectLDClient = reject;
 	});
 
-	constructor(config: Configuration, api: LaunchDarklyAPI, flagMetadata: Dictionary<FeatureFlag>) {
+	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
 		this.api = api;
 		this.store = InMemoryFeatureStore();
+		this.isInitialized = new Promise(function(resolve) {
+			resolve(true);
+		});
 		this.start();
-		this.flagMetadata = flagMetadata;
 	}
 
 	async reload(e?: ConfigurationChangeEvent): Promise<void> {
@@ -57,11 +60,19 @@ export class FlagStore {
 		{ leading: false, trailing: true },
 	);
 
+	ldStatus(): boolean {
+		return this.ldClientStatus;
+	}
+
 	async start(): Promise<void> {
 		if (!this.config.streamingConfigStartCheck()) {
+			console.log("return")
 			return;
 		}
+
 		try {
+			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+			Promise.resolve((this.flagMetadata = keyBy(flags, 'key')));
 			const sdkKey = await this.getLatestSDKKey();
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
@@ -75,6 +86,8 @@ export class FlagStore {
 					);
 				}
 			}
+			Promise.resolve(this.isInitialized);
+			this.storeUpdates.fire(true);
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
@@ -103,8 +116,19 @@ export class FlagStore {
 
 	async removeAllListeners(): Promise<void> {
 		try {
+			await setTimeout(async () => {
+				const ldClient = await this.ldClient;
+				await ldClient.removeAllListeners('update');
+			}, 500);
+		} catch (err) {
+			// do nothing, ldclient does not exist
+		}
+	}
+
+	async listenerCount(): Promise<number> {
+		try {
 			const ldClient = await this.ldClient;
-			await ldClient.removeAllListeners('update');
+			return ldClient.listenerCount('update');
 		} catch (err) {
 			// do nothing, ldclient does not exist
 		}
@@ -116,6 +140,7 @@ export class FlagStore {
 			this.rejectLDClient();
 			const ldClient = await this.ldClient;
 			ldClient.close();
+			this.ldClientStatus = false;
 		} catch {
 			// ldClient was rejected, nothing to do
 		}
@@ -182,8 +207,10 @@ export class FlagStore {
 		});
 	}
 
-	allFlagsMetadata(): Dictionary<FeatureFlag> {
-		return this.flagMetadata;
+	allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
+		return new Promise(resolve => {
+			resolve(this.flagMetadata);
+		});
 	}
 
 	private readonly debounceUpdate = debounce(

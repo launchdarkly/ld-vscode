@@ -36,12 +36,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return;
 		}
 		await this.debouncedReload();
+		this.refresh();
 	}
 
 	private readonly debouncedReload = _.debounce(
 		async () => {
 			try {
-				await this.flagStore.removeAllListeners();
 				await this.getFlags();
 				await this.flagUpdateListener();
 			} catch (err) {
@@ -57,39 +57,38 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	getChildren(element?: FlagNode): Thenable<FlagNode[]> {
-		if (!this.flagNodes) {
+		if (typeof this.flagNodes === 'undefined' || this.flagNodes.length == 0) {
 			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
 		}
 
 		return Promise.resolve(element ? element.children : this.flagNodes);
 	}
 
+	setFlagsStore(flagstore: FlagStore): void {
+		this.flagStore = flagstore;
+		this.flagUpdateListener();
+	}
+
 	async getFlags(): Promise<void> {
 		try {
 			const nodes = [];
-			_.map(this.flagStore.allFlagsMetadata(), value => {
+			//await this.flagStore.isInitialized
+			const flags = await this.flagStore.allFlagsMetadata();
+			_.map(flags, value => {
 				this.flagToValues(value).then(node => {
 					nodes.push(node);
 				});
 				//nodes.push(await this.flagToValues(value))
 			});
 			this.flagNodes = nodes;
-			//
-			//}
 		} catch (err) {
 			console.error(err);
-			let message = 'Error retrieving Flags';
-			if (err.statusCode === 401) {
-				message = 'Unauthorized';
-			} else if (
-				err.statusCode === 404 ||
-				(err.statusCode === 400 && err.message.includes('Unknown environment key'))
-			) {
-				message = 'Configured environment does not exist.';
-			}
+			const message = 'Error retrieving Flags: `${err}';
 			this.flagNodes = [this.flagFactory({ label: message })];
 		}
-		this.refresh();
+		if (!this.flagNodes) {
+			this.flagNodes = [new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)];
+		}
 	}
 
 	registerTreeviewRefreshCommand(): vscode.Disposable {
@@ -132,17 +131,16 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 						});
 					});
 				});
-
 				this.refresh();
 			} catch (err) {
 				console.error('Failed to update LaunchDarkly flag tree view:', err);
 			}
 		});
 		this.flagStore.storeUpdates.event(async () => {
-			const flags = this.flagStore.allFlagsMetadata();
+			const flags = await this.flagStore.allFlagsMetadata();
 			if (flags.length != this.flagNodes.length) {
 				const nodes = [];
-				_.map(this.flagStore.allFlagsMetadata(), value => {
+				_.map(flags, value => {
 					this.flagToValues(value).then(node => {
 						nodes.push(node);
 					});
