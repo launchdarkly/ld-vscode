@@ -36,7 +36,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return;
 		}
 		await this.debouncedReload();
-		this.refresh();
 	}
 
 	private readonly debouncedReload = debounce(
@@ -44,6 +43,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			try {
 				await this.getFlags();
 				await this.flagUpdateListener();
+				this.refresh();
 			} catch (err) {
 				console.error(err);
 			}
@@ -73,6 +73,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		try {
 			const nodes = [];
 			const flags = await this.flagStore.allFlagsMetadata();
+			console.log(flags["chatbox"])
 			map(flags, value => {
 				this.flagToValues(value).then(node => {
 					nodes.push(node);

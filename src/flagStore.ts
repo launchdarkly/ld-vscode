@@ -19,7 +19,6 @@ export class FlagStore {
 	private readonly store: LaunchDarkly.LDFeatureStore;
 	private flagMetadata: Dictionary<FeatureFlag>;
 	public readonly storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
-	public isInitialized: Promise<boolean>;
 	private readonly api: LaunchDarklyAPI;
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
@@ -32,9 +31,6 @@ export class FlagStore {
 		this.config = config;
 		this.api = api;
 		this.store = InMemoryFeatureStore();
-		this.isInitialized = new Promise(function(resolve) {
-			resolve(true);
-		});
 		this.start();
 	}
 
@@ -65,7 +61,7 @@ export class FlagStore {
 
 		try {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-			Promise.resolve((this.flagMetadata = keyBy(flags, 'key')));
+			this.flagMetadata = keyBy(flags, 'key');
 			const sdkKey = await this.getLatestSDKKey();
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
@@ -79,7 +75,6 @@ export class FlagStore {
 					);
 				}
 			}
-			Promise.resolve(this.isInitialized);
 			this.storeUpdates.fire(true);
 		} catch (err) {
 			this.rejectLDClient();
@@ -190,10 +185,9 @@ export class FlagStore {
 		});
 	}
 
-	allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
-		return new Promise(resolve => {
-			resolve(this.flagMetadata);
-		});
+	async allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
+		await this.ldClient // Just waiting for initialization to complete, don't actually need the client
+        return this.flagMetadata
 	}
 
 	private readonly debounceUpdate = debounce(

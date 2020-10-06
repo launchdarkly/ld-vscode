@@ -38,7 +38,6 @@ export async function register(
 	api: LaunchDarklyAPI,
 ): Promise<void> {
 	if (typeof flagStore !== 'undefined') {
-		await flagStore.isInitialized;
 		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 	}
@@ -53,12 +52,9 @@ export async function register(
 				await configurationMenu.configure();
 				if (typeof flagStore === 'undefined') {
 					flagStore = new FlagStore(config, api);
-					const initialized = await flagStore.isInitialized;
-					if (initialized) {
-						const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
-						window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
-						await flagView.reload();
-					}
+					const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
+					window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
+					await flagView.reload();
 				} else {
 					await flagStore.reload();
 				}
