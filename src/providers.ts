@@ -60,7 +60,6 @@ export async function register(
 						await flagView.reload();
 					}
 				} else {
-					window.showInformationMessage('successfully');
 					await flagStore.reload();
 				}
 

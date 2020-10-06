@@ -136,7 +136,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		});
 		this.flagStore.storeUpdates.event(async () => {
 			const flags = await this.flagStore.allFlagsMetadata();
-			if (flags.length != this.flagNodes.length) {
+			if (flags.length !== this.flagNodes.length) {
 				const nodes = [];
 				map(flags, value => {
 					this.flagToValues(value).then(node => {
@@ -184,7 +184,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * Get Link for Open Browser and build base flag node.
 		 */
 		let envConfig;
-		if (env != null) {
+		if (env !== null) {
 			envConfig = env;
 		} else {
 			const env = await this.flagStore.getFeatureFlag(flag.key);
