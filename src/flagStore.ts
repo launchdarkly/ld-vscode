@@ -19,7 +19,6 @@ export class FlagStore {
 	private readonly store: LaunchDarkly.LDFeatureStore;
 	private flagMetadata: Dictionary<FeatureFlag>;
 	public readonly storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
-	//public readonly isInitialized: EventEmitter<null> = new EventEmitter();
 	public isInitialized: Promise<boolean>;
 	private readonly api: LaunchDarklyAPI;
 	private resolveLDClient: LDClientResolve;
