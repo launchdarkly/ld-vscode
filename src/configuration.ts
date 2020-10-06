@@ -47,7 +47,6 @@ export class Configuration {
 			const ctxState = global ? this.ctx.globalState : this.ctx.workspaceState;
 			await ctxState.update(key, value);
 			await config.update(key, '', global);
-			console.log('updating access toekn');
 			return;
 		}
 
