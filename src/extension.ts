@@ -44,7 +44,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
 			await config.reload();
-			if (flagStore == undefined) {
+			if (!flagStore) {
 				const newApi = new LaunchDarklyAPI(config);
 				flagStore = new FlagStore(config, newApi);
 			}
