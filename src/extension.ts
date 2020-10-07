@@ -36,7 +36,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 
 	const api = new LaunchDarklyAPI(config);
 	let flagStore: FlagStore;
-	if (validationError != 'unconfigured') {
+	if (validationError !== 'unconfigured') {
 		flagStore = new FlagStore(config, api);
 	}
 
