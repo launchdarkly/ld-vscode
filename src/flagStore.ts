@@ -10,7 +10,7 @@ import { LaunchDarklyAPI } from './api';
 
 const DATA_KIND = { namespace: 'features' };
 
-type FlagUpdateCallback = (Object: string) => void;
+type FlagUpdateCallback = (flag: string) => void;
 type LDClientResolve = (LDClient: LaunchDarkly.LDClient) => void;
 type LDClientReject = () => void;
 
@@ -186,8 +186,8 @@ export class FlagStore {
 	}
 
 	async allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
-		await this.ldClient // Just waiting for initialization to complete, don't actually need the client
-        return this.flagMetadata
+		await this.ldClient; // Just waiting for initialization to complete, don't actually need the client
+		return this.flagMetadata;
 	}
 
 	private readonly debounceUpdate = debounce(
