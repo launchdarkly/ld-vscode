@@ -73,7 +73,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		try {
 			const nodes = [];
 			const flags = await this.flagStore.allFlagsMetadata();
-			console.log(flags['chatbox']);
 			map(flags, value => {
 				this.flagToValues(value).then(node => {
 					nodes.push(node);
