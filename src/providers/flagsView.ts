@@ -5,6 +5,7 @@ import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import * as path from 'path';
 import { debounce, map } from 'lodash';
+import { FlagAliases } from './codeRefs';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -14,15 +15,17 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private config: Configuration;
 	private flagStore: FlagStore;
 	private flagNodes: Array<FlagTreeInterface>;
+	private aliases: FlagAliases;
 	private ctx: vscode.ExtensionContext;
 	private _onDidChangeTreeData: vscode.EventEmitter<FlagTreeInterface | null | void> = new vscode.EventEmitter<FlagTreeInterface | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<FlagTreeInterface | null | void> = this._onDidChangeTreeData.event;
 
-	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext) {
+	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext, aliases?: FlagAliases) {
 		this.api = api;
 		this.config = config;
 		this.ctx = ctx;
 		this.flagStore = flagStore;
+		this.aliases = aliases
 		this.registerCommands();
 		this.start();
 	}
@@ -154,6 +157,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}
 			this.refresh();
 		});
+		this.aliases.aliasUpdates.event(async () => {
+			this.reload();
+		});
 	}
 
 	private flagFactory({
@@ -231,6 +237,25 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			);
 		}
 
+		if (this.aliases && this.aliases.keys[flag.key]) {
+			const aliases: Array<FlagNode> = this.aliases.keys[flag.key].map(alias => {
+				const aliasNode = new vscode.TreeItem(
+					alias,
+					NON_COLLAPSED)
+				aliasNode.command = {
+					command: 'workbench.action.findInFiles',
+					title: 'Find in Files',
+					arguments: [{ query: alias,
+									triggerSearch: true,
+									matchWholeWord: true,
+									isCaseSensitive: true} ]
+				}
+				return aliasNode
+			});
+			renderedFlagFields.push(
+				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'flagParentItem' }),
+			);
+		}
 		/**
 		 * Build view for any Flag Prerequisites
 		 */
@@ -423,19 +448,20 @@ export function flagNodeFactory({
 }): FlagNode {
 	return new FlagNode(ctx, label, collapsed, children, ctxValue, uri, flagKey, flagParentName, flagVersion);
 }
+
 /* eslint-enable @typescript-eslint/explicit-module-boundary-types */
 /**
  * Class representing a Feature flag as vscode TreeItem
  * It is a nested array of FlagNode's to build the view
  */
-export class FlagNode extends vscode.TreeItem {
-	children: FlagNode[] | undefined;
+ export class FlagNode extends vscode.TreeItem {
+	children: any|undefined;
 	contextValue?: string;
 	uri?: string;
 	flagKey?: string;
 	flagParentName?: string;
 	flagVersion: number;
-
+	command?: vscode.Command
 	/**
 	 * @param label will be shown in the Treeview
 	 * @param collapsibleState is initial state collapsible state
@@ -449,12 +475,13 @@ export class FlagNode extends vscode.TreeItem {
 		ctx: vscode.ExtensionContext,
 		public readonly label: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-		children?: FlagNode[],
+		children?: any,
 		contextValue?: string,
 		uri?: string,
 		flagKey?: string,
 		flagParentName?: string,
 		flagVersion?: number,
+		command?: vscode.Command
 	) {
 		super(label, collapsibleState);
 		this.contextValue = contextValue;
@@ -464,6 +491,7 @@ export class FlagNode extends vscode.TreeItem {
 		this.flagParentName = flagParentName;
 		this.flagVersion = flagVersion;
 		this.conditionalIcon(ctx, this.contextValue, this.label);
+		this.command = command
 	}
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {

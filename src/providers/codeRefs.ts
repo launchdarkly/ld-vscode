@@ -1,4 +1,4 @@
-import { window, workspace } from 'vscode';
+import { EventEmitter, window, workspace } from 'vscode';
 import { exec, ExecOptions } from 'child_process'
 import { createReadStream } from 'fs'
 import { join } from 'path'
@@ -19,6 +19,7 @@ type FlagAlias = {
 
 export class FlagAliases {
     private config: Configuration;
+    public readonly aliasUpdates: EventEmitter<boolean | null> = new EventEmitter();
     map = new Map()
     keys = new Map()
 
@@ -46,7 +47,6 @@ export class FlagAliases {
                 if (error) {
                     reject({ error, stdout, stderr });
                 }
-                console.log(stdout)
                 resolve({ stdout, stderr });
             });
         });
@@ -54,7 +54,6 @@ export class FlagAliases {
 
     private async startCodeRefsUpdateTask(interval: number) {
         const ms = interval * 60 * 1000;
-        console.log(`Interval: ${ms}`)
 		setInterval(() => {
 			this.generateAndReadAliases();
 		}, ms);
@@ -63,16 +62,12 @@ export class FlagAliases {
     async generateCsv(directory: string, outDir: string, repoName: string): Promise<void> {
         try{
             const command = `${this.config.codeRefsPath} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${this.config.project}" --repoName="${repoName}" --baseUri="${this.config.baseUri}" --contextLines=-1 --branch=scan --revision=0`
-            console.log(command)
             const output = await this.exec(command, {env: {'LD_ACCESS_TOKEN': this.config.accessToken }})
-            //const output = await this.exec(command, {})
             if (output.stderr) {
-                console.log("there")
                 window.showErrorMessage(output.stderr)
             }
         } catch (err) {
             window.showErrorMessage(err.error);
-            console.log("here")
             console.error(err)
         }
 
@@ -80,16 +75,13 @@ export class FlagAliases {
 
     async generateAndReadAliases(directory=workspace.workspaceFolders[0]): Promise<void> {
         const refsDir = directory.uri.toString().split(":",2)
-        console.log(refsDir)
         if(refsDir[0] !== "file") {
             return
         }
         const tmpDir = await fs.mkdtemp(join(tmpdir(), 'ld-'))
         const tmpRepo = "tmpRepo"
-        console.log(tmpDir)
         await this.generateCsv(refsDir[1], tmpDir, tmpRepo)
         const aliasFile = `${tmpDir}/coderefs_${this.config.project}_${tmpRepo}_scan.csv`
-        console.log(aliasFile)
         createReadStream(aliasFile)
         .pipe(csv())
         .on('data', (row: FlagAlias) => {
@@ -106,7 +98,7 @@ export class FlagAliases {
             })
         })
         .on('end', () => {
-            console.log(this.keys)
+            this.aliasUpdates.fire(true)
             fs.rmdir(tmpDir, { recursive: true })
         });
     }

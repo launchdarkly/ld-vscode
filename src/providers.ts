@@ -38,19 +38,22 @@ export async function register(
 	flagStore: FlagStore,
 	api: LaunchDarklyAPI,
 ): Promise<void> {
+	let aliases
 	if (typeof flagStore !== 'undefined') {
-		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
+		if (config.enableAliases) {
+			aliases = new FlagAliases(config);
+			aliases.start()
+		}
+
+		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 	}
+
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
 
-	let aliases
-	if (config.enableAliases) {
-		aliases = new FlagAliases(config);
-		aliases.start()
-	}
+
 
 
 	ctx.subscriptions.push(
