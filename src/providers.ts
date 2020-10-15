@@ -38,11 +38,11 @@ export async function register(
 	flagStore: FlagStore,
 	api: LaunchDarklyAPI,
 ): Promise<void> {
-	let aliases
+	let aliases;
 	if (typeof flagStore !== 'undefined') {
 		if (config.enableAliases) {
 			aliases = new FlagAliases(config);
-			aliases.start()
+			aliases.start();
 		}
 
 		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
@@ -52,9 +52,6 @@ export async function register(
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
-
-
-
 
 	ctx.subscriptions.push(
 		commands.registerCommand('extension.configureLaunchDarkly', async () => {
@@ -129,12 +126,12 @@ export async function register(
 class LaunchDarklyHoverProvider implements HoverProvider {
 	private readonly flagStore: FlagStore;
 	private readonly config: Configuration;
-	private readonly aliases: FlagAliases
+	private readonly aliases: FlagAliases;
 
 	constructor(config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
 		this.config = config;
 		this.flagStore = flagStore;
-		this.aliases = aliases
+		this.aliases = aliases;
 	}
 
 	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
@@ -142,14 +139,14 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-				let foundAlias
+				let foundAlias;
 				if (this.aliases) {
-					foundAlias = this.aliases.map[candidate]
+					foundAlias = this.aliases.map[candidate];
 				} else {
-					foundAlias = {}
+					foundAlias = {};
 				}
-				console.log(`Candidate: ${candidate}`)
-				console.log(`Alias: ${foundAlias}`)
+				console.log(`Candidate: ${candidate}`);
+				console.log(`Alias: ${foundAlias}`);
 				try {
 					const data =
 						(await this.flagStore.getFeatureFlag(candidate)) ||

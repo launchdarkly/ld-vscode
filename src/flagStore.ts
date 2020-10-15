@@ -144,10 +144,10 @@ export class FlagStore {
 
 	private async getLatestSDKKey(): Promise<string> {
 		try {
-			console.log(this.config.project)
-			console.log(this.config.env)
+			console.log(this.config.project);
+			console.log(this.config.env);
 			const env = await this.api.getEnvironment(this.config.project, this.config.env);
-			console.log(env)
+			console.log(env);
 			return env.apiKey;
 		} catch (err) {
 			if (err.statusCode === 404) {
@@ -163,6 +163,7 @@ export class FlagStore {
 	}
 
 	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
+		// Cannot replace in the config, so updating at call site.
 		const streamUri = this.config.baseUri.replace('app', 'stream');
 		return {
 			timeout: 5,
