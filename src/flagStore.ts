@@ -144,10 +144,7 @@ export class FlagStore {
 
 	private async getLatestSDKKey(): Promise<string> {
 		try {
-			console.log(this.config.project);
-			console.log(this.config.env);
 			const env = await this.api.getEnvironment(this.config.project, this.config.env);
-			console.log(env);
 			return env.apiKey;
 		} catch (err) {
 			if (err.statusCode === 404) {
