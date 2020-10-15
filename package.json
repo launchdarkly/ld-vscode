@@ -18,6 +18,11 @@
 	],
 	"main": "./dist/extension",
 	"contributes": {
+		"taskDefinitions": [
+			{
+				"type": "shell"
+			}
+		],
 		"configuration": {
 			"type": "object",
 			"title": "LaunchDarkly",
@@ -71,6 +76,21 @@
 					"type": "number",
 					"default": 120,
 					"description": "How often in minutes to refresh feature flag metadata via API. If `0` global flag metadata does not update. Max is 1440 (1 Day)."
+				},
+				"launchdarkly.enableAliases": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable reading in flag aliases via Code References"
+				},
+				"launchdarkly.codeRefsPath": {
+					"type": "string",
+					"default": "",
+					"description": "Path to where the Code References binary is installed"
+				},
+				"launchdarkly.codeRefsRefreshRate": {
+					"type": "number",
+					"default": 240,
+					"description": "How often in minutes to refresh feature flag metadata via API. If `0` code references does not update. Max is 1440 (1 Day)."
 				}
 			}
 		},
@@ -183,7 +203,7 @@
 		"watch": "webpack --mode none --watch --info-verbosity verbose",
 		"test-compile": "tsc -p ./ && cp ./package.json ./out/package.json",
 		"test": "yarn run test-compile && node ./out/test/runTest.js",
-    "lint": "eslint . --ext .ts",
+		"lint": "eslint . --ext .ts",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,tests}/**/*.ts\"",
 		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\""
 	},
@@ -207,6 +227,7 @@
 	"dependencies": {
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
+		"csv-parser": "^2.3.3",
 		"launchdarkly-node-server-sdk": "^5.13.1",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
