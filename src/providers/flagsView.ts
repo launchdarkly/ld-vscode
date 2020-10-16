@@ -562,7 +562,7 @@ export class FlagNode extends vscode.TreeItem {
 		this.command = command;
 	}
 
-	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
+	conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
 		/**
 		 * Special handling for open browser. Called in package.json
 		 */
