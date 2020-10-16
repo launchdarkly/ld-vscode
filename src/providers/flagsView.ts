@@ -9,14 +9,14 @@ import { debounce, map } from 'lodash';
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
 
-export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<FlagNode> {
+export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<FlagParentNode | FlagNode> {
 	private readonly api: LaunchDarklyAPI;
 	private config: Configuration;
 	private flagStore: FlagStore;
-	private flagNodes: Array<FlagNode>;
+	private flagNodes: Array<FlagParentNode>;
 	private ctx: vscode.ExtensionContext;
-	private _onDidChangeTreeData: vscode.EventEmitter<FlagNode | null | void> = new vscode.EventEmitter<FlagNode | null | void>();
-	readonly onDidChangeTreeData: vscode.Event<FlagNode | null | void> = this._onDidChangeTreeData.event;
+	private _onDidChangeTreeData: vscode.EventEmitter<FlagParentNode | null | void> = new vscode.EventEmitter<FlagParentNode | null | void>();
+	readonly onDidChangeTreeData: vscode.Event<FlagParentNode | null | void> = this._onDidChangeTreeData.event;
 
 	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext) {
 		this.api = api;
@@ -52,11 +52,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		{ leading: false, trailing: true },
 	);
 
-	getTreeItem(element: FlagNode): vscode.TreeItem {
+	getTreeItem(element: FlagParentNode): vscode.TreeItem {
 		return element;
 	}
 
-	getChildren(element?: FlagNode): Thenable<FlagNode[]> {
+	getChildren(element?: FlagParentNode): Thenable<FlagParentNode[] | FlagNode[]> {
 		if (typeof this.flagNodes === 'undefined' || this.flagNodes.length == 0) {
 			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
 		}
@@ -82,10 +82,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		} catch (err) {
 			console.error(err);
 			const message = 'Error retrieving Flags: `${err}';
-			this.flagNodes = [this.flagFactory({ label: message })];
+			this.flagNodes = [new FlagParentNode(this.ctx, message, NON_COLLAPSED)];
 		}
 		if (!this.flagNodes) {
-			this.flagNodes = [new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)];
+			this.flagNodes = [new FlagParentNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)];
 		}
 	}
 
@@ -179,7 +179,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		});
 	}
 
-	private async flagToValues(flag: FeatureFlag, env: FlagConfiguration = null): Promise<FlagNode> {
+	private async flagToValues(flag: FeatureFlag, env: FlagConfiguration = null): Promise<FlagParentNode> {
 		/**
 		 * Get Link for Open Browser and build base flag node.
 		 */
@@ -192,23 +192,18 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 
 		const flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
-		const item = this.flagFactory({
-			label: flag.name,
-			collapsed: COLLAPSED,
-			children: [
+		const item = new FlagParentNode(
+			this.ctx,
+			flag.name,
+			COLLAPSED,
+			[
 				this.flagFactory({ label: `Open in Browser`, ctxValue: 'flagViewBrowser', uri: flagUri }),
 				this.flagFactory({ label: `Key: ${flag.key}`, ctxValue: 'flagViewKey' }),
-				this.flagFactory({
-					label: `On: ${envConfig.on}`,
-					ctxValue: 'flagViewToggle',
-					flagKey: flag.key,
-					flagParentName: flag.name,
-				}),
 			],
-			ctxValue: 'flagParentItem',
-			flagKey: flag.key,
-			flagVersion: flag._version,
-		});
+			flag.key,
+			flag._version,
+			envConfig.on
+		)
 		/**
 		 * User friendly name for building nested children under parent FlagNode
 		 */
@@ -440,6 +435,7 @@ export class FlagNode extends vscode.TreeItem {
 	flagKey?: string;
 	flagParentName?: string;
 	flagVersion: number;
+
 	/**
 	 * @param label will be shown in the Treeview
 	 * @param collapsibleState is initial state collapsible state
@@ -470,19 +466,61 @@ export class FlagNode extends vscode.TreeItem {
 		this.conditionalIcon(ctx, this.contextValue, this.label);
 	}
 
-	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string) {
+	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
 		/**
 		 * Special handling for open browser. Called in package.json
 		 */
 		if (contextValue == 'flagViewBrowser') {
 			return;
 		}
-		if (contextValue == 'flagViewToggle' && label.split(':')[1].trim() == 'false') {
-			this.setIcon(ctx, 'toggleoff');
-		} else if (this.contextValue == 'flagViewToggle') {
+		this.setIcon(ctx, contextValue);
+	}
+
+	private setIcon(ctx: vscode.ExtensionContext, fileName: string): vscode.ThemeIcon {
+		return (this.iconPath = {
+			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName + '.svg')),
+			dark: ctx.asAbsolutePath(path.join('resources', 'dark', fileName + '.svg')),
+		});
+	}
+}
+
+export class FlagParentNode extends vscode.TreeItem {
+	children: FlagNode[] | undefined;
+	contextValue?: string;
+	uri?: string;
+	flagKey?: string;
+	flagParentName?: string;
+	flagVersion: number;
+	enabled?: boolean;
+
+	/**
+	 * @param label will be shown in the Treeview
+	 * @param collapsibleState is initial state collapsible state
+	 * @param children array of FlagNode's building nested view
+	 * @param flagKey reference to which flag key the treeview item is associated with
+	 */
+	constructor(
+		ctx: vscode.ExtensionContext,
+		public readonly label: string,
+		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+		children?: FlagNode[],
+		flagKey?: string,
+		flagVersion?: number,
+		enabled?: boolean
+	) {
+		super(label, collapsibleState);
+		this.children = children;
+		this.flagKey = flagKey;
+		this.flagVersion = flagVersion;
+		this.enabled = enabled
+		this.conditionalIcon(ctx, this.contextValue, this.enabled);
+	}
+
+	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, enabled: boolean) {
+		if (enabled) {
 			this.setIcon(ctx, 'toggleon');
-		} else if (ctx && contextValue) {
-			this.setIcon(ctx, contextValue);
+		} else {
+			this.setIcon(ctx, 'toggleoff');
 		}
 	}
 

@@ -146,10 +146,11 @@ export class FlagStore {
 	}
 
 	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
+		const streamUri = this.config.baseUri.replace("app", "stream")
 		return {
 			timeout: 5,
 			baseUri: this.config.baseUri,
-			streamUri: this.config.streamUri,
+			streamUri: streamUri,
 			sendEvents: false,
 			featureStore: this.store,
 		};
