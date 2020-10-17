@@ -4,6 +4,7 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
 import { FlagStore } from '../flagStore';
+import { LaunchDarklyTreeViewProvider } from './flagsView';
 
 /**
  * CodelensProvider
@@ -17,7 +18,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
     private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
-    constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore) {
+    constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, flagTree?: LaunchDarklyTreeViewProvider) {
         this.api = api;
         this.config = config;
         this.flagStore = flagStore;
@@ -39,9 +40,9 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
     private async flagUpdateListener() {
         // Setup listener for flag changes
         console.log("setting up lens listener")
-        this.flagStore.on('update', async flag => {
+        this.flagStore.on('update', () => {
             try {
-                const updatedFlag = await this.flagStore.getFeatureFlag(flag);
+                console.log("flag update")
                 this.refresh()
             } catch (err) {
                 console.error('Failed to update LaunchDarkly flag lens:', err);
@@ -116,9 +117,14 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
             } else {
                 flagVariations = `${variations.length} variations`
             }
-            const offVariation = codeLens.env.offVariation ? `${this.getNameorValue(codeLens.flag, codeLens.env.offVariation)} - Off Variation` : "No off Variation set"
+            let offVariation
+            if (codeLens.env.offVariation !== null) {
+                offVariation = `${this.getNameorValue(codeLens.flag, codeLens.env.offVariation)} - off variation`
+            } else {
+                offVariation = "**Code Fallthrough(No off variation set)**"
+            }
             codeLens.command = {
-                title: `LaunchDarkly Feature Flag \u2022 Serving: ${codeLens.flag.environments[this.config.env].on ? flagVariations : offVariation} ${preReq}`,
+                title: `LaunchDarkly Feature Flag \u2022 Serving: ${codeLens.env.on ? flagVariations : offVariation} ${preReq}`,
                 tooltip: "Feature Flag Variations",
                 command: "",
                 arguments: ["Argument 1", true]
