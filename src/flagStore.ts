@@ -60,7 +60,10 @@ export class FlagStore {
 		}
 
 		try {
-			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+			const getFlags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+			const flags = getFlags.map(flag => {
+				flag.variationLength = flag.variations.length
+				return flag })
 			this.flagMetadata = keyBy(flags, 'key');
 			const sdkKey = await this.getLatestSDKKey();
 			const ldConfig = this.ldConfig();
@@ -76,6 +79,21 @@ export class FlagStore {
 				}
 			}
 			this.storeUpdates.fire(true);
+			this.on('update', async (keys: string) => {
+				const flagKeys = Object.values(keys);
+				flagKeys.map(key => {
+					const curVars = this.flagMetadata[key].variationLength
+					this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
+						if (!res) {
+							return;
+						}
+						if (curVars !== res.variations.length) {
+							this.flagMetadata[key] = await this.api.getFeatureFlag(this.config.project, key, this.config.env)
+							this.storeUpdates.fire(true)
+						}
+					})
+				})
+			})
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
@@ -194,7 +212,10 @@ export class FlagStore {
 	private readonly debounceUpdate = debounce(
 		async () => {
 			try {
-				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				const getFlags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				const flags = getFlags.map(flag => {
+					flag.variationLength = flag.variations.length
+					return flag })
 				this.flagMetadata = keyBy(flags, 'key');
 				this.storeUpdates.fire(true);
 			} catch (err) {

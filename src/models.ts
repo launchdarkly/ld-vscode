@@ -384,4 +384,8 @@ export class FeatureFlag {
 	 */
 	archived?: boolean;
 	defaults?: Defaults;
+	/**
+	 * Used by plugin to make sure number of variations has not changed
+	 */
+	variationLength?: number;
 }
