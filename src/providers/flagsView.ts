@@ -369,8 +369,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * Build Off Variation view.
 		 * TODO: Render even if undefined since that is valid option.
 		 */
-		if (flag.environments[this.config.env].offVariation !== undefined) {
-			const offVar = flag.variations[flag.environments[this.config.env].offVariation];
+		if (envConfig.offVariation !== undefined) {
+			const offVar = flag.variations[envConfig.offVariation];
 			renderedFlagFields.push(
 				this.flagFactory({
 					label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
