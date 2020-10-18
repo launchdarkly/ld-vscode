@@ -472,8 +472,7 @@ export class FlagNode extends vscode.TreeItem {
 		 */
 		if (contextValue == 'flagViewBrowser') {
 			return;
-		}
-		else if (ctx && contextValue) {
+		} else if (ctx && contextValue) {
 			this.setIcon(ctx, contextValue);
 		}
 	}
