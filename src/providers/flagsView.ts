@@ -9,14 +9,14 @@ import { debounce, map } from 'lodash';
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
 
-export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<FlagParentNode | FlagNode> {
+export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<FlagTreeInterface> {
 	private readonly api: LaunchDarklyAPI;
 	private config: Configuration;
 	private flagStore: FlagStore;
-	private flagNodes: Array<FlagParentNode>;
+	private flagNodes: Array<FlagTreeInterface>;
 	private ctx: vscode.ExtensionContext;
-	private _onDidChangeTreeData: vscode.EventEmitter<FlagParentNode | null | void> = new vscode.EventEmitter<FlagParentNode | null | void>();
-	readonly onDidChangeTreeData: vscode.Event<FlagParentNode | null | void> = this._onDidChangeTreeData.event;
+	private _onDidChangeTreeData: vscode.EventEmitter<FlagTreeInterface | null | void> = new vscode.EventEmitter<FlagTreeInterface | null | void>();
+	readonly onDidChangeTreeData: vscode.Event<FlagTreeInterface | null | void> = this._onDidChangeTreeData.event;
 
 	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext) {
 		this.api = api;
@@ -52,11 +52,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		{ leading: false, trailing: true },
 	);
 
-	getTreeItem(element: FlagParentNode): vscode.TreeItem {
+	getTreeItem(element: FlagTreeInterface): vscode.TreeItem {
 		return element;
 	}
 
-	getChildren(element?: FlagParentNode): Thenable<FlagParentNode[] | FlagNode[]> {
+	getChildren(element?: FlagTreeInterface): Promise<FlagTreeInterface[]> {
 		if (typeof this.flagNodes === 'undefined' || this.flagNodes.length == 0) {
 			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
 		}
@@ -531,3 +531,10 @@ export class FlagParentNode extends vscode.TreeItem {
 		});
 	}
 }
+
+export interface FlagTreeInterface {
+	children: any;
+	command?: any;
+	flagKey?: string;
+	flagVersion?: number
+  }
