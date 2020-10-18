@@ -202,8 +202,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			],
 			flag.key,
 			flag._version,
-			envConfig.on
-		)
+			envConfig.on,
+		);
 		/**
 		 * User friendly name for building nested children under parent FlagNode
 		 */
@@ -506,13 +506,13 @@ export class FlagParentNode extends vscode.TreeItem {
 		children?: FlagNode[],
 		flagKey?: string,
 		flagVersion?: number,
-		enabled?: boolean
+		enabled?: boolean,
 	) {
 		super(label, collapsibleState);
 		this.children = children;
 		this.flagKey = flagKey;
 		this.flagVersion = flagVersion;
-		this.enabled = enabled
+		this.enabled = enabled;
 		this.conditionalIcon(ctx, this.contextValue, this.enabled);
 	}
 
@@ -536,5 +536,5 @@ export interface FlagTreeInterface {
 	children: any;
 	command?: any;
 	flagKey?: string;
-	flagVersion?: number
-  }
+	flagVersion?: number;
+}
