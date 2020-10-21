@@ -518,9 +518,9 @@ export class FlagParentNode extends vscode.TreeItem {
 	}
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, enabled: boolean) {
-		if (enabled) {
+		if (ctx && enabled) {
 			this.setIcon(ctx, 'toggleon');
-		} else {
+		} else if (ctx) {
 			this.setIcon(ctx, 'toggleoff');
 		}
 	}
