@@ -210,6 +210,10 @@
 					"when": "view == launchdarklyFeatureFlags && viewItem == variationDefault"
 				},
 				{
+					"command": "launchdarkly.fallthroughChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == rollout"
+				},
+				{
 					"command": "launchdarkly.offChange",
 					"when": "view == launchdarklyFeatureFlags && viewItem == variationOff"
 				}

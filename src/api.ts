@@ -71,28 +71,6 @@ export class LaunchDarklyAPI {
 		return this.patchFeatureFlag(projectKey, flagKey, patchOp);
 	}
 
-	async patchFallthrough(projectKey: string, flagKey: string, idx: number): Promise<FeatureFlag> {
-		const patch = new PatchOperation();
-		patch.path = `/environments/${this.config.env}/fallthrough/variation`;
-		patch.op = 'replace';
-		patch.value = idx;
-		const patchOp = new PatchComment();
-		patchOp.comment = 'VS Code Updated';
-		patchOp.patch = [patch];
-		return this.patchFeatureFlag(projectKey, flagKey, patchOp);
-	}
-
-	async patchOffVariation(projectKey: string, flagKey: string, idx: number): Promise<FeatureFlag> {
-		const patch = new PatchOperation();
-		patch.path = `/environments/${this.config.env}/offVariation`;
-		patch.op = 'replace';
-		patch.value = idx;
-		const patchOp = new PatchComment();
-		patchOp.comment = 'VS Code Updated';
-		patchOp.patch = [patch];
-		return this.patchFeatureFlag(projectKey, flagKey, patchOp);
-	}
-
 	private createOptions(path: string, method = 'GET', body?: PatchComment) {
 		const options = {
 			method: method,
