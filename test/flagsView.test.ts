@@ -62,4 +62,4 @@ suite('flagParentNode tests', () => {
 			0
 		);
 	});
-}
+});
