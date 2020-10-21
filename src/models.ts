@@ -156,14 +156,14 @@ export class Flag extends Resource {
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 export class FlagConfiguration {
 	key: string;
-	offVariation: any;
+	variations: Array<any>;
+	offVariation: number | undefined;
 	fallthrough: any;
 	prerequisites: any;
 	targets: any;
 	rules: Array<any>;
 	on: boolean;
 	version: number;
-	variations: Array<any>;
 }
 /* eslint-enable  @typescript-eslint/no-explicit-any */
 
@@ -388,4 +388,14 @@ export class FeatureFlag {
 	 * Used by plugin to make sure number of variations has not changed
 	 */
 	variationLength?: number;
+}
+
+export class PatchOperation {
+	op: string;
+	path: string;
+	value: any;
+}
+export class PatchComment {
+	comment?: string;
+	patch?: Array<PatchOperation>;
 }

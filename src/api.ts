@@ -2,7 +2,7 @@ import * as rp from 'request-promise-native';
 import * as url from 'url';
 
 import { Configuration } from './configuration';
-import { Resource, Project, Environment, FeatureFlag } from './models';
+import { Resource, Project, Environment, FeatureFlag, PatchOperation, PatchComment } from './models';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PACKAGE_JSON = require('../package.json');
@@ -54,7 +54,46 @@ export class LaunchDarklyAPI {
 		return flags;
 	}
 
-	private createOptions(path: string, method = 'GET') {
+	async patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag> {
+		const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value);
+		const data = await rp(options);
+		return new FeatureFlag(JSON.parse(data));
+	}
+
+	async patchFeatureFlagOn(projectKey: string, flagKey: string, enabled: boolean): Promise<FeatureFlag> {
+		const patch = new PatchOperation();
+		patch.path = `/environments/${this.config.env}/on`;
+		patch.op = 'replace';
+		patch.value = enabled;
+		const patchOp = new PatchComment();
+		patchOp.comment = 'VS Code Updated';
+		patchOp.patch = [patch];
+		return this.patchFeatureFlag(projectKey, flagKey, patchOp);
+	}
+
+	async patchFallthrough(projectKey: string, flagKey: string, idx: number): Promise<FeatureFlag> {
+		const patch = new PatchOperation();
+		patch.path = `/environments/${this.config.env}/fallthrough/variation`;
+		patch.op = 'replace';
+		patch.value = idx;
+		const patchOp = new PatchComment();
+		patchOp.comment = 'VS Code Updated';
+		patchOp.patch = [patch];
+		return this.patchFeatureFlag(projectKey, flagKey, patchOp);
+	}
+
+	async patchOffVariation(projectKey: string, flagKey: string, idx: number): Promise<FeatureFlag> {
+		const patch = new PatchOperation();
+		patch.path = `/environments/${this.config.env}/offVariation`;
+		patch.op = 'replace';
+		patch.value = idx;
+		const patchOp = new PatchComment();
+		patchOp.comment = 'VS Code Updated';
+		patchOp.patch = [patch];
+		return this.patchFeatureFlag(projectKey, flagKey, patchOp);
+	}
+
+	private createOptions(path: string, method = 'GET', body?: PatchComment) {
 		const options = {
 			method: method,
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
@@ -63,6 +102,11 @@ export class LaunchDarklyAPI {
 				UserAgent: 'VSCodeExtension/' + PACKAGE_JSON.version,
 			},
 		};
+
+		if (body) {
+			options.headers['content-type'] = 'application/json';
+			options['body'] = [JSON.stringify(body)];
+		}
 
 		return options;
 	}

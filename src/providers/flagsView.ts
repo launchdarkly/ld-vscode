@@ -125,6 +125,26 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					isCaseSensitive: true,
 				});
 			}),
+			vscode.commands.registerCommand('launchdarkly.toggleFlag', async (node: FlagParentNode) => {
+				const env = await this.flagStore.getFeatureFlag(node.flagKey)
+				this.api.patchFeatureFlagOn(this.config.project,node.flagKey, !env.config.on)
+			}),
+			vscode.commands.registerCommand('launchdarkly.fallthroughChange', async (node: FlagNode) => {
+				const env = await this.flagStore.getFeatureFlag(node.flagKey)
+				const variations = env.flag.variations.map((variation, idx) => { return `${idx}. ${variation.name ? variation.name : variation.value}`})
+				const choice = await vscode.window.showQuickPick(variations)
+				console.log(choice)
+				const newFallthrough = choice.split(".")[0]
+				this.api.patchFallthrough(this.config.project, node.flagKey, parseInt(newFallthrough))
+			}),
+			vscode.commands.registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
+				const env = await this.flagStore.getFeatureFlag(node.flagKey)
+				const variations = env.flag.variations.map((variation, idx) => { return `${idx}. ${variation.name ? variation.name : variation.value}`})
+				const choice = await vscode.window.showQuickPick(variations)
+				console.log(choice)
+				const newOff = choice.split(".")[0]
+				this.api.patchOffVariation(this.config.project, node.flagKey, parseInt(newOff))
+			})
 		);
 	}
 
@@ -227,6 +247,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			flag.key,
 			flag._version,
 			envConfig.on,
+			[],
+			"flagParentItem"
 		);
 		/**
 		 * User friendly name for building nested children under parent FlagNode
@@ -375,6 +397,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
 					}`,
 					ctxValue: 'variationDefault',
+					flagKey: envConfig.key
 				}),
 			);
 		} else if (fallThrough.rollout) {
@@ -553,13 +576,15 @@ export class FlagParentNode extends vscode.TreeItem {
 		flagKey?: string,
 		flagVersion?: number,
 		enabled?: boolean,
-		aliases?: string[]
+		aliases?: string[],
+		contextValue?: string
 	) {
 		super(label, collapsibleState);
 		this.children = children;
 		this.flagKey = flagKey;
 		this.flagVersion = flagVersion;
 		this.enabled = enabled;
+		this.contextValue = contextValue
 		this.conditionalIcon(ctx, this.contextValue, this.enabled);
 		this.aliases = aliases
 	}
