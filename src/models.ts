@@ -156,7 +156,6 @@ export class Flag extends Resource {
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 export class FlagConfiguration {
 	key: string;
-	variations: Array<any>;
 	offVariation: any;
 	fallthrough: any;
 	prerequisites: any;
