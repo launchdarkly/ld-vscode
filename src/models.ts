@@ -163,6 +163,7 @@ export class FlagConfiguration {
 	rules: Array<any>;
 	on: boolean;
 	version: number;
+	variations: Array<any>;
 }
 /* eslint-enable  @typescript-eslint/no-explicit-any */
 
