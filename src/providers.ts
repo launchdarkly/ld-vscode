@@ -45,7 +45,7 @@ export async function register(
 			if (aliases.codeRefsVersionCheck()) {
 				aliases.start();
 			} else {
-				window.showErrorMessage("ld-find-code-refs version > 2 supported.")
+				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
 			}
 		}
 
