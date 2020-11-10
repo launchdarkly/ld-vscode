@@ -163,9 +163,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}
 			this.refresh();
 		});
-		this.aliases.aliasUpdates.event(async () => {
-			this.reload();
-		});
+		if (this.aliases) {
+			this.aliases.aliasUpdates.event(async () => {
+				this.reload();
+			});
+		}
 	}
 
 	private flagFactory({

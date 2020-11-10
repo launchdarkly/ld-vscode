@@ -42,7 +42,11 @@ export async function register(
 	if (typeof flagStore !== 'undefined') {
 		if (config.enableAliases) {
 			aliases = new FlagAliases(config);
-			aliases.start();
+			if (aliases.codeRefsVersionCheck()) {
+				aliases.start();
+			} else {
+				window.showErrorMessage("ld-find-code-refs version > 2 supported.")
+			}
 		}
 
 		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
@@ -145,8 +149,6 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 				} else {
 					foundAlias = {};
 				}
-				console.log(`Candidate: ${candidate}`);
-				console.log(`Alias: ${foundAlias}`);
 				try {
 					const data =
 						(await this.flagStore.getFeatureFlag(candidate)) ||

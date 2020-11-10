@@ -62,7 +62,7 @@ export class FlagAliases {
 	async generateCsv(directory: string, outDir: string, repoName: string): Promise<void> {
 		try {
 			const command = `${this.config.codeRefsPath} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${this.config.project}" --repoName="${repoName}" --baseUri="${this.config.baseUri}" --contextLines=-1 --branch=scan --revision=0`;
-			const output = await this.exec(command, { env: { LD_ACCESS_TOKEN: this.config.accessToken } });
+			const output = await this.exec(command, { env: { LD_ACCESS_TOKEN: this.config.accessToken }, timeout: 20 * 60000 });
 			if (output.stderr) {
 				window.showErrorMessage(output.stderr);
 			}
@@ -100,5 +100,26 @@ export class FlagAliases {
 				this.aliasUpdates.fire(true);
 				fs.rmdir(tmpDir, { recursive: true });
 			});
+	}
+
+	async codeRefsVersionCheck(): Promise<boolean> {
+		try{
+			const command = `${this.config.codeRefsPath} --version`;
+				const output = await this.exec(command, {});
+				if (output.stderr) {
+					window.showErrorMessage(output.stderr);
+					return false
+				}
+				const version = output.stdout.split(" ")[2].split(".")
+				if (Number(version[0]) > 2) {
+					return true
+				} else {
+					return false
+				}
+		} catch (err) {
+			window.showErrorMessage(err.error);
+			console.error(err);
+			return false
+		}
 	}
 }
