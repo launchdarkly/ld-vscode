@@ -40,7 +40,7 @@ export async function register(
 ): Promise<void> {
 	let aliases;
 	if (typeof flagStore !== 'undefined') {
-		if (config.enableAliases && config.codeRefsPath !== "") {
+		if (config.enableAliases && config.codeRefsPath !== '') {
 			aliases = new FlagAliases(config);
 			if (aliases.codeRefsVersionCheck()) {
 				aliases.start();
