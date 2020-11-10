@@ -115,6 +115,16 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			),
 			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.reload()),
 			this.registerTreeviewRefreshCommand(),
+			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
+				const aliases = this.aliases.getKeys()
+				console.log(aliases[node.flagKey].join("|"))
+				vscode.commands.executeCommand('workbench.action.findInFiles', {
+					query: aliases[node.flagKey].join("|"),
+					triggerSearch: true,
+					matchWholeWord: true,
+					isCaseSensitive: true,
+				});
+			}),
 		);
 	}
 
@@ -244,19 +254,19 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }),
 			);
 		}
-
-		if (this.aliases && this.aliases.keys[flag.key]) {
-			const aliases: Array<FlagNode> = this.aliases.keys[flag.key].map(alias => {
-				const aliasNode = new vscode.TreeItem(alias, NON_COLLAPSED);
+		const aliasKeys = this.aliases.getKeys()
+		if (this.aliases && aliasKeys[flag.key]) {
+			const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
+				const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' })
 				aliasNode.command = {
 					command: 'workbench.action.findInFiles',
 					title: 'Find in Files',
-					arguments: [{ query: alias, triggerSearch: true, matchWholeWord: true, isCaseSensitive: true }],
+					arguments: [{ query: alias, triggerSearch: true, matchWholeWord: true, isCaseSensitive: true}],
 				};
 				return aliasNode;
 			});
 			renderedFlagFields.push(
-				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'flagParentItem' }),
+				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'flagParentItem', flagKey: flag.key }),
 			);
 		}
 		/**
@@ -398,13 +408,16 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * TODO: Render even if undefined since that is valid option.
 		 */
 		if (envConfig.offVariation !== undefined) {
+			console.log(envConfig.offVariation)
 			const offVar = flag.variations[envConfig.offVariation];
-			renderedFlagFields.push(
-				this.flagFactory({
-					label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
-					ctxValue: 'variationOff',
-				}),
-			);
+			if (offVar !== undefined) {
+				renderedFlagFields.push(
+					this.flagFactory({
+						label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
+						ctxValue: 'variationOff',
+					}),
+				);
+			}
 		}
 
 		/**
@@ -524,6 +537,7 @@ export class FlagParentNode extends vscode.TreeItem {
 	flagParentName?: string;
 	flagVersion: number;
 	enabled?: boolean;
+	aliases?: string[]
 
 	/**
 	 * @param label will be shown in the Treeview
@@ -539,6 +553,7 @@ export class FlagParentNode extends vscode.TreeItem {
 		flagKey?: string,
 		flagVersion?: number,
 		enabled?: boolean,
+		aliases?: string[]
 	) {
 		super(label, collapsibleState);
 		this.children = children;
@@ -546,6 +561,7 @@ export class FlagParentNode extends vscode.TreeItem {
 		this.flagVersion = flagVersion;
 		this.enabled = enabled;
 		this.conditionalIcon(ctx, this.contextValue, this.enabled);
+		this.aliases = aliases
 	}
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, enabled: boolean) {

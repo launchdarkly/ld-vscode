@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "View LaunchDarkly feature flags in your editor.",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"publisher": "launchdarkly",
 	"engines": {
 		"vscode": "^1.45.0"
@@ -126,6 +126,14 @@
 					"light": "resources/light/link_external.svg",
 					"dark": "resources/dark/link_external.svg"
 				}
+			},
+			{
+				"command": "launchdarkly.flagMultipleSearch",
+				"title": "Find all Flag Aliases",
+				"icon": {
+					"light": "resources/light/flagMultipleSearch.svg",
+					"dark": "resources/dark/flagMultipleSearch.svg"
+				}
 			}
 		],
 		"menus": {
@@ -144,6 +152,10 @@
 				},
 				{
 					"command": "launchdarkly.treeviewrefresh",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.flagMultipleSearch",
 					"when": "false"
 				}
 			],
@@ -170,6 +182,11 @@
 				{
 					"command": "launchdarkly.openBrowser",
 					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser",
+					"group": "inline"
+				},
+				{
+					"command": "launchdarkly.flagMultipleSearch",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
 					"group": "inline"
 				}
 			]

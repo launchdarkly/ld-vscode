@@ -41,8 +41,9 @@ export async function register(
 	let aliases;
 	if (typeof flagStore !== 'undefined') {
 		if (config.enableAliases && config.codeRefsPath !== '') {
-			aliases = new FlagAliases(config);
+			aliases = new FlagAliases(config, ctx);
 			if (aliases.codeRefsVersionCheck()) {
+				aliases.setupStatusBar()
 				aliases.start();
 			} else {
 				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
@@ -145,7 +146,8 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let foundAlias;
 				if (this.aliases) {
-					foundAlias = this.aliases.map[candidate];
+					const aliasesMap = this.aliases.getMap()
+					foundAlias = aliasesMap[candidate];
 				} else {
 					foundAlias = {};
 				}
