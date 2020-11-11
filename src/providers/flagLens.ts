@@ -63,6 +63,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				...new Set(
 					obj.rules
 						.concat(obj.fallthrough)
+						// eslint-disable-next-line no-prototype-builtins
 						.map(x => (x.hasOwnProperty('rollout') ? x.rollout.variations.map(v => v.variation) : x.variation))
 						.flat(),
 				),
@@ -86,7 +87,6 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			let matches;
 			const flags = await this.flagStore.allFlagsMetadata();
 			const env = await this.flagStore.allFlags();
-			console.log('here');
 			const keys = Object.keys(flags);
 			let aliases: Map<string, string>;
 			let aliasArr;
