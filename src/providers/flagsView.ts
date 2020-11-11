@@ -116,9 +116,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.reload()),
 			this.registerTreeviewRefreshCommand(),
 			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
-				const aliases = this.aliases.getKeys()
+				const aliases = this.aliases.getKeys();
 				vscode.commands.executeCommand('workbench.action.findInFiles', {
-					query: aliases[node.flagKey].join("|"),
+					query: aliases[node.flagKey].join('|'),
 					triggerSearch: true,
 					matchWholeWord: true,
 					isCaseSensitive: true,
@@ -275,7 +275,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			flag._version,
 			envConfig.on,
 			[],
-			"flagParentItem"
+			'flagParentItem',
 		);
 		/**
 		 * User friendly name for building nested children under parent FlagNode
@@ -303,19 +303,25 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }),
 			);
 		}
-		const aliasKeys = this.aliases.getKeys()
+		const aliasKeys = this.aliases.getKeys();
 		if (this.aliases && aliasKeys[flag.key]) {
 			const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
-				const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' })
+				const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' });
 				aliasNode.command = {
 					command: 'workbench.action.findInFiles',
 					title: 'Find in Files',
-					arguments: [{ query: alias, triggerSearch: true, matchWholeWord: true, isCaseSensitive: true}],
+					arguments: [{ query: alias, triggerSearch: true, matchWholeWord: true, isCaseSensitive: true }],
 				};
 				return aliasNode;
 			});
 			renderedFlagFields.push(
-				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'aliases', flagKey: flag.key }),
+				this.flagFactory({
+					label: `Aliases`,
+					children: aliases,
+					collapsed: COLLAPSED,
+					ctxValue: 'aliases',
+					flagKey: flag.key,
+				}),
 			);
 		}
 		/**
@@ -459,7 +465,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * TODO: Render even if undefined since that is valid option.
 		 */
 		if (envConfig.offVariation !== undefined) {
-			console.log(envConfig.offVariation)
 			const offVar = flag.variations[envConfig.offVariation];
 			if (offVar !== undefined) {
 				renderedFlagFields.push(
@@ -589,7 +594,7 @@ export class FlagParentNode extends vscode.TreeItem {
 	flagParentName?: string;
 	flagVersion: number;
 	enabled?: boolean;
-	aliases?: string[]
+	aliases?: string[];
 
 	/**
 	 * @param label will be shown in the Treeview
@@ -606,7 +611,7 @@ export class FlagParentNode extends vscode.TreeItem {
 		flagVersion?: number,
 		enabled?: boolean,
 		aliases?: string[],
-		contextValue?: string
+		contextValue?: string,
 	) {
 		super(label, collapsibleState);
 		this.children = children;
@@ -615,7 +620,7 @@ export class FlagParentNode extends vscode.TreeItem {
 		this.enabled = enabled;
 		this.contextValue = contextValue;
 		this.conditionalIcon(ctx, this.contextValue, this.enabled);
-		this.aliases = aliases
+		this.aliases = aliases;
 	}
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, enabled: boolean) {

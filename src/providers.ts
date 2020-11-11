@@ -45,7 +45,7 @@ export async function register(
 		if (config.enableAliases && config.codeRefsPath !== '') {
 			aliases = new FlagAliases(config, ctx);
 			if (aliases.codeRefsVersionCheck()) {
-				aliases.setupStatusBar()
+				aliases.setupStatusBar();
 				aliases.start();
 			} else {
 				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
@@ -55,9 +55,9 @@ export async function register(
 		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 	}
-	const codeLens = new FlagCodeLensProvider(api, config, flagStore);
-	languages.registerCodeLensProvider("*", codeLens)
-	codeLens.start()
+	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
+	languages.registerCodeLensProvider('*', codeLens);
+	codeLens.start();
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
@@ -150,7 +150,7 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let foundAlias;
 				if (this.aliases) {
-					const aliasesMap = this.aliases.getMap()
+					const aliasesMap = this.aliases.getMap();
 					foundAlias = aliasesMap[candidate];
 				} else {
 					foundAlias = {};
