@@ -73,7 +73,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	}
 
 	getNameorValue(flag: FeatureFlag, variation: number) {
-		return flag.variations[variation].name ? flag.variations[variation].name : flag.variations[variation].value;
+		return JSON.stringify(flag.variations[variation].name) ? flag.variations[variation].name : JSON.stringify(flag.variations[variation].value);
 	}
 
 	public async provideCodeLenses(
@@ -142,13 +142,15 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				flagVariations = `${variations.length} variations`;
 			}
 			let offVariation;
+			console.log(codeLens.env)
+			console.log(codeLens.env.offVariation)
 			if (codeLens.env.offVariation !== null) {
-				offVariation = `${this.getNameorValue(codeLens.flag, codeLens.env.offVariation)} - off variation`;
+				offVariation = `${JSON.stringify(this.getNameorValue(codeLens.flag, codeLens.env.offVariation))} - off variation`;
 			} else {
 				offVariation = '**Code Fallthrough(No off variation set)**';
 			}
 			codeLens.command = {
-				title: `LaunchDarkly Feature Flag \u2022 Serving: ${codeLens.env.on ? flagVariations : offVariation} ${preReq}`,
+				title: `LaunchDarkly Feature Flag \u2022 ${codeLens.env.key} \u2022 Serving: ${codeLens.env.on ? flagVariations : offVariation} ${preReq}`,
 				tooltip: 'Feature Flag Variations',
 				command: '',
 				arguments: ['Argument 1', true],
