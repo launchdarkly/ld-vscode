@@ -304,7 +304,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				return aliasNode;
 			});
 			renderedFlagFields.push(
-				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'flagParentItem', flagKey: flag.key }),
+				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'aliases', flagKey: flag.key }),
 			);
 		}
 		/**

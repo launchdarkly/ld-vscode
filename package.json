@@ -198,7 +198,7 @@
 				},
 				{
 					"command": "launchdarkly.flagMultipleSearch",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
+					"when": "view == launchdarklyFeatureFlags && viewItem == aliases",
 					"group": "inline"
 				},
 				{
