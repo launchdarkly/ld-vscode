@@ -142,8 +142,6 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				flagVariations = `${variations.length} variations`;
 			}
 			let offVariation;
-			console.log(codeLens.env)
-			console.log(codeLens.env.offVariation)
 			if (codeLens.env.offVariation !== null) {
 				offVariation = `${JSON.stringify(this.getNameorValue(codeLens.flag, codeLens.env.offVariation))} - off variation`;
 			} else {
