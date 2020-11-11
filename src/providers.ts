@@ -226,36 +226,145 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 };
 
 export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url?: string): MarkdownString {
-	const fields = [
-		['Name', flag.name],
-		['Key', c.key],
-		['Enabled', c.on],
-		['Default variation', JSON.stringify(c.variations[c.fallthrough.variation], null, 2)],
-		['Off variation', JSON.stringify(c.variations[c.offVariation], null, 2)],
-		[plural(c.prerequisites.length, 'prerequisite', 'prerequisites')],
-		[
-			plural(
-				c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
-				'user target',
-				'user targets',
-			),
-		],
-		[plural(c.rules.length, 'rule', 'rules')],
-	];
-	let hoverString = new MarkdownString(`**LaunchDarkly feature flag**`);
-	fields.forEach(field => {
-		hoverString = hoverString.appendText('\n' + `${field[0]}`);
-		if (field.length == 2) {
-			hoverString = hoverString.appendText(`: `);
-			hoverString = hoverString.appendCodeblock(`${field[1]}`);
-		}
-	});
-	if (url) {
-		hoverString.appendText('\n');
-		hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`);
-		hoverString.isTrusted = true;
+	let name = ''
+	if (flag.name) {
+		name = `\u2022 ${flag.name} `
 	}
-	return hoverString;
+	const hoverString = new MarkdownString(`**LaunchDarkly feature flag** ${name}   [$(link-external)](${url})`, true);
+
+	let describeStr = ''
+	if (flag.description) {
+		describeStr = describeStr + flag.description
+	}
+	hoverString.appendText('\n')
+	// hoverString.appendMarkdown(name)
+	// hoverString.appendText('\n')
+
+	hoverString.appendMarkdown(describeStr)
+	hoverString.appendText('\n')
+	let Prereqs = ''
+	//console.log(config.env)
+	if (c.prerequisites && c.prerequisites.length > 0) {
+		Prereqs = `\u2022 prerequisites ${c.prerequisites.length}`
+	}
+
+	let targets = ``
+	if (c.targets && targets.length > 0) {
+		const count = c.targets.reduce((acc, curr) => acc + curr.values.length, 0)
+		//console.log(c.targets.reduce((acc, curr) => acc + curr.values.length, 0))
+		targets = `\u2022 targets ${count}`
+	}
+
+	let rules = ``
+	if (c.rules && c.rules.length > 0) {
+		rules = `\u2022 rules ${c.rules.length}`
+	}
+	hoverString.appendMarkdown(`${Prereqs} ${targets} ${rules}`)
+	//const fields = [
+	//	['Name', flag.name],
+	//	['Description', flag.description],
+	//['Key', c.key],
+	// TODO figure out how to handle with codelens off
+	//['Enabled', c.on],
+	// TODO figure out how to handle with variationHover off
+	//['Default variation', JSON.stringify(c.variations[c.fallthrough.variation], null, 2)],
+	//['Off variation', JSON.stringify(c.variations[c.offVariation], null, 2)],
+	// [plural(c.prerequisites.length, 'prerequisite', 'prerequisites')],
+	// [
+	// 	plural(
+	// 		c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
+	// 		'user target',
+	// 		'user targets',
+	// 	),
+	// ],
+	// [plural(c.rules.length, 'rule', 'rules')],
+	//];
+	// fields.forEach(field => {
+	// 	hoverString = hoverString.appendText('\n' + `${field[0]}`);
+	// 	if (field.length == 2) {
+	// 		hoverString = hoverString.appendText(`: `);
+	// 		hoverString = hoverString.appendCodeblock(`${field[1]}`);
+	// 	}
+	// });
+	// if (url) {
+	// 	hoverString.appendText('\n');
+	// 	hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`);
+	//
+	// }
+	//hoverString.appendText('\n');
+	hoverString.appendText('\n')
+	hoverString.appendMarkdown('**Variations**')
+	flag.variations.map((variation, idx) => {
+		let offVar = ''
+		if (c.offVariation !== undefined && c.offVariation === idx) {
+			offVar = `\u25c6 Off Variation`
+		}
+
+		let defVar = ''
+		if (c.fallthrough) {
+			if (c.fallthrough.variation !== undefined && c.fallthrough.variation === idx) {
+				defVar = `\u25c6 Fallthrough Variation`
+			}
+		}
+
+		let varName = ''
+		if (variation.name) {
+			varName = `\u25c6 ${variation.name} `
+		}
+
+		hoverString.appendText('\n')
+		if (varName || offVar || defVar) {
+			hoverString.appendMarkdown(`${idx + 1} ${varName} ${offVar} ${defVar} \u25c6 Return Value: \`${JSON.stringify(variation.value)}\``)
+		} else {
+			hoverString.appendMarkdown(`${idx + 1} \u25c6 Return Value: \`${JSON.stringify(variation.value)}\``)
+		}
+		hoverString.appendText('\n')
+
+		//let name = ''
+		if (variation.name) {
+			varName = `\u25c6 ${variation.name} `
+		}
+		let describeStr = ''
+		if (variation.description) {
+			describeStr = describeStr + variation.description
+		}
+		hoverString.appendMarkdown(describeStr)
+		hoverString.appendText('\n')
+		//hoverString.appendMarkdown(`Return Value: \`${JSON.stringify(variation.value)}\``);
+		hoverString.appendText('\n')
+	})
+
+	return hoverString
+	// const fields = [
+	// 	['Name', flag.name],
+	// 	['Key', c.key],
+	// 	['Enabled', c.on],
+	// 	['Default variation', JSON.stringify(c.variations[c.fallthrough.variation], null, 2)],
+	// 	['Off variation', JSON.stringify(c.variations[c.offVariation], null, 2)],
+	// 	[plural(c.prerequisites.length, 'prerequisite', 'prerequisites')],
+	// 	[
+	// 		plural(
+	// 			c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
+	// 			'user target',
+	// 			'user targets',
+	// 		),
+	// 	],
+	// 	[plural(c.rules.length, 'rule', 'rules')],
+	// ];
+	// let hoverString = new MarkdownString(`**LaunchDarkly feature flag**`);
+	// fields.forEach(field => {
+	// 	hoverString = hoverString.appendText('\n' + `${field[0]}`);
+	// 	if (field.length == 2) {
+	// 		hoverString = hoverString.appendText(`: `);
+	// 		hoverString = hoverString.appendCodeblock(`${field[1]}`);
+	// 	}
+	// });
+	// if (url) {
+	// 	hoverString.appendText('\n');
+	// 	hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`);
+	// 	hoverString.isTrusted = true;
+	// }
+	// return hoverString;
 }
 
 function plural(count: number, singular: string, plural: string) {
