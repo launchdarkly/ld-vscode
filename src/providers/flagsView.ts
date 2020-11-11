@@ -117,7 +117,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.registerTreeviewRefreshCommand(),
 			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
 				const aliases = this.aliases.getKeys()
-				console.log(aliases[node.flagKey].join("|"))
 				vscode.commands.executeCommand('workbench.action.findInFiles', {
 					query: aliases[node.flagKey].join("|"),
 					triggerSearch: true,
@@ -126,14 +125,26 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				});
 			}),
 			vscode.commands.registerCommand('launchdarkly.toggleFlag', async (node: FlagParentNode) => {
-				const env = await this.flagStore.getFeatureFlag(node.flagKey);
-				this.api.patchFeatureFlagOn(this.config.project, node.flagKey, !env.config.on);
+				try {
+					const env = await this.flagStore.getFeatureFlag(node.flagKey);
+					await this.api.patchFeatureFlagOn(this.config.project, node.flagKey, !env.config.on);
+				} catch(err) {
+					vscode.window.showErrorMessage(err.message)
+				}
 			}),
 			vscode.commands.registerCommand('launchdarkly.fallthroughChange', async (node: FlagNode) => {
-				this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
+				try {
+					await this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
+				} catch (err) {
+					vscode.window.showErrorMessage(err.message)
+				}
 			}),
 			vscode.commands.registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
-				this.flagPatch(node, `/environments/${this.config.env}/offVariation`);
+				try {
+					await this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
+				} catch (err) {
+					this.flagPatch(node, `/environments/${this.config.env}/offVariation`);
+				}
 			}),
 		);
 	}
@@ -148,7 +159,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private async flagPatch(node: FlagTreeInterface, path: string, contextValue?: string): Promise<void> {
 		const env = await this.flagStore.getFeatureFlag(node.flagKey);
 		const variations = env.flag.variations.map((variation, idx) => {
-			return `${idx}. ${variation.name ? variation.name : variation.value}`;
+			return `${idx}. ${JSON.stringify(variation.name) ? JSON.stringify(variation.name) : JSON.stringify(variation.value)}`;
 		});
 		const choice = await vscode.window.showQuickPick(variations);
 		const newValue = choice.split('.')[0];
@@ -161,12 +172,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		patchComment.comment = 'Update by VSCode';
 		patchComment.patch = patch;
 		try {
-			this.api.patchFeatureFlag(this.config.project, node.flagKey, patchComment);
+			await this.api.patchFeatureFlag(this.config.project, node.flagKey, patchComment);
 		} catch (err) {
-			if (err.statusCode === 401) {
+			if (err.statusCode === 403) {
 				vscode.window.showErrorMessage('Unauthorized: Your key does not have permissions to change the flag.', err);
 			} else {
-				vscode.window.showErrorMessage(err.body);
+				vscode.window.showErrorMessage(err.message);
 			}
 		}
 	}
@@ -455,6 +466,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					this.flagFactory({
 						label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
 						ctxValue: 'variationOff',
+						flagKey: flag.key
 					}),
 				);
 			}
