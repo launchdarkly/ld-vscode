@@ -82,13 +82,24 @@ export async function register(
 				window.showErrorMessage('An unexpected error occurred, please try again later.');
 			}
 		}),
+		commands.registerCommand('launchdarkly.toggleFlagContext', async () => {
+			try {
+				const key = ctx.workspaceState.get('LDFlagKey') as string;
+				if (key) {
+					const env = await flagStore.getFeatureFlag(key);
+					await api.patchFeatureFlagOn(config.project, key, !env.config.on);
+				}
+			} catch(err) {
+				window.showErrorMessage(err.message)
+			}
+		}),
 		languages.registerCompletionItemProvider(
 			LD_MODE,
-			new LaunchDarklyCompletionItemProvider(config, flagStore),
+			new LaunchDarklyCompletionItemProvider(config, flagStore, aliases),
 			"'",
 			'"',
 		),
-		languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore, aliases)),
+		languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore, ctx, aliases)),
 		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
 			const flagKey = editor.document.getText(
 				editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
@@ -135,23 +146,30 @@ export async function register(
 class LaunchDarklyHoverProvider implements HoverProvider {
 	private readonly flagStore: FlagStore;
 	private readonly config: Configuration;
-	private readonly aliases: FlagAliases;
+	private readonly aliases?: FlagAliases;
+	private readonly ctx: ExtensionContext;
 
-	constructor(config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
+	constructor(config: Configuration, flagStore: FlagStore, ctx: ExtensionContext, aliases?: FlagAliases) {
 		this.config = config;
 		this.flagStore = flagStore;
 		this.aliases = aliases;
+		this.ctx = ctx;
 	}
 
 	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
+		commands.executeCommand('setContext', 'LDFlagToggle', '');
 		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let foundAlias;
+				let aliases;
+				let aliasArr;
 				if (this.aliases) {
-					const aliasesMap = this.aliases.getMap();
-					foundAlias = aliasesMap[candidate];
+					aliases = this.aliases.getMap();
+					const aliasKeys = Object.keys(aliases);
+					aliasArr = [...aliasKeys].filter(element => element !== '')
+					foundAlias = aliasArr.filter(element => candidate.includes(element));
 				} else {
 					foundAlias = {};
 				}
@@ -159,11 +177,13 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 					const data =
 						(await this.flagStore.getFeatureFlag(candidate)) ||
 						(await this.flagStore.getFeatureFlag(kebabCase(candidate))) ||
-						(await this.flagStore.getFeatureFlag(foundAlias));
+						(await this.flagStore.getFeatureFlag(aliases[foundAlias[0]]));
 					if (data) {
 						const env = data.flag.environments[this.config.env];
 						const sitePath = env._site.href;
 						const browserUrl = url.resolve(this.config.baseUri, sitePath);
+						commands.executeCommand('setContext', 'LDFlagToggle', data.flag.key);
+						this.ctx.workspaceState.update('LDFlagKey', data.flag.key);
 						const hover = generateHoverString(data.flag, data.config, browserUrl);
 						resolve(new Hover(hover));
 						return;
@@ -180,10 +200,12 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 	private readonly flagStore: FlagStore;
 	private readonly config: Configuration;
+	private readonly aliases?: FlagAliases;
 
-	constructor(config: Configuration, flagStore: FlagStore) {
+	constructor(config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
 		this.config = config;
 		this.flagStore = flagStore;
+		this.aliases = aliases
 	}
 
 	public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
@@ -192,6 +214,10 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 			return new Promise(async resolve => {
 				if (this.config.enableAutocomplete) {
 					const flags = await this.flagStore.allFlags();
+					let aliases
+					if (this.aliases) {
+						aliases = this.aliases
+					}
 					resolve(
 						Object.keys(flags).map(flag => {
 							return new CompletionItem(flag, CompletionItemKind.Field);
@@ -237,13 +263,9 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url
 		describeStr = describeStr + flag.description
 	}
 	hoverString.appendText('\n')
-	// hoverString.appendMarkdown(name)
-	// hoverString.appendText('\n')
-
 	hoverString.appendMarkdown(describeStr)
 	hoverString.appendText('\n')
 	let Prereqs = ''
-	//console.log(config.env)
 	if (c.prerequisites && c.prerequisites.length > 0) {
 		Prereqs = `\u2022 prerequisites ${c.prerequisites.length}`
 	}
@@ -251,7 +273,6 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url
 	let targets = ``
 	if (c.targets && targets.length > 0) {
 		const count = c.targets.reduce((acc, curr) => acc + curr.values.length, 0)
-		//console.log(c.targets.reduce((acc, curr) => acc + curr.values.length, 0))
 		targets = `\u2022 targets ${count}`
 	}
 
@@ -260,38 +281,6 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url
 		rules = `\u2022 rules ${c.rules.length}`
 	}
 	hoverString.appendMarkdown(`${Prereqs} ${targets} ${rules}`)
-	//const fields = [
-	//	['Name', flag.name],
-	//	['Description', flag.description],
-	//['Key', c.key],
-	// TODO figure out how to handle with codelens off
-	//['Enabled', c.on],
-	// TODO figure out how to handle with variationHover off
-	//['Default variation', JSON.stringify(c.variations[c.fallthrough.variation], null, 2)],
-	//['Off variation', JSON.stringify(c.variations[c.offVariation], null, 2)],
-	// [plural(c.prerequisites.length, 'prerequisite', 'prerequisites')],
-	// [
-	// 	plural(
-	// 		c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
-	// 		'user target',
-	// 		'user targets',
-	// 	),
-	// ],
-	// [plural(c.rules.length, 'rule', 'rules')],
-	//];
-	// fields.forEach(field => {
-	// 	hoverString = hoverString.appendText('\n' + `${field[0]}`);
-	// 	if (field.length == 2) {
-	// 		hoverString = hoverString.appendText(`: `);
-	// 		hoverString = hoverString.appendCodeblock(`${field[1]}`);
-	// 	}
-	// });
-	// if (url) {
-	// 	hoverString.appendText('\n');
-	// 	hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`);
-	//
-	// }
-	//hoverString.appendText('\n');
 	hoverString.appendText('\n')
 	hoverString.appendMarkdown('**Variations**')
 	flag.variations.map((variation, idx) => {
@@ -335,40 +324,6 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url
 	})
 
 	return hoverString
-	// const fields = [
-	// 	['Name', flag.name],
-	// 	['Key', c.key],
-	// 	['Enabled', c.on],
-	// 	['Default variation', JSON.stringify(c.variations[c.fallthrough.variation], null, 2)],
-	// 	['Off variation', JSON.stringify(c.variations[c.offVariation], null, 2)],
-	// 	[plural(c.prerequisites.length, 'prerequisite', 'prerequisites')],
-	// 	[
-	// 		plural(
-	// 			c.targets.reduce((acc, curr) => acc + curr.values.length, 0),
-	// 			'user target',
-	// 			'user targets',
-	// 		),
-	// 	],
-	// 	[plural(c.rules.length, 'rule', 'rules')],
-	// ];
-	// let hoverString = new MarkdownString(`**LaunchDarkly feature flag**`);
-	// fields.forEach(field => {
-	// 	hoverString = hoverString.appendText('\n' + `${field[0]}`);
-	// 	if (field.length == 2) {
-	// 		hoverString = hoverString.appendText(`: `);
-	// 		hoverString = hoverString.appendCodeblock(`${field[1]}`);
-	// 	}
-	// });
-	// if (url) {
-	// 	hoverString.appendText('\n');
-	// 	hoverString = hoverString.appendMarkdown(`[Open in browser](${url})`);
-	// 	hoverString.isTrusted = true;
-	// }
-	// return hoverString;
-}
-
-function plural(count: number, singular: string, plural: string) {
-	return count === 1 ? `1 ${singular}` : `${count} ${plural}`;
 }
 
 export function isPrecedingCharStringDelimeter(document: TextDocument, position: Position): boolean {
