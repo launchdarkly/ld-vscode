@@ -122,7 +122,8 @@ export async function register(
 			}
 
 			try {
-				await openFlagInBrowser(config, flagKey, flagStore);
+				const fKey = ctx.workspaceState.get("LDFlagKey") as string
+				await openFlagInBrowser(config, fKey, flagStore);
 			} catch (err) {
 				let errMsg = `Encountered an unexpected error retrieving the flag ${flagKey}`;
 				if (err.statusCode == 404) {
