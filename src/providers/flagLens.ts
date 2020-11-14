@@ -73,7 +73,13 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	}
 
 	getNameorValue(flag: FeatureFlag, variation: number) {
-		return JSON.stringify(flag.variations[variation].name) ? flag.variations[variation].name : JSON.stringify(flag.variations[variation].value);
+		let flagVal
+		if (typeof flag.variations[variation].value === 'object') {
+			flagVal = JSON.stringify(flag.variations[variation].value)
+		} else {
+			flagVal = flag.variations[variation].value
+		}
+		return JSON.stringify(flag.variations[variation].name) ? flag.variations[variation].name : flagVal;
 	}
 
 	public async provideCodeLenses(
