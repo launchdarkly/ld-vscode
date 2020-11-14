@@ -66,8 +66,8 @@ export class FlagAliases {
 		return this.ctx.workspaceState.get("aliasKeys")
 	}
 
-	getListOfKeys(): Array<string> {
-		return this.ctx.workspaceState.get("aliasListOfKeys")
+	getListOfMapKeys(): Array<string> {
+		return this.ctx.workspaceState.get("aliasListOfMapKeys")
 	}
 
 	getMap(): Map<string, string> {
