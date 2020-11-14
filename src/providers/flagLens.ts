@@ -10,7 +10,6 @@ import { FlagAliases } from './codeRefs';
  * CodelensProvider
  */
 export class FlagCodeLensProvider implements vscode.CodeLensProvider {
-	private readonly api: LaunchDarklyAPI;
 	private config: Configuration;
 	private codeLenses: vscode.CodeLens[] = [];
 	private regex: RegExp;
@@ -20,7 +19,6 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
 	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, aliases: FlagAliases) {
-		this.api = api;
 		this.config = config;
 		this.flagStore = flagStore;
 		this.aliases = aliases;
