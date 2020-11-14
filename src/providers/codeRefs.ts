@@ -66,6 +66,10 @@ export class FlagAliases {
 		return this.ctx.workspaceState.get("aliasKeys")
 	}
 
+	getListOfKeys(): Array<string> {
+		return this.ctx.workspaceState.get("aliasListOfKeys")
+	}
+
 	getMap(): Map<string, string> {
 		return this.ctx.workspaceState.get("aliasMap")
 	}
@@ -117,9 +121,9 @@ export class FlagAliases {
 			.on('end', () => {
 				this.ctx.workspaceState.update("aliasMap", this.map)
 				this.ctx.workspaceState.update("aliasKeys", this.keys)
+				this.ctx.workspaceState.update("aliasListOfKeys", Object.keys(this.map))
 				this.aliasUpdates.fire(true);
 				this.statusBar.hide()
-				//fs.rmdir(tmpDir, { recursive: true });
 			});
 	}
 
@@ -144,17 +148,9 @@ export class FlagAliases {
 		}
 	}
 
-		// register a command that is invoked when the status bar
-	// item is selected
+	// create statusbar
 	setupStatusBar(): void {
-		const myCommandId = 'sample.showSelectionCount';
-		// this.ctx.subscriptions.push(commands.registerCommand(myCommandId, () => {
-		// 	window.showInformationMessage(`Yeah, ${n} line(s) selected... Keep going!`);
-		// }));
-
-		// create a new status bar item that we can now manage
 		this.statusBar = window.createStatusBarItem(StatusBarAlignment.Right, 100);
-		this.statusBar.command = myCommandId;
 		this.ctx.subscriptions.push(this.statusBar);
 	}
 }
