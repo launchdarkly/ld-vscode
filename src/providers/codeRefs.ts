@@ -118,20 +118,12 @@ export class FlagAliases {
 				});
 			})
 			.on('end', () => {
-<<<<<<< HEAD
 				this.ctx.workspaceState.update("aliasMap", this.map)
 				this.ctx.workspaceState.update("aliasKeys", this.keys)
 				const mapKeys = Object.keys(this.map).filter(element => element != '')
 				this.ctx.workspaceState.update("aliasListOfMapKeys", mapKeys)
 				this.aliasUpdates.fire(true);
 				this.statusBar.hide()
-=======
-				this.ctx.workspaceState.update('aliasMap', this.map);
-				this.ctx.workspaceState.update('aliasKeys', this.keys);
-				this.aliasUpdates.fire(true);
-				this.statusBar.hide();
-				//fs.rmdir(tmpDir, { recursive: true });
->>>>>>> aee7464... codelens on aliases basic support
 			});
 	}
 
