@@ -121,7 +121,8 @@ export class FlagAliases {
 			.on('end', () => {
 				this.ctx.workspaceState.update("aliasMap", this.map)
 				this.ctx.workspaceState.update("aliasKeys", this.keys)
-				this.ctx.workspaceState.update("aliasListOfKeys", Object.keys(this.map))
+				const mapKeys = Object.keys(this.map).filter(element => element != '')
+				this.ctx.workspaceState.update("aliasListOfMapKeys", mapKeys)
 				this.aliasUpdates.fire(true);
 				this.statusBar.hide()
 			});
