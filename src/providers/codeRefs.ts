@@ -1,4 +1,4 @@
-import { commands, EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
+import { commands, EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace, WorkspaceFolder } from 'vscode';
 import { exec, ExecOptions } from 'child_process';
 import { createReadStream } from 'fs';
 import { join } from 'path';
@@ -33,7 +33,8 @@ export class FlagAliases {
 
 	async start(): Promise<void> {
 		this.generateAndReadAliases();
-		if (this.config.refreshRate) {
+		const aliasFile = await workspace.findFiles('.launchdarkly/coderefs.yaml')
+		if (this.config.refreshRate && aliasFile.length > 0) {
 			if (this.config.validateRefreshInterval(this.config.codeRefsRefreshRate)) {
 				this.startCodeRefsUpdateTask(this.config.codeRefsRefreshRate);
 			} else {
