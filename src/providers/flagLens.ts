@@ -71,11 +71,11 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	}
 
 	getNameorValue(flag: FeatureFlag, variation: number) {
-		let flagVal
+		let flagVal;
 		if (typeof flag.variations[variation].value === 'object') {
-			flagVal = JSON.stringify(flag.variations[variation].value)
+			flagVal = JSON.stringify(flag.variations[variation].value);
 		} else {
-			flagVal = flag.variations[variation].value
+			flagVal = flag.variations[variation].value;
 		}
 		return JSON.stringify(flag.variations[variation].name) ? flag.variations[variation].name : flagVal;
 	}
@@ -106,10 +106,13 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				const position = new vscode.Position(line.lineNumber, indexOf);
 				const range = document.getWordRangeAtPosition(position, new RegExp(this.regex));
 				const prospect = document.getText(range);
-				const flag = keys.filter(element => prospect.includes(element));
+				let flag;
+				if (typeof keys !== 'undefined') {
+					flag = keys.filter(element => prospect.includes(element));
+				}
 				const foundAliases = aliasArr.filter(element => prospect.includes(element));
 
-				if (range && flag !== undefined && flags[flag[0]]) {
+				if (range && typeof flag !== 'undefined' && flags[flag[0]]) {
 					const codeLens = new FlagCodeLens(range, flags[flag[0]], env[flag[0]], this.config);
 					this.codeLenses.push(codeLens);
 				} else if (range && foundAliases.length > 0 && flags[aliases[foundAliases]]) {
@@ -146,12 +149,16 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			}
 			let offVariation;
 			if (codeLens.env.offVariation !== null) {
-				offVariation = `${JSON.stringify(this.getNameorValue(codeLens.flag, codeLens.env.offVariation))} - off variation`;
+				offVariation = `${JSON.stringify(
+					this.getNameorValue(codeLens.flag, codeLens.env.offVariation),
+				)} - off variation`;
 			} else {
 				offVariation = '**Code Fallthrough(No off variation set)**';
 			}
 			codeLens.command = {
-				title: `LaunchDarkly Feature Flag \u2022 ${codeLens.env.key} \u2022 Serving: ${codeLens.env.on ? flagVariations : offVariation} ${preReq}`,
+				title: `LaunchDarkly Feature Flag \u2022 ${codeLens.env.key} \u2022 Serving: ${
+					codeLens.env.on ? flagVariations : offVariation
+				} ${preReq}`,
 				tooltip: 'Feature Flag Variations',
 				command: '',
 				arguments: ['Argument 1', true],

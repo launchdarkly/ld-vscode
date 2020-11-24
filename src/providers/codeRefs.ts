@@ -67,7 +67,7 @@ export class FlagAliases {
 	}
 
 	getListOfMapKeys(): Array<string> {
-		return this.ctx.workspaceState.get("aliasListOfMapKeys")
+		return this.ctx.workspaceState.get('aliasListOfMapKeys');
 	}
 
 	getMap(): Map<string, string> {
@@ -118,12 +118,12 @@ export class FlagAliases {
 				});
 			})
 			.on('end', () => {
-				this.ctx.workspaceState.update("aliasMap", this.map)
-				this.ctx.workspaceState.update("aliasKeys", this.keys)
-				const mapKeys = Object.keys(this.map).filter(element => element != '')
-				this.ctx.workspaceState.update("aliasListOfMapKeys", mapKeys)
+				this.ctx.workspaceState.update('aliasMap', this.map);
+				this.ctx.workspaceState.update('aliasKeys', this.keys);
+				const mapKeys = Object.keys(this.map).filter(element => element != '');
+				this.ctx.workspaceState.update('aliasListOfMapKeys', mapKeys);
 				this.aliasUpdates.fire(true);
-				this.statusBar.hide()
+				this.statusBar.hide();
 			});
 	}
 

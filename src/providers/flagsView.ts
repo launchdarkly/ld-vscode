@@ -128,15 +128,15 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				try {
 					const env = await this.flagStore.getFeatureFlag(node.flagKey);
 					await this.api.patchFeatureFlagOn(this.config.project, node.flagKey, !env.config.on);
-				} catch(err) {
-					vscode.window.showErrorMessage(err.message)
+				} catch (err) {
+					vscode.window.showErrorMessage(err.message);
 				}
 			}),
 			vscode.commands.registerCommand('launchdarkly.fallthroughChange', async (node: FlagNode) => {
 				try {
 					await this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
 				} catch (err) {
-					vscode.window.showErrorMessage(err.message)
+					vscode.window.showErrorMessage(err.message);
 				}
 			}),
 			vscode.commands.registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
@@ -159,7 +159,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private async flagPatch(node: FlagTreeInterface, path: string, contextValue?: string): Promise<void> {
 		const env = await this.flagStore.getFeatureFlag(node.flagKey);
 		const variations = env.flag.variations.map((variation, idx) => {
-			return `${idx}. ${JSON.stringify(variation.name) ? JSON.stringify(variation.name) : JSON.stringify(variation.value)}`;
+			return `${idx}. ${
+				JSON.stringify(variation.name) ? JSON.stringify(variation.name) : JSON.stringify(variation.value)
+			}`;
 		});
 		const choice = await vscode.window.showQuickPick(variations);
 		const newValue = choice.split('.')[0];
@@ -471,7 +473,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					this.flagFactory({
 						label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
 						ctxValue: 'variationOff',
-						flagKey: flag.key
+						flagKey: flag.key,
 					}),
 				);
 			}
