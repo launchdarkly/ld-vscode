@@ -1,4 +1,13 @@
-import { commands, EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace, WorkspaceFolder } from 'vscode';
+import {
+	commands,
+	EventEmitter,
+	ExtensionContext,
+	StatusBarAlignment,
+	StatusBarItem,
+	window,
+	workspace,
+	WorkspaceFolder,
+} from 'vscode';
 import { exec, ExecOptions } from 'child_process';
 import { createReadStream } from 'fs';
 import { join } from 'path';
@@ -33,7 +42,7 @@ export class FlagAliases {
 
 	async start(): Promise<void> {
 		this.generateAndReadAliases();
-		const aliasFile = await workspace.findFiles('.launchdarkly/coderefs.yaml')
+		const aliasFile = await workspace.findFiles('.launchdarkly/coderefs.yaml');
 		if (this.config.refreshRate && aliasFile.length > 0) {
 			if (this.config.validateRefreshInterval(this.config.codeRefsRefreshRate)) {
 				this.startCodeRefsUpdateTask(this.config.codeRefsRefreshRate);
@@ -119,12 +128,12 @@ export class FlagAliases {
 				});
 			})
 			.on('end', () => {
-				this.ctx.workspaceState.update("aliasMap", this.map)
-				this.ctx.workspaceState.update("aliasKeys", this.keys)
-				const mapKeys = Object.keys(this.map).filter(element => element != '')
-				this.ctx.workspaceState.update("aliasListOfMapKeys", mapKeys)
+				this.ctx.workspaceState.update('aliasMap', this.map);
+				this.ctx.workspaceState.update('aliasKeys', this.keys);
+				const mapKeys = Object.keys(this.map).filter(element => element != '');
+				this.ctx.workspaceState.update('aliasListOfMapKeys', mapKeys);
 				this.aliasUpdates.fire(true);
-				this.statusBar.hide()
+				this.statusBar.hide();
 				//fs.rmdir(tmpDir, { recursive: true });
 			});
 	}

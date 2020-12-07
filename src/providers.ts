@@ -89,8 +89,8 @@ export async function register(
 					const env = await flagStore.getFeatureFlag(key);
 					await api.patchFeatureFlagOn(config.project, key, !env.config.on);
 				}
-			} catch(err) {
-				window.showErrorMessage(err.message)
+			} catch (err) {
+				window.showErrorMessage(err.message);
 			}
 		}),
 		languages.registerCompletionItemProvider(
@@ -122,7 +122,7 @@ export async function register(
 			}
 
 			try {
-				const fKey = ctx.workspaceState.get("LDFlagKey") as string
+				const fKey = ctx.workspaceState.get('LDFlagKey') as string;
 				await openFlagInBrowser(config, fKey, flagStore);
 			} catch (err) {
 				let errMsg = `Encountered an unexpected error retrieving the flag ${flagKey}`;
@@ -169,7 +169,7 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 				if (this.aliases) {
 					aliases = this.aliases.getMap();
 					const aliasKeys = Object.keys(aliases);
-					aliasArr = [...aliasKeys].filter(element => element !== '')
+					aliasArr = [...aliasKeys].filter(element => element !== '');
 					foundAlias = aliasArr.filter(element => candidate.includes(element));
 				} else {
 					foundAlias = {};
@@ -206,7 +206,7 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 	constructor(config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
 		this.config = config;
 		this.flagStore = flagStore;
-		this.aliases = aliases
+		this.aliases = aliases;
 	}
 
 	public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
@@ -215,9 +215,9 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 			return new Promise(async resolve => {
 				if (this.config.enableAutocomplete) {
 					const flags = await this.flagStore.allFlags();
-					let aliases
+					let aliases;
 					if (this.aliases) {
-						aliases = this.aliases
+						aliases = this.aliases;
 					}
 					resolve(
 						Object.keys(flags).map(flag => {
@@ -253,78 +253,80 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 };
 
 export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url?: string): MarkdownString {
-	let name = ''
+	let name = '';
 	if (flag.name) {
-		name = `\u2022 ${flag.name} `
+		name = `\u2022 ${flag.name} `;
 	}
 	const hoverString = new MarkdownString(`**LaunchDarkly feature flag** ${name}   [$(link-external)](${url})`, true);
 
-	let describeStr = ''
+	let describeStr = '';
 	if (flag.description) {
-		describeStr = describeStr + flag.description
+		describeStr = describeStr + flag.description;
 	}
-	hoverString.appendText('\n')
-	hoverString.appendMarkdown(describeStr)
-	hoverString.appendText('\n')
-	let Prereqs = ''
+	hoverString.appendText('\n');
+	hoverString.appendMarkdown(describeStr);
+	hoverString.appendText('\n');
+	let Prereqs = '';
 	if (c.prerequisites && c.prerequisites.length > 0) {
-		Prereqs = `\u2022 prerequisites ${c.prerequisites.length}`
+		Prereqs = `\u2022 prerequisites ${c.prerequisites.length}`;
 	}
 
-	let targets = ``
+	let targets = ``;
 	if (c.targets && targets.length > 0) {
-		const count = c.targets.reduce((acc, curr) => acc + curr.values.length, 0)
-		targets = `\u2022 targets ${count}`
+		const count = c.targets.reduce((acc, curr) => acc + curr.values.length, 0);
+		targets = `\u2022 targets ${count}`;
 	}
 
-	let rules = ``
+	let rules = ``;
 	if (c.rules && c.rules.length > 0) {
-		rules = `\u2022 rules ${c.rules.length}`
+		rules = `\u2022 rules ${c.rules.length}`;
 	}
-	hoverString.appendMarkdown(`${Prereqs} ${targets} ${rules}`)
-	hoverString.appendText('\n')
-	hoverString.appendMarkdown('**Variations**')
+	hoverString.appendMarkdown(`${Prereqs} ${targets} ${rules}`);
+	hoverString.appendText('\n');
+	hoverString.appendMarkdown('**Variations**');
 	flag.variations.map((variation, idx) => {
-		let offVar = ''
+		let offVar = '';
 		if (c.offVariation !== undefined && c.offVariation === idx) {
-			offVar = `\u25c6 Off Variation`
+			offVar = `\u25c6 Off Variation`;
 		}
 
-		let defVar = ''
+		let defVar = '';
 		if (c.fallthrough) {
 			if (c.fallthrough.variation !== undefined && c.fallthrough.variation === idx) {
-				defVar = `\u25c6 Fallthrough Variation`
+				defVar = `\u25c6 Fallthrough Variation`;
 			}
 		}
 
-		let varName = ''
+		let varName = '';
 		if (variation.name) {
-			varName = `\u25c6 ${variation.name} `
+			varName = `\u25c6 ${variation.name} `;
 		}
 
-		hoverString.appendText('\n')
+		hoverString.appendText('\n');
 		if (varName || offVar || defVar) {
-			hoverString.appendMarkdown(`${idx + 1} ${varName} ${offVar} ${defVar} \u25c6 Return Value: \`${JSON.stringify(variation.value)}\``)
+			hoverString.appendMarkdown(
+				`${idx + 1} ${varName} ${offVar} ${defVar} \u25c6 Return Value: \`${JSON.stringify(variation.value)}\``,
+			);
 		} else {
-			hoverString.appendMarkdown(`${idx + 1} \u25c6 Return Value: \`${JSON.stringify(variation.value)}\``)
+			hoverString.appendMarkdown(`${idx + 1} \u25c6 Return Value: \`${JSON.stringify(variation.value)}\``);
 		}
-		hoverString.appendText('\n')
+		hoverString.appendText('\n');
 
 		//let name = ''
 		if (variation.name) {
-			varName = `\u25c6 ${variation.name} `
+			varName = `\u25c6 ${variation.name} `;
 		}
-		let describeStr = ''
+		let describeStr = '';
 		if (variation.description) {
-			describeStr = describeStr + variation.description
+			describeStr = describeStr + variation.description;
 		}
-		hoverString.appendMarkdown(describeStr)
-		hoverString.appendText('\n')
+		hoverString.appendMarkdown(describeStr);
+		hoverString.appendText('\n');
 		//hoverString.appendMarkdown(`Return Value: \`${JSON.stringify(variation.value)}\``);
-		hoverString.appendText('\n')
-	})
+		hoverString.appendText('\n');
+	});
 
-	return hoverString
+	return hoverString;
 }
 
 export function isPrecedingCharStringDelimeter(document: TextDocument, position: Position): boolean {
