@@ -110,7 +110,7 @@
 			},
 			{
 				"command": "launchdarkly.refreshEntry",
-				"title": "LaunchDarkly: Refresh Feature Flags",
+				"title": "Refresh feature flags",
 				"icon": {
 					"light": "resources/light/refresh.svg",
 					"dark": "resources/dark/refresh.svg"
@@ -118,39 +118,39 @@
 			},
 			{
 				"command": "launchdarkly.copyKey",
-				"title": "LaunchDarkly: Copy Key to Clipboard",
+				"title": "Copy flag key",
 				"icon": {
-					"light": "resources/light/files.svg",
-					"dark": "resources/dark/files.svg"
+					"light": "resources/light/clippy.svg",
+					"dark": "resources/dark/clippy.svg"
 				}
 			},
 			{
 				"command": "launchdarkly.toggleFlag",
-				"title": "Toggle Flag"
+				"title": "Toggle feature flag"
 			},
 			{
 				"command": "launchdarkly.fallthroughChange",
-				"title": "Change Fallthrough Variation"
+				"title": "Change fallthrough variation"
 			},
 			{
 				"command": "launchdarkly.offChange",
-				"title": "Change Off Variation"
+				"title": "Change off variation"
 			},
 			{
 				"command": "launchdarkly.treeviewrefresh",
-				"title": "LaunchDarkly Toggle Treeview"
+				"title": "Toggle treeview"
 			},
 			{
 				"command": "launchdarkly.openBrowser",
-				"title": "LD: Open in Browser",
+				"title": "Open in LaunchDarkly",
 				"icon": {
-					"light": "resources/light/link_external.svg",
-					"dark": "resources/dark/link_external.svg"
+					"light": "resources/light/link-external.svg",
+					"dark": "resources/dark/link-external.svg"
 				}
 			},
 			{
 				"command": "launchdarkly.flagMultipleSearch",
-				"title": "Find all Flag Aliases",
+				"title": "Find all flag aliases",
 				"icon": {
 					"light": "resources/light/flagMultipleSearch.svg",
 					"dark": "resources/dark/flagMultipleSearch.svg"
@@ -203,12 +203,12 @@
 			"view/item/context": [
 				{
 					"command": "launchdarkly.copyKey",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewKey",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
 					"group": "inline"
 				},
 				{
 					"command": "launchdarkly.openBrowser",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
 					"group": "inline"
 				},
 				{
@@ -246,7 +246,7 @@
 			"explorer": [
 				{
 					"id": "launchdarklyFeatureFlags",
-					"name": "LaunchDarkly Feature Flags",
+					"name": "LaunchDarkly",
 					"when": "launchdarkly:enableFlagExplorer"
 				}
 			]

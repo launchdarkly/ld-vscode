@@ -91,10 +91,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		} catch (err) {
 			console.error(err);
 			const message = 'Error retrieving Flags: `${err}';
-			this.flagNodes = [new FlagParentNode(this.ctx, message, NON_COLLAPSED)];
+			this.flagNodes = [new FlagParentNode(this.ctx, message, message, null, NON_COLLAPSED)];
 		}
 		if (!this.flagNodes) {
-			this.flagNodes = [new FlagParentNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)];
+			this.flagNodes = [new FlagParentNode(this.ctx, 'No Flags Found.', 'No Flags Found', null, NON_COLLAPSED)];
 		}
 	}
 
@@ -108,7 +108,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	async registerCommands(): Promise<void> {
 		this.ctx.subscriptions.push(
 			vscode.commands.registerCommand('launchdarkly.copyKey', (node: FlagNode) =>
-				vscode.env.clipboard.writeText(node.label.split(':')[1].trim()),
+				vscode.env.clipboard.writeText(node.flagKey),
 			),
 			vscode.commands.registerCommand('launchdarkly.openBrowser', (node: FlagNode) =>
 				vscode.env.openExternal(vscode.Uri.parse(node.uri)),
@@ -272,10 +272,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		const item = new FlagParentNode(
 			this.ctx,
 			flag.name,
+			flag.description,
+			flagUri,
 			COLLAPSED,
 			[
-				this.flagFactory({ label: `Open in Browser`, ctxValue: 'flagViewBrowser', uri: flagUri }),
-				this.flagFactory({ label: `Key: ${flag.key}`, ctxValue: 'flagViewKey' }),
+				// this.flagFactory({ label: `Open in Browser`, ctxValue: 'flagViewBrowser', uri: flagUri }),
+				// this.flagFactory({ label: `Key: ${flag.key}`, ctxValue: 'flagViewKey' }),
 			],
 			flag.key,
 			flag._version,
@@ -291,14 +293,14 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		/**
 		 * Check flag description
 		 */
-		if (flag.description) {
-			renderedFlagFields.push(
-				this.flagFactory({
-					label: `Description: ${flag.description ? flag.description : ''}`,
-					ctxValue: 'description',
-				}),
-			);
-		}
+		// if (flag.description) {
+		// 	renderedFlagFields.push(
+		// 		this.flagFactory({
+		// 			label: `Description: ${flag.description ? flag.description : ''}`,
+		// 			ctxValue: 'description',
+		// 		}),
+		// 	);
+		// }
 
 		/**
 		 * Build list of tags under "Tags" label
@@ -394,7 +396,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					label: `${variation.name ? variation.name : JSON.stringify(variation.value)}`,
 					collapsed: variation.name ? COLLAPSED : NON_COLLAPSED,
 					children: variationValue,
-					ctxValue: 'name',
+					ctxValue: 'variation',
 				}),
 			);
 
@@ -412,7 +414,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				label: `Variations`,
 				collapsed: COLLAPSED,
 				children: renderedVariations,
-				ctxValue: 'variation',
+				ctxValue: 'variations',
 			}),
 		);
 
@@ -545,6 +547,7 @@ export class FlagNode extends vscode.TreeItem {
 	command?: vscode.Command;
 	/**
 	 * @param label will be shown in the Treeview
+	 * @param description is shown when hovering over node
 	 * @param collapsibleState is initial state collapsible state
 	 * @param children array of FlagNode's building nested view
 	 * @param contextValue maps to svg resources to show icons
@@ -607,6 +610,8 @@ export class FlagParentNode extends vscode.TreeItem {
 
 	/**
 	 * @param label will be shown in the Treeview
+	 * @param tooltip will be shown while hovering over node
+	 * @param uri used when asked to open in browser
 	 * @param collapsibleState is initial state collapsible state
 	 * @param children array of FlagNode's building nested view
 	 * @param flagKey reference to which flag key the treeview item is associated with
@@ -614,6 +619,8 @@ export class FlagParentNode extends vscode.TreeItem {
 	constructor(
 		ctx: vscode.ExtensionContext,
 		public readonly label: string,
+		public readonly tooltip: string,
+		uri: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		children?: FlagNode[],
 		flagKey?: string,
@@ -624,6 +631,8 @@ export class FlagParentNode extends vscode.TreeItem {
 	) {
 		super(label, collapsibleState);
 		this.children = children;
+		this.description = flagKey;
+		this.uri = uri;
 		this.flagKey = flagKey;
 		this.flagVersion = flagVersion;
 		this.enabled = enabled;

@@ -1,3 +1,3 @@
 <svg width="48" height="24" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M12 2H36V-2H12V2ZM36 22H12V26H36V22ZM12 22C6.47715 22 2 17.5228 2 12H-2C-2 19.732 4.26801 26 12 26V22ZM46 12C46 17.5228 41.5228 22 36 22V26C43.732 26 50 19.732 50 12H46ZM36 2C41.5228 2 46 6.47715 46 12H50C50 4.26801 43.732 -2 36 -2V2ZM12 -2C4.26801 -2 -2 4.26801 -2 12H2C2 6.47715 6.47715 2 12 2V-2Z" fill="#F1F3F5"/>
+<rect x="1" y="1" width="46" height="22" rx="11" stroke="white" stroke-width="2"/>
 </svg>
