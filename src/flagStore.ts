@@ -61,7 +61,6 @@ export class FlagStore {
 
 		try {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-
 			this.flagMetadata = keyBy(flags, 'key');
 			const sdkKey = await this.getLatestSDKKey();
 			const ldConfig = this.ldConfig();
