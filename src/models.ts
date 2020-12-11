@@ -367,7 +367,7 @@ export class FeatureFlag {
 	 * An array goals from all environments associated with this feature flag
 	 */
 	goalIds?: Array<string>;
-	version?: number;
+	_version?: number;
 	/**
 	 * A mapping of keys to CustomProperty entries.
 	 */

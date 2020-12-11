@@ -31,26 +31,34 @@ const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
 
-export function register(
+export async function register(
 	ctx: ExtensionContext,
 	config: Configuration,
 	flagStore: FlagStore,
 	api: LaunchDarklyAPI,
-): void {
-	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
+): Promise<void> {
+	if (typeof flagStore !== 'undefined') {
+		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
+		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
+	}
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
-
-	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 
 	ctx.subscriptions.push(
 		commands.registerCommand('extension.configureLaunchDarkly', async () => {
 			try {
 				const configurationMenu = new ConfigurationMenu(config, api);
 				await configurationMenu.configure();
-				await flagStore.reload();
-				await flagView.reload();
+				if (typeof flagStore === 'undefined') {
+					flagStore = new FlagStore(config, api);
+					const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
+					window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
+					await flagView.reload();
+				} else {
+					await flagStore.reload();
+				}
+
 				window.showInformationMessage('LaunchDarkly configured successfully');
 			} catch (err) {
 				console.error(err);

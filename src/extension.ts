@@ -10,7 +10,7 @@ import { LaunchDarklyAPI } from './api';
 let config: Configuration;
 let flagStore: FlagStore;
 
-export function activate(ctx: ExtensionContext): void {
+export async function activate(ctx: ExtensionContext): Promise<void> {
 	config = new Configuration(ctx);
 
 	const validationError = config.validate();
@@ -35,14 +35,20 @@ export function activate(ctx: ExtensionContext): void {
 	}
 
 	const api = new LaunchDarklyAPI(config);
-	flagStore = new FlagStore(config, api);
+	let flagStore: FlagStore;
+	if (validationError !== 'unconfigured') {
+		flagStore = new FlagStore(config, api);
+	}
 
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
 			await config.reload();
+			if (!flagStore) {
+				const newApi = new LaunchDarklyAPI(config);
+				flagStore = new FlagStore(config, newApi);
+			}
 			await flagStore.reload(e);
-			await commands.executeCommand('launchdarkly.treeviewrefresh');
 		}
 	});
 

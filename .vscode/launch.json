@@ -9,10 +9,11 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
+			"sourceMaps": true,
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
-      "preLaunchTask": "test-compile"
+      "preLaunchTask": "${defaultBuildTask}"
 		},
 		{
 			"name": "Launch Tests",
@@ -28,7 +29,7 @@
 			"outFiles": [
 				"${workspaceRoot}/out/test/**/*.js"
 			],
-			"preLaunchTask": "test-compile"
+			"preLaunchTask": "${defaultBuildTask}"
 		}
 	]
 }
