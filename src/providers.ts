@@ -24,6 +24,7 @@ import { LaunchDarklyAPI } from './api';
 import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
 import { FlagStore } from './flagStore';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
+import { FlagAliases } from './providers/codeRefs';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
@@ -37,10 +38,22 @@ export async function register(
 	flagStore: FlagStore,
 	api: LaunchDarklyAPI,
 ): Promise<void> {
+	let aliases;
 	if (typeof flagStore !== 'undefined') {
-		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
+		if (config.enableAliases && config.codeRefsPath !== '') {
+			aliases = new FlagAliases(config, ctx);
+			if (aliases.codeRefsVersionCheck()) {
+				aliases.setupStatusBar()
+				aliases.start();
+			} else {
+				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
+			}
+		}
+
+		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 	}
+
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
@@ -71,7 +84,7 @@ export async function register(
 			"'",
 			'"',
 		),
-		languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore)),
+		languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore, aliases)),
 		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
 			const flagKey = editor.document.getText(
 				editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
@@ -118,10 +131,12 @@ export async function register(
 class LaunchDarklyHoverProvider implements HoverProvider {
 	private readonly flagStore: FlagStore;
 	private readonly config: Configuration;
+	private readonly aliases: FlagAliases;
 
-	constructor(config: Configuration, flagStore: FlagStore) {
+	constructor(config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
 		this.config = config;
 		this.flagStore = flagStore;
+		this.aliases = aliases;
 	}
 
 	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
@@ -129,10 +144,18 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
+				let foundAlias;
+				if (this.aliases) {
+					const aliasesMap = this.aliases.getMap()
+					foundAlias = aliasesMap[candidate];
+				} else {
+					foundAlias = {};
+				}
 				try {
 					const data =
 						(await this.flagStore.getFeatureFlag(candidate)) ||
-						(await this.flagStore.getFeatureFlag(kebabCase(candidate)));
+						(await this.flagStore.getFeatureFlag(kebabCase(candidate))) ||
+						(await this.flagStore.getFeatureFlag(foundAlias));
 					if (data) {
 						const env = data.flag.environments[this.config.env];
 						const sitePath = env._site.href;

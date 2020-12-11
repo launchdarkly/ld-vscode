@@ -160,6 +160,7 @@ export class FlagStore {
 	}
 
 	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
+		// Cannot replace in the config, so updating at call site.
 		const streamUri = this.config.baseUri.replace('app', 'stream');
 		return {
 			timeout: 5,

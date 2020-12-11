@@ -5,6 +5,8 @@ import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import * as path from 'path';
 import { debounce, map } from 'lodash';
+import { FlagAliases } from './codeRefs';
+
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -14,15 +16,23 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private config: Configuration;
 	private flagStore: FlagStore;
 	private flagNodes: Array<FlagTreeInterface>;
+	private aliases: FlagAliases;
 	private ctx: vscode.ExtensionContext;
 	private _onDidChangeTreeData: vscode.EventEmitter<FlagTreeInterface | null | void> = new vscode.EventEmitter<FlagTreeInterface | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<FlagTreeInterface | null | void> = this._onDidChangeTreeData.event;
 
-	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, ctx: vscode.ExtensionContext) {
+	constructor(
+		api: LaunchDarklyAPI,
+		config: Configuration,
+		flagStore: FlagStore,
+		ctx: vscode.ExtensionContext,
+		aliases?: FlagAliases,
+	) {
 		this.api = api;
 		this.config = config;
 		this.ctx = ctx;
 		this.flagStore = flagStore;
+		this.aliases = aliases;
 		this.registerCommands();
 		this.start();
 	}
@@ -106,6 +116,16 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			),
 			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.reload()),
 			this.registerTreeviewRefreshCommand(),
+			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
+				const aliases = this.aliases.getKeys()
+				console.log(aliases[node.flagKey].join("|"))
+				vscode.commands.executeCommand('workbench.action.findInFiles', {
+					query: aliases[node.flagKey].join("|"),
+					triggerSearch: true,
+					matchWholeWord: true,
+					isCaseSensitive: true,
+				});
+			}),
 		);
 	}
 
@@ -154,6 +174,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}
 			this.refresh();
 		});
+		if (this.aliases) {
+			this.aliases.aliasUpdates.event(async () => {
+				this.reload();
+			});
+		}
 	}
 
 	private flagFactory({
@@ -230,7 +255,21 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }),
 			);
 		}
-
+		const aliasKeys = this.aliases.getKeys()
+		if (this.aliases && aliasKeys[flag.key]) {
+			const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
+				const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' })
+				aliasNode.command = {
+					command: 'workbench.action.findInFiles',
+					title: 'Find in Files',
+					arguments: [{ query: alias, triggerSearch: true, matchWholeWord: true, isCaseSensitive: true}],
+				};
+				return aliasNode;
+			});
+			renderedFlagFields.push(
+				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'flagParentItem', flagKey: flag.key }),
+			);
+		}
 		/**
 		 * Build view for any Flag Prerequisites
 		 */
@@ -371,12 +410,14 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 */
 		if (envConfig.offVariation !== undefined) {
 			const offVar = flag.variations[envConfig.offVariation];
-			renderedFlagFields.push(
-				this.flagFactory({
-					label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
-					ctxValue: 'variationOff',
-				}),
-			);
+			if (offVar !== undefined) {
+				renderedFlagFields.push(
+					this.flagFactory({
+						label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
+						ctxValue: 'variationOff',
+					}),
+				);
+			}
 		}
 
 		/**
@@ -423,18 +464,20 @@ export function flagNodeFactory({
 }): FlagNode {
 	return new FlagNode(ctx, label, collapsed, children, ctxValue, uri, flagKey, flagParentName, flagVersion);
 }
+
 /* eslint-enable @typescript-eslint/explicit-module-boundary-types */
 /**
  * Class representing a Feature flag as vscode TreeItem
  * It is a nested array of FlagNode's to build the view
  */
 export class FlagNode extends vscode.TreeItem {
-	children: FlagNode[] | undefined;
+	children: any | undefined;
 	contextValue?: string;
 	uri?: string;
 	flagKey?: string;
 	flagParentName?: string;
 	flagVersion: number;
+	command?: vscode.Command;
 
 	/**
 	 * @param label will be shown in the Treeview
@@ -449,12 +492,13 @@ export class FlagNode extends vscode.TreeItem {
 		ctx: vscode.ExtensionContext,
 		public readonly label: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-		children?: FlagNode[],
+		children?: any,
 		contextValue?: string,
 		uri?: string,
 		flagKey?: string,
 		flagParentName?: string,
 		flagVersion?: number,
+		command?: vscode.Command,
 	) {
 		super(label, collapsibleState);
 		this.contextValue = contextValue;
@@ -464,6 +508,7 @@ export class FlagNode extends vscode.TreeItem {
 		this.flagParentName = flagParentName;
 		this.flagVersion = flagVersion;
 		this.conditionalIcon(ctx, this.contextValue, this.label);
+		this.command = command;
 	}
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
@@ -493,6 +538,7 @@ export class FlagParentNode extends vscode.TreeItem {
 	flagParentName?: string;
 	flagVersion: number;
 	enabled?: boolean;
+	aliases?: string[]
 
 	/**
 	 * @param label will be shown in the Treeview
@@ -508,6 +554,7 @@ export class FlagParentNode extends vscode.TreeItem {
 		flagKey?: string,
 		flagVersion?: number,
 		enabled?: boolean,
+		aliases?: string[]
 	) {
 		super(label, collapsibleState);
 		this.children = children;
@@ -515,6 +562,7 @@ export class FlagParentNode extends vscode.TreeItem {
 		this.flagVersion = flagVersion;
 		this.enabled = enabled;
 		this.conditionalIcon(ctx, this.contextValue, this.enabled);
+		this.aliases = aliases
 	}
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, enabled: boolean) {

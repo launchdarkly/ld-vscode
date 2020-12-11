@@ -12,7 +12,10 @@ export class Configuration {
 	sdkKey = '';
 	project = '';
 	env = '';
+	codeRefsPath = '';
 	refreshRate = 120;
+	codeRefsRefreshRate = 240;
+	enableAliases = true;
 	enableHover = true;
 	enableAutocomplete = true;
 	enableFlagExplorer = true;
@@ -49,7 +52,6 @@ export class Configuration {
 			await config.update(key, '', global);
 			return;
 		}
-
 		await config.update(key, value, global);
 		config = workspace.getConfiguration('launchdarkly');
 
