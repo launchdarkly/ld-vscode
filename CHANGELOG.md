@@ -2,6 +2,12 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [2.4.0] - 2020-11-10
+### Changed
+
+- Show flag status(on/off) at top level of treeview
+- Only update flags on refresh schedule for global metadata
+
 ## [2.3.0] - 2020-05-29
 
 ### Added

@@ -76,6 +76,20 @@ export class FlagStore {
 				}
 			}
 			this.storeUpdates.fire(true);
+			this.on('update', async (keys: string) => {
+				const flagKeys = Object.values(keys);
+				flagKeys.map(key => {
+					this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
+						if (!res) {
+							return;
+						}
+						if (this.flagMetadata[key].variations.length !== res.variations.length) {
+							this.flagMetadata[key] = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
+							this.storeUpdates.fire(true);
+						}
+					});
+				});
+			});
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
@@ -146,10 +160,11 @@ export class FlagStore {
 	}
 
 	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
+		const streamUri = this.config.baseUri.replace('app', 'stream');
 		return {
 			timeout: 5,
 			baseUri: this.config.baseUri,
-			streamUri: this.config.streamUri,
+			streamUri: streamUri,
 			sendEvents: false,
 			featureStore: this.store,
 		};
