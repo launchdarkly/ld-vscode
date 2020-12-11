@@ -284,7 +284,7 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url
 	hoverString.appendMarkdown(`${Prereqs} ${targets} ${rules}`);
 	hoverString.appendText('\n');
 	hoverString.appendMarkdown('**Variations**');
-	flag.variations.map((variation, idx) => {
+	c.variations.map((variation, idx) => {
 		let offVar = '';
 		if (c.offVariation !== undefined && c.offVariation === idx) {
 			offVar = `\u25c6 Off Variation`;
