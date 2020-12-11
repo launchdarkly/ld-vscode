@@ -7,6 +7,7 @@ import * as path from 'path';
 import { debounce, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
 
+
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
 
@@ -408,7 +409,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * TODO: Render even if undefined since that is valid option.
 		 */
 		if (envConfig.offVariation !== undefined) {
-			console.log(envConfig.offVariation)
 			const offVar = flag.variations[envConfig.offVariation];
 			if (offVar !== undefined) {
 				renderedFlagFields.push(
@@ -478,6 +478,7 @@ export class FlagNode extends vscode.TreeItem {
 	flagParentName?: string;
 	flagVersion: number;
 	command?: vscode.Command;
+
 	/**
 	 * @param label will be shown in the Treeview
 	 * @param collapsibleState is initial state collapsible state
