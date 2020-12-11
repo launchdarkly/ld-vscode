@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
-import { FeatureFlag, FlagConfiguration } from '../models';
+import { FeatureFlag, FlagConfiguration, PatchComment, PatchOperation } from '../models';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import * as path from 'path';
 import { debounce, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
-
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -118,13 +117,34 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.registerTreeviewRefreshCommand(),
 			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
 				const aliases = this.aliases.getKeys()
-				console.log(aliases[node.flagKey].join("|"))
 				vscode.commands.executeCommand('workbench.action.findInFiles', {
 					query: aliases[node.flagKey].join("|"),
 					triggerSearch: true,
 					matchWholeWord: true,
 					isCaseSensitive: true,
 				});
+			}),
+			vscode.commands.registerCommand('launchdarkly.toggleFlag', async (node: FlagParentNode) => {
+				try {
+					const env = await this.flagStore.getFeatureFlag(node.flagKey);
+					await this.api.patchFeatureFlagOn(this.config.project, node.flagKey, !env.config.on);
+				} catch(err) {
+					vscode.window.showErrorMessage(err.message)
+				}
+			}),
+			vscode.commands.registerCommand('launchdarkly.fallthroughChange', async (node: FlagNode) => {
+				try {
+					await this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
+				} catch (err) {
+					vscode.window.showErrorMessage(err.message)
+				}
+			}),
+			vscode.commands.registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
+				try {
+					await this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
+				} catch (err) {
+					this.flagPatch(node, `/environments/${this.config.env}/offVariation`);
+				}
 			}),
 		);
 	}
@@ -134,6 +154,32 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return;
 		}
 		await this.reload();
+	}
+
+	private async flagPatch(node: FlagTreeInterface, path: string, contextValue?: string): Promise<void> {
+		const env = await this.flagStore.getFeatureFlag(node.flagKey);
+		const variations = env.flag.variations.map((variation, idx) => {
+			return `${idx}. ${JSON.stringify(variation.name) ? JSON.stringify(variation.name) : JSON.stringify(variation.value)}`;
+		});
+		const choice = await vscode.window.showQuickPick(variations);
+		const newValue = choice.split('.')[0];
+		const patch = [];
+		patch.push({ op: 'replace', path: path, value: parseInt(newValue) });
+		if (contextValue && contextValue === 'rollout') {
+			patch.push({ op: 'remove', path: `/environments/${this.config.env}/fallthrough/rollout` });
+		}
+		const patchComment = new PatchComment();
+		patchComment.comment = 'Update by VSCode';
+		patchComment.patch = patch;
+		try {
+			await this.api.patchFeatureFlag(this.config.project, node.flagKey, patchComment);
+		} catch (err) {
+			if (err.statusCode === 403) {
+				vscode.window.showErrorMessage('Unauthorized: Your key does not have permissions to change the flag.', err);
+			} else {
+				vscode.window.showErrorMessage(err.message);
+			}
+		}
 	}
 
 	private async flagUpdateListener() {
@@ -228,6 +274,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			flag.key,
 			flag._version,
 			envConfig.on,
+			[],
+			"flagParentItem"
 		);
 		/**
 		 * User friendly name for building nested children under parent FlagNode
@@ -267,7 +315,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				return aliasNode;
 			});
 			renderedFlagFields.push(
-				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'flagParentItem', flagKey: flag.key }),
+				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'aliases', flagKey: flag.key }),
 			);
 		}
 		/**
@@ -376,6 +424,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
 					}`,
 					ctxValue: 'variationDefault',
+					flagKey: envConfig.key,
 				}),
 			);
 		} else if (fallThrough.rollout) {
@@ -400,6 +449,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					collapsed: COLLAPSED,
 					children: fallThroughRollout,
 					ctxValue: 'rollout',
+					flagKey: flag.key,
 				}),
 			);
 		}
@@ -415,6 +465,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					this.flagFactory({
 						label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
 						ctxValue: 'variationOff',
+						flagKey: flag.key
 					}),
 				);
 			}
@@ -554,13 +605,15 @@ export class FlagParentNode extends vscode.TreeItem {
 		flagKey?: string,
 		flagVersion?: number,
 		enabled?: boolean,
-		aliases?: string[]
+		aliases?: string[],
+		contextValue?: string
 	) {
 		super(label, collapsibleState);
 		this.children = children;
 		this.flagKey = flagKey;
 		this.flagVersion = flagVersion;
 		this.enabled = enabled;
+		this.contextValue = contextValue;
 		this.conditionalIcon(ctx, this.contextValue, this.enabled);
 		this.aliases = aliases
 	}

@@ -116,6 +116,18 @@
 				}
 			},
 			{
+				"command": "launchdarkly.toggleFlag",
+				"title": "Toggle Flag"
+			},
+			{
+				"command": "launchdarkly.fallthroughChange",
+				"title": "Change Fallthrough Variation"
+			},
+			{
+				"command": "launchdarkly.offChange",
+				"title": "Change Off Variation"
+			},
+			{
 				"command": "launchdarkly.treeviewrefresh",
 				"title": "LaunchDarkly Toggle Treeview"
 			},
@@ -186,8 +198,24 @@
 				},
 				{
 					"command": "launchdarkly.flagMultipleSearch",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
+					"when": "view == launchdarklyFeatureFlags && viewItem == aliases",
 					"group": "inline"
+				},
+				{
+					"command": "launchdarkly.toggleFlag",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem"
+				},
+				{
+					"command": "launchdarkly.fallthroughChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == variationDefault"
+				},
+				{
+					"command": "launchdarkly.fallthroughChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == rollout"
+				},
+				{
+					"command": "launchdarkly.offChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == variationOff"
 				}
 			]
 		},
