@@ -1,4 +1,13 @@
-import { commands, EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
+import {
+	commands,
+	EventEmitter,
+	ExtensionContext,
+	StatusBarAlignment,
+	StatusBarItem,
+	window,
+	workspace,
+	WorkspaceFolder,
+} from 'vscode';
 import { exec, ExecOptions } from 'child_process';
 import { createReadStream } from 'fs';
 import { join } from 'path';
@@ -23,17 +32,18 @@ export class FlagAliases {
 	public readonly aliasUpdates: EventEmitter<boolean | null> = new EventEmitter();
 	map = new Map();
 	keys = new Map();
-	private statusBar: StatusBarItem
+	private statusBar: StatusBarItem;
 
 	constructor(config: Configuration, ctx: ExtensionContext) {
 		this.config = config;
-		this.ctx = ctx
+		this.ctx = ctx;
 	}
 	aliases: Array<string>;
 
 	async start(): Promise<void> {
 		this.generateAndReadAliases();
-		if (this.config.refreshRate) {
+		const aliasFile = await workspace.findFiles('.launchdarkly/coderefs.yaml');
+		if (this.config.refreshRate && aliasFile.length > 0) {
 			if (this.config.validateRefreshInterval(this.config.codeRefsRefreshRate)) {
 				this.startCodeRefsUpdateTask(this.config.codeRefsRefreshRate);
 			} else {
@@ -125,6 +135,7 @@ export class FlagAliases {
 				this.ctx.workspaceState.update('aliasListOfMapKeys', mapKeys);
 				this.aliasUpdates.fire(true);
 				this.statusBar.hide();
+				//fs.rmdir(tmpDir, { recursive: true });
 			});
 	}
 
@@ -148,6 +159,7 @@ export class FlagAliases {
 			return false;
 		}
 	}
+
 
 	// create statusbar
 	setupStatusBar(): void {

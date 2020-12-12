@@ -97,7 +97,12 @@
 			{
 				"command": "extension.openInLaunchDarkly",
 				"title": "LaunchDarkly: Open in LaunchDarkly",
-				"when": "editorTextFocus"
+				"when": "LDFlagToggle"
+			},
+			{
+				"command": "launchdarkly.toggleFlagContext",
+				"title": "LaunchDarkly: Toggle Flag",
+				"when": "LDFlagToggle"
 			},
 			{
 				"command": "extension.configureLaunchDarkly",
@@ -178,8 +183,14 @@
 			"editor/context": [
 				{
 					"command": "extension.openInLaunchDarkly",
-					"when": "editorTextFocus",
+					"when": "LDFlagToggle",
 					"group": "LaunchDarkly"
+				},
+				{
+					"command": "launchdarkly.toggleFlagContext",
+					"args": "${LDFlagToggle}",
+					"when": "LDFlagToggle",
+					"group": "LaunchDarkly@1"
 				}
 			],
 			"view/title": [

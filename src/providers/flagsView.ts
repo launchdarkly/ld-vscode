@@ -116,9 +116,13 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.reload()),
 			this.registerTreeviewRefreshCommand(),
 			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
-				const aliases = this.aliases.getKeys()
+				let aliases;
+				if (this.aliases) {
+					aliases = this.aliases.getKeys();
+				}
+				aliases = aliases ? [...aliases] + node.flagKey : node.flagKey;
 				vscode.commands.executeCommand('workbench.action.findInFiles', {
-					query: aliases[node.flagKey].join("|"),
+					query: aliases[node.flagKey].join('|'),
 					triggerSearch: true,
 					matchWholeWord: true,
 					isCaseSensitive: true,
@@ -305,26 +309,28 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }),
 			);
 		}
-		const aliasKeys = this.aliases.getKeys();
-		if (this.aliases && aliasKeys[flag.key]) {
-			const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
-				const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' });
-				aliasNode.command = {
-					command: 'workbench.action.findInFiles',
-					title: 'Find in Files',
-					arguments: [{ query: alias, triggerSearch: true, matchWholeWord: true, isCaseSensitive: true }],
-				};
-				return aliasNode;
-			});
-			renderedFlagFields.push(
-				this.flagFactory({
-					label: `Aliases`,
-					children: aliases,
-					collapsed: COLLAPSED,
-					ctxValue: 'aliases',
-					flagKey: flag.key,
-				}),
-			);
+		if (this.aliases) {
+			const aliasKeys = this.aliases.getKeys();
+			if (aliasKeys[flag.key]) {
+				const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
+					const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' });
+					aliasNode.command = {
+						command: 'workbench.action.findInFiles',
+						title: 'Find in Files',
+						arguments: [{ query: alias, triggerSearch: true, matchWholeWord: true, isCaseSensitive: true }],
+					};
+					return aliasNode;
+				});
+				renderedFlagFields.push(
+					this.flagFactory({
+						label: `Aliases`,
+						children: aliases,
+						collapsed: COLLAPSED,
+						ctxValue: 'aliases',
+						flagKey: flag.key,
+					}),
+				);
+			}
 		}
 		/**
 		 * Build view for any Flag Prerequisites
@@ -537,7 +543,6 @@ export class FlagNode extends vscode.TreeItem {
 	flagParentName?: string;
 	flagVersion: number;
 	command?: vscode.Command;
-
 	/**
 	 * @param label will be shown in the Treeview
 	 * @param collapsibleState is initial state collapsible state
@@ -570,7 +575,7 @@ export class FlagNode extends vscode.TreeItem {
 		this.command = command;
 	}
 
-	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
+	conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
 		/**
 		 * Special handling for open browser. Called in package.json
 		 */
@@ -583,6 +588,7 @@ export class FlagNode extends vscode.TreeItem {
 
 	private setIcon(ctx: vscode.ExtensionContext, fileName: string): vscode.ThemeIcon {
 		return (this.iconPath = {
+			id: null,
 			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName + '.svg')),
 			dark: ctx.asAbsolutePath(path.join('resources', 'dark', fileName + '.svg')),
 		});
@@ -636,6 +642,7 @@ export class FlagParentNode extends vscode.TreeItem {
 
 	private setIcon(ctx: vscode.ExtensionContext, fileName: string): vscode.ThemeIcon {
 		return (this.iconPath = {
+			id: null,
 			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName + '.svg')),
 			dark: ctx.asAbsolutePath(path.join('resources', 'dark', fileName + '.svg')),
 		});
