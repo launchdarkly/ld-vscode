@@ -94,11 +94,9 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			const keys = Object.keys(flags);
 			let aliases: Map<string, string>;
 			let aliasArr;
-			try {
+			if (typeof aliases !== "undefined") {
 				aliases = this.aliases.getMap();
 				aliasArr = this.aliases.getListOfMapKeys();
-			} catch (err) {
-				console.log(err);
 			}
 			while ((matches = regex.exec(text)) !== null) {
 				const line = document.lineAt(document.positionAt(matches.index).line);
@@ -110,12 +108,14 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				if (typeof keys !== 'undefined') {
 					flag = keys.filter(element => prospect.includes(element));
 				}
-				const foundAliases = aliasArr.filter(element => prospect.includes(element));
-
+				let foundAliases
+				if (typeof aliases !== "undefined") {
+					foundAliases = aliasArr.filter(element => prospect.includes(element));
+				}
 				if (range && typeof flag !== 'undefined' && flags[flag[0]]) {
 					const codeLens = new FlagCodeLens(range, flags[flag[0]], env[flag[0]], this.config);
 					this.codeLenses.push(codeLens);
-				} else if (range && foundAliases.length > 0 && flags[aliases[foundAliases]]) {
+				} else if (range && foundAliases && foundAliases.length > 0 && flags[aliases[foundAliases]]) {
 					const codeLens = new FlagCodeLens(
 						range,
 						flags[aliases[foundAliases]],
