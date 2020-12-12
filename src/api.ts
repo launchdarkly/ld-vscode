@@ -63,8 +63,8 @@ export class LaunchDarklyAPI {
 		}
 	}
 
-	async patchFeatureFlagOn(projectKey: string, flagKey: string, enabled: boolean): Promise<FeatureFlag | Error> {
-		try {
+	async patchFeatureFlagOn(projectKey: string, flagKey: string, enabled: boolean): Promise<FeatureFlag | Error > {
+		try{
 			const patch = new PatchOperation();
 			patch.path = `/environments/${this.config.env}/on`;
 			patch.op = 'replace';
@@ -84,7 +84,7 @@ export class LaunchDarklyAPI {
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
 			headers: {
 				Authorization: this.config.accessToken,
-				UserAgent: 'VSCodeExtension/' + PACKAGE_JSON.version,
+				'User-Agent': 'VSCodeExtension/' + PACKAGE_JSON.version,
 			},
 		};
 

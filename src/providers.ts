@@ -27,6 +27,7 @@ import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
 import { FlagCodeLensProvider } from './providers/flagLens';
 
+
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 const LD_MODE: DocumentFilter = {
@@ -58,6 +59,7 @@ export async function register(
 	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
 	languages.registerCodeLensProvider('*', codeLens);
 	codeLens.start();
+
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}

@@ -116,9 +116,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.reload()),
 			this.registerTreeviewRefreshCommand(),
 			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
-				const aliases = this.aliases.getKeys();
+				const aliases = this.aliases.getKeys()
 				vscode.commands.executeCommand('workbench.action.findInFiles', {
-					query: aliases[node.flagKey].join('|'),
+					query: aliases[node.flagKey].join("|"),
 					triggerSearch: true,
 					matchWholeWord: true,
 					isCaseSensitive: true,
@@ -537,6 +537,7 @@ export class FlagNode extends vscode.TreeItem {
 	flagParentName?: string;
 	flagVersion: number;
 	command?: vscode.Command;
+
 	/**
 	 * @param label will be shown in the Treeview
 	 * @param collapsibleState is initial state collapsible state
@@ -569,7 +570,7 @@ export class FlagNode extends vscode.TreeItem {
 		this.command = command;
 	}
 
-	conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
+	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
 		/**
 		 * Special handling for open browser. Called in package.json
 		 */

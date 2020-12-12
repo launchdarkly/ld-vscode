@@ -23,11 +23,11 @@ export class FlagAliases {
 	public readonly aliasUpdates: EventEmitter<boolean | null> = new EventEmitter();
 	map = new Map();
 	keys = new Map();
-	private statusBar: StatusBarItem;
+	private statusBar: StatusBarItem
 
 	constructor(config: Configuration, ctx: ExtensionContext) {
 		this.config = config;
-		this.ctx = ctx;
+		this.ctx = ctx
 	}
 	aliases: Array<string>;
 
@@ -76,10 +76,11 @@ export class FlagAliases {
 
 	async generateCsv(directory: string, outDir: string, repoName: string): Promise<void> {
 		try {
-			console.log('starting to find aliases');
+			console.log("starting to find aliases")
 			const command = `${this.config.codeRefsPath} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${this.config.project}" --repoName="${repoName}" --baseUri="${this.config.baseUri}" --contextLines=-1 --branch=scan --revision=0`;
 			const output = await this.exec(command, {
-				env: { LD_ACCESS_TOKEN: this.config.accessToken, GOMAXPROCS: 1 },
+				env: { LD_ACCESS_TOKEN: this.config.accessToken,
+						GOMAXPROCS: 1 },
 				timeout: 20 * 60000,
 			});
 			if (output.stderr) {
@@ -148,8 +149,7 @@ export class FlagAliases {
 		}
 	}
 
-	// register a command that is invoked when the status bar
-	// item is selected
+	// create statusbar
 	setupStatusBar(): void {
 		this.statusBar = window.createStatusBarItem(StatusBarAlignment.Right, 100);
 		this.ctx.subscriptions.push(this.statusBar);
