@@ -86,6 +86,10 @@
 					"type": "number",
 					"default": 240,
 					"description": "How often in minutes to refresh feature flag metadata via API. If `0` code references does not update. Max is 1440 (1 Day)."
+				},
+				"launchdarkly.enableCodeLens": {
+				   "type": "boolean",
+				   "default": true
 				}
 			}
 		},

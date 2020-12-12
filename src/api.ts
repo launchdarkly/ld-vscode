@@ -53,13 +53,13 @@ export class LaunchDarklyAPI {
 		return flags;
 	}
 
-	async patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag | Error > {
+	async patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag | Error> {
 		try {
 			const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value);
 			const data = await rp(options);
 			return new FeatureFlag(JSON.parse(data));
 		} catch (err) {
-			return Promise.reject(err)
+			return Promise.reject(err);
 		}
 	}
 
@@ -74,7 +74,7 @@ export class LaunchDarklyAPI {
 			patchOp.patch = [patch];
 			return this.patchFeatureFlag(projectKey, flagKey, patchOp);
 		} catch (err) {
-			return Promise.reject(err)
+			return Promise.reject(err);
 		}
 	}
 

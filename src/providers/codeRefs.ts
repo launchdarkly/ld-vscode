@@ -63,15 +63,15 @@ export class FlagAliases {
 	}
 
 	getKeys(): Map<string, string> {
-		return this.ctx.workspaceState.get("aliasKeys")
+		return this.ctx.workspaceState.get('aliasKeys');
 	}
 
 	getListOfMapKeys(): Array<string> {
-		return this.ctx.workspaceState.get("aliasListOfMapKeys")
+		return this.ctx.workspaceState.get('aliasListOfMapKeys');
 	}
 
 	getMap(): Map<string, string> {
-		return this.ctx.workspaceState.get("aliasMap")
+		return this.ctx.workspaceState.get('aliasMap');
 	}
 
 	async generateCsv(directory: string, outDir: string, repoName: string): Promise<void> {
@@ -119,12 +119,12 @@ export class FlagAliases {
 				});
 			})
 			.on('end', () => {
-				this.ctx.workspaceState.update("aliasMap", this.map)
-				this.ctx.workspaceState.update("aliasKeys", this.keys)
-				const mapKeys = Object.keys(this.map).filter(element => element != '')
-				this.ctx.workspaceState.update("aliasListOfMapKeys", mapKeys)
+				this.ctx.workspaceState.update('aliasMap', this.map);
+				this.ctx.workspaceState.update('aliasKeys', this.keys);
+				const mapKeys = Object.keys(this.map).filter(element => element != '');
+				this.ctx.workspaceState.update('aliasListOfMapKeys', mapKeys);
 				this.aliasUpdates.fire(true);
-				this.statusBar.hide()
+				this.statusBar.hide();
 			});
 	}
 

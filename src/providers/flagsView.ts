@@ -128,15 +128,15 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				try {
 					const env = await this.flagStore.getFeatureFlag(node.flagKey);
 					await this.api.patchFeatureFlagOn(this.config.project, node.flagKey, !env.config.on);
-				} catch(err) {
-					vscode.window.showErrorMessage(err.message)
+				} catch (err) {
+					vscode.window.showErrorMessage(err.message);
 				}
 			}),
 			vscode.commands.registerCommand('launchdarkly.fallthroughChange', async (node: FlagNode) => {
 				try {
 					await this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
 				} catch (err) {
-					vscode.window.showErrorMessage(err.message)
+					vscode.window.showErrorMessage(err.message);
 				}
 			}),
 			vscode.commands.registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
@@ -159,7 +159,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private async flagPatch(node: FlagTreeInterface, path: string, contextValue?: string): Promise<void> {
 		const env = await this.flagStore.getFeatureFlag(node.flagKey);
 		const variations = env.flag.variations.map((variation, idx) => {
-			return `${idx}. ${JSON.stringify(variation.name) ? JSON.stringify(variation.name) : JSON.stringify(variation.value)}`;
+			return `${idx}. ${
+				JSON.stringify(variation.name) ? JSON.stringify(variation.name) : JSON.stringify(variation.value)
+			}`;
 		});
 		const choice = await vscode.window.showQuickPick(variations);
 		const newValue = choice.split('.')[0];
@@ -275,7 +277,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			flag._version,
 			envConfig.on,
 			[],
-			"flagParentItem"
+			'flagParentItem',
 		);
 		/**
 		 * User friendly name for building nested children under parent FlagNode
@@ -303,19 +305,25 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }),
 			);
 		}
-		const aliasKeys = this.aliases.getKeys()
+		const aliasKeys = this.aliases.getKeys();
 		if (this.aliases && aliasKeys[flag.key]) {
 			const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
-				const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' })
+				const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' });
 				aliasNode.command = {
 					command: 'workbench.action.findInFiles',
 					title: 'Find in Files',
-					arguments: [{ query: alias, triggerSearch: true, matchWholeWord: true, isCaseSensitive: true}],
+					arguments: [{ query: alias, triggerSearch: true, matchWholeWord: true, isCaseSensitive: true }],
 				};
 				return aliasNode;
 			});
 			renderedFlagFields.push(
-				this.flagFactory({ label: `Aliases`, children: aliases, collapsed: COLLAPSED, ctxValue: 'aliases', flagKey: flag.key }),
+				this.flagFactory({
+					label: `Aliases`,
+					children: aliases,
+					collapsed: COLLAPSED,
+					ctxValue: 'aliases',
+					flagKey: flag.key,
+				}),
 			);
 		}
 		/**
@@ -465,7 +473,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					this.flagFactory({
 						label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
 						ctxValue: 'variationOff',
-						flagKey: flag.key
+						flagKey: flag.key,
 					}),
 				);
 			}
@@ -589,7 +597,7 @@ export class FlagParentNode extends vscode.TreeItem {
 	flagParentName?: string;
 	flagVersion: number;
 	enabled?: boolean;
-	aliases?: string[]
+	aliases?: string[];
 
 	/**
 	 * @param label will be shown in the Treeview
@@ -606,7 +614,7 @@ export class FlagParentNode extends vscode.TreeItem {
 		flagVersion?: number,
 		enabled?: boolean,
 		aliases?: string[],
-		contextValue?: string
+		contextValue?: string,
 	) {
 		super(label, collapsibleState);
 		this.children = children;
@@ -615,7 +623,7 @@ export class FlagParentNode extends vscode.TreeItem {
 		this.enabled = enabled;
 		this.contextValue = contextValue;
 		this.conditionalIcon(ctx, this.contextValue, this.enabled);
-		this.aliases = aliases
+		this.aliases = aliases;
 	}
 
 	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, enabled: boolean) {

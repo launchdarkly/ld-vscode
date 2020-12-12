@@ -25,6 +25,8 @@ import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
 import { FlagStore } from './flagStore';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
+import { FlagCodeLensProvider } from './providers/flagLens';
+
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
@@ -39,11 +41,12 @@ export async function register(
 	api: LaunchDarklyAPI,
 ): Promise<void> {
 	let aliases;
+
 	if (typeof flagStore !== 'undefined') {
 		if (config.enableAliases && config.codeRefsPath !== '') {
 			aliases = new FlagAliases(config, ctx);
 			if (aliases.codeRefsVersionCheck()) {
-				aliases.setupStatusBar()
+				aliases.setupStatusBar();
 				aliases.start();
 			} else {
 				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
@@ -53,6 +56,9 @@ export async function register(
 		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 	}
+	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
+	languages.registerCodeLensProvider('*', codeLens);
+	codeLens.start();
 
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
@@ -146,7 +152,7 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let foundAlias;
 				if (this.aliases) {
-					const aliasesMap = this.aliases.getMap()
+					const aliasesMap = this.aliases.getMap();
 					foundAlias = aliasesMap[candidate];
 				} else {
 					foundAlias = {};
