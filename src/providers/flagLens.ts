@@ -3,7 +3,6 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
 import { FlagStore } from '../flagStore';
-import { LaunchDarklyTreeViewProvider } from './flagsView';
 import { FlagAliases } from './codeRefs';
 
 /**
