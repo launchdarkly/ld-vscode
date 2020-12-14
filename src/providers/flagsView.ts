@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { FeatureFlag, FlagConfiguration, PatchComment, PatchOperation } from '../models';
+import { FeatureFlag, FlagConfiguration, PatchComment } from '../models';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
@@ -193,7 +193,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private async flagReadyListener() {
 		this.flagStore.storeReady.event(async () => {
 			try {
-				this.flagUpdateListener()
+				this.flagUpdateListener();
 			} catch (err) {
 				console.error('Failed to update LaunchDarkly flag tree view:', err);
 			}
@@ -575,7 +575,7 @@ export class FlagNode extends vscode.TreeItem {
 		this.command = command;
 	}
 
-	conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
+	conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean): void {
 		/**
 		 * Special handling for open browser. Called in package.json
 		 */

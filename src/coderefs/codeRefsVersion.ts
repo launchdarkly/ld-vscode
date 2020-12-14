@@ -1,3 +1,3 @@
 export class CodeRefs {
-    static version = '2.1.0';
+	static version = '2.1.0';
 }

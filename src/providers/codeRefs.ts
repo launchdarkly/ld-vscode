@@ -1,18 +1,11 @@
-import {
-	EventEmitter,
-	ExtensionContext,
-	StatusBarAlignment,
-	StatusBarItem,
-	window,
-	workspace,
-} from 'vscode';
+import { EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
 import { exec, ExecOptions } from 'child_process';
 import { access, createReadStream, constants } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import * as csv from 'csv-parser';
 import { Configuration } from '../configuration';
-import { CodeRefs } from '../utils/codeRefsVersion';
+import { CodeRefs } from '../coderefs/codeRefsVersion';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const fs = require('fs').promises;
@@ -85,29 +78,31 @@ export class FlagAliases {
 
 	async generateCsv(directory: string, outDir: string, repoName: string): Promise<void> {
 		try {
-			let codeRefsBin
+			let codeRefsBin;
 			try {
-				await access(`${this.ctx.asAbsolutePath("coderefs")}/${CodeRefs.version}/ld-find-code-refs`, constants.F_OK, (err) => {
-					if (err) {
-						console.log(err)
-					}
-					else {
-						codeRefsBin = `${this.ctx.asAbsolutePath("coderefs")}/${CodeRefs.version}/ld-find-code-refs`
-						if (process.platform == 'win32') {
-							codeRefsBin = `${codeRefsBin}.exe`
+				await access(
+					`${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`,
+					constants.F_OK,
+					err => {
+						if (err) {
+							console.log(err);
+						} else {
+							codeRefsBin = `${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`;
+							if (process.platform == 'win32') {
+								codeRefsBin = `${codeRefsBin}.exe`;
+							}
 						}
-					}
-				});
+					},
+				);
 				// The check succeeded
 			} catch (error) {
-				codeRefsBin = this.config.codeRefsPath
+				codeRefsBin = this.config.codeRefsPath;
 				// The check failed
 			}
-			console.log(codeRefsBin)
+			console.log(codeRefsBin);
 			const command = `${codeRefsBin} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${this.config.project}" --repoName="${repoName}" --baseUri="${this.config.baseUri}" --contextLines=-1 --branch=scan --revision=0`;
 			const output = await this.exec(command, {
-				env: { LD_ACCESS_TOKEN: this.config.accessToken,
-						GOMAXPROCS: 1 },
+				env: { LD_ACCESS_TOKEN: this.config.accessToken, GOMAXPROCS: 1 },
 				timeout: 20 * 60000,
 			});
 			if (output.stderr) {

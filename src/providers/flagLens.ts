@@ -94,8 +94,10 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			let aliases: Map<string, string>;
 			let aliasArr;
 			try {
-				aliases = this.aliases.getMap();
-				aliasArr = this.aliases.getListOfMapKeys();
+				if (typeof aliases !== 'undefined') {
+					aliases = this.aliases.getMap();
+					aliasArr = this.aliases.getListOfMapKeys();
+				}
 			} catch (err) {
 				console.log(err);
 			}
@@ -109,8 +111,8 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				if (typeof keys !== 'undefined') {
 					flag = keys.filter(element => prospect.includes(element));
 				}
-				let foundAliases
-				if (typeof aliases !== "undefined") {
+				let foundAliases;
+				if (typeof aliases !== 'undefined') {
 					foundAliases = aliasArr.filter(element => prospect.includes(element));
 				}
 				if (range && typeof flag !== 'undefined' && flags[flag[0]]) {

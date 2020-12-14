@@ -17,7 +17,6 @@ import {
 import * as url from 'url';
 import opn = require('opn');
 import { kebabCase } from 'lodash';
-
 import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
@@ -27,7 +26,7 @@ import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
 import { FlagCodeLensProvider } from './providers/flagLens';
 
-const STRING_DELIMITERS = ['"', "'", '`'];
+const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 const LD_MODE: DocumentFilter = {
 	scheme: 'file',
@@ -332,7 +331,7 @@ export function isPrecedingCharStringDelimiter(document: TextDocument, position:
 		range.start.character,
 	);
 	const candidate = document.getText(c).trim();
-	return STRING_DELIMITERS.indexOf(candidate) !== -1;
+	return STRING_DELIMETERS.indexOf(candidate) !== -1;
 }
 
 const candidateTextStartLocation = (char: number) => (char === 1 ? 0 : char - 2);
