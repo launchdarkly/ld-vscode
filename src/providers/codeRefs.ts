@@ -33,9 +33,9 @@ export class FlagAliases {
 	aliases: Array<string>;
 
 	async start(): Promise<void> {
-		this.generateAndReadAliases();
 		const aliasFile = await workspace.findFiles('.launchdarkly/coderefs.yaml');
-		if (this.config.refreshRate && aliasFile.length > 0) {
+		if (this.config.codeRefsRefreshRate && aliasFile.length > 0) {
+			this.generateAndReadAliases();
 			if (this.config.validateRefreshInterval(this.config.codeRefsRefreshRate)) {
 				this.startCodeRefsUpdateTask(this.config.codeRefsRefreshRate);
 			} else {
@@ -76,30 +76,26 @@ export class FlagAliases {
 		return this.ctx.workspaceState.get('aliasMap');
 	}
 
+	async getCodeRefsBin(): Promise<string> {
+		await access(
+			join(this.ctx.asAbsolutePath('coderefs'), `${CodeRefs.version}/ld-find-code-refs`),
+			constants.F_OK,
+			err => {
+				if (err) {
+					return this.config.codeRefsPath ? this.config.codeRefsPath : "" ;
+				}
+			}
+		)
+		let codeRefsBin = `${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`;
+		if (process.platform == 'win32') {
+			codeRefsBin = `${codeRefsBin}.exe`;
+		}
+		return codeRefsBin
+	}
+
 	async generateCsv(directory: string, outDir: string, repoName: string): Promise<void> {
 		try {
-			let codeRefsBin;
-			try {
-				await access(
-					`${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`,
-					constants.F_OK,
-					err => {
-						if (err) {
-							console.log(err);
-						} else {
-							codeRefsBin = `${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`;
-							if (process.platform == 'win32') {
-								codeRefsBin = `${codeRefsBin}.exe`;
-							}
-						}
-					},
-				);
-				// The check succeeded
-			} catch (error) {
-				codeRefsBin = this.config.codeRefsPath;
-				// The check failed
-			}
-			console.log(codeRefsBin);
+			const codeRefsBin = await this.getCodeRefsBin()
 			const command = `${codeRefsBin} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${this.config.project}" --repoName="${repoName}" --baseUri="${this.config.baseUri}" --contextLines=-1 --branch=scan --revision=0`;
 			const output = await this.exec(command, {
 				env: { LD_ACCESS_TOKEN: this.config.accessToken, GOMAXPROCS: 1 },
@@ -124,7 +120,7 @@ export class FlagAliases {
 		this.statusBar.text = `LaunchDarkly: Generating aliases`;
 		this.statusBar.show();
 		await this.generateCsv(refsDir[1], tmpDir, tmpRepo);
-		const aliasFile = `${tmpDir}/coderefs_${this.config.project}_${tmpRepo}_scan.csv`;
+		const aliasFile = join(tmpDir, `coderefs_${this.config.project}_${tmpRepo}_scan.csv`);
 		createReadStream(aliasFile)
 			.pipe(csv())
 			.on('data', (row: FlagAlias) => {
@@ -147,13 +143,17 @@ export class FlagAliases {
 				this.ctx.workspaceState.update('aliasListOfMapKeys', mapKeys);
 				this.aliasUpdates.fire(true);
 				this.statusBar.hide();
-				//fs.rmdir(tmpDir, { recursive: true });
+				fs.rmdir(tmpDir, { recursive: true });
 			});
 	}
 
 	async codeRefsVersionCheck(): Promise<boolean> {
 		try {
-			const command = `${this.config.codeRefsPath} --version`;
+			const codeRefsBin = await this.getCodeRefsBin()
+			if (!codeRefsBin) {
+				return false
+			}
+			const command = `${codeRefsBin} --version`;
 			const output = await this.exec(command, {});
 			if (output.stderr) {
 				window.showErrorMessage(output.stderr);

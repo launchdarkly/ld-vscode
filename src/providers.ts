@@ -41,7 +41,7 @@ export async function register(
 	let aliases;
 
 	if (typeof flagStore !== 'undefined') {
-		if (config.enableAliases && config.codeRefsPath !== '') {
+		if (config.enableAliases) {
 			aliases = new FlagAliases(config, ctx);
 			if (aliases.codeRefsVersionCheck()) {
 				aliases.setupStatusBar();

@@ -85,7 +85,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			const nodes = [];
 			const flags = await this.flagStore.allFlagsMetadata();
 			map(flags, value => {
-				this.flagToValues(value).then(node => {
+					this.flagToValues(value).then(node => {
 					nodes.push(node);
 				});
 			});
@@ -310,7 +310,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 		if (this.aliases) {
 			const aliasKeys = this.aliases.getKeys();
-			if (aliasKeys[flag.key]) {
+			if (aliasKeys && aliasKeys[flag.key]) {
 				const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
 					const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' });
 					aliasNode.command = {

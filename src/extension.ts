@@ -55,13 +55,15 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	});
 	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}`;
 	// Check to see if coderefs is already installed. Need more logic if specific config path is set.
-	access(codeRefsVersionDir, constants.F_OK, err => {
-		if (err) {
-			const CodeRefs = new CodeRefsDownloader(ctx, codeRefsVersionDir);
-			CodeRefs.download();
-			return;
-		}
-	});
+	if (config.enableAliases) {
+		access(codeRefsVersionDir, constants.F_OK, err => {
+			if (err) {
+				const CodeRefs = new CodeRefsDownloader(ctx, codeRefsVersionDir);
+				CodeRefs.download();
+				return;
+			}
+		});
+	}
 
 	registerProviders(ctx, config, flagStore, api);
 }
