@@ -3,13 +3,20 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as providers from '../src/providers';
-import { FeatureFlag, FlagConfiguration } from '../src/models';
+import { FeatureFlag, FlagConfiguration, Variation } from '../src/models';
+
+const trueVariation = new Variation
+trueVariation.value = true
+
+const falseVariation = new Variation
+falseVariation.value = false
 
 const flag = new FeatureFlag ({
 	name: "Test",
 	key: "test",
 	tags: [],
 	environments: null,
+	variations: [trueVariation, falseVariation]
 });
 
 const flagConfig: FlagConfiguration = {
