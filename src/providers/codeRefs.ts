@@ -111,15 +111,15 @@ export class FlagAliases {
 	}
 
 	async generateAndReadAliases(directory = workspace.workspaceFolders[0]): Promise<void> {
-		const refsDir = directory.uri.toString().split(':', 2);
-		if (refsDir[0] !== 'file') {
+		const refsDir = directory.uri.fsPath
+		if (refsDir === "") {
 			return;
 		}
 		const tmpDir = await fs.mkdtemp(join(tmpdir(), 'ld-'));
 		const tmpRepo = 'tmpRepo';
 		this.statusBar.text = `LaunchDarkly: Generating aliases`;
 		this.statusBar.show();
-		await this.generateCsv(refsDir[1], tmpDir, tmpRepo);
+		await this.generateCsv(refsDir, tmpDir, tmpRepo);
 		const aliasFile = join(tmpDir, `coderefs_${this.config.project}_${tmpRepo}_scan.csv`);
 		createReadStream(aliasFile)
 			.pipe(csv())

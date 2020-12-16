@@ -244,6 +244,8 @@ export class FlagStore {
 					errMsg = `Project does not exist`;
 				} else if (err.statusCode == 401) {
 					errMsg = `Unauthorized`;
+				} else {
+					errMsg = err.message;
 				}
 				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 			}

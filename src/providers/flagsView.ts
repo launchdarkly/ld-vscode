@@ -119,12 +119,19 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.registerTreeviewRefreshCommand(),
 			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
 				let aliases;
+				let findAliases: string
 				if (this.aliases) {
 					aliases = this.aliases.getKeys();
 				}
-				aliases = aliases ? [...aliases] + node.flagKey : node.flagKey;
+				if (aliases[node.flagKey]) {
+					const tempSearch = [...aliases[node.flagKey]]
+					tempSearch.push(node.flagKey)
+					findAliases = tempSearch.join('|')
+				} else {
+					findAliases = node.flagKey
+				}
 				vscode.commands.executeCommand('workbench.action.findInFiles', {
-					query: aliases[node.flagKey].join('|'),
+					query: findAliases,
 					triggerSearch: true,
 					matchWholeWord: true,
 					isCaseSensitive: true,
@@ -310,7 +317,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 		if (this.aliases) {
 			const aliasKeys = this.aliases.getKeys();
-			if (aliasKeys && aliasKeys[flag.key]) {
+			if (aliasKeys && aliasKeys[flag.key].length > 0) {
 				const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
 					const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' });
 					aliasNode.command = {
