@@ -38,7 +38,7 @@ const testPath = path.join(__dirname, '..', '..', 'test');
 suite('provider utils tests', () => {
 	test('generateHoverString', () => {
 		assert.equal(
-			"**LaunchDarkly feature flag** • Test    [$(link-external)](http://app.launchdarkly.com/example)\n\n\n\n• prerequisites 1\n\n**Variations**\n\n1   ◆ Fallthrough Variation ◆ Return Value: `true`\n\n\n\n\n\n\n\n2  ◆ Off Variation  ◆ Return Value: `false`",
+			"**LaunchDarkly feature flag** • Test    [$(link-external)](http://app.launchdarkly.com/example)\n\n\n\n• prerequisites 1\n\n**Variations**\n\n1   ◆ Fallthrough Variation ◆ Return Value: `true`\n\n\n\n\n\n\n\n\n2  ◆ Off Variation  ◆ Return Value: `false`\n\n\n\n\n",
 			providers.generateHoverString(flag, flagConfig, "http://app.launchdarkly.com/example").value,
 		);
 	});
