@@ -3,7 +3,6 @@ import { ExtensionContext } from 'vscode';
 import { mkdirSync, createWriteStream, existsSync, unlinkSync, createReadStream } from 'fs';
 import * as rp from 'request-promise-native';
 import { CodeRefs } from './codeRefsVersion';
-//import * as tar from 'tar';
 import * as rr from 'rimraf';
 import * as tar from 'tar-fs';
 const gunzip = require('gunzip-maybe');
@@ -64,9 +63,9 @@ export class CodeRefsDownloader {
 			createReadStream(codeRefsPath)
 				.pipe(gunzip())
 				.pipe(tar.extract(this.downloadDir));
+			unlinkSync(codeRefsPath);
 		} catch (err) {
 			console.log(err);
 		}
-		unlinkSync(codeRefsPath);
 	}
 }

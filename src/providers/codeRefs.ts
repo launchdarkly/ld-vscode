@@ -82,20 +82,20 @@ export class FlagAliases {
 			constants.F_OK,
 			err => {
 				if (err) {
-					return this.config.codeRefsPath ? this.config.codeRefsPath : "" ;
+					return this.config.codeRefsPath ? this.config.codeRefsPath : '';
 				}
-			}
-		)
+			},
+		);
 		let codeRefsBin = `${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`;
 		if (process.platform == 'win32') {
 			codeRefsBin = `${codeRefsBin}.exe`;
 		}
-		return codeRefsBin
+		return codeRefsBin;
 	}
 
 	async generateCsv(directory: string, outDir: string, repoName: string): Promise<void> {
 		try {
-			const codeRefsBin = await this.getCodeRefsBin()
+			const codeRefsBin = await this.getCodeRefsBin();
 			const command = `${codeRefsBin} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${this.config.project}" --repoName="${repoName}" --baseUri="${this.config.baseUri}" --contextLines=-1 --branch=scan --revision=0`;
 			const output = await this.exec(command, {
 				env: { LD_ACCESS_TOKEN: this.config.accessToken, GOMAXPROCS: 1 },
@@ -111,8 +111,8 @@ export class FlagAliases {
 	}
 
 	async generateAndReadAliases(directory = workspace.workspaceFolders[0]): Promise<void> {
-		const refsDir = directory.uri.fsPath
-		if (refsDir === "") {
+		const refsDir = directory.uri.fsPath;
+		if (refsDir === '') {
 			return;
 		}
 		const tmpDir = await fs.mkdtemp(join(tmpdir(), 'ld-'));
@@ -149,9 +149,9 @@ export class FlagAliases {
 
 	async codeRefsVersionCheck(): Promise<boolean> {
 		try {
-			const codeRefsBin = await this.getCodeRefsBin()
+			const codeRefsBin = await this.getCodeRefsBin();
 			if (!codeRefsBin) {
-				return false
+				return false;
 			}
 			const command = `${codeRefsBin} --version`;
 			const output = await this.exec(command, {});

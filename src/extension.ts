@@ -8,7 +8,6 @@ import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
 import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
 import { CodeRefs } from './coderefs/codeRefsVersion';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 
 let config: Configuration;
 let flagStore: FlagStore;
