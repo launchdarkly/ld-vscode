@@ -3,6 +3,7 @@ import { FeatureFlag, FlagConfiguration, PatchComment, PatchOperation } from '..
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
+import { generateHoverString } from '../providers';
 import * as path from 'path';
 import { debounce, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
@@ -268,17 +269,13 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			envConfig = env.config;
 		}
 
-		const flagUri = this.config.baseUri + flag.environments[this.config.env]._site.href;
 		const item = new FlagParentNode(
 			this.ctx,
 			flag.name,
-			flag.description,
-			flagUri,
+			generateHoverString(flag, envConfig, this.config),
+			this.config.baseUri,
 			COLLAPSED,
-			[
-				// this.flagFactory({ label: `Open in Browser`, ctxValue: 'flagViewBrowser', uri: flagUri }),
-				// this.flagFactory({ label: `Key: ${flag.key}`, ctxValue: 'flagViewKey' }),
-			],
+			[],
 			flag.key,
 			flag._version,
 			envConfig.on,
@@ -289,18 +286,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * User friendly name for building nested children under parent FlagNode
 		 */
 		const renderedFlagFields = item.children;
-
-		/**
-		 * Check flag description
-		 */
-		// if (flag.description) {
-		// 	renderedFlagFields.push(
-		// 		this.flagFactory({
-		// 			label: `Description: ${flag.description ? flag.description : ''}`,
-		// 			ctxValue: 'description',
-		// 		}),
-		// 	);
-		// }
 
 		/**
 		 * Build list of tags under "Tags" label
@@ -619,7 +604,7 @@ export class FlagParentNode extends vscode.TreeItem {
 	constructor(
 		ctx: vscode.ExtensionContext,
 		public readonly label: string,
-		public readonly tooltip: string,
+		public readonly tooltip: string | vscode.MarkdownString,
 		uri: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		children?: FlagNode[],
