@@ -317,7 +317,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 		if (this.aliases) {
 			const aliasKeys = this.aliases.getKeys();
-			if (aliasKeys && aliasKeys[flag.key].length > 0) {
+			if (aliasKeys && aliasKeys[flag.key] !== undefined && aliasKeys[flag.key].length > 0) {
 				const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
 					const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' });
 					aliasNode.command = {

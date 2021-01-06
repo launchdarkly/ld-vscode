@@ -162,16 +162,14 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-				let foundAlias;
 				let aliases;
 				let aliasArr;
-				if (this.aliases) {
+				let foundAlias = []
+				if (typeof this.aliases !== undefined) {
 					aliases = this.aliases.getMap();
-					const aliasKeys = Object.keys(aliases);
+					const aliasKeys = Object.keys(aliases) !== undefined ? Object.keys(aliases) : [];
 					aliasArr = [...aliasKeys].filter(element => element !== '');
 					foundAlias = aliasArr.filter(element => candidate.includes(element));
-				} else {
-					foundAlias = {};
 				}
 				try {
 					const data =
