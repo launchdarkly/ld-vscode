@@ -163,19 +163,18 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let aliases;
-				let aliasArr;
 				let foundAlias = []
 				if (typeof this.aliases !== undefined) {
 					aliases = this.aliases.getMap();
 					const aliasKeys = Object.keys(aliases) !== undefined ? Object.keys(aliases) : [];
-					aliasArr = [...aliasKeys].filter(element => element !== '');
+					const aliasArr = [...aliasKeys].filter(element => element !== '');
 					foundAlias = aliasArr.filter(element => candidate.includes(element));
 				}
 				try {
 					const data =
 						(await this.flagStore.getFeatureFlag(candidate)) ||
 						(await this.flagStore.getFeatureFlag(kebabCase(candidate))) ||
-						(await this.flagStore.getFeatureFlag(aliases[foundAlias[0]]));
+						(await this.flagStore.getFeatureFlag(aliases[foundAlias[0]])); // We only match on first alias
 					if (data) {
 						commands.executeCommand('setContext', 'LDFlagToggle', data.flag.key);
 						this.ctx.workspaceState.update('LDFlagKey', data.flag.key);
