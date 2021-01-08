@@ -212,6 +212,10 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 			return new Promise(async resolve => {
 				if (this.config.enableAutocomplete) {
 					const flags = await this.flagStore.allFlags();
+					let aliases;
+					if (this.aliases) {
+						aliases = this.aliases;
+					}
 					resolve(
 						Object.keys(flags).map(flag => {
 							return new CompletionItem(flag, CompletionItemKind.Field);

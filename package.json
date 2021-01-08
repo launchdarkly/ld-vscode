@@ -126,15 +126,15 @@
 			},
 			{
 				"command": "launchdarkly.toggleFlag",
-				"title": "Toggle feature flag"
+				"title": "Toggle Flag"
 			},
 			{
 				"command": "launchdarkly.fallthroughChange",
-				"title": "Change fallthrough variation"
+				"title": "Change Fallthrough Variation"
 			},
 			{
 				"command": "launchdarkly.offChange",
-				"title": "Change off variation"
+				"title": "Change Off Variation"
 			},
 			{
 				"command": "launchdarkly.treeviewrefresh",
@@ -151,6 +151,14 @@
 			{
 				"command": "launchdarkly.flagMultipleSearch",
 				"title": "Find all flag aliases",
+				"icon": {
+					"light": "resources/light/flagMultipleSearch.svg",
+					"dark": "resources/dark/flagMultipleSearch.svg"
+				}
+			},
+			{
+				"command": "launchdarkly.flagMultipleSearch",
+				"title": "Find all Flag Aliases",
 				"icon": {
 					"light": "resources/light/flagMultipleSearch.svg",
 					"dark": "resources/dark/flagMultipleSearch.svg"

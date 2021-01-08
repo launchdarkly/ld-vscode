@@ -52,6 +52,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		async () => {
 			try {
 				await this.getFlags();
+				await this.flagReadyListener();
 				await this.flagUpdateListener();
 				this.refresh();
 			} catch (err) {
@@ -188,6 +189,17 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}
 		}
 	}
+
+	private async flagReadyListener() {
+		this.flagStore.storeReady.event(async () => {
+			try {
+				this.flagUpdateListener()
+			} catch (err) {
+				console.error('Failed to update LaunchDarkly flag tree view:', err);
+			}
+		});
+	}
+
 
 	private async flagUpdateListener() {
 		// Setup listener for flag changes

@@ -12,10 +12,6 @@ let flagStore: FlagStore;
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	config = new Configuration(ctx);
-	// const workspaceRoot = workspace.rootPath;
-	// if (!workspaceRoot) {
-	// 	return;
-	// }
 	const validationError = config.validate();
 	switch (validationError) {
 		case 'unconfigured':

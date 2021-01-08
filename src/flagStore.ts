@@ -19,6 +19,9 @@ export class FlagStore {
 	private readonly store: LaunchDarkly.LDFeatureStore;
 	private flagMetadata: Dictionary<FeatureFlag>;
 	public readonly storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
+	// We fire a storeReady event because this will always exist compared to 'ready' listener on LDClient
+	// which may be reinitialized
+	public readonly storeReady: EventEmitter<boolean | null> = new EventEmitter();
 	private readonly api: LaunchDarklyAPI;
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
@@ -26,6 +29,8 @@ export class FlagStore {
 		this.resolveLDClient = resolve;
 		this.rejectLDClient = reject;
 	});
+	private offlineTimer: NodeJS.Timer
+	private offlineTimerSet = false
 
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
@@ -66,6 +71,7 @@ export class FlagStore {
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
+			this.storeReady.fire(true)
 			if (this.config.refreshRate) {
 				if (this.config.validateRefreshInterval(this.config.refreshRate)) {
 					this.startGlobalFlagUpdateTask(this.config.refreshRate);
@@ -90,6 +96,25 @@ export class FlagStore {
 					});
 				});
 			});
+			window.onDidChangeWindowState(async e => {
+				const ldClient = await this.ldClient;
+				if (e.focused) {
+					if (typeof this.offlineTimer !== 'undefined') {
+						clearTimeout(this.offlineTimer)
+						this.offlineTimerSet = false
+					}
+					if (this.offlineTimer) {
+						await this.reload()
+						this.offlineTimerSet = false
+					}
+				} else {
+					if (typeof this.offlineTimer === 'undefined') {
+						this.offlineTimer = setTimeout(async() => {
+							this.offlineTimerSet = true
+							await ldClient.close()
+						}, 600000)
+					}
+				}})
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);

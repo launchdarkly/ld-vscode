@@ -84,7 +84,7 @@ export class LaunchDarklyAPI {
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
 			headers: {
 				Authorization: this.config.accessToken,
-				UserAgent: 'VSCodeExtension/' + PACKAGE_JSON.version,
+				'User-Agent': 'VSCodeExtension/' + PACKAGE_JSON.version,
 			},
 		};
 
