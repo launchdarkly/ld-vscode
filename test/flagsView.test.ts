@@ -47,7 +47,7 @@ suite('flagNode tests', () => {
 });
 
 suite('flagParentNode tests', () => {
-	const flagValue = new flagsView.FlagParentNode(null, flag.name, vscode.TreeItemCollapsibleState.None, [], "testContext")
+	const flagValue = new flagsView.FlagParentNode(null, flag.name, flag.description, null, vscode.TreeItemCollapsibleState.None, [], "testContext")
 	test('testFlagValue label', () => {
 		assert.equal(
 			flagValue.label,

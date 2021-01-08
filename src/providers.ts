@@ -27,8 +27,7 @@ import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
 import { FlagCodeLensProvider } from './providers/flagLens';
 
-
-const STRING_DELIMETERS = ['"', "'", '`'];
+const STRING_DELIMITERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 const LD_MODE: DocumentFilter = {
 	scheme: 'file',
@@ -181,12 +180,9 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 						(await this.flagStore.getFeatureFlag(kebabCase(candidate))) ||
 						(await this.flagStore.getFeatureFlag(aliases[foundAlias[0]]));
 					if (data) {
-						const env = data.flag.environments[this.config.env];
-						const sitePath = env._site.href;
-						const browserUrl = url.resolve(this.config.baseUri, sitePath);
 						commands.executeCommand('setContext', 'LDFlagToggle', data.flag.key);
 						this.ctx.workspaceState.update('LDFlagKey', data.flag.key);
-						const hover = generateHoverString(data.flag, data.config, browserUrl);
+						const hover = generateHoverString(data.flag, data.config, this.config);
 						resolve(new Hover(hover));
 						return;
 					}
@@ -211,7 +207,7 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 	}
 
 	public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
-		if (isPrecedingCharStringDelimeter(document, position)) {
+		if (isPrecedingCharStringDelimiter(document, position)) {
 			// eslint-disable-next-line no-async-promise-executor
 			return new Promise(async resolve => {
 				if (this.config.enableAutocomplete) {
@@ -227,7 +223,7 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 					);
 					return;
 				}
-				resolve();
+				resolve(null);
 			});
 		}
 	}
@@ -253,84 +249,78 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	opn(url.resolve(config.baseUri, sitePath));
 };
 
-export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, url?: string): MarkdownString {
-	let name = '';
-	if (flag.name) {
-		name = `\u2022 ${flag.name} `;
-	}
-	const hoverString = new MarkdownString(`**LaunchDarkly feature flag** ${name}   [$(link-external)](${url})`, true);
+function truncate(str:string, n:number): string {
+	return (str.length > n) ? str.substr(0, n-1) + '\u2026' : str;
+}
 
-	let describeStr = '';
-	if (flag.description) {
-		describeStr = describeStr + flag.description;
-	}
+export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, config: Configuration): MarkdownString {
+	const env = Object.keys(flag.environments)[0];
+	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
+	const hoverString = new MarkdownString(`$(rocket) ${config.project} / ${env} / **[${flag.key}](${flagUri} "Open in LaunchDarkly")**\n\n`, true);
+	hoverString.isTrusted = true;
+
 	hoverString.appendText('\n');
-	hoverString.appendMarkdown(describeStr);
+	hoverString.appendMarkdown(flag.description);
 	hoverString.appendText('\n');
-	let Prereqs = '';
+
 	if (c.prerequisites && c.prerequisites.length > 0) {
-		Prereqs = `\u2022 prerequisites ${c.prerequisites.length}`;
+		hoverString.appendMarkdown(`* Prerequisites: ${c.prerequisites.map((p: { key: string; variation: string | number; }) => `\`${p.key}\``).join(' ')}\n`);
 	}
-
-	let targets = ``;
-	if (c.targets && targets.length > 0) {
-		const count = c.targets.reduce((acc, curr) => acc + curr.values.length, 0);
-		targets = `\u2022 targets ${count}`;
+	if (c.targets && c.targets.length > 0) {
+		hoverString.appendMarkdown(`* Targets configured\n`);
 	}
-
-	let rules = ``;
 	if (c.rules && c.rules.length > 0) {
-		rules = `\u2022 rules ${c.rules.length}`;
+		hoverString.appendMarkdown(`* Rules configured\n`);
 	}
-	hoverString.appendMarkdown(`${Prereqs} ${targets} ${rules}`);
 	hoverString.appendText('\n');
-	hoverString.appendMarkdown('**Variations**');
-	flag.variations.map((variation, idx) => {
-		let offVar = '';
-		if (c.offVariation !== undefined && c.offVariation === idx) {
-			offVar = `\u25c6 Off Variation`;
-		}
 
-		let defVar = '';
+	let varTypeIcon;
+	const varType = flag.kind === 'multivariate'
+		? typeof flag.variations[0].value
+		: flag.kind;
+	switch (varType) {
+		case 'boolean':
+			varTypeIcon = '$(symbol-boolean)';
+			break;
+		case 'number':
+			varTypeIcon = '$(symbol-number)'
+			break;
+		case 'object':
+			varTypeIcon = '$(symbol-object)'
+			break;
+		case 'string':
+			varTypeIcon = '$(symbol-key)'
+			break;
+		default:
+			break;
+	}
+
+	hoverString.appendMarkdown(`**${varTypeIcon} Variations**`);
+	flag.variations.map((variation, idx) => {
+		const props = [];
+		if (c.offVariation !== undefined && c.offVariation === idx) {
+			props.push('`$(arrow-small-right)off`');
+		}
 		if (c.fallthrough) {
 			if (c.fallthrough.variation !== undefined && c.fallthrough.variation === idx) {
-				defVar = `\u25c6 Fallthrough Variation`;
+				props.push('`$(arrow-small-right)fallthrough`');
 			}
 		}
-
-		let varName = '';
-		if (variation.name) {
-			varName = `\u25c6 ${variation.name} `;
+		if (c.fallthrough.rollout) {
+			props.push(`\`$(arrow-small-right)rollout @ ${c.fallthrough.rollout.variations[idx].weight/1000}%\``)
 		}
 
+		const varVal = `\`${truncate(JSON.stringify(variation.value), 30).trim()}\``;
+		const varName = variation.name ? ` **${variation.name}**` : '';
+		const varDescription = variation.description ? `: ${variation.description}` : '';
 		hoverString.appendText('\n');
-		if (varName || offVar || defVar) {
-			hoverString.appendMarkdown(
-				`${idx + 1} ${varName} ${offVar} ${defVar} \u25c6 Return Value: \`${JSON.stringify(variation.value)}\``,
-			);
-		} else {
-			hoverString.appendMarkdown(`${idx + 1} \u25c6 Return Value: \`${JSON.stringify(variation.value)}\``);
-		}
-		hoverString.appendText('\n');
-
-		//let name = ''
-		if (variation.name) {
-			varName = `\u25c6 ${variation.name} `;
-		}
-		let describeStr = '';
-		if (variation.description) {
-			describeStr = describeStr + variation.description;
-		}
-		hoverString.appendMarkdown(describeStr);
-		hoverString.appendText('\n');
-		//hoverString.appendMarkdown(`Return Value: \`${JSON.stringify(variation.value)}\``);
-		hoverString.appendText('\n');
+		hoverString.appendMarkdown(`* ${varVal}${varName}${varDescription} ${props.length ? props.join(' ') : ''}`);
 	});
 
 	return hoverString;
 }
 
-export function isPrecedingCharStringDelimeter(document: TextDocument, position: Position): boolean {
+export function isPrecedingCharStringDelimiter(document: TextDocument, position: Position): boolean {
 	const range = document.getWordRangeAtPosition(position, FLAG_KEY_REGEX);
 	if (!range || !range.start || range.start.character === 0) {
 		return false;
@@ -342,7 +332,7 @@ export function isPrecedingCharStringDelimeter(document: TextDocument, position:
 		range.start.character,
 	);
 	const candidate = document.getText(c).trim();
-	return STRING_DELIMETERS.indexOf(candidate) !== -1;
+	return STRING_DELIMITERS.indexOf(candidate) !== -1;
 }
 
 const candidateTextStartLocation = (char: number) => (char === 1 ? 0 : char - 2);

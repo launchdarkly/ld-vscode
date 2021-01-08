@@ -160,8 +160,6 @@ export class FlagAliases {
 		}
 	}
 
-
-	// create statusbar
 	setupStatusBar(): void {
 		this.statusBar = window.createStatusBarItem(StatusBarAlignment.Right, 100);
 		this.ctx.subscriptions.push(this.statusBar);

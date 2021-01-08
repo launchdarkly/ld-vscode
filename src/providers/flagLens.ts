@@ -94,9 +94,11 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			const keys = Object.keys(flags);
 			let aliases: Map<string, string>;
 			let aliasArr;
-			if (typeof aliases !== "undefined") {
+			try {
 				aliases = this.aliases.getMap();
 				aliasArr = this.aliases.getListOfMapKeys();
+			} catch (err) {
+				console.log(err);
 			}
 			while ((matches = regex.exec(text)) !== null) {
 				const line = document.lineAt(document.positionAt(matches.index).line);
