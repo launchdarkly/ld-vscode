@@ -186,7 +186,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		const patchComment = new PatchComment();
 		patchComment.comment = 'Update by VSCode';
 		patchComment.patch = patch;
-		console.log(patch)
 		try {
 			await this.api.patchFeatureFlag(this.config.project, node.flagKey, patchComment);
 		} catch (err) {
