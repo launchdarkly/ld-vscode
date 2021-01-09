@@ -13,6 +13,7 @@ import {
 	Range,
 	TextDocument,
 	MarkdownString,
+	ColorThemeKind,
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
@@ -20,17 +21,22 @@ import { kebabCase } from 'lodash';
 import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
-import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
+import { FeatureFlag, FlagConfiguration, FeatureFlagConfig, Environment } from './models';
 import { FlagStore } from './flagStore';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
 import { FlagCodeLensProvider } from './providers/flagLens';
+import * as path from 'path';
+import * as fs from 'fs';
+import { downloadAndUnzipVSCode } from 'vscode-test';
+
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
+const FLAG_STATUS_CACHE = new Map<string, string>()
 
 export async function register(
 	ctx: ExtensionContext,
@@ -178,7 +184,7 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 					if (data) {
 						commands.executeCommand('setContext', 'LDFlagToggle', data.flag.key);
 						this.ctx.workspaceState.update('LDFlagKey', data.flag.key);
-						const hover = generateHoverString(data.flag, data.config, this.config);
+						const hover = generateHoverString(data.flag, data.config, this.config, this.ctx);
 						resolve(new Hover(hover));
 						return;
 					}
@@ -249,14 +255,15 @@ function truncate(str:string, n:number): string {
 	return (str.length > n) ? str.substr(0, n-1) + '\u2026' : str;
 }
 
-export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, config: Configuration): MarkdownString {
+export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, config: Configuration, ctx: ExtensionContext): MarkdownString {
 	const env = Object.keys(flag.environments)[0];
 	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(`$(rocket) ${config.project} / ${env} / **[${flag.key}](${flagUri} "Open in LaunchDarkly")**\n\n`, true);
 	hoverString.isTrusted = true;
 
 	hoverString.appendText('\n');
-	hoverString.appendMarkdown(flag.description);
+	//hoverString.appendMarkdown(flag.description);
+	hoverString.appendMarkdown(`![](${getFlagStatusUri(ctx, c.on)}) ${flag.description}`);
 	hoverString.appendText('\n');
 
 	if (c.prerequisites && c.prerequisites.length > 0) {
@@ -314,6 +321,22 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, con
 	});
 
 	return hoverString;
+}
+
+export function getFlagStatusUri(ctx: ExtensionContext, status: boolean) {
+	const fileName = status ? "toggleon" : "toggleoff"
+	const theme: ColorThemeKind = window.activeColorTheme.kind
+	let dataUri = FLAG_STATUS_CACHE.get(ColorThemeKind[theme]);
+	if (dataUri == null && ctx !== undefined) {
+		const contents = fs
+			.readFileSync(ctx.asAbsolutePath(`resources/${ColorThemeKind[theme]}/${fileName}.svg`))
+			.toString('base64');
+
+		dataUri = encodeURI(`data:image/svg+xml;base64,${contents}`);
+		FLAG_STATUS_CACHE.set(ColorThemeKind[theme], dataUri)
+	}
+
+	return dataUri;
 }
 
 export function isPrecedingCharStringDelimiter(document: TextDocument, position: Position): boolean {
