@@ -323,17 +323,17 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, con
 	return hoverString;
 }
 
-export function getFlagStatusUri(ctx: ExtensionContext, status: boolean) {
+function getFlagStatusUri(ctx: ExtensionContext, status: boolean) {
 	const fileName = status ? "toggleon" : "toggleoff"
 	const theme: ColorThemeKind = window.activeColorTheme.kind
-	let dataUri = FLAG_STATUS_CACHE.get(ColorThemeKind[theme]);
+	let dataUri = FLAG_STATUS_CACHE.get(`${ColorThemeKind[theme]}-${fileName}`);
 	if (dataUri == null && ctx !== undefined) {
 		const contents = fs
 			.readFileSync(ctx.asAbsolutePath(`resources/${ColorThemeKind[theme]}/${fileName}.svg`))
 			.toString('base64');
 
 		dataUri = encodeURI(`data:image/svg+xml;base64,${contents}`);
-		FLAG_STATUS_CACHE.set(ColorThemeKind[theme], dataUri)
+		FLAG_STATUS_CACHE.set(`${ColorThemeKind[theme]}-${fileName}`, dataUri)
 	}
 
 	return dataUri;
