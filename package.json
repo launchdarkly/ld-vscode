@@ -239,6 +239,14 @@
 				{
 					"command": "launchdarkly.offChange",
 					"when": "view == launchdarklyFeatureFlags && viewItem == variationOff"
+				},
+				{
+					"command": "launchdarkly.fallthroughChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem"
+				},
+				{
+					"command": "launchdarkly.offChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem"
 				}
 			]
 		},

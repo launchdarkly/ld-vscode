@@ -154,9 +154,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}),
 			vscode.commands.registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
 				try {
-					await this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
+					await this.flagPatch(node, `/environments/${this.config.env}/offVariation`, node.contextValue);
 				} catch (err) {
-					this.flagPatch(node, `/environments/${this.config.env}/offVariation`);
+					vscode.window.showErrorMessage(err.message);
 				}
 			}),
 		);
@@ -186,6 +186,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		const patchComment = new PatchComment();
 		patchComment.comment = 'Update by VSCode';
 		patchComment.patch = patch;
+		console.log(patch)
 		try {
 			await this.api.patchFeatureFlag(this.config.project, node.flagKey, patchComment);
 		} catch (err) {
@@ -291,8 +292,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		const item = new FlagParentNode(
 			this.ctx,
 			flag.name,
-			generateHoverString(flag, envConfig, this.config),
-			this.config.baseUri,
+			generateHoverString(flag, envConfig, this.config, this.ctx),
+			`${this.config.baseUri}/${this.config.project}/${this.config.env}/features/${flag.key}`,
 			COLLAPSED,
 			[],
 			flag.key,
