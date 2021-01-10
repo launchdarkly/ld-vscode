@@ -5,6 +5,7 @@ import { FeatureFlag, FlagConfiguration } from '../models';
 import { FlagStore } from '../flagStore';
 import { FlagAliases } from './codeRefs';
 
+const MAX_CODELENS_VALUE = 20
 /**
  * CodelensProvider
  */
@@ -72,9 +73,9 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	getNameorValue(flag: FeatureFlag, variation: number) {
 		let flagVal;
 		if (typeof flag.variations[variation].value === 'object') {
-			flagVal = JSON.stringify(flag.variations[variation].value);
+			flagVal = JSON.stringify(flag.variations[variation].value).substring(0,MAX_CODELENS_VALUE);
 		} else {
-			flagVal = flag.variations[variation].value;
+			flagVal = typeof flag.variations[variation].value === 'string' ?  flag.variations[variation].value.substring(0,MAX_CODELENS_VALUE) : flag.variations[variation].value;
 		}
 		return JSON.stringify(flag.variations[variation].name) ? flag.variations[variation].name : flagVal;
 	}
