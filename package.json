@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly Beta",
 	"description": "View LaunchDarkly feature flags in your editor.",
-	"version": "3.0.0-beta",
+	"version": "3.0.0-beta.0",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.52.0"
