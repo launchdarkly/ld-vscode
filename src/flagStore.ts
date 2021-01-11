@@ -29,8 +29,8 @@ export class FlagStore {
 		this.resolveLDClient = resolve;
 		this.rejectLDClient = reject;
 	});
-	private offlineTimer: NodeJS.Timer
-	private offlineTimerSet = false
+	private offlineTimer: NodeJS.Timer;
+	private offlineTimerSet = false;
 
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
@@ -71,7 +71,7 @@ export class FlagStore {
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
-			this.storeReady.fire(true)
+			this.storeReady.fire(true);
 			if (this.config.refreshRate) {
 				if (this.config.validateRefreshInterval(this.config.refreshRate)) {
 					this.startGlobalFlagUpdateTask(this.config.refreshRate);
@@ -100,21 +100,22 @@ export class FlagStore {
 				const ldClient = await this.ldClient;
 				if (e.focused) {
 					if (typeof this.offlineTimer !== 'undefined') {
-						clearTimeout(this.offlineTimer)
-						this.offlineTimerSet = false
+						clearTimeout(this.offlineTimer);
+						this.offlineTimerSet = false;
 					}
 					if (this.offlineTimer) {
-						await this.reload()
-						this.offlineTimerSet = false
+						await this.reload();
+						this.offlineTimerSet = false;
 					}
 				} else {
 					if (typeof this.offlineTimer === 'undefined') {
-						this.offlineTimer = setTimeout(async() => {
-							this.offlineTimerSet = true
-							await ldClient.close()
-						}, 600000)
+						this.offlineTimer = setTimeout(async () => {
+							this.offlineTimerSet = true;
+							await ldClient.close();
+						}, 600000);
 					}
-				}})
+				}
+			});
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
