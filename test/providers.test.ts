@@ -4,12 +4,28 @@ import * as vscode from 'vscode';
 
 import * as providers from '../src/providers';
 import { FeatureFlag, FlagConfiguration } from '../src/models';
+import { Configuration } from '../src/configuration';
 
 const flag = new FeatureFlag ({
 	name: "Test",
 	key: "test",
+	description: 'First flag',
 	tags: [],
-	environments: null,
+	environments: {
+		test: {
+			'_site': {
+				href: 'https://example.com'
+			}
+		},
+	},
+	kind: 'boolean',
+	variations: [
+		{
+			value: 1,
+			name: 'one',
+			description: 'first flag'
+		}
+	]
 });
 
 const flagConfig: FlagConfiguration = {
@@ -20,19 +36,33 @@ const flagConfig: FlagConfiguration = {
 		variation: 0,
 	},
 	offVariation: 1,
-	prerequisites: ['something'],
+	prerequisites: [{ key: 'something'}],
 	targets: [{ values: ['user', 'anotheruser'] }, { values: ['someotheruser'] }],
 	rules: [],
 	version: 1,
 };
 
+class MockConfiguration extends Configuration {
+	baseUri = 'https://example.com';
+	project = 'abc';
+	constructor() {
+		super(null)
+	}
+
+	reload():void {
+		console.log('calling overridden reload()');
+	}
+}
+const mockConfig = new MockConfiguration()
+
 const testPath = path.join(__dirname, '..', '..', 'test');
 
 suite('provider utils tests', () => {
 	test('generateHoverString', () => {
-		assert.equal(
-			"**LaunchDarkly feature flag**\n\nName: \n```\nTest\n```\n\n\nKey: \n```\ntest\n```\n\n\nEnabled: \n```\ntrue\n```\n\n\nDefault variation: \n```\n\"SomeVariation\"\n```\n\n\nOff variation: \n```\n{\n  \"thisIsJson\": \"AnotherVariation\"\n}\n```\n\n\n1 prerequisite\n\n3 user targets\n\n0 rules\n\n[Open in browser](http://app.launchdarkly.com/example)",
-			providers.generateHoverString(flag, flagConfig, "http://app.launchdarkly.com/example").value,
+		const hoverStr = providers.generateHoverString(flag, flagConfig, mockConfig).value;
+		assert.strictEqual(
+			"$(rocket) abc / test / **[test](https://example.com/ \"Open in LaunchDarkly\")**\n\n\n\nFirst flag\n\n* Prerequisites: `something`\n* Targets configured\n\n\n**$(symbol-boolean) Variations**\n\n* `1` **one**: first flag `$(arrow-small-right)fallthrough`",
+			hoverStr
 		);
 	});
 
@@ -81,7 +111,7 @@ suite('provider utils tests', () => {
 		const document = await vscode.workspace.openTextDocument(uri);
 		tests.forEach(t => {
 			const pos = new vscode.Position(t.line, t.char);
-			assert.equal(providers.isPrecedingCharStringDelimeter(document, pos), t.expected, t.name);
+			assert.equal(providers.isPrecedingCharStringDelimiter(document, pos), t.expected, t.name);
 		});
 	});
 });
