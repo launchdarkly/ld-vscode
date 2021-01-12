@@ -13,25 +13,30 @@ import {
 	Range,
 	TextDocument,
 	MarkdownString,
+	ColorThemeKind,
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
 import { kebabCase } from 'lodash';
-
 import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
-import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
+import { FeatureFlag, FlagConfiguration, FeatureFlagConfig, Environment } from './models';
 import { FlagStore } from './flagStore';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
 import { FlagCodeLensProvider } from './providers/flagLens';
+import * as path from 'path';
+import * as fs from 'fs';
+import { downloadAndUnzipVSCode } from 'vscode-test';
 
-const STRING_DELIMITERS = ['"', "'", '`'];
+
+const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
+const FLAG_STATUS_CACHE = new Map<string, string>()
 
 export async function register(
 	ctx: ExtensionContext,
@@ -42,7 +47,7 @@ export async function register(
 	let aliases;
 
 	if (typeof flagStore !== 'undefined') {
-		if (config.enableAliases && config.codeRefsPath !== '') {
+		if (config.enableAliases) {
 			aliases = new FlagAliases(config, ctx);
 			if (aliases.codeRefsVersionCheck()) {
 				aliases.setupStatusBar();
@@ -163,26 +168,23 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 		return new Promise(async (resolve, reject) => {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
-				let foundAlias;
 				let aliases;
-				let aliasArr;
-				if (this.aliases) {
+				let foundAlias = []
+				if (typeof this.aliases !== undefined) {
 					aliases = this.aliases.getMap();
-					const aliasKeys = Object.keys(aliases);
-					aliasArr = [...aliasKeys].filter(element => element !== '');
+					const aliasKeys = Object.keys(aliases) !== undefined ? Object.keys(aliases) : [];
+					const aliasArr = [...aliasKeys].filter(element => element !== '');
 					foundAlias = aliasArr.filter(element => candidate.includes(element));
-				} else {
-					foundAlias = {};
 				}
 				try {
 					const data =
 						(await this.flagStore.getFeatureFlag(candidate)) ||
 						(await this.flagStore.getFeatureFlag(kebabCase(candidate))) ||
-						(await this.flagStore.getFeatureFlag(aliases[foundAlias[0]]));
+						(await this.flagStore.getFeatureFlag(aliases[foundAlias[0]])); // We only match on first alias
 					if (data) {
 						commands.executeCommand('setContext', 'LDFlagToggle', data.flag.key);
 						this.ctx.workspaceState.update('LDFlagKey', data.flag.key);
-						const hover = generateHoverString(data.flag, data.config, this.config);
+						const hover = generateHoverString(data.flag, data.config, this.config, this.ctx);
 						resolve(new Hover(hover));
 						return;
 					}
@@ -253,7 +255,7 @@ function truncate(str: string, n: number): string {
 	return str.length > n ? str.substr(0, n - 1) + '\u2026' : str;
 }
 
-export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, config: Configuration): MarkdownString {
+export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, config: Configuration, ctx: ExtensionContext): MarkdownString {
 	const env = Object.keys(flag.environments)[0];
 	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(
@@ -263,7 +265,8 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, con
 	hoverString.isTrusted = true;
 
 	hoverString.appendText('\n');
-	hoverString.appendMarkdown(flag.description);
+	//hoverString.appendMarkdown(flag.description);
+	hoverString.appendMarkdown(`![](${getFlagStatusUri(ctx, c.on)}) ${flag.description}`);
 	hoverString.appendText('\n');
 
 	if (c.prerequisites && c.prerequisites.length > 0) {
@@ -325,6 +328,22 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, con
 	return hoverString;
 }
 
+function getFlagStatusUri(ctx: ExtensionContext, status: boolean) {
+	const fileName = status ? "toggleon" : "toggleoff"
+	const theme: ColorThemeKind = window.activeColorTheme.kind
+	let dataUri = FLAG_STATUS_CACHE.get(`${ColorThemeKind[theme]}-${fileName}`);
+	if (dataUri == null && ctx !== undefined) {
+		const contents = fs
+			.readFileSync(ctx.asAbsolutePath(`resources/${ColorThemeKind[theme]}/${fileName}.svg`))
+			.toString('base64');
+
+		dataUri = encodeURI(`data:image/svg+xml;base64,${contents}`);
+		FLAG_STATUS_CACHE.set(`${ColorThemeKind[theme]}-${fileName}`, dataUri)
+	}
+
+	return dataUri;
+}
+
 export function isPrecedingCharStringDelimiter(document: TextDocument, position: Position): boolean {
 	const range = document.getWordRangeAtPosition(position, FLAG_KEY_REGEX);
 	if (!range || !range.start || range.start.character === 0) {
@@ -337,7 +356,7 @@ export function isPrecedingCharStringDelimiter(document: TextDocument, position:
 		range.start.character,
 	);
 	const candidate = document.getText(c).trim();
-	return STRING_DELIMITERS.indexOf(candidate) !== -1;
+	return STRING_DELIMETERS.indexOf(candidate) !== -1;
 }
 
 const candidateTextStartLocation = (char: number) => (char === 1 ? 0 : char - 2);

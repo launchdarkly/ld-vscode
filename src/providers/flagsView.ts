@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { FeatureFlag, FlagConfiguration, PatchComment, PatchOperation } from '../models';
+import { FeatureFlag, FlagConfiguration, PatchComment } from '../models';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
@@ -119,12 +119,19 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.registerTreeviewRefreshCommand(),
 			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
 				let aliases;
+				let findAliases: string;
 				if (this.aliases) {
 					aliases = this.aliases.getKeys();
 				}
-				aliases = aliases ? [...aliases] + node.flagKey : node.flagKey;
+				if (aliases[node.flagKey]) {
+					const tempSearch = [...aliases[node.flagKey]];
+					tempSearch.push(node.flagKey);
+					findAliases = tempSearch.join('|');
+				} else {
+					findAliases = node.flagKey;
+				}
 				vscode.commands.executeCommand('workbench.action.findInFiles', {
-					query: aliases[node.flagKey].join('|'),
+					query: findAliases,
 					triggerSearch: true,
 					matchWholeWord: true,
 					isCaseSensitive: true,
@@ -147,9 +154,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}),
 			vscode.commands.registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
 				try {
-					await this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
+					await this.flagPatch(node, `/environments/${this.config.env}/offVariation`, node.contextValue);
 				} catch (err) {
-					this.flagPatch(node, `/environments/${this.config.env}/offVariation`);
+					vscode.window.showErrorMessage(err.message);
 				}
 			}),
 		);
@@ -283,8 +290,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		const item = new FlagParentNode(
 			this.ctx,
 			flag.name,
-			generateHoverString(flag, envConfig, this.config),
-			this.config.baseUri,
+			generateHoverString(flag, envConfig, this.config, this.ctx),
+			`${this.config.baseUri}/${this.config.project}/${this.config.env}/features/${flag.key}`,
 			COLLAPSED,
 			[],
 			flag.key,
@@ -309,7 +316,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 		if (this.aliases) {
 			const aliasKeys = this.aliases.getKeys();
-			if (aliasKeys[flag.key]) {
+			if (aliasKeys && aliasKeys[flag.key] !== undefined && aliasKeys[flag.key].length > 0) {
 				const aliases: Array<FlagNode> = aliasKeys[flag.key].map(alias => {
 					const aliasNode = this.flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' });
 					aliasNode.command = {
@@ -574,7 +581,7 @@ export class FlagNode extends vscode.TreeItem {
 		this.command = command;
 	}
 
-	conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean) {
+	conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean): void {
 		/**
 		 * Special handling for open browser. Called in package.json
 		 */

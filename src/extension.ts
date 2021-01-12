@@ -1,11 +1,13 @@
 'use strict';
 
 import { commands, window, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
-
+import { access, constants } from 'fs';
 import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
+import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
+import { CodeRefs } from './coderefs/codeRefsVersion';
 
 let config: Configuration;
 let flagStore: FlagStore;
@@ -50,6 +52,17 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 			await flagStore.reload(e);
 		}
 	});
+	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}`;
+	// Check to see if coderefs is already installed. Need more logic if specific config path is set.
+	if (config.enableAliases) {
+		access(codeRefsVersionDir, constants.F_OK, err => {
+			if (err) {
+				const CodeRefs = new CodeRefsDownloader(ctx, codeRefsVersionDir);
+				CodeRefs.download();
+				return;
+			}
+		});
+	}
 
 	registerProviders(ctx, config, flagStore, api);
 }
