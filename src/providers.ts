@@ -251,14 +251,17 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 	opn(url.resolve(config.baseUri, sitePath));
 };
 
-function truncate(str:string, n:number): string {
-	return (str.length > n) ? str.substr(0, n-1) + '\u2026' : str;
+function truncate(str: string, n: number): string {
+	return str.length > n ? str.substr(0, n - 1) + '\u2026' : str;
 }
 
 export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, config: Configuration, ctx: ExtensionContext): MarkdownString {
 	const env = Object.keys(flag.environments)[0];
 	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
-	const hoverString = new MarkdownString(`$(rocket) ${config.project} / ${env} / **[${flag.key}](${flagUri} "Open in LaunchDarkly")**\n\n`, true);
+	const hoverString = new MarkdownString(
+		`$(rocket) ${config.project} / ${env} / **[${flag.key}](${flagUri} "Open in LaunchDarkly")**\n\n`,
+		true,
+	);
 	hoverString.isTrusted = true;
 
 	hoverString.appendText('\n');
@@ -267,7 +270,11 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, con
 	hoverString.appendText('\n');
 
 	if (c.prerequisites && c.prerequisites.length > 0) {
-		hoverString.appendMarkdown(`* Prerequisites: ${c.prerequisites.map((p: { key: string; variation: string | number; }) => `\`${p.key}\``).join(' ')}\n`);
+		hoverString.appendMarkdown(
+			`* Prerequisites: ${c.prerequisites
+				.map((p: { key: string; variation: string | number }) => `\`${p.key}\``)
+				.join(' ')}\n`,
+		);
 	}
 	if (c.targets && c.targets.length > 0) {
 		hoverString.appendMarkdown(`* Targets configured\n`);
@@ -278,21 +285,19 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, con
 	hoverString.appendText('\n');
 
 	let varTypeIcon;
-	const varType = flag.kind === 'multivariate'
-		? typeof flag.variations[0].value
-		: flag.kind;
+	const varType = flag.kind === 'multivariate' ? typeof flag.variations[0].value : flag.kind;
 	switch (varType) {
 		case 'boolean':
 			varTypeIcon = '$(symbol-boolean)';
 			break;
 		case 'number':
-			varTypeIcon = '$(symbol-number)'
+			varTypeIcon = '$(symbol-number)';
 			break;
 		case 'object':
-			varTypeIcon = '$(symbol-object)'
+			varTypeIcon = '$(symbol-object)';
 			break;
 		case 'string':
-			varTypeIcon = '$(symbol-key)'
+			varTypeIcon = '$(symbol-key)';
 			break;
 		default:
 			break;
@@ -310,7 +315,7 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, con
 			}
 		}
 		if (c.fallthrough.rollout) {
-			props.push(`\`$(arrow-small-right)rollout @ ${c.fallthrough.rollout.variations[idx].weight/1000}%\``)
+			props.push(`\`$(arrow-small-right)rollout @ ${c.fallthrough.rollout.variations[idx].weight / 1000}%\``);
 		}
 
 		const varVal = `\`${truncate(JSON.stringify(variation.value), 30).trim()}\``;

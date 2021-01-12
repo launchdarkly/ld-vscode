@@ -207,7 +207,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		});
 	}
 
-
 	private async flagUpdateListener() {
 		// Setup listener for flag changes
 		this.flagStore.on('update', async (keys: string) => {
