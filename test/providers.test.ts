@@ -1,3 +1,4 @@
+import { anyString, instance, mock, when } from 'ts-mockito';
 import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -42,26 +43,22 @@ const flagConfig: FlagConfiguration = {
 	version: 1,
 };
 
-class MockConfiguration extends Configuration {
-	baseUri = 'https://example.com';
-	project = 'abc';
-	constructor() {
-		super(null)
-	}
+const mockConfig = mock(Configuration);
+when(mockConfig.baseUri).thenReturn('https://example.com');
+when(mockConfig.project).thenReturn('abc');
+const config = instance(mockConfig);
 
-	reload():void {
-		console.log('calling overridden reload()');
-	}
-}
-const mockConfig = new MockConfiguration()
+const mockCtx = mock<vscode.ExtensionContext>();
+when(mockCtx.asAbsolutePath(anyString())).thenReturn(`${process.cwd()}/resources/dark/toggleon.svg`);
+const ctx = instance(mockCtx);
 
 const testPath = path.join(__dirname, '..', '..', 'test');
 
 suite('provider utils tests', () => {
 	test('generateHoverString', () => {
-		const hoverStr = providers.generateHoverString(flag, flagConfig, mockConfig).value;
+		const hoverStr = providers.generateHoverString(flag, flagConfig, config, ctx).value;
 		assert.strictEqual(
-			"$(rocket) abc / test / **[test](https://example.com/ \"Open in LaunchDarkly\")**\n\n\n\nFirst flag\n\n* Prerequisites: `something`\n* Targets configured\n\n\n**$(symbol-boolean) Variations**\n\n* `1` **one**: first flag `$(arrow-small-right)fallthrough`",
+			"$(rocket) abc / test / **[test](https://example.com/ \"Open in LaunchDarkly\")**\n\n\n\n![](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCA0OCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGcgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwKSI+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMTIgMEM1LjM3MjU4IDAgMCA1LjM3MjU4IDAgMTJDMCAxOC42Mjc0IDUuMzcyNTggMjQgMTIgMjRIMzZDNDIuNjI3NCAyNCA0OCAxOC42Mjc0IDQ4IDEyQzQ4IDUuMzcyNTggNDIuNjI3NCAwIDM2IDBIMTJaTTM1IDIxQzM5Ljk3MDYgMjEgNDQgMTYuOTcwNiA0NCAxMkM0NCA3LjAyOTQ0IDM5Ljk3MDYgMyAzNSAzQzMwLjAyOTQgMyAyNiA3LjAyOTQ0IDI2IDEyQzI2IDE2Ljk3MDYgMzAuMDI5NCAyMSAzNSAyMVoiIGZpbGw9IiMyN0FFNjAiLz4KPC9nPgo8ZGVmcz4KPGNsaXBQYXRoIGlkPSJjbGlwMCI+CjxyZWN0IHdpZHRoPSI0OCIgaGVpZ2h0PSIyNCIgZmlsbD0id2hpdGUiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K) First flag\n\n* Prerequisites: `something`\n* Targets configured\n\n\n**$(symbol-boolean) Variations**\n\n* `1` **one**: first flag `$(arrow-small-right)fallthrough`",
 			hoverStr
 		);
 	});

@@ -33,7 +33,7 @@
                 "reveal": "silent"
             },
             "args": [
-                "test-compile"
+                "pretest"
             ],
             "isBackground": true,
             "problemMatcher": "$tsc-watch",
