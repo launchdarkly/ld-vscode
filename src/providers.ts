@@ -21,14 +21,12 @@ import { kebabCase } from 'lodash';
 import { Configuration } from './configuration';
 import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
-import { FeatureFlag, FlagConfiguration, FeatureFlagConfig, Environment } from './models';
+import { FeatureFlag, FlagConfiguration, FeatureFlagConfig } from './models';
 import { FlagStore } from './flagStore';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
 import { FlagCodeLensProvider } from './providers/flagLens';
-import * as path from 'path';
 import * as fs from 'fs';
-import { downloadAndUnzipVSCode } from 'vscode-test';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
@@ -213,10 +211,10 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 			return new Promise(async resolve => {
 				if (this.config.enableAutocomplete) {
 					const flags = await this.flagStore.allFlags();
-					let aliases;
-					if (this.aliases) {
-						aliases = this.aliases;
-					}
+					// let aliases;
+					// if (this.aliases) {
+					// 	aliases = this.aliases;
+					// }
 					resolve(
 						Object.keys(flags).map(flag => {
 							return new CompletionItem(flag, CompletionItemKind.Field);

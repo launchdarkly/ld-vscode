@@ -393,7 +393,7 @@ export class FeatureFlag {
 export class PatchOperation {
 	op: string;
 	path: string;
-	value: any;
+	value: unknown;
 }
 export class PatchComment {
 	comment?: string;

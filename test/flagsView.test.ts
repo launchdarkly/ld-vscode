@@ -22,20 +22,23 @@ suite('flagNode tests', () => {
 	});
 
 	test('testFlagValue children', () => {
+		const children = flagValue.children as Array<unknown>
 		assert.equal(
-			flagValue.children.length,
+			children,
 			0
 		);
 	});
 
 	test('testFlagValueFunc ', () => {
+		const children = flagFunc.children as Array<unknown>
+
 		assert.equal(
 			flagFunc.collapsibleState,
 			vscode.TreeItemCollapsibleState.None
 		);
 
 		assert.equal(
-			flagFunc.children.length,
+			children,
 			0
 		);
 

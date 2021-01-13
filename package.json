@@ -274,8 +274,8 @@
 		"watch": "webpack --mode none --watch --info-verbosity verbose",
 		"pretest": "tsc -p ./ && cp ./package.json ./out/package.json",
 		"test": "node ./out/test/runTest.js",
-		"lint": "eslint . --ext .ts",
-		"lint:fix": "eslint . --fix --ext .ts",
+		"lint": "npx eslint . --ext .ts",
+		"lint:fix": "npx eslint . --fix --ext .ts",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,tests}/**/*.ts\"",
 		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\""
 	},

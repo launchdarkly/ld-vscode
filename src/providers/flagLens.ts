@@ -23,6 +23,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		this.flagStore = flagStore;
 		this.aliases = aliases;
 		this.regex = /(.+)/g;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		vscode.workspace.onDidChangeConfiguration(_ => {
 			this._onDidChangeCodeLenses.fire(null);
 		});
@@ -50,7 +51,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		});
 	}
 
-	getActiveVariations(env: FlagConfiguration) {
+	getActiveVariations(env: FlagConfiguration): unknown {
 		//const hasPrereqs = env.prerequisites > 0;
 		if (!env.on) {
 			const offVariation = env.offVariation ? env.offVariation : -1;
@@ -70,7 +71,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		}
 	}
 
-	getNameorValue(flag: FeatureFlag, variation: number) {
+	getNameorValue(flag: FeatureFlag, variation: number): string {
 		let flagVal;
 		if (typeof flag.variations[variation].value === 'object') {
 			flagVal = JSON.stringify(flag.variations[variation].value).substring(0, MAX_CODELENS_VALUE);
@@ -85,7 +86,6 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 
 	public async provideCodeLenses(
 		document: vscode.TextDocument,
-		token: vscode.CancellationToken,
 	): Promise<vscode.CodeLens[]> {
 		if (vscode.workspace.getConfiguration('launchdarkly').get('enableCodeLens', true)) {
 			this.codeLenses = [];
@@ -137,7 +137,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		}
 	}
 
-	public resolveCodeLens(codeLens: FlagCodeLens, token: vscode.CancellationToken): FlagCodeLens {
+	public resolveCodeLens(codeLens: FlagCodeLens): FlagCodeLens {
 		try {
 			let preReq = '';
 			if (codeLens.env.prerequisites && codeLens.env.prerequisites.length > 0) {

@@ -64,7 +64,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	);
 
 	getTreeItem(element: FlagTreeInterface): vscode.TreeItem {
-		return element;
+		return element as FlagParentNode;
 	}
 
 	getChildren(element?: FlagTreeInterface): Promise<FlagTreeInterface[]> {
@@ -72,7 +72,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
 		}
 
-		return Promise.resolve(element ? element.children : this.flagNodes);
+		return Promise.resolve(element ? element.children as FlagParentNode[]: this.flagNodes as FlagParentNode[]) ;
 	}
 
 	setFlagsStore(flagstore: FlagStore): void {
@@ -541,7 +541,7 @@ export function flagNodeFactory({
  * It is a nested array of FlagNode's to build the view
  */
 export class FlagNode extends vscode.TreeItem {
-	children: any | undefined;
+	children: Array<unknown> | undefined;
 	contextValue?: string;
 	uri?: string;
 	flagKey?: string;
@@ -562,7 +562,7 @@ export class FlagNode extends vscode.TreeItem {
 		ctx: vscode.ExtensionContext,
 		public readonly label: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-		children?: any,
+		children?: Array<unknown>,
 		contextValue?: string,
 		uri?: string,
 		flagKey?: string,
@@ -581,6 +581,8 @@ export class FlagNode extends vscode.TreeItem {
 		this.command = command;
 	}
 
+	// Without this ignore the signature does not match the FlagTree interface
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string, enabled?: boolean): void {
 		/**
 		 * Special handling for open browser. Called in package.json
@@ -662,8 +664,8 @@ export class FlagParentNode extends vscode.TreeItem {
 }
 
 export interface FlagTreeInterface {
-	children: any;
-	command?: any;
+	children: unknown;
+	command?: unknown;
 	flagKey?: string;
 	flagVersion?: number;
 }
