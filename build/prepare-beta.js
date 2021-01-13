@@ -2,8 +2,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-if (process.argv.length < 4 && process.argv[3] !== 'v3') return;
-
 const fs = require('fs');
 const package = require('../package.json');
 
