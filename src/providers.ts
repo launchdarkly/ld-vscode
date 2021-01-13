@@ -30,13 +30,12 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { downloadAndUnzipVSCode } from 'vscode-test';
 
-
 const STRING_DELIMETERS = ['"', "'", '`'];
 const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 const LD_MODE: DocumentFilter = {
 	scheme: 'file',
 };
-const FLAG_STATUS_CACHE = new Map<string, string>()
+const FLAG_STATUS_CACHE = new Map<string, string>();
 
 export async function register(
 	ctx: ExtensionContext,
@@ -169,7 +168,7 @@ class LaunchDarklyHoverProvider implements HoverProvider {
 			if (this.config.enableHover) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let aliases;
-				let foundAlias = []
+				let foundAlias = [];
 				if (typeof this.aliases !== undefined) {
 					aliases = this.aliases.getMap();
 					const aliasKeys = Object.keys(aliases) !== undefined ? Object.keys(aliases) : [];
@@ -255,7 +254,12 @@ function truncate(str: string, n: number): string {
 	return str.length > n ? str.substr(0, n - 1) + '\u2026' : str;
 }
 
-export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, config: Configuration, ctx: ExtensionContext): MarkdownString {
+export function generateHoverString(
+	flag: FeatureFlag,
+	c: FlagConfiguration,
+	config: Configuration,
+	ctx: ExtensionContext,
+): MarkdownString {
 	const env = Object.keys(flag.environments)[0];
 	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(
@@ -329,8 +333,8 @@ export function generateHoverString(flag: FeatureFlag, c: FlagConfiguration, con
 }
 
 function getFlagStatusUri(ctx: ExtensionContext, status: boolean) {
-	const fileName = status ? "toggleon" : "toggleoff"
-	const theme: ColorThemeKind = window.activeColorTheme.kind
+	const fileName = status ? 'toggleon' : 'toggleoff';
+	const theme: ColorThemeKind = window.activeColorTheme.kind;
 	let dataUri = FLAG_STATUS_CACHE.get(`${ColorThemeKind[theme]}-${fileName}`);
 	if (dataUri == null && ctx !== undefined) {
 		const contents = fs
@@ -338,7 +342,7 @@ function getFlagStatusUri(ctx: ExtensionContext, status: boolean) {
 			.toString('base64');
 
 		dataUri = encodeURI(`data:image/svg+xml;base64,${contents}`);
-		FLAG_STATUS_CACHE.set(`${ColorThemeKind[theme]}-${fileName}`, dataUri)
+		FLAG_STATUS_CACHE.set(`${ColorThemeKind[theme]}-${fileName}`, dataUri);
 	}
 
 	return dataUri;
