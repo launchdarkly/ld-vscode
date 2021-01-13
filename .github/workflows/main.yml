@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ v3 ]
+    branches: [ beta ]
   workflow_dispatch:
 
 jobs:
@@ -11,10 +11,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
@@ -23,7 +19,6 @@ jobs:
           yarn prepare-beta
       - name: Publish to Visual Studio Marketplace
         uses: HaaLeo/publish-vscode-extension@v0
-        if: ${{ steps.extract_branch.outputs.branch == 'v3' }}
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
