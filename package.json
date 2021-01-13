@@ -1,7 +1,7 @@
 {
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly Beta",
-	"description": "View LaunchDarkly feature flags in your editor.",
+	"description": "Manage LaunchDarkly feature flags directly from within your code",
 	"version": "3.0.0",
 	"publisher": "launchdarklyofficial",
 	"engines": {
@@ -12,7 +12,7 @@
 		"Other"
 	],
 	"icon": "images/launchdarkly.png",
-	"license": "SEE LICENSE IN LICENSE.txt",
+	"license": "SEE LICENSE.txt",
 	"activationEvents": [
 		"*"
 	],
@@ -277,7 +277,8 @@
 		"lint": "npx eslint . --ext .ts",
 		"lint:fix": "npx eslint . --fix --ext .ts",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,tests}/**/*.ts\"",
-		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\""
+    "prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\"",
+    "prepare-beta": "node build/prepare-beta.js"
 	},
 	"devDependencies": {
 		"@types/mocha": "^2.2.32",

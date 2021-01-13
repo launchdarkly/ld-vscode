@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, v3 ]
+    branches: [ v3 ]
   pull_request:
-    branches: [ master, v3 ]
+    branches: [ v3 ]
 
   workflow_dispatch:
 
@@ -17,7 +17,9 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
-      - run: yarn
+      - run: |
+          yarn
+          yarn prepare-beta
       - name: Publish to Visual Studio Marketplace
         uses: HaaLeo/publish-vscode-extension@v0
         with:
