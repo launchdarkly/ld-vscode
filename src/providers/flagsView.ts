@@ -72,7 +72,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
 		}
 
-		return Promise.resolve(element ? element.children as FlagParentNode[]: this.flagNodes as FlagParentNode[]) ;
+		return Promise.resolve(element ? (element.children as FlagParentNode[]) : (this.flagNodes as FlagParentNode[]));
 	}
 
 	setFlagsStore(flagstore: FlagStore): void {

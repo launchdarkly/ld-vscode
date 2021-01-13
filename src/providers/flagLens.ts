@@ -84,9 +84,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		return JSON.stringify(flag.variations[variation].name) ? flag.variations[variation].name : flagVal;
 	}
 
-	public async provideCodeLenses(
-		document: vscode.TextDocument,
-	): Promise<vscode.CodeLens[]> {
+	public async provideCodeLenses(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
 		if (vscode.workspace.getConfiguration('launchdarkly').get('enableCodeLens', true)) {
 			this.codeLenses = [];
 			const regex = new RegExp(this.regex);
