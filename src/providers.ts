@@ -261,7 +261,9 @@ export function generateHoverString(
 	const env = Object.keys(flag.environments)[0];
 	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(
-		`![Flag status](${getFlagStatusUri(ctx, c.on)}) ${config.project} / ${env} / **[${flag.key}](${flagUri} "Open in LaunchDarkly")** \n\n`,
+		`![Flag status](${getFlagStatusUri(ctx, c.on)}) ${config.project} / ${env} / **[${
+			flag.key
+		}](${flagUri} "Open in LaunchDarkly")** \n\n`,
 		true,
 	);
 	hoverString.isTrusted = true;

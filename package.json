@@ -12,7 +12,7 @@
 		"Other"
 	],
 	"icon": "images/launchdarkly.png",
-	"license": "SEE LICENSE.txt",
+	"license": "SEE LICENSE IN LICENSE.txt",
 	"activationEvents": [
 		"*"
 	],
