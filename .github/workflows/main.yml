@@ -20,7 +20,7 @@ jobs:
           node-version: '14'
       - run: yarn
       - run: yarn prepare-beta
-        if: ${{ steps.extract_branch.outputs.branch == 'v3' }}
+        if: ${{ steps.extract_branch.outputs.branch == 'beta' }}
       - name: Publish to Visual Studio Marketplace
         uses: HaaLeo/publish-vscode-extension@v0
         with:
