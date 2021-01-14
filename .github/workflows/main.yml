@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ beta ]
+    branches: [ master, beta ]
   workflow_dispatch:
 
 jobs:
@@ -11,19 +11,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
-      - run: |
-          yarn
-          yarn prepare-beta
+      - run: yarn
+      - run: yarn prepare-beta
+        if: ${{ steps.extract_branch.outputs.branch == 'v3' }}
       - name: Publish to Visual Studio Marketplace
         uses: HaaLeo/publish-vscode-extension@v0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
-
-#       - name: Publish to Open VSX Registry
-#         uses: HaaLeo/publish-vscode-extension@v0
-#         with:
-#           pat: ${{ secrets.OPEN_VSX_TOKEN }}
+      - name: Publish to Open VSX Registry
+        uses: HaaLeo/publish-vscode-extension@v0
+        with:
+          pat: ${{ secrets.OPEN_VSX_TOKEN }}
