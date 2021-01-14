@@ -277,8 +277,8 @@
 		"lint": "npx eslint . --ext .ts",
 		"lint:fix": "npx eslint . --fix --ext .ts",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,tests}/**/*.ts\"",
-    "prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\"",
-    "prepare-beta": "node build/prepare-beta.js"
+		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\"",
+		"prepare-beta": "node build/prepare-beta.js"
 	},
 	"devDependencies": {
 		"@types/mocha": "^2.2.32",
@@ -287,6 +287,8 @@
 		"@typescript-eslint/eslint-plugin": "3.5.0",
 		"@typescript-eslint/parser": "3.5.0",
 		"eslint": "7.3.1",
+		"expect": "26.6.2",
+		"expect-mocha-snapshot": "2.0.1",
 		"glob": "7.1.6",
 		"mocha": "5.2.0",
 		"prettier": "^1.5.3",

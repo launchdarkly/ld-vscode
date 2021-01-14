@@ -261,14 +261,13 @@ export function generateHoverString(
 	const env = Object.keys(flag.environments)[0];
 	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(
-		`$(rocket) ${config.project} / ${env} / **[${flag.key}](${flagUri} "Open in LaunchDarkly")**\n\n`,
+		`![Flag status](${getFlagStatusUri(ctx, c.on)}) ${config.project} / ${env} / **[${flag.key}](${flagUri} "Open in LaunchDarkly")** \n\n`,
 		true,
 	);
 	hoverString.isTrusted = true;
 
 	hoverString.appendText('\n');
-	//hoverString.appendMarkdown(flag.description);
-	hoverString.appendMarkdown(`![](${getFlagStatusUri(ctx, c.on)}) ${flag.description}`);
+	hoverString.appendMarkdown(flag.description);
 	hoverString.appendText('\n');
 
 	if (c.prerequisites && c.prerequisites.length > 0) {

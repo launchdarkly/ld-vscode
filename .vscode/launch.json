@@ -13,7 +13,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
-      "preLaunchTask": "${defaultBuildTask}"
+      "preLaunchTask": "yarn"
 		},
 		{
 			"name": "Launch Tests",
