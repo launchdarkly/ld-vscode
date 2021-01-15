@@ -68,7 +68,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	getChildren(element?: FlagTreeInterface): Promise<FlagTreeInterface[]> {
-		if (typeof this.flagNodes === 'undefined' || this.flagNodes.length == 0) {
+		if (this.config.isConfigured() && (typeof this.flagNodes === 'undefined' || this.flagNodes.length == 0)) {
 			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
 		}
 
@@ -95,7 +95,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			const message = `Error retrieving Flags: ${err}`;
 			this.flagNodes = [new FlagParentNode(this.ctx, message, message, null, NON_COLLAPSED)];
 		}
-		if (!this.flagNodes) {
+		if (this.config.isConfigured() && !this.flagNodes) {
 			this.flagNodes = [new FlagParentNode(this.ctx, 'No Flags Found.', 'No Flags Found', null, NON_COLLAPSED)];
 		}
 	}
