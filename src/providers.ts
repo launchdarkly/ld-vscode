@@ -334,14 +334,15 @@ export function generateHoverString(
 function getFlagStatusUri(ctx: ExtensionContext, status: boolean) {
 	const fileName = status ? 'toggleon' : 'toggleoff';
 	const theme: ColorThemeKind = window.activeColorTheme.kind;
-	let dataUri = FLAG_STATUS_CACHE.get(`${ColorThemeKind[theme]}-${fileName}`);
+	const colorTheme = ColorThemeKind[theme].toLowerCase();
+	let dataUri = FLAG_STATUS_CACHE.get(`${colorTheme}-${fileName}`);
 	if (dataUri == null && ctx !== undefined) {
 		const contents = fs
-			.readFileSync(ctx.asAbsolutePath(`resources/${ColorThemeKind[theme]}/${fileName}.svg`))
+			.readFileSync(ctx.asAbsolutePath(`resources/${colorTheme}/${fileName}.svg`))
 			.toString('base64');
 
 		dataUri = encodeURI(`data:image/svg+xml;base64,${contents}`);
-		FLAG_STATUS_CACHE.set(`${ColorThemeKind[theme]}-${fileName}`, dataUri);
+		FLAG_STATUS_CACHE.set(`${colorTheme}-${fileName}`, dataUri);
 	}
 
 	return dataUri;
