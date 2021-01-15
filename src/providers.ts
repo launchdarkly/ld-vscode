@@ -76,6 +76,7 @@ export async function register(
 					await flagView.reload();
 				} else {
 					await flagStore.reload();
+					commands.executeCommand('launchdarkly.refreshEntry');
 				}
 
 				window.showInformationMessage('LaunchDarkly configured successfully');

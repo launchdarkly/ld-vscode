@@ -95,10 +95,13 @@ export class Configuration {
 		}
 
 		// Only recommend configuring the extension on install and update
-		const unconfigured = !this.accessToken || !this.project || !this.env;
-		if (!isDisabledForWorkspace && version != storedVersion && unconfigured) {
+		if (!isDisabledForWorkspace && version != storedVersion && !this.isConfigured()) {
 			return 'unconfigured';
 		}
+	}
+
+	isConfigured(): boolean {
+		return !!this.accessToken && !!this.project && !!this.env;
 	}
 
 	getState(key: string): string {
