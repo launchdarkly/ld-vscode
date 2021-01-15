@@ -4,3 +4,4 @@ yarn-error.log
 .vscode-test
 *.vsix
 dist
+coderefs/
