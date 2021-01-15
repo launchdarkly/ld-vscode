@@ -83,6 +83,7 @@ export class Configuration {
 		const ctx = this.ctx;
 		ctx.globalState.update('version', undefined);
 		const storedVersion = ctx.globalState.get('version');
+		const isDisabledForWorkspace = ctx.workspaceState.get('isDisabledForWorkspace');
 
 		if (version !== storedVersion) {
 			ctx.globalState.update('version', version);
@@ -94,8 +95,8 @@ export class Configuration {
 		}
 
 		// Only recommend configuring the extension on install and update
-		const configured = !!this.accessToken;
-		if (version != storedVersion && !configured) {
+		const unconfigured = !this.accessToken || !this.project || !this.env;
+		if (!isDisabledForWorkspace && version != storedVersion && unconfigured) {
 			return 'unconfigured';
 		}
 	}

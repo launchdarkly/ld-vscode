@@ -19,7 +19,11 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 		case 'unconfigured':
 			window
 				.showInformationMessage('To enable the LaunchDarkly extension, select your desired environment.', 'Configure')
-				.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
+				.then(item => {
+					item === 'Configure'
+						? commands.executeCommand('extension.configureLaunchDarkly')
+						: ctx.workspaceState.update('isDisabledForWorkspace', true);
+				});
 			break;
 		case 'legacy':
 			window

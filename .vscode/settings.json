@@ -8,6 +8,5 @@
 	"prettier.singleQuote": true,
 	"prettier.useTabs": true,
 	"prettier.trailingComma": "all",
-	"prettier.printWidth": 120,
-	"launchdarkly.sdkKey": ""
+	"prettier.printWidth": 120
 }
