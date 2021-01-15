@@ -89,7 +89,7 @@ export class FlagStore {
 						if (!res) {
 							return;
 						}
-						if (this.flagMetadata[key].variations.length !== res.variations.length) {
+						if (this.flagMetadata[key]?.variations.length !== res.variations.length) {
 							this.flagMetadata[key] = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
 							this.storeUpdates.fire(true);
 						}

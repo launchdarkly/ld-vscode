@@ -92,7 +92,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			this.flagNodes = nodes;
 		} catch (err) {
 			console.error(err);
-			const message = 'Error retrieving Flags: `${err}';
+			const message = `Error retrieving Flags: ${err}`;
 			this.flagNodes = [new FlagParentNode(this.ctx, message, message, null, NON_COLLAPSED)];
 		}
 		if (!this.flagNodes) {

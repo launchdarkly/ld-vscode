@@ -11,7 +11,6 @@ const MAX_CODELENS_VALUE = 20;
  */
 export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	private config: Configuration;
-	private codeLenses: vscode.CodeLens[] = [];
 	private regex: RegExp;
 	private flagStore: FlagStore;
 	private aliases: FlagAliases;
@@ -40,10 +39,8 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 
 	private async flagUpdateListener() {
 		// Setup listener for flag changes
-		console.log('setting up lens listener');
-		this.flagStore.on('update', () => {
+		this.flagStore?.on('update', () => {
 			try {
-				console.log('flag update');
 				this.refresh();
 			} catch (err) {
 				console.error('Failed to update LaunchDarkly flag lens:', err);
@@ -86,7 +83,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 
 	public async provideCodeLenses(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
 		if (vscode.workspace.getConfiguration('launchdarkly').get('enableCodeLens', true)) {
-			this.codeLenses = [];
+			const codeLenses: vscode.CodeLens[] = [];
 			const regex = new RegExp(this.regex);
 			const text = document.getText();
 			let matches;
@@ -119,7 +116,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				}
 				if (range && typeof flag !== 'undefined' && flags[flag[0]]) {
 					const codeLens = new FlagCodeLens(range, flags[flag[0]], env[flag[0]], this.config);
-					this.codeLenses.push(codeLens);
+					codeLenses.push(codeLens);
 				} else if (range && foundAliases && foundAliases.length > 0 && flags[aliases[foundAliases]]) {
 					const codeLens = new FlagCodeLens(
 						range,
@@ -127,11 +124,11 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 						env[aliases[foundAliases]],
 						this.config,
 					);
-					this.codeLenses.push(codeLens);
+					codeLenses.push(codeLens);
 				}
 			}
 
-			return this.codeLenses;
+			return codeLenses;
 		}
 	}
 
