@@ -1,11 +1,4 @@
-<h1 align="center">
-  <br>
-    <img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/launchdarkly.png?raw=true" alt="logo" width="125">
-  <br>
-  LaunchDarkly for Visual Studio Code
-  <br>
-  <br>
-</h1>
+# LaunchDarkly for Visual Studio Code
 
 The LaunchDarkly VSCode extension provides handy utilities that make it easier to use LaunchDarkly while you're coding. Now, you can see details about feature flags defined in your code, toggle them on or off, search for usage, see all possible flag variations and more.
 
