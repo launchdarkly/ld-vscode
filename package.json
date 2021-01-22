@@ -271,7 +271,7 @@
 		"viewsWelcome": [
 			{
 				"view": "launchdarklyFeatureFlags",
-				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://marketplace.visualstudio.com/items?itemName=LaunchDarklyOfficial.launchdarkly) to learn more about how to use the LaunchDarkly extension."
+				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension."
 			}
 		]
 	},
