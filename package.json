@@ -154,15 +154,7 @@
 			},
 			{
 				"command": "launchdarkly.flagMultipleSearch",
-				"title": "Find all flag aliases",
-				"icon": {
-					"light": "resources/light/flagMultipleSearch.svg",
-					"dark": "resources/dark/flagMultipleSearch.svg"
-				}
-			},
-			{
-				"command": "launchdarkly.flagMultipleSearch",
-				"title": "Find all Flag Aliases",
+				"title": "Search Flag References",
 				"icon": {
 					"light": "resources/light/flagMultipleSearch.svg",
 					"dark": "resources/dark/flagMultipleSearch.svg"
@@ -230,7 +222,7 @@
 				},
 				{
 					"command": "launchdarkly.flagMultipleSearch",
-					"when": "view == launchdarklyFeatureFlags && viewItem == aliases",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
 					"group": "inline"
 				},
 				{
