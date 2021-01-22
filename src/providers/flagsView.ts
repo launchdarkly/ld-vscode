@@ -135,7 +135,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					triggerSearch: true,
 					matchWholeWord: true,
 					isCaseSensitive: true,
-					isRegex: true
+					isRegex: true,
 				});
 			}),
 			vscode.commands.registerCommand('launchdarkly.toggleFlag', async (node: FlagParentNode) => {
