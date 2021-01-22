@@ -89,7 +89,7 @@
 				},
 				"launchdarkly.enableCodeLens": {
 					"type": "boolean",
-					"default": true
+					"default": false
 				}
 			}
 		},

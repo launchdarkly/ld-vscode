@@ -26,7 +26,9 @@ jobs:
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
+          yarn: true
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v0
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
+          yarn: true
