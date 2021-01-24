@@ -427,7 +427,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 */
 		renderedFlagFields.push(
 			this.flagFactory({
-				label: `Rule Count: ${envConfig.rules.length}`,
+				label: `Rule count: ${envConfig.rules.length}`,
 				ctxValue: 'flagRules',
 			}),
 		);
@@ -440,7 +440,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			const fallThroughVar = flag.variations[fallThrough.variation];
 			renderedFlagFields.push(
 				this.flagFactory({
-					label: `Default Variation: ${
+					label: `Default variation: ${
 						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
 					}`,
 					ctxValue: 'variationDefault',
@@ -503,11 +503,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					collapsed: COLLAPSED,
 					children: [
 						this.flagFactory({
-							label: `OnVariation: ${defOnVar.name ? defOnVar.name : JSON.stringify(defOnVar.value)}`,
+							label: `On variation: ${defOnVar.name ? defOnVar.name : JSON.stringify(defOnVar.value)}`,
 							ctxValue: 'variation',
 						}),
 						this.flagFactory({
-							label: `OffVariation: ${defOffVar.name ? defOffVar.name : JSON.stringify(defOffVar.value)}`,
+							label: `Off variation: ${defOffVar.name ? defOffVar.name : JSON.stringify(defOffVar.value)}`,
 							ctxValue: 'variation',
 						}),
 					],
