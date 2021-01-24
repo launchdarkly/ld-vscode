@@ -3,7 +3,7 @@ import { FeatureFlag, FlagConfiguration, PatchComment } from '../models';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
-import { generateHoverString } from '../providers';
+import { generateHoverString } from './hover';
 import * as path from 'path';
 import { debounce, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
