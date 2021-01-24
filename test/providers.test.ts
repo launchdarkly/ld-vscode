@@ -8,6 +8,7 @@ import * as toMatchSnapshot from 'expect-mocha-snapshot';
 expect.extend({ toMatchSnapshot });
 
 import * as providers from '../src/providers';
+import { generateHoverString } from '../src/providers/hover'
 import { FeatureFlag, FlagConfiguration } from '../src/models';
 import { Configuration } from '../src/configuration';
 
@@ -64,7 +65,7 @@ const testPath = path.join(__dirname, '..', '..', 'test');
 
 suite('provider utils tests', function() {
 	test('generateHoverString', function() {
-		expect(providers.generateHoverString(flag, flagConfig, config, ctx).value).toMatchSnapshot(resolveSrcTestPath(this));
+		expect(generateHoverString(flag, flagConfig, config, ctx).value).toMatchSnapshot(resolveSrcTestPath(this));
 	});
 
 	test('isPrecedingCharStringDelimeter', async () => {
