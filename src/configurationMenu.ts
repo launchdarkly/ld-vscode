@@ -181,13 +181,9 @@ export class ConfigurationMenu {
 
 	async configure() {
 		await this.collectInputs();
-		['accessToken', 'project', 'env'].forEach(async option => {
+		['project', 'env'].forEach(async option => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
-		await this.config.update('sdkKey', '', true);
-		if (workspace.name) {
-			await this.config.update('sdkKey', '', false);
-		}
 	}
 
 	createQuickPickItem(resource: Resource): QuickPickItem {
