@@ -89,11 +89,6 @@ export class Configuration {
 			ctx.globalState.update('version', version);
 		}
 
-		const legacyConfiguration = !!this.sdkKey;
-		if (legacyConfiguration && !ctx.globalState.get('legacyNotificationDismissed')) {
-			return 'legacy';
-		}
-
 		// Only recommend configuring the extension on install and update
 		if (!isDisabledForWorkspace && version != storedVersion && !this.isConfigured()) {
 			return 'unconfigured';

@@ -25,22 +25,22 @@
 				"launchdarkly.project": {
 					"type": "string",
 					"default": "",
-					"description": "LaunchDarkly project key"
+					"markdownDescription": "Your LaunchDarkly project key. [More information](https://docs.launchdarkly.com/home/managing-flags/projects)."
 				},
 				"launchdarkly.env": {
 					"type": "string",
 					"default": "",
-					"description": "LaunchDarkly environment key"
+					"markdownDescription": "Your LaunchDarkly environment key. [More information](https://docs.launchdarkly.com/home/managing-flags/environments)"
 				},
 				"launchdarkly.baseUri": {
 					"type": "string",
 					"default": "https://app.launchdarkly.com",
-					"description": "LaunchDarkly base uri"
+					"description": "LaunchDarkly base URI. Change only if you are using the Relay Proxy. [More information](https://docs.launchdarkly.com/home/advanced/relay-proxy/using)"
 				},
 				"launchdarkly.streamUri": {
 					"type": "string",
 					"default": "https://stream.launchdarkly.com",
-					"description": "LaunchDarkly stream uri"
+					"markdownDescription": "LaunchDarkly stream URI. Change only if you are using the Relay Proxy. [More information](https://docs.launchdarkly.com/home/advanced/relay-proxy/using)"
 				},
 				"launchdarkly.enableHover": {
 					"type": "boolean",
@@ -55,17 +55,7 @@
 				"launchdarkly.enableFlagExplorer": {
 					"type": "boolean",
 					"default": true,
-					"description": "Enable flag explorer"
-				},
-				"launchdarkly.accessToken": {
-					"type": "string",
-					"default": "",
-					"description": "LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
-				},
-				"launchdarkly.sdkKey": {
-					"type": "string",
-					"default": "",
-					"description": "LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead."
+					"description": "Enable feature flag explorer in your sidebar"
 				},
 				"launchdarkly.refreshRate": {
 					"type": "number",
@@ -75,12 +65,7 @@
 				"launchdarkly.enableAliases": {
 					"type": "boolean",
 					"default": true,
-					"description": "Enable reading in flag aliases via Code References"
-				},
-				"launchdarkly.codeRefsPath": {
-					"type": "string",
-					"default": "",
-					"description": "Path to where the Code References binary is installed"
+					"markdownDescription": "Enable reading in flag aliases via [Code References](https://docs.launchdarkly.com/integrations/code-references). As of v3 of this extension, Code References is bundled with this extension."
 				},
 				"launchdarkly.codeRefsRefreshRate": {
 					"type": "number",
@@ -274,6 +259,14 @@
 				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension."
 			}
 		]
+	},
+	"galleryBanner": {
+    "color": "#C80000",
+    "theme": "dark"
+  },
+	"homepage": "https://docs.launchdarkly.com/integrations/vscode",
+  "bugs": {
+    "url": "https://github.com/launchdarkly/ld-vscode/issues"
 	},
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
