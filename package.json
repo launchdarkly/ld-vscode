@@ -1,6 +1,6 @@
 {
 	"name": "launchdarkly",
-	"displayName": "LaunchDarkly Beta",
+	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
 	"version": "3.0.0",
 	"publisher": "launchdarklyofficial",
