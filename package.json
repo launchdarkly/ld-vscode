@@ -261,7 +261,6 @@
 		]
 	},
 	"galleryBanner": {
-    "color": "#C80000",
     "theme": "dark"
   },
 	"homepage": "https://docs.launchdarkly.com/integrations/vscode",
