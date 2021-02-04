@@ -1,24 +1,29 @@
 'use strict';
 
 import { commands, window, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
-
+import { access, constants } from 'fs';
 import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
+import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
+import { CodeRefs } from './coderefs/codeRefsVersion';
 
 let config: Configuration;
 let flagStore: FlagStore;
 
-export function activate(ctx: ExtensionContext): void {
+export async function activate(ctx: ExtensionContext): Promise<void> {
 	config = new Configuration(ctx);
-
 	const validationError = config.validate();
 	switch (validationError) {
 		case 'unconfigured':
 			window
 				.showInformationMessage('To enable the LaunchDarkly extension, select your desired environment.', 'Configure')
-				.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
+				.then(item => {
+					item === 'Configure'
+						? commands.executeCommand('extension.configureLaunchDarkly')
+						: ctx.workspaceState.update('isDisabledForWorkspace', true);
+				});
 			break;
 		case 'legacy':
 			window
@@ -35,16 +40,33 @@ export function activate(ctx: ExtensionContext): void {
 	}
 
 	const api = new LaunchDarklyAPI(config);
-	flagStore = new FlagStore(config, api);
+	let flagStore: FlagStore;
+	if (validationError !== 'unconfigured') {
+		flagStore = new FlagStore(config, api);
+	}
 
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
 			await config.reload();
+			if (!flagStore) {
+				const newApi = new LaunchDarklyAPI(config);
+				flagStore = new FlagStore(config, newApi);
+			}
 			await flagStore.reload(e);
-			await commands.executeCommand('launchdarkly.treeviewrefresh');
 		}
 	});
+	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}`;
+	// Check to see if coderefs is already installed. Need more logic if specific config path is set.
+	if (config.enableAliases) {
+		access(codeRefsVersionDir, constants.F_OK, err => {
+			if (err) {
+				const CodeRefs = new CodeRefsDownloader(ctx, codeRefsVersionDir);
+				CodeRefs.download();
+				return;
+			}
+		});
+	}
 
 	registerProviders(ctx, config, flagStore, api);
 }

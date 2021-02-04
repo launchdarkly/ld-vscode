@@ -33,26 +33,26 @@
                 "reveal": "silent"
             },
             "args": [
-                "test-compile"
+                "pretest"
             ],
             "isBackground": true,
-            "problemMatcher": "$tsc-watch"
-        },
-        {
-            "type": "npm",
-            "script": "watch",
-            "problemMatcher": [
-                "$ts-webpack-watch",
-                "$tslint-webpack-watch"
-            ],
-            "isBackground": true,
-            "presentation": {
-                "reveal": "never"
-            },
+            "problemMatcher": "$tsc-watch",
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "type": "npm",
+            "script": "watch",
+            "problemMatcher": [],
+            "isBackground": true,
+            "presentation": {
+                "reveal": "never"
+            },
+            "group": "build",
+            "label": "npm: watch",
+            "detail": "webpack --mode none --watch --info-verbosity verbose"
         }
     ]
 }

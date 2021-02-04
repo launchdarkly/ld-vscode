@@ -1,8 +1,8 @@
-import { ConfigurationChangeEvent, commands, window } from 'vscode';
+import { ConfigurationChangeEvent, commands, EventEmitter, window } from 'vscode';
 import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
 import LaunchDarkly = require('launchdarkly-node-server-sdk');
 
-import { debounce } from 'lodash';
+import { debounce, Dictionary, keyBy } from 'lodash';
 
 import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
 import { Configuration } from './configuration';
@@ -10,23 +10,27 @@ import { LaunchDarklyAPI } from './api';
 
 const DATA_KIND = { namespace: 'features' };
 
-type FlagUpdateCallback = (flag: FeatureFlag) => void;
+type FlagUpdateCallback = (flag: string) => void;
 type LDClientResolve = (LDClient: LaunchDarkly.LDClient) => void;
 type LDClientReject = () => void;
 
 export class FlagStore {
 	private readonly config: Configuration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
-	private readonly flagMetadata: { [key: string]: FeatureFlag } = {};
-
+	private flagMetadata: Dictionary<FeatureFlag>;
+	public readonly storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
+	// We fire a storeReady event because this will always exist compared to 'ready' listener on LDClient
+	// which may be reinitialized
+	public readonly storeReady: EventEmitter<boolean | null> = new EventEmitter();
 	private readonly api: LaunchDarklyAPI;
-
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
 	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve, reject) => {
 		this.resolveLDClient = resolve;
 		this.rejectLDClient = reject;
 	});
+	private offlineTimer: NodeJS.Timer;
+	private offlineTimerSet = false;
 
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
@@ -59,15 +63,74 @@ export class FlagStore {
 		if (!this.config.streamingConfigStartCheck()) {
 			return;
 		}
+
 		try {
+			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+			this.flagMetadata = keyBy(flags, 'key');
 			const sdkKey = await this.getLatestSDKKey();
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
+			this.storeReady.fire(true);
+			if (this.config.refreshRate) {
+				if (this.config.validateRefreshInterval(this.config.refreshRate)) {
+					this.startGlobalFlagUpdateTask(this.config.refreshRate);
+				} else {
+					window.showErrorMessage(
+						`Invalid Refresh time (in Minutes): '${this.config.refreshRate}'. 0 is off, up to 1440 for one day.`,
+					);
+				}
+			}
+			this.storeUpdates.fire(true);
+			this.on('update', async (keys: string) => {
+				const flagKeys = Object.values(keys);
+				flagKeys.map(key => {
+					this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
+						if (!res) {
+							return;
+						}
+						if (this.flagMetadata[key]?.variations.length !== res.variations.length) {
+							this.flagMetadata[key] = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
+							this.storeUpdates.fire(true);
+						}
+					});
+				});
+			});
+			window.onDidChangeWindowState(async e => {
+				const ldClient = await this.ldClient;
+				if (e.focused) {
+					if (typeof this.offlineTimer !== 'undefined') {
+						clearTimeout(this.offlineTimer);
+						this.offlineTimerSet = false;
+					}
+					if (this.offlineTimer) {
+						await this.reload();
+						this.offlineTimerSet = false;
+					}
+				} else {
+					if (typeof this.offlineTimer === 'undefined') {
+						this.offlineTimer = setTimeout(async () => {
+							this.offlineTimerSet = true;
+							await ldClient.close();
+						}, 600000);
+					}
+				}
+			});
 		} catch (err) {
 			this.rejectLDClient();
 			console.error(err);
 		}
+	}
+
+	private async startGlobalFlagUpdateTask(interval: number) {
+		const ms = interval * 60 * 1000;
+		setInterval(() => {
+			this.updateFlags();
+		}, ms);
+	}
+
+	async updateFlags(): Promise<void> {
+		await this.debounceUpdate();
 	}
 
 	async on(event: string, cb: FlagUpdateCallback): Promise<void> {
@@ -81,8 +144,10 @@ export class FlagStore {
 
 	async removeAllListeners(): Promise<void> {
 		try {
-			const ldClient = await this.ldClient;
-			await ldClient.removeAllListeners('update');
+			await setTimeout(async () => {
+				const ldClient = await this.ldClient;
+				await ldClient.removeAllListeners('update');
+			}, 500);
 		} catch (err) {
 			// do nothing, ldclient does not exist
 		}
@@ -120,11 +185,14 @@ export class FlagStore {
 		}
 	}
 
-	private ldConfig(): Record<string, number | string | LaunchDarkly.LDFeatureStore> {
+	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
+		// Cannot replace in the config, so updating at call site.
+		const streamUri = this.config.baseUri.replace('app', 'stream');
 		return {
 			timeout: 5,
 			baseUri: this.config.baseUri,
-			streamUri: this.config.streamUri,
+			streamUri: streamUri,
+			sendEvents: false,
 			featureStore: this.store,
 		};
 	}
@@ -148,7 +216,6 @@ export class FlagStore {
 						return;
 					}
 				}
-
 				resolve({ flag, config: res });
 			});
 		});
@@ -159,4 +226,36 @@ export class FlagStore {
 			this.store.all(DATA_KIND, resolve);
 		});
 	}
+
+	async allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
+		await this.ldClient; // Just waiting for initialization to complete, don't actually need the client
+		return this.flagMetadata;
+	}
+
+	private readonly debounceUpdate = debounce(
+		async () => {
+			try {
+				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				this.flagMetadata = keyBy(flags, 'key');
+				this.storeUpdates.fire(true);
+			} catch (err) {
+				let errMsg;
+				if (err.statusCode == 404) {
+					errMsg = `Project does not exist`;
+				} else if (err.statusCode == 401) {
+					errMsg = `Unauthorized`;
+				} else if (err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
+					// We know the domain should exist.
+					console.log(err); // Still want to log that this is happening
+					return;
+				} else {
+					errMsg = err.message;
+				}
+				console.log(`${err}`);
+				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+			}
+		},
+		5000,
+		{ leading: true, trailing: true },
+	);
 }

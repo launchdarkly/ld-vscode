@@ -157,7 +157,7 @@ export class Flag extends Resource {
 export class FlagConfiguration {
 	key: string;
 	variations: Array<any>;
-	offVariation: any;
+	offVariation: number | undefined;
 	fallthrough: any;
 	prerequisites: any;
 	targets: any;
@@ -367,7 +367,7 @@ export class FeatureFlag {
 	 * An array goals from all environments associated with this feature flag
 	 */
 	goalIds?: Array<string>;
-	version?: number;
+	_version?: number;
 	/**
 	 * A mapping of keys to CustomProperty entries.
 	 */
@@ -384,4 +384,18 @@ export class FeatureFlag {
 	 */
 	archived?: boolean;
 	defaults?: Defaults;
+	/**
+	 * Used by plugin to make sure number of variations has not changed
+	 */
+	variationLength?: number;
+}
+
+export class PatchOperation {
+	op: string;
+	path: string;
+	value: unknown;
+}
+export class PatchComment {
+	comment?: string;
+	patch?: Array<PatchOperation>;
 }
