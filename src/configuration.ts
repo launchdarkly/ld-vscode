@@ -12,6 +12,10 @@ export class Configuration {
 	sdkKey = '';
 	project = '';
 	env = '';
+	codeRefsPath = '';
+	refreshRate = 120;
+	codeRefsRefreshRate = 240;
+	enableAliases = true;
 	enableHover = true;
 	enableAutocomplete = true;
 	enableFlagExplorer = true;
@@ -48,7 +52,6 @@ export class Configuration {
 			await config.update(key, '', global);
 			return;
 		}
-
 		await config.update(key, value, global);
 		config = workspace.getConfiguration('launchdarkly');
 
@@ -80,24 +83,27 @@ export class Configuration {
 		const ctx = this.ctx;
 		ctx.globalState.update('version', undefined);
 		const storedVersion = ctx.globalState.get('version');
+		const isDisabledForWorkspace = ctx.workspaceState.get('isDisabledForWorkspace');
 
 		if (version !== storedVersion) {
 			ctx.globalState.update('version', version);
 		}
 
-		const legacyConfiguration = !!this.sdkKey;
-		if (legacyConfiguration && !ctx.globalState.get('legacyNotificationDismissed')) {
-			return 'legacy';
-		}
-
 		// Only recommend configuring the extension on install and update
-		const configured = !!this.accessToken;
-		if (version != storedVersion && !configured) {
+		if (!isDisabledForWorkspace && version != storedVersion && !this.isConfigured()) {
 			return 'unconfigured';
 		}
 	}
 
+	isConfigured(): boolean {
+		return !!this.accessToken && !!this.project && !!this.env;
+	}
+
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
+	}
+
+	validateRefreshInterval(interval: number): boolean {
+		return 0 <= interval && interval <= 1440;
 	}
 }

@@ -2,8 +2,7 @@ import * as rp from 'request-promise-native';
 import * as url from 'url';
 
 import { Configuration } from './configuration';
-import { Resource, Project, Environment, FeatureFlag } from './models';
-
+import { Resource, Project, Environment, FeatureFlag, PatchOperation, PatchComment } from './models';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PACKAGE_JSON = require('../package.json');
 
@@ -48,21 +47,51 @@ export class LaunchDarklyAPI {
 
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
 		const envParam = envKey ? 'env=' + envKey : '';
-		const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=false&sort=name`);
+		const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=true&sort=name`);
 		const data = await rp(options);
 		const flags = JSON.parse(data).items;
 		return flags;
 	}
 
-	private createOptions(path: string, method = 'GET') {
+	async patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag | Error> {
+		try {
+			const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value);
+			const data = await rp(options);
+			return new FeatureFlag(JSON.parse(data));
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	async patchFeatureFlagOn(projectKey: string, flagKey: string, enabled: boolean): Promise<FeatureFlag | Error> {
+		try {
+			const patch = new PatchOperation();
+			patch.path = `/environments/${this.config.env}/on`;
+			patch.op = 'replace';
+			patch.value = enabled;
+			const patchOp = new PatchComment();
+			patchOp.comment = 'VS Code Updated';
+			patchOp.patch = [patch];
+			return this.patchFeatureFlag(projectKey, flagKey, patchOp);
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	private createOptions(path: string, method = 'GET', body?: PatchComment) {
 		const options = {
 			method: method,
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
 			headers: {
 				Authorization: this.config.accessToken,
-				UserAgent: 'VSCodeExtension/' + PACKAGE_JSON.version,
+				'User-Agent': 'VSCodeExtension/' + PACKAGE_JSON.version,
 			},
 		};
+
+		if (body) {
+			options.headers['content-type'] = 'application/json';
+			options['body'] = [JSON.stringify(body)];
+		}
 
 		return options;
 	}

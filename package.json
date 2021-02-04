@@ -1,11 +1,11 @@
 {
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
-	"description": "View LaunchDarkly feature flags in your editor.",
-	"version": "2.3.0",
-	"publisher": "launchdarkly",
+	"description": "Manage LaunchDarkly feature flags directly from within your code",
+	"version": "3.0.0",
+	"publisher": "launchdarklyofficial",
 	"engines": {
-		"vscode": "^1.45.0"
+		"vscode": "^1.52.0"
 	},
 	"repository": "https://github.com/launchdarkly/ld-vscode",
 	"categories": [
@@ -25,22 +25,22 @@
 				"launchdarkly.project": {
 					"type": "string",
 					"default": "",
-					"description": "LaunchDarkly project key"
+					"markdownDescription": "Your LaunchDarkly project key. [More information](https://docs.launchdarkly.com/home/managing-flags/projects)."
 				},
 				"launchdarkly.env": {
 					"type": "string",
 					"default": "",
-					"description": "LaunchDarkly environment key"
+					"markdownDescription": "Your LaunchDarkly environment key. [More information](https://docs.launchdarkly.com/home/managing-flags/environments)"
 				},
 				"launchdarkly.baseUri": {
 					"type": "string",
 					"default": "https://app.launchdarkly.com",
-					"description": "LaunchDarkly base uri"
+					"description": "LaunchDarkly base URI. Change only if you are using the Relay Proxy. [More information](https://docs.launchdarkly.com/home/advanced/relay-proxy/using)"
 				},
 				"launchdarkly.streamUri": {
 					"type": "string",
 					"default": "https://stream.launchdarkly.com",
-					"description": "LaunchDarkly stream uri"
+					"markdownDescription": "LaunchDarkly stream URI. Change only if you are using the Relay Proxy. [More information](https://docs.launchdarkly.com/home/advanced/relay-proxy/using)"
 				},
 				"launchdarkly.enableHover": {
 					"type": "boolean",
@@ -55,17 +55,26 @@
 				"launchdarkly.enableFlagExplorer": {
 					"type": "boolean",
 					"default": true,
-					"description": "Enable flag explorer"
+					"description": "Enable feature flag explorer in your sidebar"
 				},
-				"launchdarkly.accessToken": {
-					"type": "string",
-					"default": "",
-					"description": "LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
+				"launchdarkly.refreshRate": {
+					"type": "number",
+					"default": 120,
+					"description": "How often in minutes to refresh feature flag metadata via API. If `0` global flag metadata does not update. Max is 1440 (1 Day)."
 				},
-				"launchdarkly.sdkKey": {
-					"type": "string",
-					"default": "",
-					"description": "LaunchDarkly SDK key. OBSOLETE: Run the 'LaunchDarkly: Configure' command instead."
+				"launchdarkly.enableAliases": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Enable reading in flag aliases via [Code References](https://docs.launchdarkly.com/integrations/code-references). As of v3 of this extension, Code References is bundled with this extension."
+				},
+				"launchdarkly.codeRefsRefreshRate": {
+					"type": "number",
+					"default": 240,
+					"description": "How often in minutes to refresh feature flag metadata via API. If `0` code references does not update. Max is 1440 (1 Day)."
+				},
+				"launchdarkly.enableCodeLens": {
+					"type": "boolean",
+					"default": false
 				}
 			}
 		},
@@ -73,15 +82,24 @@
 			{
 				"command": "extension.openInLaunchDarkly",
 				"title": "LaunchDarkly: Open in LaunchDarkly",
-				"when": "editorTextFocus"
+				"when": "LDFlagToggle"
+			},
+			{
+				"command": "launchdarkly.toggleFlagContext",
+				"title": "LaunchDarkly: Toggle Flag",
+				"when": "LDFlagToggle"
 			},
 			{
 				"command": "extension.configureLaunchDarkly",
-				"title": "LaunchDarkly: Configure"
+				"title": "LaunchDarkly: Configure settings",
+				"icon": {
+					"light": "resources/light/settings.svg",
+					"dark": "resources/dark/settings.svg"
+				}
 			},
 			{
 				"command": "launchdarkly.refreshEntry",
-				"title": "LaunchDarkly: Refresh Feature Flags",
+				"title": "Refresh feature flags",
 				"icon": {
 					"light": "resources/light/refresh.svg",
 					"dark": "resources/dark/refresh.svg"
@@ -89,22 +107,42 @@
 			},
 			{
 				"command": "launchdarkly.copyKey",
-				"title": "LaunchDarkly: Copy Key to Clipboard",
+				"title": "Copy flag key",
 				"icon": {
-					"light": "resources/light/files.svg",
-					"dark": "resources/dark/files.svg"
+					"light": "resources/light/clippy.svg",
+					"dark": "resources/dark/clippy.svg"
 				}
 			},
 			{
+				"command": "launchdarkly.toggleFlag",
+				"title": "Toggle Flag"
+			},
+			{
+				"command": "launchdarkly.fallthroughChange",
+				"title": "Change Fallthrough Variation"
+			},
+			{
+				"command": "launchdarkly.offChange",
+				"title": "Change Off Variation"
+			},
+			{
 				"command": "launchdarkly.treeviewrefresh",
-				"title": "LaunchDarkly Toggle Treeview"
+				"title": "Toggle treeview"
 			},
 			{
 				"command": "launchdarkly.openBrowser",
-				"title": "LD: Open in Browser",
+				"title": "Open in LaunchDarkly",
 				"icon": {
-					"light": "resources/light/link_external.svg",
-					"dark": "resources/dark/link_external.svg"
+					"light": "resources/light/link-external.svg",
+					"dark": "resources/dark/link-external.svg"
+				}
+			},
+			{
+				"command": "launchdarkly.flagMultipleSearch",
+				"title": "Search Flag References",
+				"icon": {
+					"light": "resources/light/flagMultipleSearch.svg",
+					"dark": "resources/dark/flagMultipleSearch.svg"
 				}
 			}
 		],
@@ -125,13 +163,23 @@
 				{
 					"command": "launchdarkly.treeviewrefresh",
 					"when": "false"
+				},
+				{
+					"command": "launchdarkly.flagMultipleSearch",
+					"when": "false"
 				}
 			],
 			"editor/context": [
 				{
 					"command": "extension.openInLaunchDarkly",
-					"when": "editorTextFocus",
+					"when": "LDFlagToggle",
 					"group": "LaunchDarkly"
+				},
+				{
+					"command": "launchdarkly.toggleFlagContext",
+					"args": "${LDFlagToggle}",
+					"when": "LDFlagToggle",
+					"group": "LaunchDarkly@1"
 				}
 			],
 			"view/title": [
@@ -139,18 +187,52 @@
 					"command": "launchdarkly.refreshEntry",
 					"when": "view == launchdarklyFeatureFlags",
 					"group": "navigation"
+				},
+				{
+					"command": "extension.configureLaunchDarkly",
+					"when": "!!config.accessToken && !!config.project && !!config.env",
+					"group": "navigation"
 				}
 			],
 			"view/item/context": [
 				{
 					"command": "launchdarkly.copyKey",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewKey",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
 					"group": "inline"
 				},
 				{
 					"command": "launchdarkly.openBrowser",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
 					"group": "inline"
+				},
+				{
+					"command": "launchdarkly.flagMultipleSearch",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
+					"group": "inline"
+				},
+				{
+					"command": "launchdarkly.toggleFlag",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem"
+				},
+				{
+					"command": "launchdarkly.fallthroughChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == variationDefault"
+				},
+				{
+					"command": "launchdarkly.fallthroughChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == rollout"
+				},
+				{
+					"command": "launchdarkly.offChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == variationOff"
+				},
+				{
+					"command": "launchdarkly.fallthroughChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem"
+				},
+				{
+					"command": "launchdarkly.offChange",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem"
 				}
 			]
 		},
@@ -166,48 +248,72 @@
 			"explorer": [
 				{
 					"id": "launchdarklyFeatureFlags",
-					"name": "LaunchDarkly Feature Flags",
+					"name": "LaunchDarkly",
 					"when": "launchdarkly:enableFlagExplorer"
 				}
 			]
-		}
+		},
+		"viewsWelcome": [
+			{
+				"view": "launchdarklyFeatureFlags",
+				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension."
+			}
+		]
+	},
+	"galleryBanner": {
+    "color": "#C80000",
+    "theme": "dark"
+  },
+	"homepage": "https://docs.launchdarkly.com/integrations/vscode",
+  "bugs": {
+    "url": "https://github.com/launchdarkly/ld-vscode/issues"
 	},
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
 		"compile": "webpack --mode none",
 		"watch": "webpack --mode none --watch --info-verbosity verbose",
-		"test-compile": "tsc -p ./ && cp ./package.json ./out/package.json",
-		"test": "yarn run test-compile && node ./out/test/runTest.js",
-    "lint": "eslint . --ext .ts",
+		"pretest": "tsc -p ./ && cp ./package.json ./out/package.json",
+		"test": "node ./out/test/runTest.js",
+		"lint": "npx eslint . --ext .ts",
+		"lint:fix": "npx eslint . --fix --ext .ts",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,tests}/**/*.ts\"",
-		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\""
+		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\"",
+		"prepare-beta": "node build/prepare-beta.js"
 	},
 	"devDependencies": {
 		"@types/mocha": "^2.2.32",
 		"@types/node": "^6.0.40",
-		"@types/vscode": "1.45.0",
+		"@types/vscode": "1.52.0",
 		"@typescript-eslint/eslint-plugin": "3.5.0",
 		"@typescript-eslint/parser": "3.5.0",
 		"eslint": "7.3.1",
+		"expect": "26.6.2",
+		"expect-mocha-snapshot": "2.0.1",
 		"glob": "7.1.6",
 		"mocha": "5.2.0",
 		"prettier": "^1.5.3",
 		"pretty-error": "^2.1.1",
 		"ts-loader": "6.0.4",
-		"typescript": "^2.4.2",
-		"vscode-test": "1.3.0",
+		"ts-mockito": "2.6.1",
+		"typescript": "^4.1.3",
+		"vscode-test": "1.4.1",
 		"webpack": "4.35.0",
 		"webpack-cli": "3.3.5"
 	},
 	"dependencies": {
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
+		"csv-parser": "^2.3.3",
+		"gunzip-maybe": "^1.4.2",
 		"launchdarkly-node-server-sdk": "^5.13.1",
+		"lodash": "^4.17.12",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
 		"opn": "5.3.0",
 		"request": "^2.34",
-		"request-promise-native": "1.0.8"
+		"request-promise-native": "1.0.8",
+		"rimraf": "^3.0.2",
+		"tar-fs": "^2.1.1"
 	},
 	"resolutions": {
 		"node.extend": "^1.1.7",
