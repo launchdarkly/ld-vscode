@@ -244,9 +244,14 @@ export class FlagStore {
 					errMsg = `Project does not exist`;
 				} else if (err.statusCode == 401) {
 					errMsg = `Unauthorized`;
+				} else if (err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
+					// We know the domain should exist.
+					console.log(err); // Still want to log that this is happening
+					return;
 				} else {
 					errMsg = err.message;
 				}
+				console.log(`${err}`);
 				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 			}
 		},
