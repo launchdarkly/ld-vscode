@@ -15,15 +15,21 @@ let flagStore: FlagStore;
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	config = new Configuration(ctx);
 	const validationError = config.validate();
+	const configuredOnce = ctx.globalState.get("LDConfigured")
 	switch (validationError) {
 		case 'unconfigured':
-			window
-				.showInformationMessage('To enable the LaunchDarkly extension, select your desired environment.', 'Configure')
-				.then(item => {
-					item === 'Configure'
-						? commands.executeCommand('extension.configureLaunchDarkly')
-						: ctx.workspaceState.update('isDisabledForWorkspace', true);
-				});
+			if (window.activeTextEditor !== undefined && configuredOnce !== true) {
+				window
+					.showInformationMessage(
+						`To enable the LaunchDarkly extension, select your desired environment. If this message is dismissed, LaunchDarkly will be disabled for the workspace`,
+						'Configure',
+					)
+					.then(item => {
+						item === 'Configure'
+							? commands.executeCommand('extension.configureLaunchDarkly')
+							: ctx.workspaceState.update('isDisabledForWorkspace', true);
+					});
+			}
 			break;
 		case 'legacy':
 			window
