@@ -48,7 +48,7 @@ export class ConfigurationMenu {
 		const existingTokenName = 'Use the existing access token';
 		const options = [
 			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
-			{ name: 'Enter a new access token' }
+			{ name: 'Enter a new access token' },
 		].map(this.createQuickPickItem);
 
 		const pick = await input.showQuickPick({
@@ -182,7 +182,7 @@ export class ConfigurationMenu {
 	async configure() {
 		await this.collectInputs();
 		['accessToken', 'project', 'env'].forEach(async option => {
-			console.log(option)
+			console.log(option);
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
 	}

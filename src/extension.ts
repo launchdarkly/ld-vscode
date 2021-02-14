@@ -15,7 +15,7 @@ let flagStore: FlagStore;
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	config = new Configuration(ctx);
 	const validationError = config.validate();
-	const configuredOnce = ctx.globalState.get("LDConfigured")
+	const configuredOnce = ctx.globalState.get('LDConfigured');
 	switch (validationError) {
 		case 'unconfigured':
 			if (window.activeTextEditor !== undefined && configuredOnce !== true) {
