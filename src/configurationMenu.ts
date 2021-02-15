@@ -182,7 +182,6 @@ export class ConfigurationMenu {
 	async configure() {
 		await this.collectInputs();
 		['accessToken', 'project', 'env'].forEach(async option => {
-			console.log(option);
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
 	}

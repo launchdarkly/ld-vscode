@@ -198,6 +198,9 @@ export class FlagStore {
 	}
 
 	getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
+		if (this.flagMetadata === undefined) {
+			return null
+		}
 		let flag = this.flagMetadata[key];
 		return new Promise((resolve, reject) => {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
