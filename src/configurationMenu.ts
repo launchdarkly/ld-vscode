@@ -47,8 +47,8 @@ export class ConfigurationMenu {
 	async pickCurrentOrNewAccessToken(input: MultiStepInput) {
 		const existingTokenName = 'Use the existing access token';
 		const options = [
-			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
 			{ name: 'Enter a new access token' },
+			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
 		].map(this.createQuickPickItem);
 
 		const pick = await input.showQuickPick({
@@ -152,8 +152,8 @@ export class ConfigurationMenu {
 	async pickStorageType(input: MultiStepInput) {
 		const allWorkspacesName = 'All workspaces';
 		const storageOptions = [
-			{ name: 'This workspace', key: workspace.name },
 			{ name: allWorkspacesName, key: 'Workspace-specific configurations will take precedence' },
+			{ name: 'This workspace', key: workspace.name },
 		].map(this.createQuickPickItem);
 
 		const pick = await input.showQuickPick({
@@ -181,7 +181,7 @@ export class ConfigurationMenu {
 
 	async configure() {
 		await this.collectInputs();
-		['project', 'env'].forEach(async option => {
+		['accessToken', 'project', 'env'].forEach(async option => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
 	}
