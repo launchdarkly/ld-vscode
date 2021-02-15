@@ -135,7 +135,7 @@ export async function register(
 						}
 					}
 				}
-				console.error(`Providers ${err}`);
+				console.error(`${err}`);
 				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 			}
 		}),
