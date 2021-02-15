@@ -199,7 +199,7 @@ export class FlagStore {
 
 	getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
 		if (this.flagMetadata === undefined) {
-			return null
+			return null;
 		}
 		let flag = this.flagMetadata[key];
 		return new Promise((resolve, reject) => {
