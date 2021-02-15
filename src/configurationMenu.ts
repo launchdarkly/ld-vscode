@@ -47,8 +47,8 @@ export class ConfigurationMenu {
 	async pickCurrentOrNewAccessToken(input: MultiStepInput) {
 		const existingTokenName = 'Use the existing access token';
 		const options = [
-			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
 			{ name: 'Enter a new access token' },
+			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
 		].map(this.createQuickPickItem);
 
 		const pick = await input.showQuickPick({
