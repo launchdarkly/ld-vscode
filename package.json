@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "3.0.2",
+	"version": "3.0.3",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.52.0"
@@ -14,7 +14,7 @@
 	"icon": "images/launchdarkly.png",
 	"license": "SEE LICENSE IN LICENSE.txt",
 	"activationEvents": [
-		"*"
+		"onStartupFinished"
 	],
 	"main": "./dist/extension",
 	"contributes": {
@@ -75,6 +75,11 @@
 				"launchdarkly.enableCodeLens": {
 					"type": "boolean",
 					"default": false
+				},
+				"launchdarkly.accessToken": {
+					"type": "string",
+					"default": "",
+					"description": "LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
 				}
 			}
 		},

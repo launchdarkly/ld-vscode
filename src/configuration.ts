@@ -49,7 +49,6 @@ export class Configuration {
 		if (key === 'accessToken') {
 			const ctxState = global ? this.ctx.globalState : this.ctx.workspaceState;
 			await ctxState.update(key, value);
-			await config.update(key, '', global);
 			return;
 		}
 		await config.update(key, value, global);

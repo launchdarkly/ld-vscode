@@ -73,7 +73,7 @@ export async function register(
 					await flagStore.reload();
 					commands.executeCommand('launchdarkly.refreshEntry');
 				}
-
+				await ctx.globalState.update('LDConfigured', true);
 				window.showInformationMessage('LaunchDarkly configured successfully');
 			} catch (err) {
 				console.error(err);
@@ -135,7 +135,7 @@ export async function register(
 						}
 					}
 				}
-				console.error(err);
+				console.error(`${err}`);
 				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 			}
 		}),
