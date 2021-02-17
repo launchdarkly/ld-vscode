@@ -123,7 +123,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				if (this.aliases) {
 					aliases = this.aliases.getKeys();
 				}
-				if (aliases[node.flagKey]) {
+				if (aliases && aliases[node.flagKey]) {
 					const tempSearch = [...aliases[node.flagKey]];
 					tempSearch.push(node.flagKey);
 					findAliases = tempSearch.join('|');
