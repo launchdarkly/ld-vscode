@@ -98,8 +98,25 @@ export class Configuration {
 		return !!this.accessToken && !!this.project && !!this.env;
 	}
 
+	localIsConfigured(): boolean {
+		const config = workspace.getConfiguration('launchdarkly');
+
+		return !!this.ctx.workspaceState.get("accessToken") || !!config.get("project") || !!config.get("env");
+	}
+
+	async clearLocalConfig(): Promise<void> {
+		const config = workspace.getConfiguration('launchdarkly');
+		await this.ctx.workspaceState.update(this.accessToken, undefined);
+		await config.update("project", undefined)
+		await config.update("env", undefined)
+	}
+
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
+	}
+
+	getLocalState(key: string): string {
+		return this.ctx.workspaceState.get(key);
 	}
 
 	validateRefreshInterval(interval: number): boolean {

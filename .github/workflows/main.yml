@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, beta ]
+    branches: [ beta ]
+  release:
+    types: [ released ]
   workflow_dispatch:
 
 jobs:
