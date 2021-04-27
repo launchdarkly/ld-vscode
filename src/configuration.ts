@@ -108,15 +108,20 @@ export class Configuration {
 		await this.ctx.workspaceState.update("accessToken", undefined);
 		await config.update("project", undefined, ConfigurationTarget.Workspace)
 		await config.update("env", undefined, ConfigurationTarget.Workspace)
+
+	}
+
+	async clearGlobalConfig(): Promise<void> {
+		const config = workspace.getConfiguration('launchdarkly');
+		await this.ctx.globalState.update("accessToken", undefined);
+		await config.update("project", undefined, ConfigurationTarget.Global)
+		await config.update("env", undefined, ConfigurationTarget.Global)
 	}
 
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
 	}
 
-	getLocalState(key: string): string {
-		return this.ctx.workspaceState.get(key);
-	}
 
 	validateRefreshInterval(interval: number): boolean {
 		return 0 <= interval && interval <= 1440;

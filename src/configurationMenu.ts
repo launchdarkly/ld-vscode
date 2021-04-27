@@ -97,9 +97,7 @@ export class ConfigurationMenu {
 			this.updateAPI();
 			await this.api.getAccount();
 
-			if (workspace.name) {
-				return (input: MultiStepInput) => this.inputAccessToken(input);
-			}
+			return (input: MultiStepInput) => this.pickStorageType(input);
 
 			this.useGlobalState = true;
 		} catch (err) {
