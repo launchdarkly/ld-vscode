@@ -1,4 +1,4 @@
-import { WorkspaceConfiguration, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
+import { WorkspaceConfiguration, workspace, ExtensionContext, ConfigurationChangeEvent, ConfigurationTarget, window } from 'vscode';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const package_json = require('../package.json');
@@ -100,15 +100,14 @@ export class Configuration {
 
 	localIsConfigured(): boolean {
 		const config = workspace.getConfiguration('launchdarkly');
-
-		return !!this.ctx.workspaceState.get("accessToken") || !!config.get("project") || !!config.get("env");
+		return !!this.ctx.workspaceState.get("accessToken") || !!config.inspect("project").workspaceValue || !!config.inspect("env").workspaceValue;
 	}
 
 	async clearLocalConfig(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
-		await this.ctx.workspaceState.update(this.accessToken, undefined);
-		await config.update("project", undefined)
-		await config.update("env", undefined)
+		await this.ctx.workspaceState.update("accessToken", undefined);
+		await config.update("project", undefined, ConfigurationTarget.Workspace)
+		await config.update("env", undefined, ConfigurationTarget.Workspace)
 	}
 
 	getState(key: string): string {

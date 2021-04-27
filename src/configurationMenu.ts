@@ -46,23 +46,35 @@ export class ConfigurationMenu {
 
 	async pickCurrentOrNewAccessToken(input: MultiStepInput) {
 		const existingTokenName = 'Use the existing access token';
+		const clearOverrides = 'Clear Workspace Specific Configurations'
 		const options = [
 			{ name: 'Enter a new access token' },
 			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
-		].map(this.createQuickPickItem);
+		]
+		if (this.config.localIsConfigured()) {
+			options.push({ name: clearOverrides, key: 'clear overrides'})
+		}
+
+		const selectionOptions = options.map(this.createQuickPickItem);
 
 		const pick = await input.showQuickPick({
 			title: this.title,
 			step: 1,
 			totalSteps: this.totalSteps,
 			placeholder: 'Use your existing LaunchDarkly access token, or enter a new one.',
-			items: options,
+			items: selectionOptions,
 			shouldResume: this.shouldResume,
 		});
 
 		if (pick.label === existingTokenName) {
 			this.accessToken = this.currentAccessToken;
 			this.invalidAccessToken = '';
+			return (input: MultiStepInput) => this.pickStorageType(input);
+		}
+
+		if (pick.label === clearOverrides) {
+			await this.config.clearLocalConfig()
+			this.config.reload()
 			return (input: MultiStepInput) => this.pickStorageType(input);
 		}
 
@@ -86,7 +98,7 @@ export class ConfigurationMenu {
 			await this.api.getAccount();
 
 			if (workspace.name) {
-				return (input: MultiStepInput) => this.pickStorageType(input);
+				return (input: MultiStepInput) => this.inputAccessToken(input);
 			}
 
 			this.useGlobalState = true;
@@ -150,30 +162,19 @@ export class ConfigurationMenu {
 
 	async pickStorageType(input: MultiStepInput) {
 		const allWorkspacesName = 'All workspaces';
-		const clearOverrides = 'Clear Workspace Specific Configurations'
 		const storageOptions = [
 			{ name: allWorkspacesName, key: 'Workspace-specific configurations will take precedence' },
 			{ name: 'This workspace', key: workspace.name },
-		]
-		if (this.config.localIsConfigured()) {
-			storageOptions.push({ name: clearOverrides, key: 'clear overrides'})
-		}
-		const selectOptions = storageOptions.map(this.createQuickPickItem);
+		].map(this.createQuickPickItem);
 
 		const pick = await input.showQuickPick({
 			title: this.title,
 			step: 2,
 			totalSteps: this.totalSteps,
 			placeholder: 'Pick a configuration type',
-			items: selectOptions,
+			items: storageOptions,
 			shouldResume: this.shouldResume,
 		});
-
-		if (pick.label === clearOverrides) {
-			await this.config.clearLocalConfig()
-			this.config.reload()
-			return (input: MultiStepInput) => this.pickStorageType(input);
-		}
 
 		this.useGlobalState = pick.label == allWorkspacesName ? true : false;
 		return (input: MultiStepInput) => this.pickProject(input);
@@ -193,7 +194,6 @@ export class ConfigurationMenu {
 
 	async configure() {
 		await this.collectInputs();
-
 		['accessToken', 'project', 'env'].forEach(async option => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
