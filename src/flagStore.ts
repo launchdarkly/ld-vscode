@@ -68,6 +68,10 @@ export class FlagStore {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagMetadata = keyBy(flags, 'key');
 			const sdkKey = await this.getLatestSDKKey();
+			console.log(`Key being used: ${sdkKey}`)
+			if (sdkKey === "") {
+				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
+			}
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
@@ -117,6 +121,7 @@ export class FlagStore {
 				}
 			});
 		} catch (err) {
+			window.showErrorMessage("Failed to setup LaunchDarkly client")
 			this.rejectLDClient();
 			console.error(err);
 		}
