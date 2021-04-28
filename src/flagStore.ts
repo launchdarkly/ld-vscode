@@ -69,7 +69,7 @@ export class FlagStore {
 			this.flagMetadata = keyBy(flags, 'key');
 			const sdkKey = await this.getLatestSDKKey();
 			console.log(`Key being used: ${sdkKey}`)
-			if (sdkKey === "") {
+			if (sdkKey === "" || !sdkKey.startsWith("sdk-")) {
 				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
 			}
 			const ldConfig = this.ldConfig();
