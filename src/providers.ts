@@ -76,7 +76,7 @@ export async function register(
 				await ctx.globalState.update('LDConfigured', true);
 				window.showInformationMessage('LaunchDarkly configured successfully');
 			} catch (err) {
-				console.error(err);
+				console.error(`Failed configuring LaunchDarkly Extension(provider): ${err}`);
 				window.showErrorMessage('An unexpected error occurred, please try again later.');
 			}
 		}),
@@ -135,8 +135,17 @@ export async function register(
 						}
 					}
 				}
-				console.error(`${err}`);
+				console.error(`Failed opening browser: ${err}`);
 				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+			}
+		}),
+		commands.registerCommand('launchdarkly.clearGlobalContext', async () => {
+			try {
+				await config.clearGlobalConfig()
+				window.showInformationMessage('LaunchDarkly global settings removed');
+			} catch (err) {
+				console.error(`Failed clearing global context: ${err}`);
+				window.showErrorMessage('An unexpected error occurred, please try again later.');
 			}
 		}),
 	);

@@ -123,7 +123,7 @@ export class FlagStore {
 		} catch (err) {
 			window.showErrorMessage("Failed to setup LaunchDarkly client")
 			this.rejectLDClient();
-			console.error(err);
+			console.error(`Failed to setup client: ${err}`);
 		}
 	}
 
@@ -237,7 +237,31 @@ export class FlagStore {
 
 	async allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
 		await this.ldClient; // Just waiting for initialization to complete, don't actually need the client
-		return this.flagMetadata;
+		if (this.flagMetadata === undefined) {
+			try {
+				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				this.flagMetadata = keyBy(flags, 'key');
+				this.storeUpdates.fire(true);
+				return this.flagMetadata
+			} catch (err) {
+				let errMsg;
+				if (err.statusCode == 404) {
+					errMsg = `Project does not exist`;
+				} else if (err.statusCode == 401) {
+					errMsg = `Unauthorized`;
+				} else if (err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
+					// We know the domain should exist.
+					console.log(err); // Still want to log that this is happening
+					return;
+				} else {
+					errMsg = err.message;
+				}
+				console.log(`${err}`);
+				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+			}
+		} else {
+			return this.flagMetadata
+		}
 	}
 
 	private readonly debounceUpdate = debounce(

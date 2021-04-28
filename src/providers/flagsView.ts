@@ -56,7 +56,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				await this.flagUpdateListener();
 				this.refresh();
 			} catch (err) {
-				console.error(err);
+				console.error(`Failed reloading Flagview: ${err}`);
 			}
 		},
 		200,
@@ -91,7 +91,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			});
 			this.flagNodes = nodes;
 		} catch (err) {
-			console.error(err);
+			console.error(`Failed getting flags: ${err}`);
 			const message = `Error retrieving Flags: ${err}`;
 			this.flagNodes = [new FlagParentNode(this.ctx, message, message, null, NON_COLLAPSED)];
 		}
