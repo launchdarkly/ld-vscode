@@ -309,7 +309,7 @@
 		"@types/opn": "5.1.0",
 		"csv-parser": "^2.3.3",
 		"gunzip-maybe": "^1.4.2",
-		"launchdarkly-node-server-sdk": "^5.13.1",
+		"launchdarkly-node-server-sdk": "^5.13.5",
 		"lodash": "^4.17.12",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",

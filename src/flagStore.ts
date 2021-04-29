@@ -36,7 +36,7 @@ export class FlagStore {
 		this.config = config;
 		this.api = api;
 		this.store = InMemoryFeatureStore();
-		this.start();
+		this.reload();
 	}
 
 	async reload(e?: ConfigurationChangeEvent): Promise<void> {

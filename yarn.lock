@@ -2930,21 +2930,21 @@ kuler@^2.0.0:
   resolved "https://registry.yarnpkg.com/kuler/-/kuler-2.0.0.tgz#e2c570a3800388fb44407e851531c1d670b061b3"
   integrity sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==
 
-launchdarkly-eventsource@1.3.1:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/launchdarkly-eventsource/-/launchdarkly-eventsource-1.3.1.tgz#d5b64e805cf9753813de0f3e8027f6ffd1f73b97"
-  integrity sha512-wLgGRMV+aZIF5HrLZ+LO+YxYI52WB3ZdKrXOqcGpi4+/1r3tl7XhGceYvl751PL+clIZ0zFN+bQP4jh93cPXrg==
+launchdarkly-eventsource@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/launchdarkly-eventsource/-/launchdarkly-eventsource-1.4.0.tgz#ea27448d35b8c5b7da3dbf871fe3c3f0d4772d5e"
+  integrity sha512-NhyafaXyX2EuO8fDlQORY51eeDx0w5TJWVNqbjDc+3N69grj0zt9FYf8TE+KoFPL1IoxZMLq9mmPvhtBtpfSSQ==
   dependencies:
     original "^1.0.0"
 
-launchdarkly-node-server-sdk@^5.13.1:
-  version "5.13.4"
-  resolved "https://registry.yarnpkg.com/launchdarkly-node-server-sdk/-/launchdarkly-node-server-sdk-5.13.4.tgz#e142112b89da5a8f1ced0d7f86514c7daba66161"
-  integrity sha512-OJHJBCnrxDsWvV6NGO0NIVmMqXvdgbqDwAj5/QZTVkUutZQROjxDIc4/7TptGSTUA3gW7ZvaPe7deWHTIQuBng==
+launchdarkly-node-server-sdk@^5.13.5:
+  version "5.14.3"
+  resolved "https://registry.yarnpkg.com/launchdarkly-node-server-sdk/-/launchdarkly-node-server-sdk-5.14.3.tgz#ac099043ceecd5102c140d8d6dce15457bbc2f4e"
+  integrity sha512-VU8g3tssepP7l87GURdjzepHFF9PGnG6l7jQyQQs9Yw6v5R270S0XjE67r0w+v8v+SmZ4pjVOCSuYDJPQ04fPQ==
   dependencies:
     "@types/redis" "^2.8.18"
     async "^3.1.0"
-    launchdarkly-eventsource "1.3.1"
+    launchdarkly-eventsource "1.4.0"
     lrucache "^1.0.3"
     node-cache "^4.2.0"
     redis "^3.0.2"
