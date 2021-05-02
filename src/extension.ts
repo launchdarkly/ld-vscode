@@ -51,17 +51,6 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 		flagStore = new FlagStore(config, api);
 	}
 
-	// Handle manual changes to extension configuration
-	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
-		if (e.affectsConfiguration('launchdarkly')) {
-			await config.reload();
-			if (!flagStore) {
-				const newApi = new LaunchDarklyAPI(config);
-				flagStore = new FlagStore(config, newApi);
-			}
-			await flagStore.reload(e);
-		}
-	});
 	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}`;
 	// Check to see if coderefs is already installed. Need more logic if specific config path is set.
 	if (config.enableAliases) {

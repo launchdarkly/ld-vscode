@@ -10,6 +10,8 @@ import {
 	Position,
 	Range,
 	TextDocument,
+	workspace,
+	ConfigurationChangeEvent,
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
@@ -37,7 +39,7 @@ export async function register(
 	api: LaunchDarklyAPI,
 ): Promise<void> {
 	let aliases;
-
+	let flagView
 	if (typeof flagStore !== 'undefined') {
 		if (config.enableAliases) {
 			aliases = new FlagAliases(config, ctx);
@@ -49,7 +51,7 @@ export async function register(
 			}
 		}
 
-		const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
+		flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 	}
 	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
@@ -66,12 +68,12 @@ export async function register(
 				await configurationMenu.configure();
 				if (typeof flagStore === 'undefined') {
 					flagStore = new FlagStore(config, api);
-					const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
+					flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
 					window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 					await flagView.reload();
 				} else {
 					await flagStore.reload();
-					commands.executeCommand('launchdarkly.refreshEntry');
+					await flagView.reload()
 				}
 				await ctx.globalState.update('LDConfigured', true);
 				window.showInformationMessage('LaunchDarkly configured successfully');
@@ -149,6 +151,18 @@ export async function register(
 			}
 		}),
 	);
+		// Handle manual changes to extension configuration
+		workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
+			if (e.affectsConfiguration('launchdarkly')) {
+				await config.reload();
+				if (!flagStore) {
+					const newApi = new LaunchDarklyAPI(config);
+					flagStore = new FlagStore(config, newApi);
+				}
+				await flagStore.reload(e);
+				await flagView.reload(e);
+			}
+		});
 }
 
 class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {

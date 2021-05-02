@@ -37,7 +37,7 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 		commands.executeCommand('setContext', 'LDFlagToggle', '');
 		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
-			if (this.config.enableHover) {
+			if (this.config.enableHover && this.flagStore) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let aliases;
 				let foundAlias = [];
@@ -48,6 +48,8 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 						const aliasArr = [...aliasKeys].filter(element => element !== '');
 						foundAlias = aliasArr.filter(element => candidate.includes(element));
 					}
+				} else {
+					aliases = []
 				}
 				try {
 					const data =

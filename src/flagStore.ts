@@ -103,14 +103,16 @@ export class FlagStore {
 			window.onDidChangeWindowState(async e => {
 				const ldClient = await this.ldClient;
 				if (e.focused) {
-					if (typeof this.offlineTimer !== 'undefined') {
-						clearTimeout(this.offlineTimer);
-						this.offlineTimerSet = false;
-					}
-					if (this.offlineTimer) {
+					if (this.offlineTimerSet) {
 						await this.reload();
 						this.offlineTimerSet = false;
 					}
+					if (typeof this.offlineTimer !== 'undefined') {
+						clearTimeout(this.offlineTimer);
+						delete this.offlineTimer
+						this.offlineTimerSet = false;
+					}
+
 				} else {
 					if (typeof this.offlineTimer === 'undefined') {
 						this.offlineTimer = setTimeout(async () => {
@@ -165,6 +167,7 @@ export class FlagStore {
 			const ldClient = await this.ldClient;
 			ldClient.close();
 		} catch {
+			//console.log("client already rejected.")
 			// ldClient was rejected, nothing to do
 		}
 		this.ldClient = new Promise((resolve, reject) => {
@@ -199,6 +202,7 @@ export class FlagStore {
 			streamUri: streamUri,
 			sendEvents: false,
 			featureStore: this.store,
+			streamInitialReconnectDelay: Math.floor(Math.random() * 5) + 1
 		};
 	}
 
