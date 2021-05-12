@@ -39,7 +39,7 @@ export async function register(
 	api: LaunchDarklyAPI,
 ): Promise<void> {
 	let aliases;
-	let flagView
+	let flagView;
 	if (typeof flagStore !== 'undefined') {
 		if (config.enableAliases) {
 			aliases = new FlagAliases(config, ctx);
@@ -73,7 +73,7 @@ export async function register(
 					await flagView.reload();
 				} else {
 					await flagStore.reload();
-					await flagView.reload()
+					await flagView.reload();
 				}
 				await ctx.globalState.update('LDConfigured', true);
 				window.showInformationMessage('LaunchDarkly configured successfully');
@@ -143,7 +143,7 @@ export async function register(
 		}),
 		commands.registerCommand('launchdarkly.clearGlobalContext', async () => {
 			try {
-				await config.clearGlobalConfig()
+				await config.clearGlobalConfig();
 				window.showInformationMessage('LaunchDarkly global settings removed');
 			} catch (err) {
 				console.error(`Failed clearing global context: ${err}`);
@@ -151,18 +151,18 @@ export async function register(
 			}
 		}),
 	);
-		// Handle manual changes to extension configuration
-		workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
-			if (e.affectsConfiguration('launchdarkly')) {
-				await config.reload();
-				if (!flagStore) {
-					const newApi = new LaunchDarklyAPI(config);
-					flagStore = new FlagStore(config, newApi);
-				}
-				await flagStore.reload(e);
-				await flagView.reload(e);
+	// Handle manual changes to extension configuration
+	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
+		if (e.affectsConfiguration('launchdarkly')) {
+			await config.reload();
+			if (!flagStore) {
+				const newApi = new LaunchDarklyAPI(config);
+				flagStore = new FlagStore(config, newApi);
 			}
-		});
+			await flagStore.reload(e);
+			await flagView.reload(e);
+		}
+	});
 }
 
 class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {

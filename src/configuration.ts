@@ -1,4 +1,10 @@
-import { WorkspaceConfiguration, workspace, ExtensionContext, ConfigurationChangeEvent, ConfigurationTarget, window } from 'vscode';
+import {
+	WorkspaceConfiguration,
+	workspace,
+	ExtensionContext,
+	ConfigurationChangeEvent,
+	ConfigurationTarget,
+} from 'vscode';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const package_json = require('../package.json');
@@ -100,28 +106,30 @@ export class Configuration {
 
 	localIsConfigured(): boolean {
 		const config = workspace.getConfiguration('launchdarkly');
-		return !!this.ctx.workspaceState.get("accessToken") || !!config.inspect("project").workspaceValue || !!config.inspect("env").workspaceValue;
+		return (
+			!!this.ctx.workspaceState.get('accessToken') ||
+			!!config.inspect('project').workspaceValue ||
+			!!config.inspect('env').workspaceValue
+		);
 	}
 
 	async clearLocalConfig(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
-		await this.ctx.workspaceState.update("accessToken", undefined);
-		await config.update("project", undefined, ConfigurationTarget.Workspace)
-		await config.update("env", undefined, ConfigurationTarget.Workspace)
-
+		await this.ctx.workspaceState.update('accessToken', undefined);
+		await config.update('project', undefined, ConfigurationTarget.Workspace);
+		await config.update('env', undefined, ConfigurationTarget.Workspace);
 	}
 
 	async clearGlobalConfig(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
-		await this.ctx.globalState.update("accessToken", undefined);
-		await config.update("project", undefined, ConfigurationTarget.Global)
-		await config.update("env", undefined, ConfigurationTarget.Global)
+		await this.ctx.globalState.update('accessToken', undefined);
+		await config.update('project', undefined, ConfigurationTarget.Global);
+		await config.update('env', undefined, ConfigurationTarget.Global);
 	}
 
 	getState(key: string): string {
 		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
 	}
-
 
 	validateRefreshInterval(interval: number): boolean {
 		return 0 <= interval && interval <= 1440;

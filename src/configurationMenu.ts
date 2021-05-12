@@ -46,13 +46,13 @@ export class ConfigurationMenu {
 
 	async pickCurrentOrNewAccessToken(input: MultiStepInput) {
 		const existingTokenName = 'Use the existing access token';
-		const clearOverrides = 'Clear Workspace Specific Configurations'
+		const clearOverrides = 'Clear Workspace Specific Configurations';
 		const options = [
 			{ name: 'Enter a new access token' },
 			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
-		]
+		];
 		if (this.config.localIsConfigured()) {
-			options.push({ name: clearOverrides, key: 'clear overrides'})
+			options.push({ name: clearOverrides, key: 'clear overrides' });
 		}
 
 		const selectionOptions = options.map(this.createQuickPickItem);
@@ -73,8 +73,8 @@ export class ConfigurationMenu {
 		}
 
 		if (pick.label === clearOverrides) {
-			await this.config.clearLocalConfig()
-			this.config.reload()
+			await this.config.clearLocalConfig();
+			this.config.reload();
 			return (input: MultiStepInput) => this.pickStorageType(input);
 		}
 

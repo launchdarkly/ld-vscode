@@ -68,8 +68,7 @@ export class FlagStore {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagMetadata = keyBy(flags, 'key');
 			const sdkKey = await this.getLatestSDKKey();
-			console.log(`Key being used: ${sdkKey}`)
-			if (sdkKey === "" || !sdkKey.startsWith("sdk-")) {
+			if (sdkKey === '' || !sdkKey.startsWith('sdk-')) {
 				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
 			}
 			const ldConfig = this.ldConfig();
@@ -109,28 +108,28 @@ export class FlagStore {
 					}
 					if (typeof this.offlineTimer !== 'undefined') {
 						clearTimeout(this.offlineTimer);
-						delete this.offlineTimer
+						delete this.offlineTimer;
 						this.offlineTimerSet = false;
 					}
-
 				} else {
 					if (typeof this.offlineTimer === 'undefined') {
 						this.offlineTimer = setTimeout(async () => {
 							this.offlineTimerSet = true;
 							await ldClient.close();
-						}, 600000);
+						}, 60000);
 					}
 				}
 			});
 		} catch (err) {
-			window.showErrorMessage("Failed to setup LaunchDarkly client")
+			window.showErrorMessage('Failed to setup LaunchDarkly client');
 			this.rejectLDClient();
 			console.error(`Failed to setup client: ${err}`);
 		}
 	}
 
 	private async startGlobalFlagUpdateTask(interval: number) {
-		const ms = interval * 60 * 1000;
+		// Add jitter, if all instances are reopened as part of reboot they do not query at same time.
+		const ms = interval * 60 * 1000 + Math.floor(Math.random() * 120) + 1 * 1000;
 		setInterval(() => {
 			this.updateFlags();
 		}, ms);
@@ -202,13 +201,13 @@ export class FlagStore {
 			streamUri: streamUri,
 			sendEvents: false,
 			featureStore: this.store,
-			streamInitialReconnectDelay: Math.floor(Math.random() * 5) + 1
+			streamInitialReconnectDelay: Math.floor(Math.random() * 5) + 1,
 		};
 	}
 
-	getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
+	async getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
 		if (this.flagMetadata === undefined) {
-			return null;
+			await this.debounceUpdate();
 		}
 		let flag = this.flagMetadata[key];
 		return new Promise((resolve, reject) => {
@@ -243,10 +242,8 @@ export class FlagStore {
 		await this.ldClient; // Just waiting for initialization to complete, don't actually need the client
 		if (this.flagMetadata === undefined) {
 			try {
-				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-				this.flagMetadata = keyBy(flags, 'key');
-				this.storeUpdates.fire(true);
-				return this.flagMetadata
+				await this.debounceUpdate();
+				return this.flagMetadata;
 			} catch (err) {
 				let errMsg;
 				if (err.statusCode == 404) {
@@ -264,7 +261,7 @@ export class FlagStore {
 				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 			}
 		} else {
-			return this.flagMetadata
+			return this.flagMetadata;
 		}
 	}
 

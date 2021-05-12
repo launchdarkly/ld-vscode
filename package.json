@@ -1,8 +1,8 @@
 {
-	"name": "launchdarkly",
-	"displayName": "LaunchDarkly",
+	"name": "launchdarkly-beta",
+	"displayName": "LaunchDarkly Beta",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "3.0.4",
+	"version": "2022.1.2",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.52.0"

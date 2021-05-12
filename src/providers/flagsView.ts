@@ -284,8 +284,13 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		if (env !== null) {
 			envConfig = env;
 		} else {
-			const env = await this.flagStore.getFeatureFlag(flag.key);
-			envConfig = env.config;
+			try {
+				const env = await this.flagStore.getFeatureFlag(flag.key);
+				envConfig = env.config;
+			} catch (err) {
+				console.log(err);
+				env = new FlagConfiguration();
+			}
 		}
 
 		const item = new FlagParentNode(

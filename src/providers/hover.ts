@@ -33,10 +33,10 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 		this.ctx = ctx;
 	}
 
-	public provideHover(document: TextDocument, position: Position): Thenable<Hover> {
+	public provideHover(document: TextDocument, position: Position): Thenable<Hover | undefined> {
 		commands.executeCommand('setContext', 'LDFlagToggle', '');
 		// eslint-disable-next-line no-async-promise-executor
-		return new Promise(async (resolve, reject) => {
+		return new Promise(async resolve => {
 			if (this.config.enableHover && this.flagStore) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				let aliases;
@@ -49,13 +49,15 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 						foundAlias = aliasArr.filter(element => candidate.includes(element));
 					}
 				} else {
-					aliases = []
+					aliases = [];
 				}
 				try {
-					const data =
+					let data =
 						(await this.flagStore.getFeatureFlag(candidate)) ||
-						(await this.flagStore.getFeatureFlag(kebabCase(candidate))) ||
-						(await this.flagStore.getFeatureFlag(aliases[foundAlias[0]])); // We only match on first alias
+						(await this.flagStore.getFeatureFlag(kebabCase(candidate)));
+					if (!data && aliases && foundAlias) {
+						data = await this.flagStore.getFeatureFlag(aliases[foundAlias[0]]);
+					} // We only match on first alias
 					if (data) {
 						commands.executeCommand('setContext', 'LDFlagToggle', data.flag.key);
 						this.ctx.workspaceState.update('LDFlagKey', data.flag.key);
@@ -64,10 +66,12 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 						return;
 					}
 				} catch (e) {
-					reject(e);
+					resolve(undefined);
+					return;
 				}
 			}
-			reject();
+			resolve(undefined);
+			return;
 		});
 	}
 }
