@@ -99,6 +99,10 @@ export class FlagStore {
 					});
 				});
 			});
+			this.on("error", async (err: string) => {
+				console.log(err)
+				this.debouncedReload()
+			})
 			window.onDidChangeWindowState(async e => {
 				const ldClient = await this.ldClient;
 				if (e.focused) {
@@ -165,6 +169,7 @@ export class FlagStore {
 			this.rejectLDClient();
 			const ldClient = await this.ldClient;
 			ldClient.close();
+			delete(this.ldClient)
 		} catch {
 			//console.log("client already rejected.")
 			// ldClient was rejected, nothing to do
@@ -250,7 +255,7 @@ export class FlagStore {
 					errMsg = `Project does not exist`;
 				} else if (err.statusCode == 401) {
 					errMsg = `Unauthorized`;
-				} else if (err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
+				} else if (typeof err === 'string' && err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
 					// We know the domain should exist.
 					console.log(err); // Still want to log that this is happening
 					return;
@@ -277,14 +282,14 @@ export class FlagStore {
 					errMsg = `Project does not exist`;
 				} else if (err.statusCode == 401) {
 					errMsg = `Unauthorized`;
-				} else if (err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
+				} else if (typeof err === 'string' && err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
 					// We know the domain should exist.
 					console.log(err); // Still want to log that this is happening
 					return;
 				} else {
 					errMsg = err.message;
+					console.log(`${err}`);
 				}
-				console.log(`${err}`);
 				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 			}
 		},

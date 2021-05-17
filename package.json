@@ -1,8 +1,8 @@
 {
-	"name": "launchdarkly-beta",
-	"displayName": "LaunchDarkly Beta",
+	"name": "launchdarkly",
+	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "2022.1.2",
+	"version": "3.0.4",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.52.0"
@@ -309,8 +309,8 @@
 		"@types/opn": "5.1.0",
 		"csv-parser": "^2.3.3",
 		"gunzip-maybe": "^1.4.2",
-		"launchdarkly-node-server-sdk": "^5.14.3",
-		"lodash": "^4.17.21",
+		"launchdarkly-node-server-sdk": "^5.13.1",
+		"lodash": "^4.17.12",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
 		"opn": "5.3.0",
