@@ -68,7 +68,7 @@ export class FlagStore {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagMetadata = keyBy(flags, 'key');
 		} catch (err) {
-			console.log(`Error getting flags ${err}`)
+			console.log(`Error getting flags ${err}`);
 		}
 		try {
 			const sdkKey = await this.getLatestSDKKey();
@@ -103,10 +103,10 @@ export class FlagStore {
 					});
 				});
 			});
-			this.on("error", async (err: string) => {
-				console.log(err)
-				this.debouncedReload()
-			})
+			this.on('error', async (err: string) => {
+				console.log(err);
+				this.debouncedReload();
+			});
 			window.onDidChangeWindowState(async e => {
 				const ldClient = await this.ldClient;
 				if (e.focused) {
@@ -173,7 +173,7 @@ export class FlagStore {
 			this.rejectLDClient();
 			const ldClient = await this.ldClient;
 			ldClient.close();
-			delete(this.ldClient)
+			delete this.ldClient;
 		} catch {
 			//console.log("client already rejected.")
 			// ldClient was rejected, nothing to do
@@ -249,7 +249,7 @@ export class FlagStore {
 
 	async allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
 		await this.ldClient; // Just waiting for initialization to complete, don't actually need the client
-		if (this.flagMetadata === undefined) {
+		if (this.flagMetadata === undefined && this.config.isConfigured()) {
 			try {
 				await this.debounceUpdate();
 				return this.flagMetadata;
@@ -274,7 +274,7 @@ export class FlagStore {
 					errMsg = `Project does not exist`;
 				} else if (err.statusCode == 401) {
 					errMsg = `Unauthorized`;
-				} else if (typeof err === 'string' && err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
+				} else if ((typeof err === 'string' && err.includes('ENOTFOUND')) || err.includes('ECONNRESET')) {
 					// We know the domain should exist.
 					console.log(err); // Still want to log that this is happening
 					return;

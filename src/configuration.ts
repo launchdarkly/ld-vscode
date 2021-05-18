@@ -45,11 +45,11 @@ export class Configuration {
 
 		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
 		const accessToken = this.getState('accessToken') || this.accessToken;
-		if (!accessToken.startsWith("api")) {
-			console.error(`Access Token does not start with api-. token: ${accessToken}`)
-			window.showErrorMessage("[LaunchDarkly] Access Token does not start with api-. Please reconfigure.")
+		if (!accessToken.startsWith('api')) {
+			console.error(`Access Token does not start with api-. token: ${accessToken}`);
+			window.showErrorMessage('[LaunchDarkly] Access Token does not start with api-. Please reconfigure.');
 		}
-		this.accessToken = accessToken
+		this.accessToken = accessToken;
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {

@@ -5,7 +5,7 @@ import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import { generateHoverString } from './hover';
 import * as path from 'path';
-import { debounce, map } from 'lodash';
+import { debounce, isLength, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
@@ -59,7 +59,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				console.error(`Failed reloading Flagview: ${err}`);
 			}
 		},
-		200,
+		5000,
 		{ leading: false, trailing: true },
 	);
 
@@ -83,13 +83,20 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	async getFlags(): Promise<void> {
 		try {
 			const nodes = [];
-			const flags = await this.flagStore.allFlagsMetadata();
-			map(flags, value => {
-				this.flagToValues(value).then(node => {
-					nodes.push(node);
+			if (this.flagStore) {
+				const flags = await this.flagStore.allFlagsMetadata();
+				if (flags.length == 0 && this.config.isConfigured()) {
+					setInterval(() => {
+						this.debouncedReload();
+					}, 5000);
+				}
+				map(flags, value => {
+					this.flagToValues(value).then(node => {
+						nodes.push(node);
+					});
 				});
-			});
-			this.flagNodes = nodes;
+				this.flagNodes = nodes;
+			}
 		} catch (err) {
 			console.error(`Failed getting flags: ${err}`);
 			const message = `Error retrieving Flags: ${err}`;
