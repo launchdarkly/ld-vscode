@@ -67,6 +67,10 @@ export class FlagStore {
 		try {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagMetadata = keyBy(flags, 'key');
+		} catch (err) {
+			console.log(`Error getting flags ${err}`)
+		}
+		try {
 			const sdkKey = await this.getLatestSDKKey();
 			if (sdkKey === '' || !sdkKey.startsWith('sdk-')) {
 				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
@@ -250,20 +254,8 @@ export class FlagStore {
 				await this.debounceUpdate();
 				return this.flagMetadata;
 			} catch (err) {
-				let errMsg;
-				if (err.statusCode == 404) {
-					errMsg = `Project does not exist`;
-				} else if (err.statusCode == 401) {
-					errMsg = `Unauthorized`;
-				} else if (typeof err === 'string' && err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
-					// We know the domain should exist.
-					console.log(err); // Still want to log that this is happening
-					return;
-				} else {
-					errMsg = err.message;
-				}
 				console.log(`${err}`);
-				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+				window.showErrorMessage(`[LaunchDarkly] ${err}`);
 			}
 		} else {
 			return this.flagMetadata;
@@ -294,6 +286,6 @@ export class FlagStore {
 			}
 		},
 		5000,
-		{ leading: true, trailing: true },
+		{ trailing: true },
 	);
 }

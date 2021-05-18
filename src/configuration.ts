@@ -4,6 +4,7 @@ import {
 	ExtensionContext,
 	ConfigurationChangeEvent,
 	ConfigurationTarget,
+	window,
 } from 'vscode';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -43,7 +44,12 @@ export class Configuration {
 		}
 
 		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
-		this.accessToken = this.getState('accessToken') || this.accessToken;
+		const accessToken = this.getState('accessToken') || this.accessToken;
+		if (!accessToken.startsWith("api")) {
+			console.error(`Access Token does not start with api-. token: ${accessToken}`)
+			window.showErrorMessage("[LaunchDarkly] Access Token does not start with api-. Please reconfigure.")
+		}
+		this.accessToken = accessToken
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {
