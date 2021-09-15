@@ -2,7 +2,7 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
-## [3.0.6] - 2021-09-14
+## [3.0.5] - 2021-09-14
 ### Changed
 
 - Update icon
