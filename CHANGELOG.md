@@ -5,6 +5,10 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 ## [3.0.5] - 2021-09-14
 ### Changed
 
+- Updates for Marketplace
+## [3.0.5] - 2021-09-14
+### Changed
+
 - Update icon
 
 ## [2.4.0] - 2020-11-10

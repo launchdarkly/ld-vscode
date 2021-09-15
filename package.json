@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "3.0.5",
+	"version": "3.0.6",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.52.0"
@@ -267,7 +267,7 @@
 	},
 	"galleryBanner": {
 		"color": "#282828",
-    		"theme": "light"
+    		"theme": "dark"
   	},
 	"homepage": "https://docs.launchdarkly.com/integrations/vscode",
   "bugs": {
