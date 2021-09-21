@@ -195,7 +195,7 @@
 				},
 				{
 					"command": "extension.configureLaunchDarkly",
-					"when": "!!config.accessToken && !!config.project && !!config.env",
+					"when": "!!config.accessToken && !!config.project && !!config.env && view == launchdarklyFeatureFlags",
 					"group": "navigation"
 				}
 			],
