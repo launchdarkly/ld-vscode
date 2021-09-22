@@ -90,11 +90,13 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 						this.debouncedReload();
 					}, 5000);
 				}
-				await Promise.all(map(flags, value => {
-					this.flagToValues(value).then(node => {
-						nodes.push(node);
-					});
-				}));
+				await Promise.all(
+					map(flags, value => {
+						this.flagToValues(value).then(node => {
+							nodes.push(node);
+						});
+					}),
+				);
 				this.flagNodes = nodes;
 			}
 		} catch (err) {
@@ -235,21 +237,25 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		});
 		this.flagStore.storeUpdates.event(async () => {
 			const flags = await this.flagStore.allFlagsMetadata();
-			if (flags.length !== this.flagNodes.length) {
+			if (flags?.length !== this.flagNodes.length) {
 				const nodes = [];
-				map(flags, value => {
-					this.flagToValues(value).then(node => {
-						nodes.push(node);
-					});
-				});
+				await Promise.all(
+					map(flags, value => {
+						this.flagToValues(value).then(node => {
+							nodes.push(node);
+						});
+					}),
+				);
 				this.flagNodes = nodes;
 			} else {
-				map(flags, async flag => {
-					const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag.key);
-					if (this.flagNodes[updatedIdx].flagVersion < flag._version) {
-						this.flagNodes[updatedIdx] = await this.flagToValues(flag);
-					}
-				});
+				await Promise.all(
+					map(flags, async flag => {
+						const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag.key);
+						if (this.flagNodes[updatedIdx].flagVersion < flag._version) {
+							this.flagNodes[updatedIdx] = await this.flagToValues(flag);
+						}
+					}),
+				);
 			}
 			this.refresh();
 		});

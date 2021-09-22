@@ -55,7 +55,7 @@ export class ConfigurationMenu {
 		if (this.config.localIsConfigured()) {
 			options.push({ name: clearOverrides, key: 'clear overrides' });
 		}
-		options.push({name: clearGlobalOverrides, key: 'clear all config data'})
+		options.push({ name: clearGlobalOverrides, key: 'clear all config data' });
 
 		const selectionOptions = options.map(this.createQuickPickItem);
 
@@ -81,8 +81,8 @@ export class ConfigurationMenu {
 		}
 
 		if (pick.label === clearGlobalOverrides) {
-			await this.config.clearLocalConfig()
-			await this.config.clearGlobalConfig()
+			await this.config.clearLocalConfig();
+			await this.config.clearGlobalConfig();
 			return (input: MultiStepInput) => this.pickStorageType(input);
 		}
 
