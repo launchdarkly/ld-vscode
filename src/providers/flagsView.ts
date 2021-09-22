@@ -90,11 +90,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 						this.debouncedReload();
 					}, 5000);
 				}
-				map(flags, value => {
+				await Promise.all(map(flags, value => {
 					this.flagToValues(value).then(node => {
 						nodes.push(node);
 					});
-				});
+				}));
 				this.flagNodes = nodes;
 			}
 		} catch (err) {

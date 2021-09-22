@@ -103,6 +103,9 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			while ((matches = regex.exec(text)) !== null) {
 				const line = document.lineAt(document.positionAt(matches.index).line);
 				const indexOf = line.text.indexOf(matches[0]);
+				if (indexOf < 0) {
+					return codeLenses
+				}
 				const position = new vscode.Position(line.lineNumber, indexOf);
 				const range = document.getWordRangeAtPosition(position, new RegExp(this.regex));
 				const prospect = document.getText(range);
