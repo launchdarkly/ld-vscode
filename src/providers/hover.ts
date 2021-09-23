@@ -58,7 +58,7 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 					if (!data && aliases && foundAlias) {
 						data = await this.flagStore.getFeatureFlag(aliases[foundAlias[0]]);
 					} // We only match on first alias
-					if (data) {
+					if (data?.config) {
 						commands.executeCommand('setContext', 'LDFlagToggle', data.flag.key);
 						this.ctx.workspaceState.update('LDFlagKey', data.flag.key);
 						const hover = generateHoverString(data.flag, data.config, this.config, this.ctx);
