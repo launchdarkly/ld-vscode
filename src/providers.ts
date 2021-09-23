@@ -40,27 +40,6 @@ export async function register(
 ): Promise<void> {
 	let aliases;
 	let flagView;
-	if (typeof flagStore !== 'undefined') {
-		if (config.enableAliases) {
-			aliases = new FlagAliases(config, ctx);
-			if (aliases.codeRefsVersionCheck()) {
-				aliases.setupStatusBar();
-				aliases.start();
-			} else {
-				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
-			}
-		}
-
-		flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
-		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
-	}
-	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
-	languages.registerCodeLensProvider('*', codeLens);
-	codeLens.start();
-	if (config.enableFlagExplorer) {
-		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
-	}
-
 	ctx.subscriptions.push(
 		commands.registerCommand('extension.configureLaunchDarkly', async () => {
 			try {
@@ -163,6 +142,29 @@ export async function register(
 			await flagView.reload(e);
 		}
 	});
+	if (!config.isConfigured) {
+		return
+	}
+	if (typeof flagStore !== 'undefined') {
+		if (config.enableAliases) {
+			aliases = new FlagAliases(config, ctx);
+			if (aliases.codeRefsVersionCheck()) {
+				aliases.setupStatusBar();
+				aliases.start();
+			} else {
+				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
+			}
+		}
+
+		flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
+		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
+	}
+	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
+	languages.registerCodeLensProvider('*', codeLens);
+	codeLens.start();
+	if (config.enableFlagExplorer) {
+		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
+	}
 }
 
 class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
