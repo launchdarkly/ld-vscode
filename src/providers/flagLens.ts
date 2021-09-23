@@ -87,7 +87,12 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			const regex = new RegExp(this.regex);
 			const text = document.getText();
 			let matches;
-			const flags = await this.flagStore.allFlagsMetadata();
+			let flags
+			if (this.flagStore) {
+				flags = await this.flagStore.allFlagsMetadata();
+			} else {
+				return
+			}
 			const env = await this.flagStore.allFlags();
 			const keys = Object.keys(flags);
 			let aliases: Map<string, string>;
