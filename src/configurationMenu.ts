@@ -4,7 +4,7 @@ import { MultiStepInput } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
 import { Resource, Project } from './models';
 import { Configuration } from './configuration';
-
+const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 export class ConfigurationMenu {
 	private readonly config: Configuration;
@@ -18,6 +18,7 @@ export class ConfigurationMenu {
 	private env: string;
 	private useGlobalState: boolean;
 	private invalidAccessToken: string;
+	private baseUri = DEFAULT_BASE_URI;
 
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
@@ -30,11 +31,11 @@ export class ConfigurationMenu {
 
 	async collectInputs() {
 		if (this.currentAccessToken) {
-			await MultiStepInput.run(input => this.pickCurrentOrNewAccessToken(input));
+			await MultiStepInput.run(input => this.pickInstance(input));
 			return;
 		}
 
-		await MultiStepInput.run(input => this.inputAccessToken(input));
+		await MultiStepInput.run(input => this.pickInstance(input));
 	}
 
 	shouldResume(): Promise<boolean> {
@@ -45,6 +46,7 @@ export class ConfigurationMenu {
 	}
 
 	async pickCurrentOrNewAccessToken(input: MultiStepInput) {
+		this.useGlobalState = false
 		const existingTokenName = 'Use the existing access token';
 		const clearOverrides = 'Clear Workspace Specific Configurations';
 		const clearGlobalOverrides = 'Clear All LaunchDarkly Configurations';
@@ -71,7 +73,7 @@ export class ConfigurationMenu {
 		if (pick.label === existingTokenName) {
 			this.accessToken = this.currentAccessToken;
 			this.invalidAccessToken = '';
-			return (input: MultiStepInput) => this.pickStorageType(input);
+			return (input: MultiStepInput) => this.pickProject(input);
 		}
 
 		if (pick.label === clearOverrides) {
@@ -105,9 +107,8 @@ export class ConfigurationMenu {
 			this.updateAPI();
 			await this.api.getAccount();
 
-			return (input: MultiStepInput) => this.pickStorageType(input);
+			return (input: MultiStepInput) => this.pickProject(input);
 
-			this.useGlobalState = true;
 		} catch (err) {
 			if (err.statusCode === 401) {
 				this.invalidAccessToken = this.accessToken;
@@ -116,6 +117,21 @@ export class ConfigurationMenu {
 			}
 			throw err;
 		}
+	}
+
+	
+	async pickInstance(input: MultiStepInput) {
+		this.baseUri = await input.showInputBox({
+			title: this.title,
+			step: 1,
+			value: this.config.baseUri,
+			prompt: 'Enter LaunchDarkly Instance URL',
+			totalSteps: this.totalSteps,
+			shouldResume: this.shouldResume,
+			validate: token => this.validateAccessToken(token, this.invalidAccessToken),
+		});
+
+		return (input: MultiStepInput) => this.pickCurrentOrNewAccessToken(input);
 	}
 
 	async pickProject(input: MultiStepInput) {
@@ -195,12 +211,13 @@ export class ConfigurationMenu {
 	updateAPI() {
 		const configWithUpdatedToken = Object.assign({}, this.config);
 		configWithUpdatedToken.accessToken = this.accessToken;
+		configWithUpdatedToken.baseUri = this.baseUri
 		this.api = new LaunchDarklyAPI(configWithUpdatedToken);
 	}
 
 	async configure() {
 		await this.collectInputs();
-		['accessToken', 'project', 'env'].forEach(async option => {
+		['accessToken', 'baseUri', 'project', 'env'].forEach(async option => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
 	}

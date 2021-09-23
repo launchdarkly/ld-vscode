@@ -45,11 +45,14 @@ export class Configuration {
 
 		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
 		const accessToken = this.getState('accessToken') || this.accessToken;
+		const env = this.getState('env') || this.env;
+
 		if (!accessToken.startsWith('api')) {
 			console.error(`Access Token does not start with api-. token: ${accessToken}`);
 			window.showErrorMessage('[LaunchDarkly] Access Token does not start with api-. Please reconfigure.');
 		}
 		this.accessToken = accessToken;
+		this.env = env
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {
@@ -59,7 +62,12 @@ export class Configuration {
 
 		let config: WorkspaceConfiguration = workspace.getConfiguration('launchdarkly');
 		if (key === 'accessToken') {
-			const ctxState = global ? this.ctx.globalState : this.ctx.workspaceState;
+			const ctxState = this.ctx.globalState;
+			await ctxState.update(key, value);
+			return;
+		}
+		if (key === 'env') {
+			const ctxState = this.ctx.workspaceState;
 			await ctxState.update(key, value);
 			return;
 		}

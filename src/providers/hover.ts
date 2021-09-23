@@ -142,7 +142,11 @@ export function generateHoverString(
 			}
 		}
 		if (c.fallthrough.rollout) {
-			props.push(`\`$(arrow-small-right)rollout @ ${c.fallthrough.rollout.variations[idx].weight / 1000}%\``);
+			let weight = 0
+			if (c.fallthrough.rollout.variations[idx]?.weight) {
+				weight = c.fallthrough.rollout.variations[idx].weight / 1000
+			}
+			props.push(`\`$(arrow-small-right)rollout @ ${weight}%\``);
 		}
 
 		const varVal = `\`${truncate(JSON.stringify(variation.value), 30).trim()}\``;
