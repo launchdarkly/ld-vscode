@@ -99,7 +99,6 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			let aliasArr;
 			try {
 				if (typeof this.aliases !== 'undefined') {
-					console.log('getting flags');
 					aliasesLocal = this.aliases.getMap();
 					aliasArr = this.aliases.getListOfMapKeys();
 				}
