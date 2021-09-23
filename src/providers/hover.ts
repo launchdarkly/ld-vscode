@@ -47,7 +47,6 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 						const aliasKeys = Object.keys(aliases) ? Object.keys(aliases) : [];
 						const aliasArr = [...aliasKeys].filter(element => element !== '');
 						foundAlias = aliasArr.filter(element => candidate.includes(element));
-						console.log(`This is alias ${foundAlias}`);
 					}
 				} else {
 					aliases = [];
