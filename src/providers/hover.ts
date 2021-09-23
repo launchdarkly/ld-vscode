@@ -43,10 +43,11 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 				let foundAlias = [];
 				if (typeof this.aliases !== undefined) {
 					aliases = this.aliases?.getMap();
-					if (aliases !== undefined && aliases.length > 0) {
+					if (typeof aliases !== undefined) {
 						const aliasKeys = Object.keys(aliases) ? Object.keys(aliases) : [];
 						const aliasArr = [...aliasKeys].filter(element => element !== '');
 						foundAlias = aliasArr.filter(element => candidate.includes(element));
+						console.log(`This is alias ${foundAlias}`);
 					}
 				} else {
 					aliases = [];
@@ -142,9 +143,9 @@ export function generateHoverString(
 			}
 		}
 		if (c.fallthrough.rollout) {
-			let weight = 0
+			let weight = 0;
 			if (c.fallthrough.rollout.variations[idx]?.weight) {
-				weight = c.fallthrough.rollout.variations[idx].weight / 1000
+				weight = c.fallthrough.rollout.variations[idx].weight / 1000;
 			}
 			props.push(`\`$(arrow-small-right)rollout @ ${weight}%\``);
 		}

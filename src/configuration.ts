@@ -52,7 +52,7 @@ export class Configuration {
 			window.showErrorMessage('[LaunchDarkly] Access Token does not start with api-. Please reconfigure.');
 		}
 		this.accessToken = accessToken;
-		this.env = env
+		this.env = env;
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {

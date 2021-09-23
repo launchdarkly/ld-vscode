@@ -470,7 +470,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				new FlagNode(this.ctx, `BucketBy: ${fallThrough.rollout.bucketBy}`, NON_COLLAPSED);
 			}
 			fallThrough.rollout.variations.map(variation => {
-				let weight = 0
+				let weight = 0;
 				if (variation.weight) {
 					weight = variation.weight / 1000;
 				}

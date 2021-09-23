@@ -72,13 +72,6 @@ export async function register(
 				window.showErrorMessage(err.message);
 			}
 		}),
-		languages.registerCompletionItemProvider(
-			LD_MODE,
-			new LaunchDarklyCompletionItemProvider(config, flagStore, aliases),
-			"'",
-			'"',
-		),
-		languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore, ctx, aliases)),
 		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
 			const flagKey = editor.document.getText(
 				editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
@@ -143,7 +136,7 @@ export async function register(
 		}
 	});
 	if (!config.isConfigured) {
-		return
+		return;
 	}
 	if (typeof flagStore !== 'undefined') {
 		if (config.enableAliases) {
@@ -158,10 +151,21 @@ export async function register(
 
 		flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
+		const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
+
+		ctx.subscriptions.push(
+			languages.registerCompletionItemProvider(
+				LD_MODE,
+				new LaunchDarklyCompletionItemProvider(config, flagStore, aliases),
+				"'",
+				'"',
+			),
+			languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore, ctx, aliases)),
+			languages.registerCodeLensProvider('*', codeLens),
+		);
+		codeLens.start();
 	}
-	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
-	languages.registerCodeLensProvider('*', codeLens);
-	codeLens.start();
+
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}

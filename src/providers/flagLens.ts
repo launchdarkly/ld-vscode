@@ -87,19 +87,20 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			const regex = new RegExp(this.regex);
 			const text = document.getText();
 			let matches;
-			let flags
+			let flags;
 			if (this.flagStore) {
 				flags = await this.flagStore.allFlagsMetadata();
 			} else {
-				return
+				return;
 			}
 			const env = await this.flagStore.allFlags();
 			const keys = Object.keys(flags);
-			let aliases: Map<string, string>;
+			let aliasesLocal: Map<string, string>;
 			let aliasArr;
 			try {
-				if (typeof aliases !== 'undefined') {
-					aliases = this.aliases.getMap();
+				if (typeof this.aliases !== 'undefined') {
+					console.log('getting flags');
+					aliasesLocal = this.aliases.getMap();
 					aliasArr = this.aliases.getListOfMapKeys();
 				}
 			} catch (err) {
@@ -116,17 +117,18 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 					flag = keys.filter(element => prospect.includes(element));
 				}
 				let foundAliases;
-				if (typeof aliases !== 'undefined') {
+				if (typeof aliasesLocal !== 'undefined') {
 					foundAliases = aliasArr.filter(element => prospect.includes(element));
 				}
+
 				if (range && typeof flag !== 'undefined' && flags[flag[0]]) {
 					const codeLens = new FlagCodeLens(range, flags[flag[0]], env[flag[0]], this.config);
 					codeLenses.push(codeLens);
-				} else if (range && foundAliases && foundAliases.length > 0 && flags[aliases[foundAliases]]) {
+				} else if (range && foundAliases && foundAliases.length > 0 && flags[aliasesLocal[foundAliases]]) {
 					const codeLens = new FlagCodeLens(
 						range,
-						flags[aliases[foundAliases]],
-						env[aliases[foundAliases]],
+						flags[aliasesLocal[foundAliases]],
+						env[aliasesLocal[foundAliases]],
 						this.config,
 					);
 					codeLenses.push(codeLens);

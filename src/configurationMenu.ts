@@ -46,7 +46,7 @@ export class ConfigurationMenu {
 	}
 
 	async pickCurrentOrNewAccessToken(input: MultiStepInput) {
-		this.useGlobalState = false
+		this.useGlobalState = false;
 		const existingTokenName = 'Use the existing access token';
 		const clearOverrides = 'Clear Workspace Specific Configurations';
 		const clearGlobalOverrides = 'Clear All LaunchDarkly Configurations';
@@ -108,7 +108,6 @@ export class ConfigurationMenu {
 			await this.api.getAccount();
 
 			return (input: MultiStepInput) => this.pickProject(input);
-
 		} catch (err) {
 			if (err.statusCode === 401) {
 				this.invalidAccessToken = this.accessToken;
@@ -119,7 +118,6 @@ export class ConfigurationMenu {
 		}
 	}
 
-	
 	async pickInstance(input: MultiStepInput) {
 		this.baseUri = await input.showInputBox({
 			title: this.title,
@@ -211,7 +209,7 @@ export class ConfigurationMenu {
 	updateAPI() {
 		const configWithUpdatedToken = Object.assign({}, this.config);
 		configWithUpdatedToken.accessToken = this.accessToken;
-		configWithUpdatedToken.baseUri = this.baseUri
+		configWithUpdatedToken.baseUri = this.baseUri;
 		this.api = new LaunchDarklyAPI(configWithUpdatedToken);
 	}
 

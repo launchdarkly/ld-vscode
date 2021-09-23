@@ -133,10 +133,14 @@ export class FlagAliases {
 					this.keys[row.flagKey] = [...new Set(items)].filter(Boolean);
 				}
 				aliases.map(alias => {
+					if (alias == '') {
+						return;
+					}
 					this.map[alias] = row.flagKey;
 				});
 			})
 			.on('end', () => {
+				console.log(this.map);
 				this.ctx.workspaceState.update('aliasMap', this.map);
 				this.ctx.workspaceState.update('aliasKeys', this.keys);
 				const mapKeys = Object.keys(this.map).filter(element => element != '');
