@@ -92,8 +92,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				}
 				await Promise.all(
 					map(flags, value => {
-						this.flagToValues(value).then(node => {
-							nodes.push(node);
+						setImmediate(() => {
+							this.flagToValues(value).then(node => {
+								nodes.push(node);
+							});
 						});
 					}),
 				);
@@ -239,23 +241,23 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			const flags = await this.flagStore.allFlagsMetadata();
 			if (flags?.length !== this.flagNodes.length) {
 				const nodes = [];
-				await Promise.all(
-					map(flags, value => {
+				map(flags, value => {
+					setImmediate(() => {
 						this.flagToValues(value).then(node => {
 							nodes.push(node);
 						});
-					}),
-				);
+					});
+				});
 				this.flagNodes = nodes;
 			} else {
-				await Promise.all(
-					map(flags, async flag => {
-						const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag.key);
-						if (this.flagNodes[updatedIdx].flagVersion < flag._version) {
-							this.flagNodes[updatedIdx] = await this.flagToValues(flag);
-						}
-					}),
-				);
+				map(flags, async flag => {
+					const updatedIdx = this.flagNodes.findIndex(v => v.flagKey === flag.key);
+					if (this.flagNodes[updatedIdx].flagVersion < flag._version) {
+						this.flagNodes[updatedIdx] = setImmediate(() => {
+							this.flagToValues(flag);
+						});
+					}
+				});
 			}
 			this.refresh();
 		});
