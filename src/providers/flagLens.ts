@@ -86,7 +86,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			const codeLenses: vscode.CodeLens[] = [];
 			const regex = new RegExp(this.regex);
 			const text = document.getText();
-			let matches;
+
 			let flags;
 			if (this.flagStore) {
 				flags = await this.flagStore.allFlagsMetadata();
@@ -94,7 +94,6 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				return;
 			}
 			const env = await this.flagStore.allFlags();
-			const keys = Object.keys(flags);
 			let aliasesLocal: Map<string, string>;
 			let aliasArr;
 			try {
@@ -105,13 +104,16 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			} catch (err) {
 				console.log(err);
 			}
+			let matches;
 			while ((matches = regex.exec(text)) !== null) {
 				const line = document.lineAt(document.positionAt(matches.index).line);
 				const indexOf = line.text.indexOf(matches[0]);
 				const position = new vscode.Position(line.lineNumber, indexOf);
 				const range = document.getWordRangeAtPosition(position, new RegExp(this.regex));
 				const prospect = document.getText(range);
+
 				let flag;
+				const keys = Object.keys(flags);
 				if (typeof keys !== 'undefined') {
 					flag = keys.filter(element => prospect.includes(element));
 				}
@@ -120,10 +122,12 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 					foundAliases = aliasArr.filter(element => prospect.includes(element));
 				}
 
-				if (range && typeof flag !== 'undefined' && flags[flag[0]]) {
-					const codeLens = new FlagCodeLens(range, flags[flag[0]], env[flag[0]], this.config);
+				// Use first found flag
+				const firstFlag = flag[0];
+				if (range && typeof flag !== 'undefined' && flags[firstFlag]) {
+					const codeLens = new FlagCodeLens(range, flags[firstFlag], env[firstFlag], this.config);
 					codeLenses.push(codeLens);
-				} else if (range && foundAliases && foundAliases.length > 0 && flags[aliasesLocal[foundAliases]]) {
+				} else if (range && foundAliases?.length > 0 && flags[aliasesLocal[foundAliases]]) {
 					const codeLens = new FlagCodeLens(
 						range,
 						flags[aliasesLocal[foundAliases]],
@@ -133,7 +137,6 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 					codeLenses.push(codeLens);
 				}
 			}
-
 			return codeLenses;
 		}
 	}

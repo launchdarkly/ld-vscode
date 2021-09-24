@@ -1,6 +1,6 @@
 'use strict';
 
-import { commands, window, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
+import { commands, window, ExtensionContext } from 'vscode';
 import { access, constants } from 'fs';
 import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';

@@ -8,12 +8,12 @@ import * as toMatchSnapshot from 'expect-mocha-snapshot';
 expect.extend({ toMatchSnapshot });
 
 import * as providers from '../src/providers';
-import { generateHoverString } from '../src/providers/hover'
+import { generateHoverString } from '../src/providers/hover';
 import { FeatureFlag, FlagConfiguration } from '../src/models';
 import { Configuration } from '../src/configuration';
 
 function resolveSrcTestPath(ctx) {
-	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out','')}});
+	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out', '') } });
 }
 
 const flag = new FeatureFlag({
