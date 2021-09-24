@@ -274,7 +274,7 @@ export class FlagStore {
 					errMsg = `Project does not exist`;
 				} else if (err.statusCode == 401) {
 					errMsg = `Unauthorized`;
-				} else if ((typeof err === 'string' && err.includes('ENOTFOUND')) || err.includes('ECONNRESET')) {
+				} else if (err.code == 'ENOTFOUND' || err.code == 'ECONNRESET') {
 					// We know the domain should exist.
 					console.log(err); // Still want to log that this is happening
 					return;
