@@ -289,6 +289,7 @@ export class FlagStore {
 				} else {
 					errMsg = err.message;
 					console.log(`${err}`);
+					return;
 				}
 				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 			}
