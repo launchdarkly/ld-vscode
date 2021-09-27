@@ -112,6 +112,9 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 					console.log(`line number: ${line.lineNumber}`);
 					console.log(`index: ${indexOf}`);
 				}
+				if (indexOf == -1) {
+					continue;
+				}
 				const position = new vscode.Position(line.lineNumber, indexOf);
 				const range = document.getWordRangeAtPosition(position, new RegExp(this.regex));
 				const prospect = document.getText(range);
