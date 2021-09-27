@@ -89,50 +89,57 @@ export class FlagStore {
 				}
 			}
 			this.storeUpdates.fire(true);
-			this.on('update', async (keys: string) => {
-				const flagKeys = Object.values(keys);
-				flagKeys.map(key => {
-					this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
-						if (!res) {
-							return;
-						}
-						if (this.flagMetadata[key]?.variations.length !== res.variations.length) {
-							this.flagMetadata[key] = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
-							this.storeUpdates.fire(true);
-						}
-					});
-				});
-			});
-			this.on('error', async (err: string) => {
-				console.log(err);
-				this.debouncedReload();
-			});
-			window.onDidChangeWindowState(async e => {
-				const ldClient = await this.ldClient;
-				if (e.focused) {
-					if (this.offlineTimerSet) {
-						await this.reload();
-						this.offlineTimerSet = false;
-					}
-					if (typeof this.offlineTimer !== 'undefined') {
-						clearTimeout(this.offlineTimer);
-						delete this.offlineTimer;
-						this.offlineTimerSet = false;
-					}
-				} else {
-					if (typeof this.offlineTimer === 'undefined') {
-						this.offlineTimer = setTimeout(async () => {
-							this.offlineTimerSet = true;
-							await ldClient.close();
-						}, 60000);
-					}
-				}
-			});
+			this.setFlagListeners();
+			this.setLDClientBackgroundCheck();
 		} catch (err) {
 			window.showErrorMessage('Failed to setup LaunchDarkly client');
 			this.rejectLDClient();
 			console.error(`Failed to setup client: ${err}`);
 		}
+	}
+
+	private setFlagListeners() {
+		this.on('update', async (keys: string) => {
+			const flagKeys = Object.values(keys);
+			flagKeys.map(key => {
+				this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
+					if (!res) {
+						return;
+					}
+					if (this.flagMetadata[key]?.variations.length !== res.variations.length) {
+						this.flagMetadata[key] = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
+						this.storeUpdates.fire(true);
+					}
+				});
+			});
+		});
+		this.on('error', async (err: string) => {
+			console.log(err);
+			this.debouncedReload();
+		});
+	}
+	private setLDClientBackgroundCheck() {
+		return window.onDidChangeWindowState(async e => {
+			const ldClient = await this.ldClient;
+			if (e.focused) {
+				if (this.offlineTimerSet) {
+					await this.reload();
+					this.offlineTimerSet = false;
+				}
+				if (typeof this.offlineTimer !== 'undefined') {
+					clearTimeout(this.offlineTimer);
+					delete this.offlineTimer;
+					this.offlineTimerSet = false;
+				}
+			} else {
+				if (typeof this.offlineTimer === 'undefined') {
+					this.offlineTimer = setTimeout(async () => {
+						this.offlineTimerSet = true;
+						await ldClient.close();
+					}, 60000);
+				}
+			}
+		});
 	}
 
 	private async startGlobalFlagUpdateTask(interval: number) {
@@ -218,6 +225,7 @@ export class FlagStore {
 		if (this.flagMetadata === undefined) {
 			await this.debounceUpdate();
 		}
+
 		let flag = this.flagMetadata[key];
 		return new Promise((resolve, reject) => {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {

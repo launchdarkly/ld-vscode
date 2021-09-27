@@ -102,7 +102,7 @@ export class FlagAliases {
 				timeout: 20 * 60000,
 			});
 			if (output.stderr) {
-				window.showErrorMessage(output.stderr);
+				window.showErrorMessage(`[LaunchDarkly] finding Code References failed ${output.stderr}`);
 			}
 		} catch (err) {
 			window.showErrorMessage(err.error);

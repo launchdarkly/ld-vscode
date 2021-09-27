@@ -69,7 +69,7 @@ export async function register(
 					await api.patchFeatureFlagOn(config.project, key, !env.config.on);
 				}
 			} catch (err) {
-				window.showErrorMessage(err.message);
+				window.showErrorMessage(`Could not patch flag: ${err.message}`);
 			}
 		}),
 		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
