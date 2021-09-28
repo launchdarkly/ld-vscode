@@ -25,6 +25,7 @@ import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
 import { FlagCodeLensProvider } from './providers/flagLens';
 import { LaunchDarklyHoverProvider } from './providers/hover';
+import { LaunchDarklyFlagListProvider } from './providers/flagListView';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
@@ -151,8 +152,11 @@ export async function register(
 
 		flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
-		const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
 
+		const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
+		const listView = new LaunchDarklyFlagListProvider(config, codeLens);
+		window.registerTreeDataProvider('launchdarklyFlagList', listView);
+		ctx.subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsinDocument));
 		ctx.subscriptions.push(
 			languages.registerCompletionItemProvider(
 				LD_MODE,
@@ -162,6 +166,12 @@ export async function register(
 			),
 			languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore, ctx, aliases)),
 			languages.registerCodeLensProvider('*', codeLens),
+			commands.registerTextEditorCommand('extension.openLDFlagTree', async () => {
+				const key = ctx.workspaceState.get('LDFlagKey') as string;
+				if (key) {
+					flagView.reveal(key);
+				}
+			}),
 		);
 		codeLens.start();
 	}

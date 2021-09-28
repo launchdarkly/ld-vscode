@@ -90,6 +90,11 @@
 				"when": "LDFlagToggle"
 			},
 			{
+				"command": "extension.openLDFlagTree",
+				"title": "LaunchDarkly: Flag in Treeview",
+				"when": "LDFlagToggle"
+			},
+			{
 				"command": "launchdarkly.toggleFlagContext",
 				"title": "LaunchDarkly: Toggle Flag",
 				"when": "LDFlagToggle"
@@ -185,7 +190,13 @@
 					"args": "${LDFlagToggle}",
 					"when": "LDFlagToggle",
 					"group": "LaunchDarkly@1"
+				},
+				{
+					"command": "extension.openLDFlagTree",
+					"when": "LDFlagToggle",
+					"group": "LaunchDarkly"
 				}
+
 			],
 			"view/title": [
 				{
@@ -254,6 +265,11 @@
 				{
 					"id": "launchdarklyFeatureFlags",
 					"name": "LaunchDarkly",
+					"when": "launchdarkly:enableFlagExplorer"
+				},
+				{
+					"id": "launchdarklyFlagList",
+					"name": "LaunchDarkly Flags in File",
 					"when": "launchdarkly:enableFlagExplorer"
 				}
 			]
