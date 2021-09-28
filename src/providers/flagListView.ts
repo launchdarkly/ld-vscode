@@ -83,9 +83,14 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 	}
 
 	public setFlagsinDocument = async (): Promise<void> => {
-		const editor = window.activeTextEditor;
-		const flagsFound = await this.lens.provideCodeLenses(editor.document, null);
 		this.flagMap = new Map();
+		const editor = window.activeTextEditor;
+		if (typeof editor === 'undefined' || typeof editor.document === 'undefined') {
+			this.refresh();
+			return;
+		}
+		const flagsFound = await this.lens.provideCodeLenses(editor.document, null);
+
 		flagsFound.map(flag => {
 			const codelensFlag = flag as FlagCodeLens;
 			const getElement = this.flagMap.get(codelensFlag.env.key);
