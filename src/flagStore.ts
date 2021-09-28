@@ -136,7 +136,7 @@ export class FlagStore {
 					this.offlineTimer = setTimeout(async () => {
 						this.offlineTimerSet = true;
 						await ldClient.close();
-					}, 60000);
+					}, 300000);
 				}
 			}
 		});

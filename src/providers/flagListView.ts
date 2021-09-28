@@ -25,6 +25,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 	constructor(config: Configuration, lens: CodeLensProvider) {
 		this.config = config;
 		this.lens = lens;
+		this.setFlagsinDocument();
 	}
 
 	refresh(): void {
@@ -89,8 +90,16 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			this.refresh();
 			return;
 		}
-		const flagsFound = await this.lens.provideCodeLenses(editor.document, null);
-
+		let flagsFound;
+		try {
+			flagsFound = await this.lens.provideCodeLenses(editor.document, null);
+		} catch (err) {
+			// Try maximum of 2 times for lens to resolve
+			flagsFound = await this.lens.provideCodeLenses(editor.document, null);
+		}
+		if (typeof flagsFound === 'undefined') {
+			return;
+		}
 		flagsFound.map(flag => {
 			const codelensFlag = flag as FlagCodeLens;
 			const getElement = this.flagMap.get(codelensFlag.env.key);
