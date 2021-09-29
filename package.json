@@ -74,7 +74,8 @@
 				},
 				"launchdarkly.enableCodeLens": {
 					"type": "boolean",
-					"default": false
+					"default": false,
+					"description": "Control whether flag data is inlined when a reference is found in a file."
 				},
 				"launchdarkly.accessToken": {
 					"type": "string",
