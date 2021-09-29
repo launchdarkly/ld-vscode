@@ -140,7 +140,6 @@ export class FlagAliases {
 				});
 			})
 			.on('end', () => {
-				console.log(this.map);
 				this.ctx.workspaceState.update('aliasMap', this.map);
 				this.ctx.workspaceState.update('aliasKeys', this.keys);
 				const mapKeys = Object.keys(this.map).filter(element => element != '');

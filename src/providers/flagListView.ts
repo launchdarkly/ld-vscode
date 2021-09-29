@@ -64,7 +64,8 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		if (typeof element !== 'undefined') {
 			const child = this.flagMap.get(element.flagKey);
 			child.list.forEach(entry => {
-				items.push(new TreeItem(`Line: ${entry.end.line}`));
+				const newElement = new FlagNode(`Line: ${entry.end.line}`, null, element.flagKey, entry, 'child');
+				items.push(newElement);
 			});
 			return Promise.resolve(items);
 		} else if (this.flagMap?.size > 0) {
@@ -74,6 +75,8 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 						`${flag.flag.name ? flag.flag.name : flag.env.key}`,
 						TreeItemCollapsibleState.Collapsed,
 						flag.env.key,
+						null,
+						'flag',
 					),
 				);
 			});
@@ -139,8 +142,18 @@ class FlagList extends FlagCodeLens {
 
 export class FlagNode extends TreeItem {
 	flagKey: string;
-	constructor(public readonly label: string, public collapsibleState: TreeItemCollapsibleState, flagKey: string) {
+	range?: Range;
+	contextValue?: string;
+	constructor(
+		public readonly label: string,
+		public collapsibleState: TreeItemCollapsibleState,
+		flagKey: string,
+		range?: Range,
+		contextValue?: string,
+	) {
 		super(label, collapsibleState);
 		this.flagKey = flagKey;
+		this.range = range;
+		this.contextValue = contextValue;
 	}
 }

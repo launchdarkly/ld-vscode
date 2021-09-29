@@ -25,7 +25,7 @@ import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
 import { FlagCodeLensProvider } from './providers/flagLens';
 import { LaunchDarklyHoverProvider } from './providers/hover';
-import { LaunchDarklyFlagListProvider } from './providers/flagListView';
+import { FlagNode, LaunchDarklyFlagListProvider } from './providers/flagListView';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
@@ -158,6 +158,9 @@ export async function register(
 		window.registerTreeDataProvider('launchdarklyFlagList', listView);
 		ctx.subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsinDocument));
 		ctx.subscriptions.push(
+			commands.registerCommand('launchdarkly.OpenFlag', (node: FlagNode) =>
+				window.activeTextEditor.revealRange(node.range),
+			),
 			languages.registerCompletionItemProvider(
 				LD_MODE,
 				new LaunchDarklyCompletionItemProvider(config, flagStore, aliases),

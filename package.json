@@ -100,6 +100,14 @@
 				"when": "LDFlagToggle"
 			},
 			{
+				"command": "launchdarkly.OpenFlag",
+				"title": "Jump to line in file",
+				"icon": {
+					"light": "resources/light/flagMultipleSearch.svg",
+					"dark": "resources/dark/flagMultipleSearch.svg"
+				}
+			},
+			{
 				"command": "extension.configureLaunchDarkly",
 				"title": "LaunchDarkly: Configure settings",
 				"icon": {
@@ -177,6 +185,10 @@
 				{
 					"command": "launchdarkly.flagMultipleSearch",
 					"when": "false"
+				},
+				{
+					"command": "launchdarkly.OpenFlag",
+					"when": "false"
 				}
 			],
 			"editor/context": [
@@ -249,6 +261,11 @@
 				{
 					"command": "launchdarkly.offChange",
 					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem"
+				},
+				{
+					"command": "launchdarkly.OpenFlag",
+					"when": "view == launchdarklyFlagList && viewItem == child",
+					"group": "inline"
 				}
 			]
 		},
