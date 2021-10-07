@@ -26,6 +26,7 @@ import { FlagAliases } from './providers/codeRefs';
 import { FlagCodeLensProvider } from './providers/flagLens';
 import { LaunchDarklyHoverProvider } from './providers/hover';
 import { FlagNode, LaunchDarklyFlagListProvider } from './providers/flagListView';
+import { ClientSideEnable, refreshDiagnostics, subscribeToDocumentChanges } from './providers/diagnostics';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
@@ -156,8 +157,8 @@ export async function register(
 		const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
 		const listView = new LaunchDarklyFlagListProvider(config, codeLens);
 		window.registerTreeDataProvider('launchdarklyFlagList', listView);
-		ctx.subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsinDocument));
 		ctx.subscriptions.push(
+			window.onDidChangeActiveTextEditor(listView.setFlagsinDocument),
 			commands.registerCommand('launchdarkly.OpenFlag', (node: FlagNode) =>
 				window.activeTextEditor.revealRange(node.range),
 			),
@@ -182,6 +183,26 @@ export async function register(
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
+
+	const clientSideDiagnostics = languages.createDiagnosticCollection('clientSide');
+	ctx.subscriptions.push(
+		clientSideDiagnostics,
+		languages.registerCodeActionsProvider('*', new ClientSideEnable(), {
+			providedCodeActionKinds: ClientSideEnable.providedCodeActionKinds,
+		}),
+		commands.registerCommand('launchdarkly.enableClientSide', async args => {
+			try {
+				const patchOperation = [{ op: 'replace', path: '/clientSideAvailability/usingEnvironmentId', value: true }];
+				await api.patchFeatureFlag(config.project, args, { comment: 'VS Code Updated', patch: patchOperation });
+				// Global updates are not automatic, need to refresh flag for diagnostics.
+				await flagStore.forceFeatureFlagUpdate(args);
+				refreshDiagnostics(window.activeTextEditor.document, clientSideDiagnostics, aliases, flagStore);
+			} catch (err) {
+				console.log(err);
+			}
+		}),
+	);
+	subscribeToDocumentChanges(ctx, clientSideDiagnostics, aliases, flagStore);
 }
 
 class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {

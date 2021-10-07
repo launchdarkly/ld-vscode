@@ -118,6 +118,7 @@ export class FlagStore {
 			this.debouncedReload();
 		});
 	}
+
 	private setLDClientBackgroundCheck() {
 		return window.onDidChangeWindowState(async e => {
 			const ldClient = await this.ldClient;
@@ -148,6 +149,64 @@ export class FlagStore {
 		setInterval(() => {
 			this.updateFlags();
 		}, ms);
+	}
+
+	private readonly debounceUpdate = debounce(
+		async () => {
+			try {
+				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				this.flagMetadata = keyBy(flags, 'key');
+				this.storeUpdates.fire(true);
+			} catch (err) {
+				let errMsg;
+				if (err.statusCode == 404) {
+					errMsg = `Project does not exist`;
+				} else if (err.statusCode == 401) {
+					errMsg = `Unauthorized`;
+				} else if (err.code == 'ENOTFOUND' || err.code == 'ECONNRESET') {
+					// We know the domain should exist.
+					console.log(err); // Still want to log that this is happening
+					return;
+				} else {
+					errMsg = err.message;
+					console.log(`${err}`);
+					return;
+				}
+				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+			}
+		},
+		5000,
+		{ trailing: true },
+	);
+
+	private async getLatestSDKKey(): Promise<string> {
+		try {
+			const env = await this.api.getEnvironment(this.config.project, this.config.env);
+			return env.apiKey;
+		} catch (err) {
+			if (err.statusCode === 404) {
+				window
+					.showErrorMessage(
+						'Your configured LaunchDarkly environment does not exist. Please reconfigure the extension.',
+						'Configure',
+					)
+					.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
+			}
+			throw err;
+		}
+	}
+
+	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
+		// Cannot replace in the config, so updating at call site.
+		const streamUri = this.config.baseUri.replace('app', 'stream');
+		return {
+			timeout: 5,
+			baseUri: this.config.baseUri,
+			streamUri: streamUri,
+			sendEvents: false,
+			featureStore: this.store,
+			streamInitialReconnectDelay: Math.floor(Math.random() * 5) + 1,
+		};
 	}
 
 	async updateFlags(): Promise<void> {
@@ -191,36 +250,6 @@ export class FlagStore {
 		});
 	}
 
-	private async getLatestSDKKey(): Promise<string> {
-		try {
-			const env = await this.api.getEnvironment(this.config.project, this.config.env);
-			return env.apiKey;
-		} catch (err) {
-			if (err.statusCode === 404) {
-				window
-					.showErrorMessage(
-						'Your configured LaunchDarkly environment does not exist. Please reconfigure the extension.',
-						'Configure',
-					)
-					.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
-			}
-			throw err;
-		}
-	}
-
-	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
-		// Cannot replace in the config, so updating at call site.
-		const streamUri = this.config.baseUri.replace('app', 'stream');
-		return {
-			timeout: 5,
-			baseUri: this.config.baseUri,
-			streamUri: streamUri,
-			sendEvents: false,
-			featureStore: this.store,
-			streamInitialReconnectDelay: Math.floor(Math.random() * 5) + 1,
-		};
-	}
-
 	async getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
 		if (this.flagMetadata === undefined) {
 			await this.debounceUpdate();
@@ -249,6 +278,11 @@ export class FlagStore {
 		});
 	}
 
+	async forceFeatureFlagUpdate(flagKey: string): Promise<void> {
+		this.flagMetadata[flagKey] = await this.api.getFeatureFlag(this.config.project, flagKey, this.config.env);
+		this.storeUpdates.fire(true);
+	}
+
 	allFlags(): Promise<FlagConfiguration[]> {
 		return new Promise(resolve => {
 			this.store.all(DATA_KIND, resolve);
@@ -269,32 +303,4 @@ export class FlagStore {
 			return this.flagMetadata;
 		}
 	}
-
-	private readonly debounceUpdate = debounce(
-		async () => {
-			try {
-				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-				this.flagMetadata = keyBy(flags, 'key');
-				this.storeUpdates.fire(true);
-			} catch (err) {
-				let errMsg;
-				if (err.statusCode == 404) {
-					errMsg = `Project does not exist`;
-				} else if (err.statusCode == 401) {
-					errMsg = `Unauthorized`;
-				} else if (err.code == 'ENOTFOUND' || err.code == 'ECONNRESET') {
-					// We know the domain should exist.
-					console.log(err); // Still want to log that this is happening
-					return;
-				} else {
-					errMsg = err.message;
-					console.log(`${err}`);
-					return;
-				}
-				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
-			}
-		},
-		5000,
-		{ trailing: true },
-	);
 }

@@ -2,7 +2,8 @@ import * as rp from 'request-promise-native';
 import * as url from 'url';
 
 import { Configuration } from './configuration';
-import { Resource, Project, Environment, FeatureFlag, PatchOperation, PatchComment } from './models';
+import { Resource, Project, Environment, PatchOperation, PatchComment } from './models';
+import { FeatureFlag } from 'launchdarkly-api-typescript';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PACKAGE_JSON = require('../package.json');
 
@@ -42,7 +43,8 @@ export class LaunchDarklyAPI {
 		const envParam = envKey ? '?env=' + envKey : '';
 		const options = this.createOptions(`flags/${projectKey}/${flagKey + envParam}`);
 		const data = await rp(options);
-		return new FeatureFlag(JSON.parse(data));
+		const flag: FeatureFlag = JSON.parse(data);
+		return flag;
 	}
 
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
@@ -57,7 +59,8 @@ export class LaunchDarklyAPI {
 		try {
 			const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value);
 			const data = await rp(options);
-			return new FeatureFlag(JSON.parse(data));
+			const flag: FeatureFlag = data;
+			return flag;
 		} catch (err) {
 			return Promise.reject(err);
 		}

@@ -584,6 +584,13 @@ aws4@^1.8.0:
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.11.0.tgz#d61f46d83b2519250e2784daf5b09479a8b41c59"
   integrity sha512-xh1Rl34h6Fi1DC2WWKfxUTVqRsNnr6LsKz2+hfwDxQJWmrx8+c7ylaqBMcHfl1U1r2dsifOvKX3LQuLNZ+XSvA==
 
+axios@^0.21.1:
+  version "0.21.4"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.4.tgz#c67b90dc0568e5c1cf2b0b858c43ba28e2eda575"
+  integrity sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==
+  dependencies:
+    follow-redirects "^1.14.0"
+
 balanced-match@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.0.tgz#89b4d199ab2bee49de164ea02b89ce462d71b767"
@@ -1406,7 +1413,7 @@ ecc-jsbn@~0.1.1:
     jsbn "~0.1.0"
     safer-buffer "^2.1.0"
 
-elliptic@^6.5.4:
+elliptic@^6.5.3:
   version "6.5.4"
   resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.4.tgz#da37cebd31e79a1367e941b592ed1fbebd58abbb"
   integrity sha512-iLhC6ULemrljPZb+QutR5TQGB+pdW6KGD5RSegS+8sorOZT+rdQFbsQFJgvN3eRqNALqJer4oQ16YvJHlU8hzQ==
@@ -1925,6 +1932,11 @@ fn.name@1.x.x:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/fn.name/-/fn.name-1.1.0.tgz#26cad8017967aea8731bc42961d04a3d5988accc"
   integrity sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==
+
+follow-redirects@^1.14.0:
+  version "1.14.4"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.4.tgz#838fdf48a8bbdd79e52ee51fb1c94e3ed98b9379"
+  integrity sha512-zwGkiSXC1MUJG/qmeIFH2HBJx9u0V46QGUe3YR1fXG8bXQxq7fLj0RjLZQ5nubr9qNJUZrH+xUcwXEoXNpfS+g==
 
 for-in@^1.0.2:
   version "1.0.2"
@@ -2935,21 +2947,28 @@ kuler@^2.0.0:
   resolved "https://registry.yarnpkg.com/kuler/-/kuler-2.0.0.tgz#e2c570a3800388fb44407e851531c1d670b061b3"
   integrity sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==
 
-launchdarkly-eventsource@1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/launchdarkly-eventsource/-/launchdarkly-eventsource-1.4.0.tgz#ea27448d35b8c5b7da3dbf871fe3c3f0d4772d5e"
-  integrity sha512-NhyafaXyX2EuO8fDlQORY51eeDx0w5TJWVNqbjDc+3N69grj0zt9FYf8TE+KoFPL1IoxZMLq9mmPvhtBtpfSSQ==
+launchdarkly-api-typescript@6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/launchdarkly-api-typescript/-/launchdarkly-api-typescript-6.0.0.tgz#3e536fdc242edcd087736133a26c280bffd490d5"
+  integrity sha512-dhN04SQLs2l6Xrxhu5xTVGzi+QqJzGL2XUg2Y1GMEw7iJ1FnTn+fTOchfvIvsjn/SnF6EBsX1wA4OyyS8nQ/XA==
   dependencies:
-    original "^1.0.0"
+    axios "^0.21.1"
 
-launchdarkly-node-server-sdk@^5.14.3:
-  version "5.14.4"
-  resolved "https://registry.yarnpkg.com/launchdarkly-node-server-sdk/-/launchdarkly-node-server-sdk-5.14.4.tgz#2d2707a7473829c01671eb43ef5543d25171bc72"
-  integrity sha512-toZl+iIWwd0xYqd1dHOgHugkWVLZLic8NiNB6sCOvKCQSNi2aBhKj/BC9lq/H1Y6Cf0xm2FC4WPsK1FWP+jSMw==
+launchdarkly-eventsource@1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/launchdarkly-eventsource/-/launchdarkly-eventsource-1.4.1.tgz#195e9b1615e55bc42d6ee6aeeb492f278a3f2b5e"
+  integrity sha512-RAwB4nfxU9swTdU+kbusk17xgfCMKKVkD5cJW1oKxceEwQ5eIEw2BCCRhqZqe33+3je+oXmE+XFA+KhCFsLhxQ==
+  dependencies:
+    original "^1.0.2"
+
+launchdarkly-node-server-sdk@^5.13.1:
+  version "5.14.5"
+  resolved "https://registry.yarnpkg.com/launchdarkly-node-server-sdk/-/launchdarkly-node-server-sdk-5.14.5.tgz#f3191160de15f13597dc3aa6b92a5de125dc9072"
+  integrity sha512-POR8gcEGZSHKv9nAUpTF47zKEgPqSCs4lWqAESgaE+XtVbe2luKYeyB4SXg+pW8PnNfPPTMt/6Fi+PiA5vPnWA==
   dependencies:
     "@types/redis" "^2.8.18"
     async "^3.1.0"
-    launchdarkly-eventsource "1.4.0"
+    launchdarkly-eventsource "1.4.1"
     lrucache "^1.0.3"
     node-cache "^4.2.0"
     redis "^3.1.1"
@@ -3027,7 +3046,7 @@ lodash.kebabcase@4.1.1:
   resolved "https://registry.yarnpkg.com/lodash.kebabcase/-/lodash.kebabcase-4.1.1.tgz#8489b1cb0d29ff88195cceca448ff6d6cc295c36"
   integrity sha1-hImxyw0p/4gZXM7KRI/21swpXDY=
 
-lodash@^4.17.12, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@^4.17.5:
+lodash@^4.17.12, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.5:
   version "4.17.21"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
@@ -3525,7 +3544,7 @@ optionator@^0.9.1:
     type-check "^0.4.0"
     word-wrap "^1.2.3"
 
-original@^1.0.0:
+original@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/original/-/original-1.0.2.tgz#e442a61cffe1c5fd20a65f3261c26663b303f25f"
   integrity sha512-hyBVl6iqqUOJ8FqRe+l/gS8H+kKYjrEndd5Pm1MfBtsEKA038HkkdbAl/72EAXGyonD/PFsvmVG+EvcIpliMBg==
