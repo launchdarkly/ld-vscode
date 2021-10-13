@@ -4,8 +4,8 @@ import * as url from 'url';
 const axios = require('axios').default;
 
 import { Configuration } from './configuration';
-import { Resource, Project, Environment, PatchOperation, PatchComment } from './models';
-import { FeatureFlag } from 'launchdarkly-api-typescript';
+import { Resource, Project, FeatureFlag, Environment, PatchOperation, PatchComment } from './models';
+//import { FeatureFlag } from 'launchdarkly-api-typescript';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PACKAGE_JSON = require('../package.json');
 

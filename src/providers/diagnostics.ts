@@ -64,7 +64,6 @@ export async function refreshDiagnostics(
 					diagnostics.push(createDiagnostic(doc, lineOfText, lineIndex, getFlag.key, getFlag.key));
 				}
 			} else if (range && foundAliases?.length > 0 && flags[aliasesLocal[foundAliases]]) {
-				console.log(flags[aliasesLocal[foundAliases]]);
 				if (
 					flags[aliasesLocal[foundAliases]].clientSideAvailability?.usingEnvironmentId == false ||
 					flags[aliasesLocal[foundAliases]].includeInSnippet == false
