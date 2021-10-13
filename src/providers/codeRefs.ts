@@ -3,7 +3,7 @@ import { exec, ExecOptions } from 'child_process';
 import { access, createReadStream, constants } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import * as csv from 'csv-parser';
+import csv from 'csv-parser';
 import { Configuration } from '../configuration';
 import { CodeRefs } from '../coderefs/codeRefsVersion';
 

@@ -296,7 +296,7 @@ export class FlagStore {
 				await this.debounceUpdate();
 				return this.flagMetadata;
 			} catch (err) {
-				console.log(`${err}`);
+				console.log(`Failed getting Metadata: ${err}`);
 				window.showErrorMessage(`[LaunchDarkly] ${err}`);
 			}
 		} else {

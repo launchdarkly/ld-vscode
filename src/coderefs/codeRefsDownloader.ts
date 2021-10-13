@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { ExtensionContext } from 'vscode';
 import { mkdirSync, createWriteStream, existsSync, unlinkSync, createReadStream } from 'fs';
-import * as rp from 'request-promise-native';
 import { CodeRefs } from './codeRefsVersion';
 import * as rr from 'rimraf';
 import * as tar from 'tar-fs';
+import axios from 'axios';
 const gunzip = require('gunzip-maybe');
 
 export class CodeRefsDownloader {
@@ -47,11 +47,10 @@ export class CodeRefsDownloader {
 		}
 		const file = createWriteStream(codeRefsPath);
 		try {
-			const archivedFile = await rp(
+			const archivedFile = await axios.get(
 				`https://github.com/launchdarkly/ld-find-code-refs/releases/download/${CodeRefs.version}/ld-find-code-refs_${CodeRefs.version}_${platform}_${arch}.tar.gz`,
 				{
 					method: 'GET',
-					encoding: null,
 				},
 			);
 			file.write(archivedFile);

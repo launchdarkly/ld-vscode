@@ -19,6 +19,8 @@ export class ConfigurationMenu {
 	private useGlobalState: boolean;
 	private invalidAccessToken: string;
 	private baseUri = DEFAULT_BASE_URI;
+	private debugCipher: string;
+	private debugChannel: string;
 
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
@@ -178,6 +180,12 @@ export class ConfigurationMenu {
 		});
 
 		this.env = pick.description;
+		environments.map(env => {
+			if (env.key == pick.description) {
+				this.debugCipher = env._pubnub.cipherKey;
+				this.debugChannel = env._pubnub.channel;
+			}
+		});
 	}
 
 	async pickStorageType(input: MultiStepInput) {
@@ -215,7 +223,7 @@ export class ConfigurationMenu {
 
 	async configure() {
 		await this.collectInputs();
-		['accessToken', 'baseUri', 'project', 'env'].forEach(async option => {
+		['accessToken', 'baseUri', 'project', 'env', 'debugCipher', 'debugChannel'].forEach(async option => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
 	}

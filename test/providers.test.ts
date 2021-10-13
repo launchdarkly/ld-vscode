@@ -2,7 +2,7 @@ import { anyString, instance, mock, when } from 'ts-mockito';
 import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as expect from 'expect';
+import expect from 'expect';
 import * as toMatchSnapshot from 'expect-mocha-snapshot';
 
 expect.extend({ toMatchSnapshot });

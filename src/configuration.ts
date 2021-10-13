@@ -20,6 +20,9 @@ export class Configuration {
 	project = '';
 	env = '';
 	codeRefsPath = '';
+	debugKey = '';
+	debugCipher = '';
+	debugChannel = '';
 	refreshRate = 120;
 	codeRefsRefreshRate = 240;
 	enableAliases = true;
@@ -46,6 +49,8 @@ export class Configuration {
 		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
 		const accessToken = this.getState('accessToken') || this.accessToken;
 		const env = this.getState('env') || this.env;
+		const debugChannel = this.ctx.workspaceState.get('debugChannel', '');
+		const debugCipher = this.ctx.workspaceState.get('debugCipher', '');
 
 		if (!accessToken.startsWith('api')) {
 			console.error(`Access Token does not start with api-. token: ${accessToken}`);
@@ -53,6 +58,8 @@ export class Configuration {
 		}
 		this.accessToken = accessToken;
 		this.env = env;
+		this.debugChannel = debugChannel;
+		this.debugCipher = debugCipher;
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {
@@ -66,11 +73,17 @@ export class Configuration {
 			await ctxState.update(key, value);
 			return;
 		}
-		if (key === 'env') {
+		if (key === 'env' || key === 'debugChannel' || key === 'debugCipher') {
 			const ctxState = this.ctx.workspaceState;
 			await ctxState.update(key, value);
 			return;
 		}
+		if (key === 'debugChannel') {
+			const ctxState = this.ctx.workspaceState;
+			await ctxState.update(key, value);
+			return;
+		}
+
 		await config.update(key, value, global);
 		config = workspace.getConfiguration('launchdarkly');
 
