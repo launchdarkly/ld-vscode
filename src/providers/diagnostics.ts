@@ -19,7 +19,7 @@ export async function refreshDiagnostics(
 ): Promise<void> {
 	const diagnostics: vscode.Diagnostic[] = [];
 	let flags;
-	if (flagStore) {
+	if (flagStore && checkFilename(vscode.window.activeTextEditor.document.fileName)) {
 		flags = await flagStore.allFlagsMetadata();
 	} else {
 		return;

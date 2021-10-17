@@ -93,6 +93,11 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			this.refresh();
 			return;
 		}
+		const firstLine = editor.document.lineAt(0);
+		if (firstLine.text.includes('DO NOT EDIT')) {
+			this.refresh();
+			return;
+		}
 		let flagsFound;
 		try {
 			flagsFound = await this.lens.provideCodeLenses(editor.document, null);
@@ -101,6 +106,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			flagsFound = await this.lens.provideCodeLenses(editor.document, null);
 		}
 		if (typeof flagsFound === 'undefined') {
+			this.refresh();
 			return;
 		}
 		flagsFound.map(flag => {
