@@ -20,8 +20,8 @@ export class LaunchDarklyAPI {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	async getAccount(): Promise<any> {
 		const options = this.createOptions('account');
-		const account = await axios.get(options);
-		return JSON.parse(account);
+		const account = await axios.get(options.url, options);
+		return account.data;
 	}
 
 	async getProjects(): Promise<Array<Project>> {
