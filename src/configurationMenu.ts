@@ -81,13 +81,13 @@ export class ConfigurationMenu {
 		if (pick.label === clearOverrides) {
 			await this.config.clearLocalConfig();
 			this.config.reload();
-			return (input: MultiStepInput) => this.pickStorageType(input);
+			return (input: MultiStepInput) => this.inputAccessToken(input);
 		}
 
 		if (pick.label === clearGlobalOverrides) {
 			await this.config.clearLocalConfig();
 			await this.config.clearGlobalConfig();
-			return (input: MultiStepInput) => this.pickStorageType(input);
+			return (input: MultiStepInput) => this.inputAccessToken(input);
 		}
 
 		return (input: MultiStepInput) => this.inputAccessToken(input);
