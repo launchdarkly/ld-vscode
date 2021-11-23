@@ -117,24 +117,25 @@ export async function subscribeToDocumentChanges(
 		} catch (err) {
 			console.log(err);
 		}
-	}
-	context.subscriptions.push(
-		vscode.window.onDidChangeActiveTextEditor(editor => {
-			if (editor) {
-				try {
-					refreshDiagnostics(vscode.window.activeTextEditor.document, clientSideDiagnostics, aliases, flagStore);
-				} catch (err) {
-					console.log(err);
-				}
-			}
-		}),
-	);
 
-	context.subscriptions.push(
-		vscode.workspace.onDidChangeTextDocument(e =>
-			refreshDiagnostics(e.document, clientSideDiagnostics, aliases, flagStore),
-		),
-	);
+		context.subscriptions.push(
+			vscode.window.onDidChangeActiveTextEditor(editor => {
+				if (editor) {
+					try {
+						refreshDiagnostics(vscode.window.activeTextEditor.document, clientSideDiagnostics, aliases, flagStore);
+					} catch (err) {
+						console.log(err);
+					}
+				}
+			}),
+		);
+
+		context.subscriptions.push(
+			vscode.workspace.onDidChangeTextDocument(e =>
+				refreshDiagnostics(e.document, clientSideDiagnostics, aliases, flagStore),
+			),
+		);
+	}
 
 	context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(doc => clientSideDiagnostics.delete(doc.uri)));
 }
