@@ -13,16 +13,16 @@ import {
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
-import { FlagCodeLens } from './flagLens';
+import { FlagCodeLens, FlagCodeLensProvider } from './flagLens';
 
 export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> {
 	private config: Configuration;
-	private lens: CodeLensProvider;
+	private lens: FlagCodeLensProvider;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
 	private flagsInFile: Array<FlagList> = [];
 	private flagMap: Map<string, FlagList> = new Map();
-	constructor(config: Configuration, lens: CodeLensProvider) {
+	constructor(config: Configuration, lens: FlagCodeLensProvider) {
 		this.config = config;
 		this.lens = lens;
 		this.setFlagsinDocument();
@@ -100,10 +100,10 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		}
 		let flagsFound;
 		try {
-			flagsFound = await this.lens.provideCodeLenses(editor.document, null);
+			flagsFound = await this.lens.ldCodeLens(editor.document);
 		} catch (err) {
 			// Try maximum of 2 times for lens to resolve
-			flagsFound = await this.lens.provideCodeLenses(editor.document, null);
+			flagsFound = await this.lens.ldCodeLens(editor.document);
 		}
 		if (typeof flagsFound === 'undefined') {
 			this.refresh();
