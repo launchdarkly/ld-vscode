@@ -21,7 +21,11 @@ export class CodeRefsDownloader {
 		const codeRefsPath = this.ctx.asAbsolutePath(`coderefs/coderefs-${CodeRefs.version}.tar.gz`);
 
 		// Remove all previous versions of the binary
-		await new Promise(resolve => rr(`${dir}/*`, resolve));
+		try {
+			await new Promise(resolve => rr(`${dir}/*`, resolve));
+		} catch (err) {
+			console.log(`No previous version of code references installed`);
+		}
 		this.installDir(dir, codeRefsPath);
 	}
 

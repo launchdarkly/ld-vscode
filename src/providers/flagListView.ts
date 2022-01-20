@@ -1,6 +1,5 @@
 import { debounce } from 'lodash';
 import {
-	CodeLensProvider,
 	ConfigurationChangeEvent,
 	Event,
 	EventEmitter,
@@ -64,7 +63,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		if (typeof element !== 'undefined') {
 			const child = this.flagMap.get(element.flagKey);
 			child.list.forEach(entry => {
-				const newElement = new FlagNode(`Line: ${entry.end.line}`, null, element.flagKey, entry, 'child');
+				const newElement = new FlagNode(`Line: ${entry.end.line + 1}`, null, element.flagKey, entry, 'child');
 				items.push(newElement);
 			});
 			return Promise.resolve(items);
