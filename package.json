@@ -77,6 +77,11 @@
 					"default": false,
 					"description": "Control whether flag data is inlined when a reference is found in a file."
 				},
+				"launchdarkly.enableMetricsExplorer": {
+					"type": "boolean",
+					"default": false,
+					"description": "Enable Metrics Explorer"
+				},
 				"launchdarkly.accessToken": {
 					"type": "string",
 					"default": "",
@@ -288,6 +293,11 @@
 					"command": "launchdarkly.OpenFlag",
 					"when": "view == launchdarklyFlagList && viewItem == child",
 					"group": "inline"
+				},
+				{
+					"command": "launchdarkly.openBrowser",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser || view == launchdarklyMetrics && viewItem == metricViewBrowser",
+					"group": "inline"
 				}
 			]
 		},
@@ -310,6 +320,10 @@
 					"id": "launchdarklyFlagList",
 					"name": "LaunchDarkly Flags in File",
 					"when": "launchdarkly:enableFlagExplorer"
+				},
+				{
+					"id": "launchdarklyMetrics",
+					"name": "LaunchDarkly Metrics"
 				}
 			]
 		},
@@ -331,7 +345,7 @@
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
 		"compile": "webpack --mode none",
-		"watch": "webpack --mode none --watch --info-verbosity verbose",
+		"watch": "webpack --mode none --watch",
 		"pretest": "tsc -p ./ && cp ./package.json ./out/package.json",
 		"test": "node ./out/test/runTest.js",
 		"lint": "npx eslint . --ext .ts",

@@ -2,9 +2,9 @@
 import { ExtensionContext } from 'vscode';
 import { mkdirSync, createWriteStream, existsSync, unlinkSync, createReadStream } from 'fs';
 import { CodeRefs } from './codeRefsVersion';
-import * as rr from 'rimraf';
 import * as tar from 'tar-fs';
 import axios from 'axios';
+const rimraf = require('rimraf');
 const gunzip = require('gunzip-maybe');
 
 export class CodeRefsDownloader {
@@ -22,7 +22,7 @@ export class CodeRefsDownloader {
 
 		// Remove all previous versions of the binary
 		try {
-			await new Promise(resolve => rr(`${dir}/*`, resolve));
+			await new Promise(resolve => rimraf(`${dir}/*`, resolve));
 		} catch (err) {
 			console.log(`No previous version of code references installed`);
 		}
@@ -54,6 +54,7 @@ export class CodeRefsDownloader {
 			const archivedFile = await axios.get(
 				`https://github.com/launchdarkly/ld-find-code-refs/releases/download/${CodeRefs.version}/ld-find-code-refs_${CodeRefs.version}_${platform}_${arch}.tar.gz`,
 				{
+					responseType: 'arraybuffer',
 					method: 'GET',
 				},
 			);

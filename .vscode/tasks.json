@@ -12,9 +12,9 @@
 		{
 			"label": "yarn",
 			"command": "yarn",
-			"type": "shell",
 			"presentation": {
-				"reveal": "silent"
+				"reveal": "silent",
+				"clear": true
 			},
 			"args": ["run", "compile"],
 			"isBackground": true,

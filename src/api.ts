@@ -4,7 +4,7 @@ import * as url from 'url';
 const axios = require('axios').default;
 
 import { Configuration } from './configuration';
-import { Resource, Project, FeatureFlag, Environment, PatchOperation, PatchComment } from './models';
+import { Resource, Project, FeatureFlag, Environment, PatchOperation, PatchComment, Metric } from './models';
 //import { FeatureFlag } from 'launchdarkly-api-typescript';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PACKAGE_JSON = require('../package.json');
@@ -39,6 +39,13 @@ export class LaunchDarklyAPI {
 		const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
 		const data = await axios.get(options.url, options);
 		return data.data;
+	}
+
+	async getMetrics(projectKey: string): Promise<Array<Metric>> {
+		// TODO: Update to use cursor and get all
+		const options = this.createOptions(`metrics/${projectKey}?limit=50`);
+		const data = await axios.get(options.url, options);
+		return data.data.items;
 	}
 
 	async getFeatureFlag(projectKey: string, flagKey: string, envKey?: string): Promise<FeatureFlag> {

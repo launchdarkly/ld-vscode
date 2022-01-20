@@ -28,6 +28,7 @@ import { FlagCodeLensProvider } from './providers/flagLens';
 import { LaunchDarklyHoverProvider } from './providers/hover';
 import { FlagNode, LaunchDarklyFlagListProvider } from './providers/flagListView';
 import { ClientSideEnable, refreshDiagnostics, subscribeToDocumentChanges } from './providers/diagnostics';
+import { LaunchDarklyMetricsTreeViewProvider } from './providers/metricsView';
 import PubNub from 'pubnub';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
@@ -52,6 +53,8 @@ export async function register(
 			try {
 				const configurationMenu = new ConfigurationMenu(config, api);
 				await configurationMenu.configure();
+				const metricsView = new LaunchDarklyMetricsTreeViewProvider(api, config, ctx);
+				window.registerTreeDataProvider('launchdarklyMetrics', metricsView);
 				if (typeof flagStore === 'undefined') {
 					flagStore = new FlagStore(config, api);
 					flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
@@ -68,6 +71,7 @@ export async function register(
 				window.showErrorMessage('An unexpected error occurred, please try again later.');
 			}
 		}),
+
 		commands.registerCommand('launchdarkly.toggleFlagContext', async () => {
 			try {
 				const key = ctx.workspaceState.get('LDFlagKey') as string;
@@ -155,6 +159,8 @@ export async function register(
 				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
 			}
 		}
+		const metricsView = new LaunchDarklyMetricsTreeViewProvider(api, config, ctx);
+		window.registerTreeDataProvider('launchdarklyMetrics', metricsView);
 
 		flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);

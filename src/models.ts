@@ -406,3 +406,18 @@ export class PatchComment {
 	comment?: string;
 	patch?: Array<PatchOperation>;
 }
+
+export class Metric {
+	key: string;
+	name: string;
+	description: string;
+	kind: string;
+	_attachedFlagCount: number;
+	links?: Links;
+	_site: Link;
+	tags?: Array<string>;
+	creationDate?: number;
+	lastModified?: number;
+	isNumeric: boolean;
+	eventKey: string;
+}
