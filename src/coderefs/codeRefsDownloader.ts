@@ -56,9 +56,12 @@ export class CodeRefsDownloader {
 				{
 					responseType: 'arraybuffer',
 					method: 'GET',
+					headers: {
+						'Content-Type': 'application/gzip',
+					},
 				},
 			);
-			file.write(archivedFile);
+			file.write(archivedFile.data);
 			file.end();
 		} catch (err) {
 			console.log(err);

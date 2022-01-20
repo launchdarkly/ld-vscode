@@ -7,7 +7,7 @@ import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
 import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
-import { CodeRefs } from './coderefs/codeRefsVersion';
+import { CodeRefs as cr } from './coderefs/codeRefsVersion';
 
 let config: Configuration;
 let flagStore: FlagStore;
@@ -51,7 +51,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 		flagStore = new FlagStore(config, api);
 	}
 
-	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}`;
+	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${cr.version}`;
 	// Check to see if coderefs is already installed. Need more logic if specific config path is set.
 	if (config.enableAliases) {
 		access(codeRefsVersionDir, constants.F_OK, err => {
