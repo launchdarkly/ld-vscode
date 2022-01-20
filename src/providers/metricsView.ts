@@ -23,6 +23,7 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 		this.api = api;
 		this.config = config;
 		this.ctx = ctx;
+		this.registerCommands();
 		this.start();
 	}
 
@@ -59,6 +60,21 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 		this.refresh();
 	}
 
+	async registerCommands(): Promise<void> {
+		this.ctx.subscriptions.push(
+			vscode.commands.registerCommand('launchdarkly.metricMultipleSearch', (node: MetricValue) => {
+				const findMetrics = node.eventKey;
+				vscode.commands.executeCommand('workbench.action.findInFiles', {
+					query: findMetrics,
+					triggerSearch: true,
+					matchWholeWord: true,
+					isCaseSensitive: true,
+					isRegex: true,
+				});
+			}),
+		);
+	}
+
 	async start(): Promise<void> {
 		this.ctx.subscriptions.push(
 			vscode.commands.registerCommand('launchdarkly.refreshEntryMetric', () => this.refresh()),
@@ -89,7 +105,16 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 	private metricToValues(metric: Metric): MetricValue {
 		const metricUri = this.config.baseUri + metric._site.href;
 		const tooltip = generateMetricsHoverString(metric, this.config);
-		const item = new MetricValue(this.ctx, metric.name, tooltip, NON_COLLAPSED, [], 'metricParentItem', metricUri);
+		const item = new MetricValue(
+			this.ctx,
+			metric.name,
+			tooltip,
+			NON_COLLAPSED,
+			[],
+			'metricParentItem',
+			metricUri,
+			metric.eventKey,
+		);
 		const child = item.children;
 
 		if (metric.tags) {
@@ -128,7 +153,7 @@ export class MetricValue extends vscode.TreeItem {
 	children: MetricValue[] | undefined;
 	contextValue?: string;
 	uri?: string;
-	flagKey?: string;
+	eventKey?: string;
 	flagParentName?: string;
 
 	constructor(
@@ -139,14 +164,14 @@ export class MetricValue extends vscode.TreeItem {
 		children?: MetricValue[],
 		contextValue?: string,
 		uri?: string,
-		flagKey?: string,
+		eventKey?: string,
 		flagParentName?: string,
 	) {
 		super(label, collapsibleState);
 		this.contextValue = contextValue;
 		this.children = children;
 		this.uri = uri;
-		this.flagKey = flagKey;
+		this.eventKey = eventKey;
 		this.flagParentName = flagParentName;
 		this.conditionalIcon(ctx, this.contextValue, this.label);
 	}

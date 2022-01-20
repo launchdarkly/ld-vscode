@@ -186,6 +186,14 @@
 					"light": "resources/light/flagMultipleSearch.svg",
 					"dark": "resources/dark/flagMultipleSearch.svg"
 				}
+			},
+			{
+				"command": "launchdarkly.metricMultipleSearch",
+				"title": "Search Metric References",
+				"icon": {
+					"light": "resources/light/flagMultipleSearch.svg",
+					"dark": "resources/dark/flagMultipleSearch.svg"
+				}
 			}
 		],
 		"menus": {
@@ -208,6 +216,10 @@
 				},
 				{
 					"command": "launchdarkly.flagMultipleSearch",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.metricMultipleSearch",
 					"when": "false"
 				},
 				{
@@ -263,6 +275,11 @@
 				{
 					"command": "launchdarkly.flagMultipleSearch",
 					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
+					"group": "inline"
+				},
+				{
+					"command": "launchdarkly.metricMultipleSearch",
+					"when": "view == launchdarklyMetrics && viewItem == metricParentItem",
 					"group": "inline"
 				},
 				{
@@ -364,7 +381,7 @@
 		"eslint": "7.3.1",
 		"expect": "26.6.2",
 		"expect-mocha-snapshot": "2.0.1",
-		"glob": "7.1.6",
+		"glob": "7.2.0",
 		"mocha": "5.2.0",
 		"prettier": "^1.5.3",
 		"pretty-error": "^2.1.1",
