@@ -146,7 +146,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				vscode.env.clipboard.writeText(node.flagKey),
 			),
 			vscode.commands.registerCommand('launchdarkly.openBrowser', (node: FlagNode | string) => {
-				console.log(node);
 				if (typeof node === 'string') {
 					vscode.env.openExternal(vscode.Uri.parse(node));
 				} else {

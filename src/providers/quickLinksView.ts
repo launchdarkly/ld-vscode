@@ -1,9 +1,10 @@
-import { debounce, isLength } from 'lodash';
+import { debounce } from 'lodash';
 import {
 	ConfigurationChangeEvent,
 	Event,
 	EventEmitter,
 	TreeItem,
+	QuickPickItem,
 	TreeDataProvider,
 	TreeItemCollapsibleState,
 	Command,
@@ -33,17 +34,28 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 
 	start(): void {
 		commands.registerCommand('launchdarkly.openCompareFlag', async () => {
-			let flags = ['No flags found'];
+			let values: QuickPickItem[] = [{ label: 'No flags found', description: '' }];
 			if (typeof this.flagStore !== 'undefined') {
-				const flagKeys = Object.keys(this.flagStore.allFlagsMetadata());
+				const flags = await this.flagStore.allFlagsMetadata();
+				const flagKeys = Object.keys(flags);
 				if (flagKeys.length > 0) {
-					flags = flagKeys;
+					const options = [];
+					flagKeys.map((item) => {
+						options.push({ label: flags[item].key, description: flags[item].name ? flags[item].name : '' });
+					});
+					values = options;
 				}
 			}
-			console.log(flags);
-			await window.showQuickPick(flags, {
-				onDidSelectItem: (item) => window.showInformationMessage(`Focus ${item}`),
+			const quickPick = window.createQuickPick();
+			quickPick.items = values;
+			quickPick.title = 'Select Flag for Overview';
+			quickPick.placeholder = 'placeholder';
+			quickPick.onDidAccept(() => {
+				const linkUrl = `${this.config.baseUri}/${this.config.project}/${this.config.env}/features/${quickPick.selectedItems[0].label}/compare-flag`;
+				commands.executeCommand('launchdarkly.openBrowser', linkUrl);
+				quickPick.dispose();
 			});
+			quickPick.show();
 		});
 	}
 	async reload(e?: ConfigurationChangeEvent | undefined): Promise<void> {
@@ -89,6 +101,8 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 				command: 'launchdarkly.openCompareFlag',
 			}),
 		);
+		items.push(new LinkNode(`Open Documentation`, NON_COLLAPSED, `https://docs.launchdarkly.com`));
+		items.push(new LinkNode(`Open API Documentation`, NON_COLLAPSED, `https://apidocs.launchdarkly.com`));
 
 		return Promise.resolve(items);
 	}
