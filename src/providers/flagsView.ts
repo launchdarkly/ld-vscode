@@ -7,6 +7,7 @@ import { generateHoverString } from './hover';
 import * as path from 'path';
 import { debounce, isLength, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
+import { LinkNode } from './quickLinksView';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -143,9 +144,14 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			vscode.commands.registerCommand('launchdarkly.copyKey', (node: FlagNode) =>
 				vscode.env.clipboard.writeText(node.flagKey),
 			),
-			vscode.commands.registerCommand('launchdarkly.openBrowser', (node: FlagNode) =>
-				vscode.env.openExternal(vscode.Uri.parse(node.uri)),
-			),
+			vscode.commands.registerCommand('launchdarkly.openBrowser', (node: FlagNode | string) => {
+				console.log(node);
+				if (typeof node === 'string') {
+					vscode.env.openExternal(vscode.Uri.parse(node));
+				} else {
+					vscode.env.openExternal(vscode.Uri.parse(node.uri));
+				}
+			}),
 			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.reload()),
 			this.registerTreeviewRefreshCommand(),
 			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
@@ -528,7 +534,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					flagKey: envConfig.key,
 				}),
 			);
-		} else if (fallThrough.rollout) {
+		} else if (fallThrough.rollout !== undefined) {
 			const fallThroughRollout: Array<FlagNode> = [];
 			if (fallThrough.rollout.bucketBy) {
 				new FlagNode(this.ctx, `BucketBy: ${fallThrough.rollout.bucketBy}`, NON_COLLAPSED);

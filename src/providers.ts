@@ -30,6 +30,7 @@ import { FlagNode, LaunchDarklyFlagListProvider } from './providers/flagListView
 import { ClientSideEnable, refreshDiagnostics, subscribeToDocumentChanges } from './providers/diagnostics';
 import { LaunchDarklyMetricsTreeViewProvider } from './providers/metricsView';
 import PubNub from 'pubnub';
+import { QuickLinksListProvider } from './providers/quickLinksView';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
@@ -164,6 +165,9 @@ export async function register(
 
 		flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
 		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
+
+		const quickLinksView = new QuickLinksListProvider(config, flagStore);
+		window.registerTreeDataProvider('launchdarklyQuickLinks', quickLinksView);
 
 		const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
 		const listView = new LaunchDarklyFlagListProvider(config, codeLens);

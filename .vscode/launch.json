@@ -8,8 +8,8 @@
 			"runtimeExecutable": "${execPath}",
 			"args": ["--disable-extensions", "--extensionDevelopmentPath=${workspaceFolder}"],
 			"sourceMaps": true,
-			"outFiles": ["${workspaceFolder}/out/**/*.js"],
-			"preLaunchTask": "yarn"
+			"outFiles": ["${workspaceFolder}/out/**/*.js"]
+			//"preLaunchTask": "yarn"
 		},
 		{
 			"name": "Launch Tests",
