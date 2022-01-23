@@ -328,11 +328,11 @@
 		],
 		"viewsContainers": {
 			"activitybar": [
-			  {
-			    "id": "launchdarkly-explorer",
-			    "title": "LaunchDarkly",
-			    "icon": "resources/logo.svg"
-			  }
+				{
+					"id": "launchdarkly-explorer",
+					"title": "LaunchDarkly",
+					"icon": "resources/logo.svg"
+				}
 			]
 		},
 		"views": {
@@ -355,8 +355,6 @@
 					"id": "launchdarklyMetrics",
 					"name": "Metrics"
 				}
-
-
 			]
 		},
 		"viewsWelcome": [
@@ -394,6 +392,7 @@
 		"@typescript-eslint/eslint-plugin": "5.10.0",
 		"@typescript-eslint/parser": "5.10.0",
 		"eslint": "8.7.0",
+		"eslint-config-prettier": "8.3.0",
 		"expect": "26.6.2",
 		"expect-mocha-snapshot": "2.0.1",
 		"glob": "7.2.0",

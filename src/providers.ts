@@ -84,7 +84,7 @@ export async function register(
 				window.showErrorMessage(`Could not patch flag: ${err.message}`);
 			}
 		}),
-		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async editor => {
+		commands.registerTextEditorCommand('extension.openInLaunchDarkly', async (editor) => {
 			const flagKey = editor.document.getText(
 				editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
 			);
@@ -238,7 +238,7 @@ export async function register(
 		languages.registerCodeActionsProvider('*', new ClientSideEnable(), {
 			providedCodeActionKinds: ClientSideEnable.providedCodeActionKinds,
 		}),
-		commands.registerCommand('launchdarkly.enableClientSide', async args => {
+		commands.registerCommand('launchdarkly.enableClientSide', async (args) => {
 			try {
 				const patchOperation = [{ op: 'replace', path: '/clientSideAvailability/usingEnvironmentId', value: true }];
 				await api.patchFeatureFlag(config.project, args, { comment: 'VS Code Updated', patch: patchOperation });
@@ -269,9 +269,9 @@ const enableDebugger = (ctx: ExtensionContext, debuggers: DebuggerWindows, pubnu
 			value.appendLine('Starting Debugger');
 		});
 		pubnub.addListener({
-			message: function(m) {
+			message: function (m) {
 				if (Array.isArray(m.message)) {
-					m.message.forEach(async msg => {
+					m.message.forEach(async (msg) => {
 						switch (msg.kind) {
 							case 'identify': {
 								const parsedMsg = parseIdentify(msg);
@@ -380,7 +380,7 @@ const parseSummary = (event: SummaryEvent) => {
 	Object.entries(event.features).forEach(([key, feature]) => {
 		line = line + `	flag key: ${key}\n`;
 		line = line + `		default value: ${feature.default}\n`;
-		feature.counters.forEach(counter => {
+		feature.counters.forEach((counter) => {
 			line = line + `		count: ${counter.count}\n`;
 			line = line + ` 		value: ${counter.value}\n`;
 			line = line + ` 		variation: ${counter.variation}\n`;
@@ -455,7 +455,7 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 	public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
 		if (isPrecedingCharStringDelimiter(document, position)) {
 			// eslint-disable-next-line no-async-promise-executor
-			return new Promise(async resolve => {
+			return new Promise(async (resolve) => {
 				if (this.config.enableAutocomplete) {
 					const flags = await this.flagStore.allFlagsMetadata();
 					const flagCompletes = [];
@@ -504,10 +504,7 @@ export function isPrecedingCharStringDelimiter(document: TextDocument, position:
 		range.start.line,
 		range.start.character,
 	);
-	const candidate = document
-		.getText(c)
-		.trim()
-		.replace('(', '');
+	const candidate = document.getText(c).trim().replace('(', '');
 	return STRING_DELIMETERS.indexOf(candidate) !== -1;
 }
 

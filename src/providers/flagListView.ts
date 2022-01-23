@@ -62,13 +62,13 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		const items = [];
 		if (typeof element !== 'undefined') {
 			const child = this.flagMap.get(element.flagKey);
-			child.list.forEach(entry => {
+			child.list.forEach((entry) => {
 				const newElement = new FlagNode(`Line: ${entry.end.line + 1}`, null, element.flagKey, entry, 'child');
 				items.push(newElement);
 			});
 			return Promise.resolve(items);
 		} else if (this.flagMap?.size > 0) {
-			this.flagMap.forEach(flag => {
+			this.flagMap.forEach((flag) => {
 				items.push(
 					new FlagNode(
 						`${flag.flag.name ? flag.flag.name : flag.env.key}`,
@@ -108,7 +108,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			this.refresh();
 			return;
 		}
-		flagsFound.map(flag => {
+		flagsFound.map((flag) => {
 			const codelensFlag = flag as FlagCodeLens;
 			const getElement = this.flagMap.get(codelensFlag.env.key);
 			if (getElement) {

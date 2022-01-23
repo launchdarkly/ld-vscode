@@ -16,7 +16,8 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 	private flagStore: FlagStore;
 	private metricValues: Array<MetricValue>;
 	private ctx: vscode.ExtensionContext;
-	private _onDidChangeTreeData: vscode.EventEmitter<MetricValue | null | void> = new vscode.EventEmitter<MetricValue | null | void>();
+	private _onDidChangeTreeData: vscode.EventEmitter<MetricValue | null | void> =
+		new vscode.EventEmitter<MetricValue | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<MetricValue | null | void> = this._onDidChangeTreeData.event;
 
 	constructor(api: LaunchDarklyAPI, config: Configuration, ctx: vscode.ExtensionContext) {
@@ -51,7 +52,7 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 	async getMetrics(): Promise<void> {
 		const metrics = await this.api.getMetrics(this.config.project);
 		const metricValues = [];
-		metrics.map(metric => {
+		metrics.map((metric) => {
 			if (metric.kind == 'custom') {
 				metricValues.push(this.metricToValues(metric));
 			}
@@ -120,7 +121,7 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 		if (metric.tags) {
 			item.collapsibleState = COLLAPSED;
 			const tags: Array<MetricValue> = [];
-			metric.tags.map(tag => {
+			metric.tags.map((tag) => {
 				tags.push(this.metricFactory({ label: tag, ctxValue: 'flagTagItem' }));
 			});
 			const childNode = new MetricValue(this.ctx, 'Tags', '', COLLAPSED, tags, 'tags');

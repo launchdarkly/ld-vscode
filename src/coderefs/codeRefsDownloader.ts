@@ -22,7 +22,7 @@ export class CodeRefsDownloader {
 
 		// Remove all previous versions of the binary
 		try {
-			await new Promise(resolve => rimraf(`${dir}/*`, resolve));
+			await new Promise((resolve) => rimraf(`${dir}/*`, resolve));
 		} catch (err) {
 			console.log(`No previous version of code references installed`);
 		}
@@ -67,9 +67,7 @@ export class CodeRefsDownloader {
 			console.log(err);
 		}
 		try {
-			createReadStream(codeRefsPath)
-				.pipe(gunzip())
-				.pipe(tar.extract(this.downloadDir));
+			createReadStream(codeRefsPath).pipe(gunzip()).pipe(tar.extract(this.downloadDir));
 			unlinkSync(codeRefsPath);
 		} catch (err) {
 			console.log(err);

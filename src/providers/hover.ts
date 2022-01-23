@@ -36,7 +36,7 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 	public provideHover(document: TextDocument, position: Position): Thenable<Hover | undefined> {
 		commands.executeCommand('setContext', 'LDFlagToggle', '');
 		// eslint-disable-next-line no-async-promise-executor
-		return new Promise(async resolve => {
+		return new Promise(async (resolve) => {
 			if (this.config.enableHover && this.flagStore) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				if (typeof candidate === 'undefined') {
@@ -49,8 +49,8 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 					aliases = this.aliases?.getMap();
 					if (typeof aliases !== undefined) {
 						const aliasKeys = Object.keys(aliases) ? Object.keys(aliases) : [];
-						const aliasArr = [...aliasKeys].filter(element => element !== '');
-						foundAlias = aliasArr.filter(element => candidate.includes(element));
+						const aliasArr = [...aliasKeys].filter((element) => element !== '');
+						foundAlias = aliasArr.filter((element) => candidate.includes(element));
 					}
 				} else {
 					aliases = [];

@@ -80,7 +80,7 @@ export class FlagAliases {
 		await access(
 			join(this.ctx.asAbsolutePath('coderefs'), `${CodeRefs.version}/ld-find-code-refs`),
 			constants.F_OK,
-			err => {
+			(err) => {
 				if (err) {
 					return this.config.codeRefsPath ? this.config.codeRefsPath : '';
 				}
@@ -132,7 +132,7 @@ export class FlagAliases {
 					const items = [...findKey, ...aliases];
 					this.keys[row.flagKey] = [...new Set(items)].filter(Boolean);
 				}
-				aliases.map(alias => {
+				aliases.map((alias) => {
 					if (alias == '') {
 						return;
 					}
@@ -142,7 +142,7 @@ export class FlagAliases {
 			.on('end', () => {
 				this.ctx.workspaceState.update('aliasMap', this.map);
 				this.ctx.workspaceState.update('aliasKeys', this.keys);
-				const mapKeys = Object.keys(this.map).filter(element => element != '');
+				const mapKeys = Object.keys(this.map).filter((element) => element != '');
 				this.ctx.workspaceState.update('aliasListOfMapKeys', mapKeys);
 				this.aliasUpdates.fire(true);
 				this.statusBar.hide();

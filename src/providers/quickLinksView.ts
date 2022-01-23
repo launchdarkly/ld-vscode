@@ -42,7 +42,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 			}
 			console.log(flags);
 			await window.showQuickPick(flags, {
-				onDidSelectItem: item => window.showInformationMessage(`Focus ${item}`),
+				onDidSelectItem: (item) => window.showInformationMessage(`Focus ${item}`),
 			});
 		});
 	}

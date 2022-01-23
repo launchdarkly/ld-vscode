@@ -33,11 +33,11 @@ export class ConfigurationMenu {
 
 	async collectInputs() {
 		if (this.currentAccessToken) {
-			await MultiStepInput.run(input => this.pickInstance(input));
+			await MultiStepInput.run((input) => this.pickInstance(input));
 			return;
 		}
 
-		await MultiStepInput.run(input => this.pickInstance(input));
+		await MultiStepInput.run((input) => this.pickInstance(input));
 	}
 
 	shouldResume(): Promise<boolean> {
@@ -101,7 +101,7 @@ export class ConfigurationMenu {
 			totalSteps: this.totalSteps,
 			value: typeof this.accessToken === 'string' ? this.accessToken : '',
 			prompt: 'Enter your LaunchDarkly access token',
-			validate: token => this.validateAccessToken(token, this.invalidAccessToken),
+			validate: (token) => this.validateAccessToken(token, this.invalidAccessToken),
 			shouldResume: this.shouldResume,
 		});
 
@@ -128,7 +128,7 @@ export class ConfigurationMenu {
 			prompt: 'Enter LaunchDarkly Instance URL',
 			totalSteps: this.totalSteps,
 			shouldResume: this.shouldResume,
-			validate: token => this.validateAccessToken(token, this.invalidAccessToken),
+			validate: (token) => this.validateAccessToken(token, this.invalidAccessToken),
 		});
 
 		return (input: MultiStepInput) => this.pickCurrentOrNewAccessToken(input);
@@ -165,7 +165,7 @@ export class ConfigurationMenu {
 	}
 
 	async pickEnvironment(input: MultiStepInput) {
-		const selectedProject = this.projects.find(proj => proj.key === this.project);
+		const selectedProject = this.projects.find((proj) => proj.key === this.project);
 		const environments = selectedProject.environments;
 		const environmentOptions = environments.map(this.createQuickPickItem);
 
@@ -180,7 +180,7 @@ export class ConfigurationMenu {
 		});
 
 		this.env = pick.description;
-		environments.map(env => {
+		environments.map((env) => {
 			if (env.key == pick.description) {
 				this.debugCipher = env._pubnub.cipherKey;
 				this.debugChannel = env._pubnub.channel;
@@ -223,7 +223,7 @@ export class ConfigurationMenu {
 
 	async configure() {
 		await this.collectInputs();
-		['accessToken', 'baseUri', 'project', 'env', 'debugCipher', 'debugChannel'].forEach(async option => {
+		['accessToken', 'baseUri', 'project', 'env', 'debugCipher', 'debugChannel'].forEach(async (option) => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
 	}

@@ -53,11 +53,11 @@ export async function refreshDiagnostics(
 			let flag;
 			const keys = Object.keys(flags);
 			if (typeof keys !== 'undefined') {
-				flag = keys.filter(element => prospect.includes(element));
+				flag = keys.filter((element) => prospect.includes(element));
 			}
 			let foundAliases;
 			if (typeof aliasesLocal !== 'undefined') {
-				foundAliases = aliasArr.filter(element => prospect.includes(element));
+				foundAliases = aliasArr.filter((element) => prospect.includes(element));
 			}
 
 			// Use first found flag
@@ -123,7 +123,7 @@ export async function subscribeToDocumentChanges(
 		}
 
 		context.subscriptions.push(
-			vscode.window.onDidChangeActiveTextEditor(editor => {
+			vscode.window.onDidChangeActiveTextEditor((editor) => {
 				if (editor) {
 					try {
 						refreshDiagnostics(vscode.window.activeTextEditor.document, clientSideDiagnostics, aliases, flagStore);
@@ -135,13 +135,13 @@ export async function subscribeToDocumentChanges(
 		);
 
 		context.subscriptions.push(
-			vscode.workspace.onDidChangeTextDocument(e =>
+			vscode.workspace.onDidChangeTextDocument((e) =>
 				refreshDiagnostics(e.document, clientSideDiagnostics, aliases, flagStore),
 			),
 		);
 	}
 
-	context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(doc => clientSideDiagnostics.delete(doc.uri)));
+	context.subscriptions.push(vscode.workspace.onDidCloseTextDocument((doc) => clientSideDiagnostics.delete(doc.uri)));
 }
 
 const checkFilename = (filename: string): boolean => {
@@ -162,8 +162,8 @@ export class ClientSideEnable implements vscode.CodeActionProvider {
 	): vscode.CodeAction[] {
 		// for each diagnostic entry that has the matching `code`, create a code action command
 		return context.diagnostics
-			.filter(diagnostic => diagnostic.code === CLIENT_SIDE_MENTION)
-			.map(diagnostic => this.createCommandCodeAction(diagnostic));
+			.filter((diagnostic) => diagnostic.code === CLIENT_SIDE_MENTION)
+			.map((diagnostic) => this.createCommandCodeAction(diagnostic));
 	}
 
 	private createCommandCodeAction(diagnostic: vscode.Diagnostic): vscode.CodeAction {
