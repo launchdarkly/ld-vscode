@@ -76,7 +76,6 @@ export class FlagStore {
 				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
 			}
 			const ldConfig = this.ldConfig();
-			console.log(sdkKey);
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
 			this.storeReady.fire(true);
