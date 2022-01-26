@@ -145,7 +145,7 @@ export function generateHoverString(
 				props.push('`$(arrow-small-right)fallthrough`');
 			}
 		}
-		if (c.fallthrough.rollout) {
+		if (c.fallthrough?.rollout) {
 			let weight = 0;
 			if (c.fallthrough.rollout.variations[idx]?.weight) {
 				weight = c.fallthrough.rollout.variations[idx].weight / 1000;

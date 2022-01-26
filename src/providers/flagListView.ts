@@ -110,14 +110,20 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		}
 		flagsFound.map((flag) => {
 			const codelensFlag = flag as FlagCodeLens;
-			const getElement = this.flagMap.get(codelensFlag.env.key);
-			if (getElement) {
-				getElement.list.push(codelensFlag.range);
-			} else {
-				const newElement = new FlagList(codelensFlag.range, codelensFlag.flag, codelensFlag.env, codelensFlag.config, [
-					codelensFlag.range,
-				]);
-				this.flagMap.set(codelensFlag.env.key, newElement);
+			if (codelensFlag?.env?.key) {
+				const getElement = this.flagMap.get(codelensFlag.env.key);
+				if (getElement) {
+					getElement.list.push(codelensFlag.range);
+				} else {
+					const newElement = new FlagList(
+						codelensFlag.range,
+						codelensFlag.flag,
+						codelensFlag.env,
+						codelensFlag.config,
+						[codelensFlag.range],
+					);
+					this.flagMap.set(codelensFlag.env.key, newElement);
+				}
 			}
 		});
 		this.refresh();

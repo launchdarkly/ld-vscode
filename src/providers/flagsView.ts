@@ -8,6 +8,7 @@ import * as path from 'path';
 import { debounce, isLength, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
 import { LinkNode } from './quickLinksView';
+import checkExistingCommand from '../utils';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -105,23 +106,32 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	async getFlags(): Promise<void> {
+		// Clear existing flags
+		this.flagNodes = [];
 		try {
 			const nodes = [];
 			if (this.flagStore) {
 				const flags = await this.flagStore.allFlagsMetadata();
-				if (flags.length == 0 && this.config.isConfigured()) {
+				console.log('test');
+				console.log(flags);
+				if (flags?.length == 0 && this.config.isConfigured()) {
 					setInterval(() => {
 						this.debouncedReload();
 					}, 5000);
 				}
-				map(flags, (value) => {
-					setImmediate(() => {
-						this.flagToParent(value).then((node) => {
-							nodes.push(node);
+
+				if (Object.keys(flags).length > 0) {
+					console.log('test2');
+					map(flags, (value) => {
+						setImmediate(() => {
+							this.flagToParent(value).then((node) => {
+								nodes.push(node);
+							});
 						});
 					});
-				});
-				this.flagNodes = nodes;
+					this.flagNodes = nodes;
+					this.refresh();
+				}
 			}
 		} catch (err) {
 			console.error(`Failed getting flags: ${err}`);
@@ -141,10 +151,13 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	async registerCommands(): Promise<void> {
+		// Check Copy Key only, if it exists the rest should also and registering commands should be skipped.
+		const copyKeyCmd = 'launchdarkly.copyKey';
+		if (await checkExistingCommand(copyKeyCmd)) {
+			return;
+		}
 		this.ctx.subscriptions.push(
-			vscode.commands.registerCommand('launchdarkly.copyKey', (node: FlagNode) =>
-				vscode.env.clipboard.writeText(node.flagKey),
-			),
+			vscode.commands.registerCommand(copyKeyCmd, (node: FlagNode) => vscode.env.clipboard.writeText(node.flagKey)),
 			vscode.commands.registerCommand('launchdarkly.openBrowser', (node: FlagNode | string) => {
 				if (typeof node === 'string') {
 					vscode.env.openExternal(vscode.Uri.parse(node));
@@ -534,7 +547,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					flagKey: envConfig.key,
 				}),
 			);
-		} else if (fallThrough.rollout !== undefined) {
+		} else if (fallThrough?.rollout !== undefined) {
 			const fallThroughRollout: Array<FlagNode> = [];
 			if (fallThrough.rollout.bucketBy) {
 				new FlagNode(this.ctx, `BucketBy: ${fallThrough.rollout.bucketBy}`, NON_COLLAPSED);

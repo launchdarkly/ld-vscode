@@ -6,6 +6,7 @@ import { FlagStore } from '../flagStore';
 import * as path from 'path';
 import * as url from 'url';
 import { MarkdownString } from 'vscode';
+import checkExistingCommand from '../utils';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -62,8 +63,12 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 	}
 
 	async registerCommands(): Promise<void> {
+		const metricSearchCmd = 'launchdarkly.metricMultipleSearch';
+		if (await checkExistingCommand(metricSearchCmd)) {
+			return;
+		}
 		this.ctx.subscriptions.push(
-			vscode.commands.registerCommand('launchdarkly.metricMultipleSearch', (node: MetricValue) => {
+			vscode.commands.registerCommand(metricSearchCmd, (node: MetricValue) => {
 				const findMetrics = node.eventKey;
 				vscode.commands.executeCommand('workbench.action.findInFiles', {
 					query: findMetrics,
@@ -73,14 +78,12 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 					isRegex: true,
 				});
 			}),
+			vscode.commands.registerCommand('launchdarkly.refreshEntryMetric', () => this.refresh()),
+			registerMetricTreeviewRefreshCommand(this),
 		);
 	}
 
 	async start(): Promise<void> {
-		this.ctx.subscriptions.push(
-			vscode.commands.registerCommand('launchdarkly.refreshEntryMetric', () => this.refresh()),
-			registerMetricTreeviewRefreshCommand(this),
-		);
 		this.getMetrics();
 	}
 

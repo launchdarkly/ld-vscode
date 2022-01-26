@@ -13,6 +13,7 @@ import {
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
+import checkExistingCommand from '../utils';
 
 const NON_COLLAPSED = TreeItemCollapsibleState.None;
 
@@ -32,8 +33,12 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 		this._onDidChangeTreeData.fire(null);
 	}
 
-	start(): void {
-		commands.registerCommand('launchdarkly.openCompareFlag', async () => {
+	async start(): Promise<void> {
+		const compareFlagsCmd = 'launchdarkly.openCompareFlag';
+		if (await checkExistingCommand(compareFlagsCmd)) {
+			return;
+		}
+		commands.registerCommand(compareFlagsCmd, async () => {
 			let values: QuickPickItem[] = [{ label: 'No flags found', description: '' }];
 			if (typeof this.flagStore !== 'undefined') {
 				const flags = await this.flagStore.allFlagsMetadata();

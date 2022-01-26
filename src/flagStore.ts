@@ -76,6 +76,7 @@ export class FlagStore {
 				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
 			}
 			const ldConfig = this.ldConfig();
+			console.log(sdkKey);
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
 			this.storeReady.fire(true);
@@ -241,7 +242,6 @@ export class FlagStore {
 			ldClient.close();
 			delete this.ldClient;
 		} catch {
-			//console.log("client already rejected.")
 			// ldClient was rejected, nothing to do
 		}
 		this.ldClient = new Promise((resolve, reject) => {

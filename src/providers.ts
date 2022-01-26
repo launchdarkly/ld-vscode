@@ -13,6 +13,7 @@ import {
 	workspace,
 	ConfigurationChangeEvent,
 	OutputChannel,
+	TreeDataProvider,
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
@@ -31,6 +32,9 @@ import { ClientSideEnable, refreshDiagnostics, subscribeToDocumentChanges } from
 import { LaunchDarklyMetricsTreeViewProvider } from './providers/metricsView';
 import PubNub from 'pubnub';
 import { QuickLinksListProvider } from './providers/quickLinksView';
+import globalClearCmd from './commands/clearGlobalContext';
+import configureLaunchDarkly from './commands/configureLaunchDarkly';
+import { createViews } from './utils';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
@@ -47,32 +51,11 @@ export async function register(
 	api: LaunchDarklyAPI,
 ): Promise<void> {
 	let aliases;
-	let flagView;
+	let flagView: LaunchDarklyTreeViewProvider;
+
+	await configureLaunchDarkly(ctx, config, api, flagStore, flagView);
 
 	ctx.subscriptions.push(
-		commands.registerCommand('extension.configureLaunchDarkly', async () => {
-			try {
-				const configurationMenu = new ConfigurationMenu(config, api);
-				await configurationMenu.configure();
-				const metricsView = new LaunchDarklyMetricsTreeViewProvider(api, config, ctx);
-				window.registerTreeDataProvider('launchdarklyMetrics', metricsView);
-				if (typeof flagStore === 'undefined') {
-					flagStore = new FlagStore(config, api);
-					flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
-					window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
-					await flagView.reload();
-				} else {
-					await flagStore.reload();
-					await flagView.reload();
-				}
-				await ctx.globalState.update('LDConfigured', true);
-				window.showInformationMessage('LaunchDarkly configured successfully');
-			} catch (err) {
-				console.error(`Failed configuring LaunchDarkly Extension(provider): ${err}`);
-				window.showErrorMessage('An unexpected error occurred, please try again later.');
-			}
-		}),
-
 		commands.registerCommand('launchdarkly.toggleFlagContext', async () => {
 			try {
 				const key = ctx.workspaceState.get('LDFlagKey') as string;
@@ -125,16 +108,8 @@ export async function register(
 				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 			}
 		}),
-		commands.registerCommand('launchdarkly.clearGlobalContext', async () => {
-			try {
-				await config.clearGlobalConfig();
-				window.showInformationMessage('LaunchDarkly global settings removed');
-			} catch (err) {
-				console.error(`Failed clearing global context: ${err}`);
-				window.showErrorMessage('An unexpected error occurred, please try again later.');
-			}
-		}),
 	);
+	await globalClearCmd(ctx, config);
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
@@ -144,7 +119,7 @@ export async function register(
 				flagStore = new FlagStore(config, newApi);
 			}
 			await flagStore.reload(e);
-			await flagView.reload(e);
+			await createViews(api, config, ctx, flagStore);
 		}
 	});
 	if (!config.isConfigured) {
@@ -160,18 +135,8 @@ export async function register(
 				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
 			}
 		}
-		const metricsView = new LaunchDarklyMetricsTreeViewProvider(api, config, ctx);
-		window.registerTreeDataProvider('launchdarklyMetrics', metricsView);
 
-		flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
-		window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
-
-		const quickLinksView = new QuickLinksListProvider(config, flagStore);
-		window.registerTreeDataProvider('launchdarklyQuickLinks', quickLinksView);
-
-		const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
-		const listView = new LaunchDarklyFlagListProvider(config, codeLens);
-		window.registerTreeDataProvider('launchdarklyFlagList', listView);
+		await createViews(api, config, ctx, flagStore, aliases);
 
 		const Lddebugger = window.createOutputChannel('LaunchDarkly All');
 		const LddIdentify = window.createOutputChannel('LaunchDarkly Identify Debug');
@@ -204,9 +169,7 @@ export async function register(
 			);
 		}
 
-		ctx.subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsinDocument));
 		ctx.subscriptions.push(
-			window.onDidChangeActiveTextEditor(listView.setFlagsinDocument),
 			commands.registerCommand('launchdarkly.OpenFlag', (node: FlagNode) =>
 				window.activeTextEditor.revealRange(node.range),
 			),
@@ -217,15 +180,7 @@ export async function register(
 				'"',
 			),
 			languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config, flagStore, ctx, aliases)),
-			languages.registerCodeLensProvider('*', codeLens),
-			commands.registerTextEditorCommand('extension.openLDFlagTree', async () => {
-				const key = ctx.workspaceState.get('LDFlagKey') as string;
-				if (key) {
-					flagView.reveal(key);
-				}
-			}),
 		);
-		codeLens.start();
 	}
 
 	if (config.enableFlagExplorer) {
