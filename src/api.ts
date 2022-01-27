@@ -4,6 +4,7 @@ import * as url from 'url';
 const axios = require('axios').default;
 
 import { Configuration } from './configuration';
+import { NewFlag } from './createFlagMenu';
 import { Resource, Project, FeatureFlag, Environment, PatchOperation, PatchComment, Metric } from './models';
 //import { FeatureFlag } from 'launchdarkly-api-typescript';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -55,6 +56,13 @@ export class LaunchDarklyAPI {
 		return new FeatureFlag(data.data);
 	}
 
+	async postFeatureFlag(projectKey: string, flag: NewFlag): Promise<FeatureFlag> {
+		// We really only need options here for the headers and auth
+		const options = this.createOptions(``, 'POST');
+		const data = await axios.post(url.resolve(this.config.baseUri, `api/v2/flags/${projectKey}`), flag, options);
+		return new FeatureFlag(data.data);
+	}
+
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
 		const envParam = envKey ? 'env=' + envKey : '';
 		const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=true&sort=name`, 'GET', null, {
@@ -99,7 +107,13 @@ export class LaunchDarklyAPI {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/ban-types
-	private createOptions(path: string, method = 'GET', body?: PatchComment, params?: Object) {
+	private createOptions(
+		path: string,
+		method = 'GET',
+		body?: PatchComment | unknown,
+		params?: Object,
+		isArray?: boolean,
+	) {
 		const options = {
 			method: method,
 			url: url.resolve(this.config.baseUri, `api/v2/${path}`),
@@ -114,11 +128,13 @@ export class LaunchDarklyAPI {
 			options.params = params;
 		}
 
-		if (body) {
+		if (body && isArray) {
 			options.headers['content-type'] = 'application/json';
 			options['data'] = [JSON.stringify(body)];
+		} else {
+			options.headers['content-type'] = 'application/json';
+			options['data'] = JSON.stringify(body);
 		}
-
 		return options;
 	}
 }

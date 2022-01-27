@@ -156,6 +156,10 @@
 				"title": "Toggle Flag"
 			},
 			{
+				"command": "launchdarkly.createFlag",
+				"title": "LaunchDarkly: Create New Boolean Flag"
+			},
+			{
 				"command": "launchdarkly.fallthroughChange",
 				"title": "Change Fallthrough Variation"
 			},

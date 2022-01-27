@@ -35,6 +35,7 @@ import { QuickLinksListProvider } from './providers/quickLinksView';
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
 import { createViews } from './utils';
+import createFlagCmd from './commands/createFlag';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
@@ -54,6 +55,7 @@ export async function register(
 	let flagView: LaunchDarklyTreeViewProvider;
 
 	await configureLaunchDarkly(ctx, config, api, flagStore, flagView);
+	await createFlagCmd(ctx, config, api);
 
 	ctx.subscriptions.push(
 		commands.registerCommand('launchdarkly.toggleFlagContext', async () => {

@@ -34,7 +34,7 @@ interface InputBoxParameters {
 }
 
 export class MultiStepInput {
-	static async run<T>(start: InputStep): Promise<void> {
+	static async run<T>(start: InputStep) {
 		const input = new MultiStepInput();
 		return input.stepThrough(start);
 	}
@@ -42,7 +42,7 @@ export class MultiStepInput {
 	private current?: QuickInput;
 	private steps: InputStep[] = [];
 
-	private async stepThrough<T>(start: InputStep): Promise<void> {
+	private async stepThrough<T>(start: InputStep) {
 		let step: InputStep | void = start;
 		while (step) {
 			this.steps.push(step);
@@ -70,7 +70,6 @@ export class MultiStepInput {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>({
 		title,
 		step,
@@ -85,8 +84,6 @@ export class MultiStepInput {
 		try {
 			return await new Promise<T | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
 				const input = window.createQuickPick<T>();
-				input.matchOnDescription = true;
-				input.matchOnDetail = true;
 				input.title = title;
 				input.step = step;
 				input.totalSteps = totalSteps;
@@ -101,7 +98,6 @@ export class MultiStepInput {
 						if (item === QuickInputButtons.Back) {
 							reject(InputFlowAction.back);
 						} else {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							resolve(<any>item);
 						}
 					}),
@@ -123,7 +119,6 @@ export class MultiStepInput {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	async showInputBox<P extends InputBoxParameters>({
 		title,
 		step,
@@ -150,7 +145,6 @@ export class MultiStepInput {
 						if (item === QuickInputButtons.Back) {
 							reject(InputFlowAction.back);
 						} else {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							resolve(<any>item);
 						}
 					}),
