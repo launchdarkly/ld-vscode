@@ -90,6 +90,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 		return element;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async getChildren(element?: LinkNode): Promise<LinkNode[]> {
 		const baseUrl = `${this.config.baseUri}/${this.config.project}/${this.config.env}`;
 		const items = [];

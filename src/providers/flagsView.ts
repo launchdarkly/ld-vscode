@@ -5,9 +5,8 @@ import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import { generateHoverString } from './hover';
 import * as path from 'path';
-import { debounce, isLength, map } from 'lodash';
+import { debounce, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
-import { LinkNode } from './quickLinksView';
 import checkExistingCommand from '../utils';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;

@@ -3,9 +3,6 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { ConfigurationMenu } from '../configurationMenu';
 import { FlagStore } from '../flagStore';
-import { LaunchDarklyTreeViewProvider } from '../providers/flagsView';
-import { LaunchDarklyMetricsTreeViewProvider } from '../providers/metricsView';
-import { QuickLinksListProvider } from '../providers/quickLinksView';
 import { createViews } from '../utils';
 
 export default async function configureLaunchDarkly(
@@ -13,7 +10,6 @@ export default async function configureLaunchDarkly(
 	config: Configuration,
 	api: LaunchDarklyAPI,
 	flagStore?: FlagStore,
-	flagView?: LaunchDarklyTreeViewProvider,
 ) {
 	const configureExtension: Disposable = commands.registerCommand('extension.configureLaunchDarkly', async () => {
 		try {

@@ -1,12 +1,9 @@
-import { env, QuickPickItem, window, workspace } from 'vscode';
+import { env, window, workspace } from 'vscode';
 
 import { MultiStepInput } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
-import { Resource, Project } from './models';
 import { Configuration } from './configuration';
 import { kebabCase } from 'lodash';
-
-const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
 
 export interface State {
 	name: string;
@@ -195,6 +192,8 @@ const isValidKey = async (v: string): Promise<string> => {
 	}
 };
 
+// TODO: Implement valid name check
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isValidName = async (v: string): Promise<string> => {
 	return '';
 };

@@ -13,25 +13,19 @@ import {
 	workspace,
 	ConfigurationChangeEvent,
 	OutputChannel,
-	TreeDataProvider,
 } from 'vscode';
 import * as url from 'url';
 import opn = require('opn');
 import { kebabCase } from 'lodash';
 import { Configuration } from './configuration';
-import { ConfigurationMenu } from './configurationMenu';
 import { LaunchDarklyAPI } from './api';
 import { FeatureFlagConfig } from './models';
 import { FlagStore } from './flagStore';
-import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { FlagAliases } from './providers/codeRefs';
-import { FlagCodeLensProvider } from './providers/flagLens';
 import { LaunchDarklyHoverProvider } from './providers/hover';
-import { FlagNode, LaunchDarklyFlagListProvider } from './providers/flagListView';
+import { FlagNode } from './providers/flagListView';
 import { ClientSideEnable, refreshDiagnostics, subscribeToDocumentChanges } from './providers/diagnostics';
-import { LaunchDarklyMetricsTreeViewProvider } from './providers/metricsView';
 import PubNub from 'pubnub';
-import { QuickLinksListProvider } from './providers/quickLinksView';
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
 import { createViews } from './utils';
@@ -52,9 +46,8 @@ export async function register(
 	api: LaunchDarklyAPI,
 ): Promise<void> {
 	let aliases;
-	let flagView: LaunchDarklyTreeViewProvider;
 
-	await configureLaunchDarkly(ctx, config, api, flagStore, flagView);
+	await configureLaunchDarkly(ctx, config, api, flagStore);
 	await createFlagCmd(ctx, config, api);
 
 	ctx.subscriptions.push(
@@ -116,11 +109,8 @@ export async function register(
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
 			await config.reload();
-			if (!flagStore) {
-				const newApi = new LaunchDarklyAPI(config);
-				flagStore = new FlagStore(config, newApi);
-			}
-			await flagStore.reload(e);
+			const newApi = new LaunchDarklyAPI(config);
+			flagStore = new FlagStore(config, newApi);
 			await createViews(api, config, ctx, flagStore);
 		}
 	});
@@ -416,6 +406,7 @@ class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 				if (this.config.enableAutocomplete) {
 					const flags = await this.flagStore.allFlagsMetadata();
 					const flagCompletes = [];
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					for (const [key, flag] of Object.entries(flags)) {
 						const flagCompletion = new CompletionItem(flag.key, CompletionItemKind.Field);
 						flagCompletion.detail = flag.description ? flag.description : '';

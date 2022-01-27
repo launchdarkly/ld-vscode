@@ -177,10 +177,10 @@ export class MetricValue extends vscode.TreeItem {
 		this.uri = uri;
 		this.eventKey = eventKey;
 		this.flagParentName = flagParentName;
-		this.conditionalIcon(ctx, this.contextValue, this.label);
+		this.conditionalIcon(ctx, this.contextValue);
 	}
 
-	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string, label: string) {
+	private conditionalIcon(ctx: vscode.ExtensionContext, contextValue: string) {
 		if (ctx) {
 			this.setIcon(ctx, contextValue);
 		}

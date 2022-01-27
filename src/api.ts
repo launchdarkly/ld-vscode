@@ -111,7 +111,7 @@ export class LaunchDarklyAPI {
 		path: string,
 		method = 'GET',
 		body?: PatchComment | unknown,
-		params?: Object,
+		params?: unknown,
 		isArray?: boolean,
 	) {
 		const options = {
