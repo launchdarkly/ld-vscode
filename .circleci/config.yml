@@ -3,7 +3,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:12.22
     steps:
       - checkout
       - run: echo "Node version:" `node --version`
@@ -25,14 +25,15 @@ jobs:
             sudo chmod +x /etc/init.d/xvfb
             sudo update-rc.d xvfb defaults
             sudo service xvfb start
+            sudo service dbus restart
+            export $(dbus-launch)
       - run:
           name: Build
           command: 'yarn run vscode:prepublish'
       - run:
           name: Test
           command: |
-            /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-            DISPLAY=:99 yarn test
+            DISPLAY=:1 yarn test
       - run:
           name: Prettier
           command: 'yarn run prettier:check'
