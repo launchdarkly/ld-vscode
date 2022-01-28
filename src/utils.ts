@@ -17,7 +17,7 @@ export default async function checkExistingCommand(commandName: string): Promise
 	return false;
 }
 
-export async function createViews(
+export async function setupComponents(
 	api: LaunchDarklyAPI,
 	config: Configuration,
 	ctx: ExtensionContext,
@@ -38,6 +38,16 @@ export async function createViews(
 	const quickLinksView = new QuickLinksListProvider(config, flagStore);
 	window.registerTreeDataProvider('launchdarklyQuickLinks', quickLinksView);
 	await quickLinksView.reload();
+
+	if (config.enableAliases) {
+		aliases = new FlagAliases(config, ctx);
+		if (aliases.codeRefsVersionCheck()) {
+			aliases.setupStatusBar();
+			aliases.start();
+		} else {
+			window.showErrorMessage('ld-find-code-refs version > 2 supported.');
+		}
+	}
 
 	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
 	const listView = new LaunchDarklyFlagListProvider(config, codeLens);

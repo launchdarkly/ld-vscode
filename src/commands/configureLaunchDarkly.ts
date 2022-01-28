@@ -3,7 +3,7 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { ConfigurationMenu } from '../configurationMenu';
 import { FlagStore } from '../flagStore';
-import { createViews } from '../utils';
+import { setupComponents } from '../utils';
 
 export default async function configureLaunchDarkly(
 	ctx: ExtensionContext,
@@ -21,7 +21,7 @@ export default async function configureLaunchDarkly(
 				await flagStore.reload();
 			}
 
-			await createViews(api, config, ctx, flagStore);
+			await setupComponents(api, config, ctx, flagStore);
 			await ctx.globalState.update('LDConfigured', true);
 			window.showInformationMessage('LaunchDarkly configured successfully');
 		} catch (err) {

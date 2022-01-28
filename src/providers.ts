@@ -28,7 +28,7 @@ import { ClientSideEnable, refreshDiagnostics, subscribeToDocumentChanges } from
 import PubNub from 'pubnub';
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
-import { createViews } from './utils';
+import { setupComponents } from './utils';
 import createFlagCmd from './commands/createFlag';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
@@ -111,24 +111,14 @@ export async function register(
 			await config.reload();
 			const newApi = new LaunchDarklyAPI(config);
 			flagStore = new FlagStore(config, newApi);
-			await createViews(api, config, ctx, flagStore);
+			await setupComponents(newApi, config, ctx, flagStore);
 		}
 	});
 	if (!config.isConfigured) {
 		return;
 	}
 	if (typeof flagStore !== 'undefined') {
-		if (config.enableAliases) {
-			aliases = new FlagAliases(config, ctx);
-			if (aliases.codeRefsVersionCheck()) {
-				aliases.setupStatusBar();
-				aliases.start();
-			} else {
-				window.showErrorMessage('ld-find-code-refs version > 2 supported.');
-			}
-		}
-
-		await createViews(api, config, ctx, flagStore, aliases);
+		await setupComponents(api, config, ctx, flagStore, aliases);
 
 		const Lddebugger = window.createOutputChannel('LaunchDarkly All');
 		const LddIdentify = window.createOutputChannel('LaunchDarkly Identify Debug');
