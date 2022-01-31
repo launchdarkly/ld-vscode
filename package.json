@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "3.0.4",
+	"version": "3.0.6",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.52.0"
@@ -74,12 +74,28 @@
 				},
 				"launchdarkly.enableCodeLens": {
 					"type": "boolean",
-					"default": false
+					"default": false,
+					"description": "Control whether flag data is inlined when a reference is found in a file."
+				},
+				"launchdarkly.enableMetricsExplorer": {
+					"type": "boolean",
+					"default": false,
+					"description": "Enable Metrics Explorer"
 				},
 				"launchdarkly.accessToken": {
 					"type": "string",
 					"default": "",
 					"description": "LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
+				},
+				"launchdarkly.debuggerKey": {
+					"type": "string",
+					"default": "",
+					"description": "LaunchDarkly Debugger Key"
+				},
+				"launchdarkly.flagsInFile": {
+					"type": "boolean",
+					"default": "",
+					"description": "LaunchDarkly Flags in File"
 				}
 			}
 		},
@@ -90,9 +106,26 @@
 				"when": "LDFlagToggle"
 			},
 			{
+				"command": "extension.openLDFlagTree",
+				"title": "LaunchDarkly: Flag in Treeview",
+				"when": "LDFlagToggle"
+			},
+			{
 				"command": "launchdarkly.toggleFlagContext",
 				"title": "LaunchDarkly: Toggle Flag",
 				"when": "LDFlagToggle"
+			},
+			{
+				"command": "launchdarkly.enableDebugger",
+				"title": "LaunchDarkly: Enable Debugger"
+			},
+			{
+				"command": "launchdarkly.OpenFlag",
+				"title": "Jump to line in file",
+				"icon": {
+					"light": "resources/light/flagMultipleSearch.svg",
+					"dark": "resources/dark/flagMultipleSearch.svg"
+				}
 			},
 			{
 				"command": "extension.configureLaunchDarkly",
@@ -123,6 +156,10 @@
 				"title": "Toggle Flag"
 			},
 			{
+				"command": "launchdarkly.createFlag",
+				"title": "LaunchDarkly: Create New Boolean Flag"
+			},
+			{
 				"command": "launchdarkly.fallthroughChange",
 				"title": "Change Fallthrough Variation"
 			},
@@ -132,6 +169,10 @@
 			},
 			{
 				"command": "launchdarkly.treeviewrefresh",
+				"title": "Toggle treeview"
+			},
+			{
+				"command": "launchdarkly.enableClientSide",
 				"title": "Toggle treeview"
 			},
 			{
@@ -145,6 +186,14 @@
 			{
 				"command": "launchdarkly.flagMultipleSearch",
 				"title": "Search Flag References",
+				"icon": {
+					"light": "resources/light/flagMultipleSearch.svg",
+					"dark": "resources/dark/flagMultipleSearch.svg"
+				}
+			},
+			{
+				"command": "launchdarkly.metricMultipleSearch",
+				"title": "Search Metric References",
 				"icon": {
 					"light": "resources/light/flagMultipleSearch.svg",
 					"dark": "resources/dark/flagMultipleSearch.svg"
@@ -172,6 +221,18 @@
 				{
 					"command": "launchdarkly.flagMultipleSearch",
 					"when": "false"
+				},
+				{
+					"command": "launchdarkly.metricMultipleSearch",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.OpenFlag",
+					"when": "false"
+				},
+				{
+					"command": "launchdarkly.enableDebugger",
+					"when": "config.launchdarkly.debuggerKey"
 				}
 			],
 			"editor/context": [
@@ -185,6 +246,11 @@
 					"args": "${LDFlagToggle}",
 					"when": "LDFlagToggle",
 					"group": "LaunchDarkly@1"
+				},
+				{
+					"command": "extension.openLDFlagTree",
+					"when": "LDFlagToggle",
+					"group": "LaunchDarkly"
 				}
 			],
 			"view/title": [
@@ -195,7 +261,7 @@
 				},
 				{
 					"command": "extension.configureLaunchDarkly",
-					"when": "!!config.accessToken && !!config.project && !!config.env",
+					"when": "!!config.accessToken && !!config.project && !!config.env && view == launchdarklyFeatureFlags",
 					"group": "navigation"
 				}
 			],
@@ -213,6 +279,11 @@
 				{
 					"command": "launchdarkly.flagMultipleSearch",
 					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
+					"group": "inline"
+				},
+				{
+					"command": "launchdarkly.metricMultipleSearch",
+					"when": "view == launchdarklyMetrics && viewItem == metricParentItem",
 					"group": "inline"
 				},
 				{
@@ -238,6 +309,16 @@
 				{
 					"command": "launchdarkly.offChange",
 					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem"
+				},
+				{
+					"command": "launchdarkly.OpenFlag",
+					"when": "view == launchdarklyFlagList && viewItem == child",
+					"group": "inline"
+				},
+				{
+					"command": "launchdarkly.openBrowser",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser || view == launchdarklyMetrics && viewItem == metricViewBrowser",
+					"group": "inline"
 				}
 			]
 		},
@@ -249,12 +330,34 @@
 				"when": "editorTextFocus"
 			}
 		],
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "launchdarkly-explorer",
+					"title": "LaunchDarkly",
+					"icon": "resources/logo.svg"
+				}
+			]
+		},
 		"views": {
-			"explorer": [
+			"launchdarkly-explorer": [
+				{
+					"id": "launchdarklyQuickLinks",
+					"name": "Quick Links"
+				},
+				{
+					"id": "launchdarklyFlagList",
+					"name": "Flags in File",
+					"when": "launchdarkly:enableFlagExplorer"
+				},
 				{
 					"id": "launchdarklyFeatureFlags",
-					"name": "LaunchDarkly",
+					"name": "Feature Flags",
 					"when": "launchdarkly:enableFlagExplorer"
+				},
+				{
+					"id": "launchdarklyMetrics",
+					"name": "Metrics"
 				}
 			]
 		},
@@ -266,16 +369,17 @@
 		]
 	},
 	"galleryBanner": {
-    "theme": "light"
-  },
+		"color": "#282828",
+		"theme": "dark"
+	},
 	"homepage": "https://docs.launchdarkly.com/integrations/vscode",
-  "bugs": {
-    "url": "https://github.com/launchdarkly/ld-vscode/issues"
+	"bugs": {
+		"url": "https://github.com/launchdarkly/ld-vscode/issues"
 	},
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
 		"compile": "webpack --mode none",
-		"watch": "webpack --mode none --watch --info-verbosity verbose",
+		"watch": "webpack --mode none --watch",
 		"pretest": "tsc -p ./ && cp ./package.json ./out/package.json",
 		"test": "node ./out/test/runTest.js",
 		"lint": "npx eslint . --ext .ts",
@@ -287,35 +391,39 @@
 	"devDependencies": {
 		"@types/mocha": "^2.2.32",
 		"@types/node": "^6.0.40",
+		"@types/pubnub": "4.29.4",
 		"@types/vscode": "1.52.0",
-		"@typescript-eslint/eslint-plugin": "3.5.0",
-		"@typescript-eslint/parser": "3.5.0",
-		"eslint": "7.3.1",
+		"@typescript-eslint/eslint-plugin": "5.10.0",
+		"@typescript-eslint/parser": "5.10.0",
+		"eslint": "8.7.0",
+		"eslint-config-prettier": "8.3.0",
 		"expect": "26.6.2",
 		"expect-mocha-snapshot": "2.0.1",
-		"glob": "7.1.6",
+		"glob": "7.2.0",
 		"mocha": "5.2.0",
-		"prettier": "^1.5.3",
+		"prettier": "^2.5.1",
 		"pretty-error": "^2.1.1",
-		"ts-loader": "6.0.4",
+		"ts-loader": "^8.2.0",
 		"ts-mockito": "2.6.1",
-		"typescript": "^4.1.3",
-		"vscode-test": "1.4.1",
-		"webpack": "4.35.0",
-		"webpack-cli": "3.3.5"
+		"typescript": "^4.2.4",
+		"vscode-test": "^1.4.1",
+		"webpack": "^5.35.1",
+		"webpack-cli": "^4.6.0"
 	},
 	"dependencies": {
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
+		"axios": "0.21.4",
 		"csv-parser": "^2.3.3",
 		"gunzip-maybe": "^1.4.2",
+		"launchdarkly-api-typescript": "6.0.0",
 		"launchdarkly-node-server-sdk": "^5.13.1",
 		"lodash": "^4.17.12",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
 		"opn": "5.3.0",
+		"pubnub": "4.33.0",
 		"request": "^2.34",
-		"request-promise-native": "1.0.8",
 		"rimraf": "^3.0.2",
 		"tar-fs": "^2.1.1"
 	},

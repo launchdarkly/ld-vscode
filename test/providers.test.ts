@@ -2,18 +2,18 @@ import { anyString, instance, mock, when } from 'ts-mockito';
 import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as expect from 'expect';
+import expect from 'expect';
 import * as toMatchSnapshot from 'expect-mocha-snapshot';
 
 expect.extend({ toMatchSnapshot });
 
 import * as providers from '../src/providers';
-import { generateHoverString } from '../src/providers/hover'
+import { generateHoverString } from '../src/providers/hover';
 import { FeatureFlag, FlagConfiguration } from '../src/models';
 import { Configuration } from '../src/configuration';
 
 function resolveSrcTestPath(ctx) {
-	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out','')}});
+	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out', '') } });
 }
 
 const flag = new FeatureFlag({

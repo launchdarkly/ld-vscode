@@ -17,13 +17,13 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 	public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
-	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, aliases: FlagAliases) {
+	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
 		this.config = config;
 		this.flagStore = flagStore;
 		this.aliases = aliases;
 		this.regex = /(.+)/g;
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		vscode.workspace.onDidChangeConfiguration(_ => {
+		vscode.workspace.onDidChangeConfiguration((_) => {
 			this._onDidChangeCodeLenses.fire(null);
 		});
 		this.start();
@@ -55,12 +55,12 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			return [offVariation];
 		} else {
 			// eslint-disable-next-line no-prototype-builtins
-			const allVariations = obj => [
+			const allVariations = (obj) => [
 				...new Set(
 					obj.rules
 						.concat(obj.fallthrough)
 						// eslint-disable-next-line no-prototype-builtins
-						.map(x => (x.hasOwnProperty('rollout') ? x.rollout.variations.map(v => v.variation) : x.variation))
+						.map((x) => (x.hasOwnProperty('rollout') ? x.rollout.variations.map((v) => v.variation) : x.variation))
 						.flat(),
 				),
 			];
@@ -83,55 +83,70 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 
 	public async provideCodeLenses(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
 		if (vscode.workspace.getConfiguration('launchdarkly').get('enableCodeLens', true)) {
-			const codeLenses: vscode.CodeLens[] = [];
-			const regex = new RegExp(this.regex);
-			const text = document.getText();
-			let matches;
-			const flags = await this.flagStore.allFlagsMetadata();
-			const env = await this.flagStore.allFlags();
-			const keys = Object.keys(flags);
-			let aliases: Map<string, string>;
-			let aliasArr;
-			try {
-				if (typeof aliases !== 'undefined') {
-					aliases = this.aliases.getMap();
-					aliasArr = this.aliases.getListOfMapKeys();
-				}
-			} catch (err) {
-				console.log(err);
-			}
-			while ((matches = regex.exec(text)) !== null) {
-				const line = document.lineAt(document.positionAt(matches.index).line);
-				const indexOf = line.text.indexOf(matches[0]);
-				const position = new vscode.Position(line.lineNumber, indexOf);
-				const range = document.getWordRangeAtPosition(position, new RegExp(this.regex));
-				const prospect = document.getText(range);
-				let flag;
-				if (typeof keys !== 'undefined') {
-					flag = keys.filter(element => prospect.includes(element));
-				}
-				let foundAliases;
-				if (typeof aliases !== 'undefined') {
-					foundAliases = aliasArr.filter(element => prospect.includes(element));
-				}
-				if (range && typeof flag !== 'undefined' && flags[flag[0]]) {
-					const codeLens = new FlagCodeLens(range, flags[flag[0]], env[flag[0]], this.config);
-					codeLenses.push(codeLens);
-				} else if (range && foundAliases && foundAliases.length > 0 && flags[aliases[foundAliases]]) {
-					const codeLens = new FlagCodeLens(
-						range,
-						flags[aliases[foundAliases]],
-						env[aliases[foundAliases]],
-						this.config,
-					);
-					codeLenses.push(codeLens);
-				}
-			}
-
-			return codeLenses;
+			return this.ldCodeLens(document);
 		}
 	}
 
+	public async ldCodeLens(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
+		const codeLenses: vscode.CodeLens[] = [];
+		const regex = new RegExp(this.regex);
+		const text = document.getText();
+
+		let flags;
+		if (this.flagStore) {
+			flags = await this.flagStore.allFlagsMetadata();
+		} else {
+			return;
+		}
+		const env = await this.flagStore.allFlags();
+		let aliasesLocal: Map<string, string>;
+		let aliasArr;
+		try {
+			if (typeof this.aliases !== 'undefined') {
+				aliasesLocal = this.aliases.getMap();
+				aliasArr = this.aliases.getListOfMapKeys();
+			}
+		} catch (err) {
+			console.log(err);
+		}
+		let matches;
+		while ((matches = regex.exec(text)) !== null) {
+			const line = document.lineAt(document.positionAt(matches.index).line);
+			const indexOf = line.text.indexOf(matches[0]);
+			if (indexOf == -1) {
+				continue;
+			}
+			const position = new vscode.Position(line.lineNumber, indexOf);
+			const range = document.getWordRangeAtPosition(position, new RegExp(this.regex));
+			const prospect = document.getText(range);
+
+			let flag;
+			const keys = Object.keys(flags);
+			if (typeof keys !== 'undefined') {
+				flag = keys.filter((element) => prospect.includes(element));
+			}
+			let foundAliases;
+			if (typeof aliasesLocal !== 'undefined') {
+				foundAliases = aliasArr.filter((element) => prospect.includes(element));
+			}
+
+			// Use first found flag
+			const firstFlag = flag[0];
+			if (range && typeof flag !== 'undefined' && flags[firstFlag]) {
+				const codeLens = new FlagCodeLens(range, flags[firstFlag], env[firstFlag], this.config);
+				codeLenses.push(codeLens);
+			} else if (range && foundAliases?.length > 0 && flags[aliasesLocal[foundAliases]]) {
+				const codeLens = new FlagCodeLens(
+					range,
+					flags[aliasesLocal[foundAliases]],
+					env[aliasesLocal[foundAliases]],
+					this.config,
+				);
+				codeLenses.push(codeLens);
+			}
+		}
+		return codeLenses;
+	}
 	public resolveCodeLens(codeLens: FlagCodeLens): FlagCodeLens {
 		try {
 			let preReq = '';

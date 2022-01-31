@@ -2,7 +2,20 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [3.0.6] - 2021-09-14
+
+### Changed
+
+- Updates for Marketplace
+
+## [3.0.5] - 2021-09-14
+
+### Changed
+
+- Update icon
+
 ## [2.4.0] - 2020-11-10
+
 ### Changed
 
 - Show flag status(on/off) at top level of treeview
@@ -51,6 +64,7 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 - Fixed an error log when cursor position was in an invalid state
 
 ### Changed
+
 - Cleaned up debug logging
 - The extension will no longer initially display a warning message when not configured.
 

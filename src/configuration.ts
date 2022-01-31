@@ -1,4 +1,11 @@
-import { WorkspaceConfiguration, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
+import {
+	WorkspaceConfiguration,
+	workspace,
+	ExtensionContext,
+	ConfigurationChangeEvent,
+	ConfigurationTarget,
+	window,
+} from 'vscode';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const package_json = require('../package.json');
@@ -13,6 +20,9 @@ export class Configuration {
 	project = '';
 	env = '';
 	codeRefsPath = '';
+	debugKey = '';
+	debugCipher = '';
+	debugChannel = '';
 	refreshRate = 120;
 	codeRefsRefreshRate = 240;
 	enableAliases = true;
@@ -37,7 +47,19 @@ export class Configuration {
 		}
 
 		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
-		this.accessToken = this.getState('accessToken') || this.accessToken;
+		const accessToken = this.getState('accessToken') || this.accessToken;
+		const env = this.getState('env') || this.env;
+		const debugChannel = this.ctx.workspaceState.get('debugChannel', '');
+		const debugCipher = this.ctx.workspaceState.get('debugCipher', '');
+
+		if (!accessToken.startsWith('api')) {
+			console.error(`Access Token does not start with api-. token: ${accessToken}`);
+			window.showErrorMessage('[LaunchDarkly] Access Token does not start with api-. Please reconfigure.');
+		}
+		this.accessToken = accessToken;
+		this.env = env;
+		this.debugChannel = debugChannel;
+		this.debugCipher = debugCipher;
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {
@@ -47,10 +69,21 @@ export class Configuration {
 
 		let config: WorkspaceConfiguration = workspace.getConfiguration('launchdarkly');
 		if (key === 'accessToken') {
-			const ctxState = global ? this.ctx.globalState : this.ctx.workspaceState;
+			const ctxState = this.ctx.globalState;
 			await ctxState.update(key, value);
 			return;
 		}
+		if (key === 'env' || key === 'debugChannel' || key === 'debugCipher') {
+			const ctxState = this.ctx.workspaceState;
+			await ctxState.update(key, value);
+			return;
+		}
+		if (key === 'debugChannel') {
+			const ctxState = this.ctx.workspaceState;
+			await ctxState.update(key, value);
+			return;
+		}
+
 		await config.update(key, value, global);
 		config = workspace.getConfiguration('launchdarkly');
 
@@ -61,7 +94,7 @@ export class Configuration {
 
 	public streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
 		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-		if (streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+		if (streamingConfigOptions.every((option) => !e.affectsConfiguration(`launchdarkly.${option}`))) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return true;
 		}
@@ -70,7 +103,7 @@ export class Configuration {
 
 	public streamingConfigStartCheck(): boolean {
 		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-		if (!streamingConfigOptions.every(o => !!this[o])) {
+		if (!streamingConfigOptions.every((o) => !!this[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return false;
 		}
@@ -96,6 +129,29 @@ export class Configuration {
 
 	isConfigured(): boolean {
 		return !!this.accessToken && !!this.project && !!this.env;
+	}
+
+	localIsConfigured(): boolean {
+		const config = workspace.getConfiguration('launchdarkly');
+		return (
+			!!this.ctx.workspaceState.get('accessToken') ||
+			!!config.inspect('project').workspaceValue ||
+			!!config.inspect('env').workspaceValue
+		);
+	}
+
+	async clearLocalConfig(): Promise<void> {
+		const config = workspace.getConfiguration('launchdarkly');
+		await this.ctx.workspaceState.update('accessToken', undefined);
+		await config.update('project', undefined, ConfigurationTarget.Workspace);
+		await config.update('env', undefined, ConfigurationTarget.Workspace);
+	}
+
+	async clearGlobalConfig(): Promise<void> {
+		const config = workspace.getConfiguration('launchdarkly');
+		await this.ctx.globalState.update('accessToken', undefined);
+		await config.update('project', undefined, ConfigurationTarget.Global);
+		await config.update('env', undefined, ConfigurationTarget.Global);
 	}
 
 	getState(key: string): string {

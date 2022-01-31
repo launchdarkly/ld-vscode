@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { ExtensionContext } from 'vscode';
 import { mkdirSync, createWriteStream, existsSync, unlinkSync, createReadStream } from 'fs';
-import * as rp from 'request-promise-native';
 import { CodeRefs } from './codeRefsVersion';
-import * as rr from 'rimraf';
 import * as tar from 'tar-fs';
+import axios from 'axios';
+const rimraf = require('rimraf');
 const gunzip = require('gunzip-maybe');
 
 export class CodeRefsDownloader {
@@ -21,7 +21,11 @@ export class CodeRefsDownloader {
 		const codeRefsPath = this.ctx.asAbsolutePath(`coderefs/coderefs-${CodeRefs.version}.tar.gz`);
 
 		// Remove all previous versions of the binary
-		await new Promise(resolve => rr(`${dir}/*`, resolve));
+		try {
+			await new Promise((resolve) => rimraf(`${dir}/*`, resolve));
+		} catch (err) {
+			console.log(`No previous version of code references installed`);
+		}
 		this.installDir(dir, codeRefsPath);
 	}
 
@@ -47,22 +51,23 @@ export class CodeRefsDownloader {
 		}
 		const file = createWriteStream(codeRefsPath);
 		try {
-			const archivedFile = await rp(
+			const archivedFile = await axios.get(
 				`https://github.com/launchdarkly/ld-find-code-refs/releases/download/${CodeRefs.version}/ld-find-code-refs_${CodeRefs.version}_${platform}_${arch}.tar.gz`,
 				{
+					responseType: 'arraybuffer',
 					method: 'GET',
-					encoding: null,
+					headers: {
+						'Content-Type': 'application/gzip',
+					},
 				},
 			);
-			file.write(archivedFile);
+			file.write(archivedFile.data);
 			file.end();
 		} catch (err) {
 			console.log(err);
 		}
 		try {
-			createReadStream(codeRefsPath)
-				.pipe(gunzip())
-				.pipe(tar.extract(this.downloadDir));
+			createReadStream(codeRefsPath).pipe(gunzip()).pipe(tar.extract(this.downloadDir));
 			unlinkSync(codeRefsPath);
 		} catch (err) {
 			console.log(err);

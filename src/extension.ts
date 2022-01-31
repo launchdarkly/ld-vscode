@@ -1,13 +1,13 @@
 'use strict';
 
-import { commands, window, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
+import { commands, window, ExtensionContext } from 'vscode';
 import { access, constants } from 'fs';
 import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
 import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
 import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
-import { CodeRefs } from './coderefs/codeRefsVersion';
+import { CodeRefs as cr } from './coderefs/codeRefsVersion';
 
 let config: Configuration;
 let flagStore: FlagStore;
@@ -24,7 +24,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 						`To enable the LaunchDarkly extension, select your desired environment. If this message is dismissed, LaunchDarkly will be disabled for the workspace`,
 						'Configure',
 					)
-					.then(item => {
+					.then((item) => {
 						item === 'Configure'
 							? commands.executeCommand('extension.configureLaunchDarkly')
 							: ctx.workspaceState.update('isDisabledForWorkspace', true);
@@ -37,7 +37,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 					'Your LaunchDarkly extension configuration has been deprecated and may not work correctly. Please reconfigure the extension.',
 					'Configure',
 				)
-				.then(item => {
+				.then((item) => {
 					item === 'Configure'
 						? commands.executeCommand('extension.configureLaunchDarkly')
 						: ctx.globalState.update('legacyNotificationDismissed', true);
@@ -51,21 +51,10 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 		flagStore = new FlagStore(config, api);
 	}
 
-	// Handle manual changes to extension configuration
-	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
-		if (e.affectsConfiguration('launchdarkly')) {
-			await config.reload();
-			if (!flagStore) {
-				const newApi = new LaunchDarklyAPI(config);
-				flagStore = new FlagStore(config, newApi);
-			}
-			await flagStore.reload(e);
-		}
-	});
-	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}`;
+	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${cr.version}`;
 	// Check to see if coderefs is already installed. Need more logic if specific config path is set.
 	if (config.enableAliases) {
-		access(codeRefsVersionDir, constants.F_OK, err => {
+		access(codeRefsVersionDir, constants.F_OK, (err) => {
 			if (err) {
 				const CodeRefs = new CodeRefsDownloader(ctx, codeRefsVersionDir);
 				CodeRefs.download();
