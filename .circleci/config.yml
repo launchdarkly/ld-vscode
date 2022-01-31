@@ -3,7 +3,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:12.22
     steps:
       - checkout
       - run: echo "Node version:" `node --version`
@@ -20,17 +20,20 @@ jobs:
           name: Setup build environment
           command: |
             sudo apt-get update
-            sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libnss3 libasound2
+            sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libnss3 libasound2 libgbm-dev
             sudo cp test/xvfb.init /etc/init.d/xvfb
             sudo chmod +x /etc/init.d/xvfb
             sudo update-rc.d xvfb defaults
             sudo service xvfb start
+            sudo service dbus restart
+            export $(dbus-launch)
       - run:
           name: Build
           command: 'yarn run vscode:prepublish'
       - run:
           name: Test
-          command: 'DISPLAY=:1 yarn test'
+          command: |
+            DISPLAY=:1 yarn test
       - run:
           name: Prettier
           command: 'yarn run prettier:check'
