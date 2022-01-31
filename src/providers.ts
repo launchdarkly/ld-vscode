@@ -28,7 +28,7 @@ import { ClientSideEnable, refreshDiagnostics, subscribeToDocumentChanges } from
 import PubNub from 'pubnub';
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
-import { setupComponents } from './utils';
+import { extensionReload, setupComponents } from './utils';
 import createFlagCmd from './commands/createFlag';
 
 const STRING_DELIMETERS = ['"', "'", '`'];
@@ -108,10 +108,7 @@ export async function register(
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
-			await config.reload();
-			const newApi = new LaunchDarklyAPI(config);
-			flagStore = new FlagStore(config, newApi);
-			await setupComponents(newApi, config, ctx, flagStore);
+			extensionReload(config, ctx);
 		}
 	});
 	if (!config.isConfigured) {
@@ -239,7 +236,6 @@ const enableDebugger = (ctx: ExtensionContext, debuggers: DebuggerWindows, pubnu
 						}
 					});
 				} else {
-					console.log(m);
 					Lddebugger.appendLine(m.message);
 				}
 			},

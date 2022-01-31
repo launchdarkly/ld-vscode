@@ -17,6 +17,14 @@ export default async function checkExistingCommand(commandName: string): Promise
 	return false;
 }
 
+export async function extensionReload(config: Configuration, ctx: ExtensionContext) {
+	// Read in latest version of config
+	await config.reload();
+	const newApi = new LaunchDarklyAPI(config);
+	const flagStore = new FlagStore(config, newApi);
+	await setupComponents(newApi, config, ctx, flagStore);
+}
+
 export async function setupComponents(
 	api: LaunchDarklyAPI,
 	config: Configuration,
@@ -27,17 +35,10 @@ export async function setupComponents(
 	// Add metrics view
 	const metricsView = new LaunchDarklyMetricsTreeViewProvider(api, config, ctx);
 	window.registerTreeDataProvider('launchdarklyMetrics', metricsView);
-	await metricsView.reload();
-
-	// Add Flag view
-	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx);
-	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
-	await flagView.reload();
 
 	// Add Quick Links view
 	const quickLinksView = new QuickLinksListProvider(config, flagStore);
 	window.registerTreeDataProvider('launchdarklyQuickLinks', quickLinksView);
-	await quickLinksView.reload();
 
 	if (config.enableAliases) {
 		aliases = new FlagAliases(config, ctx);
@@ -48,6 +49,10 @@ export async function setupComponents(
 			window.showErrorMessage('ld-find-code-refs version > 2 supported.');
 		}
 	}
+
+	// Add Flag view
+	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
+	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 
 	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
 	const listView = new LaunchDarklyFlagListProvider(config, codeLens);

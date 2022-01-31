@@ -4,6 +4,7 @@ import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
 import { FlagStore } from '../flagStore';
 import { FlagAliases } from './codeRefs';
+import { ConfigurationChangeEvent } from 'vscode';
 
 const MAX_CODELENS_VALUE = 20;
 /**
@@ -23,8 +24,10 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		this.aliases = aliases;
 		this.regex = /(.+)/g;
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		vscode.workspace.onDidChangeConfiguration((_) => {
-			this._onDidChangeCodeLenses.fire(null);
+		vscode.workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
+			if (e.affectsConfiguration('launchdarkly')) {
+				this._onDidChangeCodeLenses.fire(null);
+			}
 		});
 		this.start();
 	}
