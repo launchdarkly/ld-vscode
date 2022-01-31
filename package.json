@@ -101,7 +101,7 @@
 		},
 		"commands": [
 			{
-				"command": "extension.openInLaunchDarkly",
+				"command": "launchdarkly.openInLaunchDarkly",
 				"title": "LaunchDarkly: Open in LaunchDarkly",
 				"when": "LDFlagToggle"
 			},
@@ -237,7 +237,7 @@
 			],
 			"editor/context": [
 				{
-					"command": "extension.openInLaunchDarkly",
+					"command": "launchdarkly.openInLaunchDarkly",
 					"when": "LDFlagToggle",
 					"group": "LaunchDarkly"
 				},
@@ -324,7 +324,7 @@
 		},
 		"keybindings": [
 			{
-				"command": "extension.openInLaunchDarkly",
+				"command": "launchdarkly.openInLaunchDarkly",
 				"key": "ctrl+alt+g",
 				"mac": "cmd+alt+g",
 				"when": "editorTextFocus"

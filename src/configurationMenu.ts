@@ -1,4 +1,4 @@
-import { ExtensionContext, QuickPickItem, window, workspace } from 'vscode';
+import { Disposable, ExtensionContext, QuickPickItem, window, workspace } from 'vscode';
 
 import { MultiStepInput } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
@@ -24,8 +24,9 @@ export class ConfigurationMenu {
 	private debugCipher: string;
 	private debugChannel: string;
 	private state: CMState;
+	private disposables: Array<Disposable>;
 
-	constructor(config: Configuration, api: LaunchDarklyAPI, ctx: ExtensionContext) {
+	constructor(config: Configuration, api: LaunchDarklyAPI, ctx: ExtensionContext, disposables?: Array<Disposable>) {
 		this.config = config;
 		this.api = api;
 		this.title = 'Configure LaunchDarkly';
@@ -33,6 +34,7 @@ export class ConfigurationMenu {
 		workspace.name && this.totalSteps++;
 		this.currentAccessToken = config.accessToken;
 		this.ctx = ctx;
+		this.disposables = disposables;
 	}
 
 	async collectInputs() {
@@ -195,7 +197,7 @@ export class ConfigurationMenu {
 		Object.keys(state).forEach((key) => {
 			this.config.update(key, state[key], false);
 		});
-		await extensionReload(this.config, this.ctx);
+		await extensionReload(this.config, this.ctx, this.disposables);
 	}
 
 	async validateAccessToken(token: string, invalidAccessToken: string) {

@@ -192,14 +192,14 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					vscode.window.showErrorMessage(`Could not toggle flag: ${err.message}`);
 				}
 			}),
-			vscode.commands.registerCommand('launchdarkly.fallthroughChange', async (node: FlagNode) => {
+			vscode.commands.registerCommand('launchdarkly.user.fallthroughChange', async (node: FlagNode) => {
 				try {
 					await this.flagPatch(node, `/environments/${this.config.env}/fallthrough/variation`, node.contextValue);
 				} catch (err) {
 					vscode.window.showErrorMessage(`Could not set Fallthrough: ${err.message}`);
 				}
 			}),
-			vscode.commands.registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
+			vscode.commands.registerCommand('launchdarkly.user.offChange', async (node: FlagNode) => {
 				try {
 					await this.flagPatch(node, `/environments/${this.config.env}/offVariation`, node.contextValue);
 				} catch (err) {
