@@ -36,8 +36,6 @@ export async function register(
 	await globalClearCmd(ctx, config);
 
 	let disposables = await generalCommands(ctx, config, api, flagStore);
-	console.log('about to configure');
-	console.log(disposables);
 	await configureLaunchDarkly(ctx, config, api, flagStore, disposables);
 
 	// Handle manual changes to extension configuration

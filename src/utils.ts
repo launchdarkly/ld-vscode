@@ -41,8 +41,6 @@ export async function setupComponents(
 	flagStore: FlagStore,
 	disposables?: Array<Disposable>,
 ) {
-	console.log(`setting up ${Date.now()}`);
-	console.log(disposables);
 	if (disposables) {
 		disposables.map((item) => {
 			item.dispose();

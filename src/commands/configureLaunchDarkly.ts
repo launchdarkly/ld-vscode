@@ -21,9 +21,6 @@ export default async function configureLaunchDarkly(
 			} else {
 				await flagStore.reload();
 			}
-			//console.log("here")
-			//console.log(disposables)
-			//await setupComponents(api, config, ctx, flagStore, disposables);
 			await ctx.globalState.update('LDConfigured', true);
 			window.showInformationMessage('LaunchDarkly configured successfully');
 		} catch (err) {

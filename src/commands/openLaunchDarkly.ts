@@ -73,6 +73,5 @@ const openFlagInBrowser = async (config: Configuration, flagKey: string, flagSto
 		env = flag.environments[config.env];
 		sitePath = env._site.href;
 	}
-	console.log(sitePath);
 	opn(url.resolve(config.baseUri, sitePath));
 };
