@@ -10,18 +10,17 @@ export default async function configureLaunchDarkly(
 	config: Configuration,
 	api: LaunchDarklyAPI,
 	flagStore?: FlagStore,
+	disposables?: Array<Disposable>,
 ) {
 	const configureExtension: Disposable = commands.registerCommand('extension.configureLaunchDarkly', async () => {
 		try {
-			const configurationMenu = new ConfigurationMenu(config, api);
+			const configurationMenu = new ConfigurationMenu(config, api, ctx, disposables);
 			await configurationMenu.configure();
 			if (typeof flagStore === 'undefined') {
 				flagStore = new FlagStore(config, api);
 			} else {
 				await flagStore.reload();
 			}
-
-			await setupComponents(api, config, ctx, flagStore);
 			await ctx.globalState.update('LDConfigured', true);
 			window.showInformationMessage('LaunchDarkly configured successfully');
 		} catch (err) {

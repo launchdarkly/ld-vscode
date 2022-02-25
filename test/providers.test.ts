@@ -11,6 +11,7 @@ import * as providers from '../src/providers';
 import { generateHoverString } from '../src/providers/hover';
 import { FeatureFlag, FlagConfiguration } from '../src/models';
 import { Configuration } from '../src/configuration';
+import { isPrecedingCharStringDelimiter } from '../src/providers/completion';
 
 function resolveSrcTestPath(ctx) {
 	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out', '') } });
@@ -113,7 +114,7 @@ suite('provider utils tests', function () {
 		const document = await vscode.workspace.openTextDocument(uri);
 		tests.forEach((t) => {
 			const pos = new vscode.Position(t.line, t.char);
-			assert.equal(providers.isPrecedingCharStringDelimiter(document, pos), t.expected, t.name);
+			assert.equal(isPrecedingCharStringDelimiter(document, pos), t.expected, t.name);
 		});
 	});
 });

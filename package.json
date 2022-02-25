@@ -101,7 +101,7 @@
 		},
 		"commands": [
 			{
-				"command": "extension.openInLaunchDarkly",
+				"command": "launchdarkly.openInLaunchDarkly",
 				"title": "LaunchDarkly: Open in LaunchDarkly",
 				"when": "LDFlagToggle"
 			},
@@ -237,7 +237,7 @@
 			],
 			"editor/context": [
 				{
-					"command": "extension.openInLaunchDarkly",
+					"command": "launchdarkly.openInLaunchDarkly",
 					"when": "LDFlagToggle",
 					"group": "LaunchDarkly"
 				},
@@ -324,7 +324,7 @@
 		},
 		"keybindings": [
 			{
-				"command": "extension.openInLaunchDarkly",
+				"command": "launchdarkly.openInLaunchDarkly",
 				"key": "ctrl+alt+g",
 				"mac": "cmd+alt+g",
 				"when": "editorTextFocus"
@@ -418,7 +418,7 @@
 		"gunzip-maybe": "^1.4.2",
 		"launchdarkly-api-typescript": "6.0.0",
 		"launchdarkly-node-server-sdk": "^5.13.1",
-		"lodash": "^4.17.12",
+		"lodash": "^4.17.21",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
 		"opn": "5.3.0",
