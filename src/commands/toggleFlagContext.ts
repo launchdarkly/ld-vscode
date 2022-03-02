@@ -3,12 +3,12 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 
-export default async function toggleFlagCtxCmd(
+export default function toggleFlagCtxCmd(
 	ctx: ExtensionContext,
 	config: Configuration,
 	api: LaunchDarklyAPI,
 	flagStore: FlagStore,
-): Promise<Disposable> {
+): Disposable {
 	const toggleFlagCtxCmd = commands.registerCommand('launchdarkly.toggleFlagContext', async () => {
 		try {
 			const key = ctx.workspaceState.get('LDFlagKey') as string;

@@ -21,34 +21,28 @@ export default async function checkExistingCommand(commandName: string): Promise
 	return false;
 }
 
-export async function extensionReload(
+export function extensionReload(
 	config: Configuration,
 	ctx: ExtensionContext,
-	disposables?: Array<Disposable>,
-): Promise<Array<Disposable>> {
+) {
 	// Read in latest version of config
-	await config.reload();
+	config.reload();
 	const newApi = new LaunchDarklyAPI(config);
 	const flagStore = new FlagStore(config, newApi);
-	await setupComponents(newApi, config, ctx, flagStore, disposables);
-	return generalCommands(ctx, config, newApi, flagStore);
+	setupComponents(newApi, config, ctx, flagStore);
+	
 }
 
-export async function setupComponents(
+export function setupComponents(
 	api: LaunchDarklyAPI,
 	config: Configuration,
 	ctx: ExtensionContext,
 	flagStore: FlagStore,
-	disposables?: Array<Disposable>,
 ) {
-	if (disposables) {
-		disposables.map((item) => {
-			item.dispose();
-		});
+	const cmds = ctx.globalState.get<Disposable>("commands")
+	if (typeof cmds.dispose === 'function') {
+		cmds.dispose()
 	}
-	const waitTill = new Date(new Date().getTime() + 5 * 1000);
-	// eslint-disable-next-line no-empty
-	while (waitTill > new Date()) {}
 
 	// Add metrics view
 	const metricsView = new LaunchDarklyMetricsTreeViewProvider(api, config, ctx);
@@ -93,4 +87,6 @@ export async function setupComponents(
 	);
 
 	codeLens.start();
+
+	generalCommands(ctx, config, api, flagStore);
 }

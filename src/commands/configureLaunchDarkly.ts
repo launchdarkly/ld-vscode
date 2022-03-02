@@ -3,9 +3,8 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { ConfigurationMenu } from '../configurationMenu';
 import { FlagStore } from '../flagStore';
-import { setupComponents } from '../utils';
 
-export default async function configureLaunchDarkly(
+export default function configureLaunchDarkly(
 	ctx: ExtensionContext,
 	config: Configuration,
 	api: LaunchDarklyAPI,

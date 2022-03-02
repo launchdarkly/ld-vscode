@@ -35,20 +35,20 @@ export async function register(
 
 	await globalClearCmd(ctx, config);
 
-	let disposables = await generalCommands(ctx, config, api, flagStore);
-	await configureLaunchDarkly(ctx, config, api, flagStore, disposables);
+	//ctx.globalState.update("commands", generalCommands(ctx, config, api, flagStore));
+	await configureLaunchDarkly(ctx, config, api, flagStore);
 
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly')) {
-			disposables = await extensionReload(config, ctx, disposables);
+			extensionReload(config, ctx);
 		}
 	});
 	if (!config.isConfigured) {
 		return;
 	}
 	if (typeof flagStore !== 'undefined') {
-		await setupComponents(api, config, ctx, flagStore);
+		setupComponents(api, config, ctx, flagStore);
 
 		const Lddebugger = window.createOutputChannel('LaunchDarkly All');
 		const LddIdentify = window.createOutputChannel('LaunchDarkly Identify Debug');

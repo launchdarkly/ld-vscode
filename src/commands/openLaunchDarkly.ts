@@ -7,11 +7,11 @@ import { FeatureFlagConfig } from '../models';
 import * as url from 'url';
 import opn = require('opn');
 
-export default async function openInLdCmd(
+export default function openInLdCmd(
 	ctx: ExtensionContext,
 	config: Configuration,
 	flagStore: FlagStore,
-): Promise<Disposable> {
+): Disposable {
 	const openInLdCmd = commands.registerTextEditorCommand('launchdarkly.openInLaunchDarkly', async (editor) => {
 		const flagKey = editor.document.getText(
 			editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
