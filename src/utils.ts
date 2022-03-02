@@ -21,16 +21,12 @@ export default async function checkExistingCommand(commandName: string): Promise
 	return false;
 }
 
-export function extensionReload(
-	config: Configuration,
-	ctx: ExtensionContext,
-) {
+export function extensionReload(config: Configuration, ctx: ExtensionContext) {
 	// Read in latest version of config
 	config.reload();
 	const newApi = new LaunchDarklyAPI(config);
 	const flagStore = new FlagStore(config, newApi);
 	setupComponents(newApi, config, ctx, flagStore);
-	
 }
 
 export function setupComponents(
@@ -39,9 +35,9 @@ export function setupComponents(
 	ctx: ExtensionContext,
 	flagStore: FlagStore,
 ) {
-	const cmds = ctx.globalState.get<Disposable>("commands")
+	const cmds = ctx.globalState.get<Disposable>('commands');
 	if (typeof cmds.dispose === 'function') {
-		cmds.dispose()
+		cmds.dispose();
 	}
 
 	// Add metrics view

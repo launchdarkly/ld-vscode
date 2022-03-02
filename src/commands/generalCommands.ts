@@ -17,5 +17,5 @@ export default function generalCommands(
 	const openLdCmd = openInLdCmd(ctx, config, flagStore);
 
 	const disposables = Disposable.from(createFlag, toggleFlagCmd, openLdCmd);
-	ctx.globalState.update("commands", disposables);
+	ctx.globalState.update('commands', disposables);
 }
