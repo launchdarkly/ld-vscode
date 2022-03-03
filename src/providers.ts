@@ -77,7 +77,6 @@ export async function register(
 	subscribeToDocumentChanges(ctx, clientSideDiagnostics, aliases, flagStore);
 }
 
-
 export function isPrecedingCharStringDelimiter(document: TextDocument, pos: Position): any {
 	throw new Error('Function not implemented.');
 }
