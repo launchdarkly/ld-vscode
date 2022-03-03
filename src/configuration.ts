@@ -48,7 +48,21 @@ export class Configuration {
 
 		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
 		const accessToken = this.getState('accessToken') || this.accessToken;
-		const env = this.getState('env') || this.env;
+		if (!this.getState('env')) {
+			this.ctx.workspaceState.update('env', this.env);
+		}
+		const env = this.getState('env');
+
+		if (!this.getState('project')) {
+			this.ctx.workspaceState.update('project', this.project);
+		}
+		const project = this.getState('project');
+
+		if (!this.getState('baseUri')) {
+			this.ctx.workspaceState.update('baseUri', this.baseUri);
+		}
+		const baseUri = this.getState('baseUri');
+
 		const debugChannel = this.ctx.workspaceState.get('debugChannel', '');
 		const debugCipher = this.ctx.workspaceState.get('debugCipher', '');
 
@@ -58,6 +72,8 @@ export class Configuration {
 		}
 		this.accessToken = accessToken;
 		this.env = env;
+		this.project = project;
+		this.baseUri = baseUri;
 		this.debugChannel = debugChannel;
 		this.debugCipher = debugCipher;
 	}
@@ -67,25 +83,24 @@ export class Configuration {
 			return;
 		}
 
-		let config: WorkspaceConfiguration = workspace.getConfiguration('launchdarkly');
+		const config: WorkspaceConfiguration = workspace.getConfiguration('launchdarkly');
 		if (key === 'accessToken') {
 			const ctxState = this.ctx.globalState;
 			await ctxState.update(key, value);
 			return;
-		}
-		if (key === 'env' || key === 'debugChannel' || key === 'debugCipher') {
+		} else if (
+			key === 'env' ||
+			key === 'project' ||
+			key === 'baseUri' ||
+			key === 'debugChannel' ||
+			key === 'debugCipher'
+		) {
 			const ctxState = this.ctx.workspaceState;
 			await ctxState.update(key, value);
 			return;
+		} else {
+			await config.update(key, value, global);
 		}
-		if (key === 'debugChannel') {
-			const ctxState = this.ctx.workspaceState;
-			await ctxState.update(key, value);
-			return;
-		}
-
-		await config.update(key, value, global);
-		config = workspace.getConfiguration('launchdarkly');
 
 		this[key] = value;
 		// eslint-disable-next-line @typescript-eslint/no-empty-function
