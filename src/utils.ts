@@ -1,4 +1,3 @@
-import { time } from 'console';
 import { commands, Disposable, DocumentFilter, ExtensionContext, languages, window } from 'vscode';
 import { LaunchDarklyAPI } from './api';
 import generalCommands from './commands/generalCommands';

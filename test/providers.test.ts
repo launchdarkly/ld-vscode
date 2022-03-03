@@ -7,7 +7,6 @@ const expect = require('expect');
 const toMatchSnapshot = require('expect-mocha-snapshot');
 
 expect.extend({ toMatchSnapshot });
-import * as providers from '../src/providers';
 import { generateHoverString } from '../src/providers/hover';
 import { FeatureFlag, FlagConfiguration } from '../src/models';
 import { Configuration } from '../src/configuration';

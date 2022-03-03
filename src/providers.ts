@@ -19,7 +19,6 @@ import PubNub from 'pubnub';
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
 import { extensionReload, setupComponents } from './utils';
-import generalCommands from './commands/generalCommands';
 
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 
