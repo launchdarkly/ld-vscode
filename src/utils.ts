@@ -36,7 +36,7 @@ export function setupComponents(
 	flagStore: FlagStore,
 ) {
 	const cmds = ctx.globalState.get<Disposable>('commands');
-	if (typeof cmds.dispose === 'function') {
+	if (typeof cmds?.dispose === 'function') {
 		cmds.dispose();
 	}
 
