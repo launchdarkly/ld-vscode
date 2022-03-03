@@ -9,11 +9,10 @@ export default function configureLaunchDarkly(
 	config: Configuration,
 	api: LaunchDarklyAPI,
 	flagStore?: FlagStore,
-	disposables?: Array<Disposable>,
 ) {
 	const configureExtension: Disposable = commands.registerCommand('extension.configureLaunchDarkly', async () => {
 		try {
-			const configurationMenu = new ConfigurationMenu(config, api, ctx, disposables);
+			const configurationMenu = new ConfigurationMenu(config, api, ctx);
 			await configurationMenu.configure();
 			if (typeof flagStore === 'undefined') {
 				flagStore = new FlagStore(config, api);

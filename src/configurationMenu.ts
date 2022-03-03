@@ -25,7 +25,7 @@ export class ConfigurationMenu {
 	private debugChannel: string;
 	private state: CMState;
 
-	constructor(config: Configuration, api: LaunchDarklyAPI, ctx: ExtensionContext, disposables?: Array<Disposable>) {
+	constructor(config: Configuration, api: LaunchDarklyAPI, ctx: ExtensionContext) {
 		this.config = config;
 		this.api = api;
 		this.title = 'Configure LaunchDarkly';
