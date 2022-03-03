@@ -87,11 +87,6 @@
 					"default": "",
 					"description": "LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
 				},
-				"launchdarkly.debuggerKey": {
-					"type": "string",
-					"default": "",
-					"description": "LaunchDarkly Debugger Key"
-				},
 				"launchdarkly.flagsInFile": {
 					"type": "boolean",
 					"default": "",
@@ -114,10 +109,6 @@
 				"command": "launchdarkly.toggleFlagContext",
 				"title": "LaunchDarkly: Toggle Flag",
 				"when": "LDFlagToggle"
-			},
-			{
-				"command": "launchdarkly.enableDebugger",
-				"title": "LaunchDarkly: Enable Debugger"
 			},
 			{
 				"command": "launchdarkly.OpenFlag",
@@ -229,10 +220,6 @@
 				{
 					"command": "launchdarkly.OpenFlag",
 					"when": "false"
-				},
-				{
-					"command": "launchdarkly.enableDebugger",
-					"when": "config.launchdarkly.debuggerKey"
 				}
 			],
 			"editor/context": [
@@ -391,7 +378,6 @@
 	"devDependencies": {
 		"@types/mocha": "^2.2.32",
 		"@types/node": "^6.0.40",
-		"@types/pubnub": "4.29.4",
 		"@types/vscode": "1.52.0",
 		"@typescript-eslint/eslint-plugin": "5.10.0",
 		"@typescript-eslint/parser": "5.10.0",
@@ -422,7 +408,6 @@
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
 		"opn": "5.3.0",
-		"pubnub": "4.33.0",
 		"request": "^2.34",
 		"rimraf": "^3.0.2",
 		"tar-fs": "^2.1.1"
