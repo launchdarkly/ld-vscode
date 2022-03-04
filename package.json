@@ -163,10 +163,6 @@
 				"title": "Toggle treeview"
 			},
 			{
-				"command": "launchdarkly.enableClientSide",
-				"title": "Toggle treeview"
-			},
-			{
 				"command": "launchdarkly.openBrowser",
 				"title": "Open in LaunchDarkly",
 				"icon": {

@@ -1,19 +1,9 @@
-import {
-	commands,
-	languages,
-	window,
-	ExtensionContext,
-	Position,
-	TextDocument,
-	workspace,
-	ConfigurationChangeEvent,
-} from 'vscode';
+import { commands, window, ExtensionContext, workspace, ConfigurationChangeEvent } from 'vscode';
 
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
 import { FlagStore } from './flagStore';
 import { FlagNode } from './providers/flagListView';
-import { ClientSideEnable, refreshDiagnostics, subscribeToDocumentChanges } from './providers/diagnostics';
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
 import { extensionReload, setupComponents } from './utils';
@@ -26,11 +16,8 @@ export async function register(
 	flagStore: FlagStore,
 	api: LaunchDarklyAPI,
 ): Promise<void> {
-	let aliases;
-
 	await globalClearCmd(ctx, config);
 
-	//ctx.globalState.update("commands", generalCommands(ctx, config, api, flagStore));
 	await configureLaunchDarkly(ctx, config, api, flagStore);
 
 	// Handle manual changes to extension configuration
@@ -55,28 +42,4 @@ export async function register(
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
-
-	const clientSideDiagnostics = languages.createDiagnosticCollection('clientSide');
-	ctx.subscriptions.push(
-		clientSideDiagnostics,
-		languages.registerCodeActionsProvider('*', new ClientSideEnable(), {
-			providedCodeActionKinds: ClientSideEnable.providedCodeActionKinds,
-		}),
-		commands.registerCommand('launchdarkly.enableClientSide', async (args) => {
-			try {
-				const patchOperation = [{ op: 'replace', path: '/clientSideAvailability/usingEnvironmentId', value: true }];
-				await api.patchFeatureFlag(config.project, args, { comment: 'VS Code Updated', patch: patchOperation });
-				// Global updates are not automatic, need to refresh flag for diagnostics.
-				await flagStore.forceFeatureFlagUpdate(args);
-				refreshDiagnostics(window.activeTextEditor.document, clientSideDiagnostics, aliases, flagStore);
-			} catch (err) {
-				console.log(err);
-			}
-		}),
-	);
-	subscribeToDocumentChanges(ctx, clientSideDiagnostics, aliases, flagStore);
-}
-
-export function isPrecedingCharStringDelimiter(document: TextDocument, pos: Position): any {
-	throw new Error('Function not implemented.');
 }
