@@ -24,7 +24,6 @@ export async function register(
 ): Promise<void> {
 	await globalClearCmd(ctx, config);
 
-	//ctx.globalState.update("commands", generalCommands(ctx, config, api, flagStore));
 	await configureLaunchDarkly(ctx, config, api, flagStore);
 
 	// Handle manual changes to extension configuration
