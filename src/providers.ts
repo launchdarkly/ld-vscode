@@ -1,10 +1,4 @@
-import {
-	commands,
-	window,
-	ExtensionContext,
-	workspace,
-	ConfigurationChangeEvent,
-} from 'vscode';
+import { commands, window, ExtensionContext, workspace, ConfigurationChangeEvent } from 'vscode';
 
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
