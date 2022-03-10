@@ -64,7 +64,7 @@ export class ConfigurationMenu {
 		if (this.config.localIsConfigured()) {
 			options.push({ name: clearOverrides, key: 'clear overrides' });
 		}
-		options.push({ name: clearGlobalOverrides, key: 'clear all config data' });
+		options.push({ name: clearGlobalOverrides, key: 'clear all configuration data' });
 
 		const selectionOptions = options.map(this.createQuickPickItem);
 

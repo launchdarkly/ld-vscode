@@ -20,9 +20,6 @@ export class Configuration {
 	project = '';
 	env = '';
 	codeRefsPath = '';
-	debugKey = '';
-	debugCipher = '';
-	debugChannel = '';
 	refreshRate = 120;
 	codeRefsRefreshRate = 240;
 	enableAliases = true;
@@ -63,9 +60,9 @@ export class Configuration {
 		}
 		const baseUri = this.getState('baseUri');
 
-		const debugChannel = this.ctx.workspaceState.get('debugChannel', '');
-		const debugCipher = this.ctx.workspaceState.get('debugCipher', '');
-
+		if (!accessToken) {
+			return
+		}
 		if (!accessToken.startsWith('api')) {
 			console.error(`Access Token does not start with api-. token: ${accessToken}`);
 			window.showErrorMessage('[LaunchDarkly] Access Token does not start with api-. Please reconfigure.');
@@ -74,8 +71,6 @@ export class Configuration {
 		this.env = env;
 		this.project = project;
 		this.baseUri = baseUri;
-		this.debugChannel = debugChannel;
-		this.debugCipher = debugCipher;
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {
@@ -91,9 +86,7 @@ export class Configuration {
 		} else if (
 			key === 'env' ||
 			key === 'project' ||
-			key === 'baseUri' ||
-			key === 'debugChannel' ||
-			key === 'debugCipher'
+			key === 'baseUri'
 		) {
 			const ctxState = this.ctx.workspaceState;
 			await ctxState.update(key, value);
