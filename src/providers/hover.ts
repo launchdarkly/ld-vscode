@@ -84,12 +84,12 @@ export function generateHoverString(
 	config: Configuration,
 	ctx: ExtensionContext,
 ): MarkdownString {
-	let env
+	let env;
 	try {
 		env = Object.keys(flag.environments)[0];
-	} catch(err) {
-		console.error(err)
-		return
+	} catch (err) {
+		console.error(err);
+		return;
 	}
 	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(

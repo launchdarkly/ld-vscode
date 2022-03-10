@@ -61,7 +61,7 @@ export class Configuration {
 		const baseUri = this.getState('baseUri');
 
 		if (!accessToken) {
-			return
+			return;
 		}
 		if (!accessToken.startsWith('api')) {
 			console.error(`Access Token does not start with api-. token: ${accessToken}`);
@@ -83,11 +83,7 @@ export class Configuration {
 			const ctxState = this.ctx.globalState;
 			await ctxState.update(key, value);
 			return;
-		} else if (
-			key === 'env' ||
-			key === 'project' ||
-			key === 'baseUri'
-		) {
+		} else if (key === 'env' || key === 'project' || key === 'baseUri') {
 			const ctxState = this.ctx.workspaceState;
 			await ctxState.update(key, value);
 			return;
