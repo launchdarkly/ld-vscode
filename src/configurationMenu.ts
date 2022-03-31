@@ -192,8 +192,8 @@ export class ConfigurationMenu {
 				this.debugChannel = env._pubnub.channel;
 			}
 		});
-		Object.keys(state).forEach((key) => {
-			this.config.update(key, state[key], false);
+		Object.keys(state).forEach(async (key) => {
+			await this.config.update(key, state[key], false);
 		});
 		extensionReload(this.config, this.ctx);
 	}
