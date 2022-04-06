@@ -21,8 +21,6 @@ export class ConfigurationMenu {
 	private projects: Array<Project>;
 	private useGlobalState: boolean;
 	private invalidAccessToken: string;
-	private debugCipher: string;
-	private debugChannel: string;
 	private state: CMState;
 
 	constructor(config: Configuration, api: LaunchDarklyAPI, ctx: ExtensionContext) {
@@ -186,12 +184,6 @@ export class ConfigurationMenu {
 		});
 
 		state.env = pick.description;
-		environments.map((env) => {
-			if (env.key == pick.description) {
-				this.debugCipher = env._pubnub.cipherKey;
-				this.debugChannel = env._pubnub.channel;
-			}
-		});
 		Object.keys(state).forEach(async (key) => {
 			await this.config.update(key, state[key], false);
 		});
@@ -213,7 +205,7 @@ export class ConfigurationMenu {
 
 	async configure() {
 		await this.collectInputs();
-		['accessToken', 'baseUri', 'project', 'env', 'debugCipher', 'debugChannel'].forEach(async (option) => {
+		['accessToken', 'baseUri', 'project', 'env'].forEach(async (option) => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
 	}
