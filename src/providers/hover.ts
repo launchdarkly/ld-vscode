@@ -84,7 +84,13 @@ export function generateHoverString(
 	config: Configuration,
 	ctx: ExtensionContext,
 ): MarkdownString {
-	const env = Object.keys(flag.environments)[0];
+	let env;
+	try {
+		env = Object.keys(flag.environments)[0];
+	} catch (err) {
+		console.error(err);
+		return;
+	}
 	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(
 		`![Flag status](${getFlagStatusUri(ctx, c.on)}) ${config.project} / ${env} / **[${

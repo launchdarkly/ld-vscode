@@ -85,7 +85,7 @@
 				"launchdarkly.accessToken": {
 					"type": "string",
 					"default": "",
-					"description": "LaunchDarkly API access token. DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
+					"description": "DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
 				},
 				"launchdarkly.flagsInFile": {
 					"type": "boolean",
