@@ -435,24 +435,22 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		/**
 		 * Build Fallthrough view
 		 */
-		const fallThrough = envConfig.fallthrough;
-		if (fallThrough.variation !== undefined) {
-			const fallThroughVar = flag.variations[fallThrough.variation];
+		const defaultRule = envConfig.fallthrough;
+		if (defaultRule.variation !== undefined) {
+			const defaultRuleVar = flag.variations[defaultRule.variation];
 			renderedFlagFields.push(
 				this.flagFactory({
-					label: `Default variation: ${
-						fallThroughVar.name ? fallThroughVar.name : JSON.stringify(fallThroughVar.value)
-					}`,
-					ctxValue: 'variationDefault',
+					label: `Default rule: ${defaultRuleVar.name ? defaultRuleVar.name : JSON.stringify(defaultRuleVar.value)}`,
+					ctxValue: 'defaultRule',
 					flagKey: envConfig.key,
 				}),
 			);
-		} else if (fallThrough.rollout) {
+		} else if (defaultRule.rollout) {
 			const fallThroughRollout: Array<FlagNode> = [];
-			if (fallThrough.rollout.bucketBy) {
-				new FlagNode(this.ctx, `BucketBy: ${fallThrough.rollout.bucketBy}`, NON_COLLAPSED);
+			if (defaultRule.rollout.bucketBy) {
+				new FlagNode(this.ctx, `BucketBy: ${defaultRule.rollout.bucketBy}`, NON_COLLAPSED);
 			}
-			fallThrough.rollout.variations.map(variation => {
+			defaultRule.rollout.variations.map(variation => {
 				const weight = variation.weight / 1000;
 				const flagVariation = flag.variations[variation.variation];
 				fallThroughRollout.push(
@@ -483,7 +481,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			if (offVar !== undefined) {
 				renderedFlagFields.push(
 					this.flagFactory({
-						label: `Off Variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
+						label: `Off variation: ${offVar.name ? offVar.name : JSON.stringify(offVar.value)}`,
 						ctxValue: 'variationOff',
 						flagKey: flag.key,
 					}),
