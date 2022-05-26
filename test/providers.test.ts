@@ -8,12 +8,12 @@ import * as toMatchSnapshot from 'expect-mocha-snapshot';
 expect.extend({ toMatchSnapshot });
 
 import * as providers from '../src/providers';
-import { generateHoverString } from '../src/providers/hover';
+import { generateHoverString } from '../src/providers/hover'
 import { FeatureFlag, FlagConfiguration } from '../src/models';
 import { Configuration } from '../src/configuration';
 
 function resolveSrcTestPath(ctx) {
-	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out', '') } });
+	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out','')}});
 }
 
 const flag = new FeatureFlag({
@@ -63,8 +63,8 @@ const ctx = instance(mockCtx);
 
 const testPath = path.join(__dirname, '..', '..', 'test');
 
-suite('provider utils tests', function () {
-	test('generateHoverString', function () {
+suite('provider utils tests', function() {
+	test('generateHoverString', function() {
 		expect(generateHoverString(flag, flagConfig, config, ctx).value).toMatchSnapshot(resolveSrcTestPath(this));
 	});
 
@@ -111,7 +111,7 @@ suite('provider utils tests', function () {
 		];
 
 		const document = await vscode.workspace.openTextDocument(uri);
-		tests.forEach((t) => {
+		tests.forEach(t => {
 			const pos = new vscode.Position(t.line, t.char);
 			assert.equal(providers.isPrecedingCharStringDelimiter(document, pos), t.expected, t.name);
 		});
