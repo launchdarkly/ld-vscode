@@ -97,7 +97,7 @@ export class MultiStepInput {
 				}
 				input.buttons = [...(this.steps.length > 1 ? [QuickInputButtons.Back] : []), ...(buttons || [])];
 				disposables.push(
-					input.onDidTriggerButton(item => {
+					input.onDidTriggerButton((item) => {
 						if (item === QuickInputButtons.Back) {
 							reject(InputFlowAction.back);
 						} else {
@@ -105,7 +105,7 @@ export class MultiStepInput {
 							resolve(<any>item);
 						}
 					}),
-					input.onDidChangeSelection(items => resolve(items[0])),
+					input.onDidChangeSelection((items) => resolve(items[0])),
 					input.onDidHide(() => {
 						(async () => {
 							reject(shouldResume && (await shouldResume()) ? InputFlowAction.resume : InputFlowAction.cancel);
@@ -119,7 +119,7 @@ export class MultiStepInput {
 				this.current.show();
 			});
 		} finally {
-			disposables.forEach(d => d.dispose());
+			disposables.forEach((d) => d.dispose());
 		}
 	}
 
@@ -146,7 +146,7 @@ export class MultiStepInput {
 				input.buttons = [...(this.steps.length > 1 ? [QuickInputButtons.Back] : []), ...(buttons || [])];
 				let validating = validate('');
 				disposables.push(
-					input.onDidTriggerButton(item => {
+					input.onDidTriggerButton((item) => {
 						if (item === QuickInputButtons.Back) {
 							reject(InputFlowAction.back);
 						} else {
@@ -164,7 +164,7 @@ export class MultiStepInput {
 						input.enabled = true;
 						input.busy = false;
 					}),
-					input.onDidChangeValue(async text => {
+					input.onDidChangeValue(async (text) => {
 						const current = validate(text);
 						validating = current;
 						const validationMessage = await current;
@@ -185,7 +185,7 @@ export class MultiStepInput {
 				this.current.show();
 			});
 		} finally {
-			disposables.forEach(d => d.dispose());
+			disposables.forEach((d) => d.dispose());
 		}
 	}
 }
