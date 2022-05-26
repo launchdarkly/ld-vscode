@@ -23,7 +23,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		this.aliases = aliases;
 		this.regex = /(.+)/g;
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		vscode.workspace.onDidChangeConfiguration((_) => {
+		vscode.workspace.onDidChangeConfiguration(_ => {
 			this._onDidChangeCodeLenses.fire(null);
 		});
 		this.start();
@@ -55,12 +55,12 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			return [offVariation];
 		} else {
 			// eslint-disable-next-line no-prototype-builtins
-			const allVariations = (obj) => [
+			const allVariations = obj => [
 				...new Set(
 					obj.rules
 						.concat(obj.fallthrough)
 						// eslint-disable-next-line no-prototype-builtins
-						.map((x) => (x.hasOwnProperty('rollout') ? x.rollout.variations.map((v) => v.variation) : x.variation))
+						.map(x => (x.hasOwnProperty('rollout') ? x.rollout.variations.map(v => v.variation) : x.variation))
 						.flat(),
 				),
 			];
@@ -108,11 +108,11 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				const prospect = document.getText(range);
 				let flag;
 				if (typeof keys !== 'undefined') {
-					flag = keys.filter((element) => prospect.includes(element));
+					flag = keys.filter(element => prospect.includes(element));
 				}
 				let foundAliases;
 				if (typeof aliases !== 'undefined') {
-					foundAliases = aliasArr.filter((element) => prospect.includes(element));
+					foundAliases = aliasArr.filter(element => prospect.includes(element));
 				}
 				if (range && typeof flag !== 'undefined' && flags[flag[0]]) {
 					const codeLens = new FlagCodeLens(range, flags[flag[0]], env[flag[0]], this.config);

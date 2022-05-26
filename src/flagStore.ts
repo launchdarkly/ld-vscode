@@ -84,7 +84,7 @@ export class FlagStore {
 			this.storeUpdates.fire(true);
 			this.on('update', async (keys: string) => {
 				const flagKeys = Object.values(keys);
-				flagKeys.map((key) => {
+				flagKeys.map(key => {
 					this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
 						if (!res) {
 							return;
@@ -96,7 +96,7 @@ export class FlagStore {
 					});
 				});
 			});
-			window.onDidChangeWindowState(async (e) => {
+			window.onDidChangeWindowState(async e => {
 				const ldClient = await this.ldClient;
 				if (e.focused) {
 					if (typeof this.offlineTimer !== 'undefined') {
@@ -179,7 +179,7 @@ export class FlagStore {
 						'Your configured LaunchDarkly environment does not exist. Please reconfigure the extension.',
 						'Configure',
 					)
-					.then((item) => item && commands.executeCommand('extension.configureLaunchDarkly'));
+					.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
 			}
 			throw err;
 		}
@@ -225,7 +225,7 @@ export class FlagStore {
 	}
 
 	allFlags(): Promise<FlagConfiguration[]> {
-		return new Promise((resolve) => {
+		return new Promise(resolve => {
 			this.store.all(DATA_KIND, resolve);
 		});
 	}
