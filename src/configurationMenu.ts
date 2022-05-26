@@ -30,11 +30,11 @@ export class ConfigurationMenu {
 
 	async collectInputs() {
 		if (this.currentAccessToken) {
-			await MultiStepInput.run((input) => this.pickCurrentOrNewAccessToken(input));
+			await MultiStepInput.run(input => this.pickCurrentOrNewAccessToken(input));
 			return;
 		}
 
-		await MultiStepInput.run((input) => this.inputAccessToken(input));
+		await MultiStepInput.run(input => this.inputAccessToken(input));
 	}
 
 	shouldResume(): Promise<boolean> {
@@ -77,7 +77,7 @@ export class ConfigurationMenu {
 			totalSteps: this.totalSteps,
 			value: typeof this.accessToken === 'string' ? this.accessToken : '',
 			prompt: 'Enter your LaunchDarkly access token',
-			validate: (token) => this.validateAccessToken(token, this.invalidAccessToken),
+			validate: token => this.validateAccessToken(token, this.invalidAccessToken),
 			shouldResume: this.shouldResume,
 		});
 
@@ -126,7 +126,7 @@ export class ConfigurationMenu {
 	}
 
 	async pickEnvironment(input: MultiStepInput) {
-		const selectedProject = this.projects.find((proj) => proj.key === this.project);
+		const selectedProject = this.projects.find(proj => proj.key === this.project);
 		const environments = selectedProject.environments;
 		const environmentOptions = environments.map(this.createQuickPickItem);
 
@@ -181,7 +181,7 @@ export class ConfigurationMenu {
 
 	async configure() {
 		await this.collectInputs();
-		['accessToken', 'project', 'env'].forEach(async (option) => {
+		['accessToken', 'project', 'env'].forEach(async option => {
 			await this.config.update(option, this[option], this.useGlobalState);
 		});
 	}
