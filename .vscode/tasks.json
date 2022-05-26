@@ -7,52 +7,45 @@
 // ${cwd}: the current working directory of the spawned process
 // A task runner that calls a custom npm script that compiles the extension.
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "yarn",
-            "command": "yarn",
-            "type": "shell",
-            "presentation": {
-                "reveal": "silent"
-            },
-            "args": [
-                "run",
-                "compile",
-                "--loglevel",
-                "silent"
-            ],
-            "isBackground": true,
-            "problemMatcher": "$tsc-watch"
-        },
-        {
-            "label": "test-compile",
-            "command": "yarn",
-            "type": "shell",
-            "presentation": {
-                "reveal": "silent"
-            },
-            "args": [
-                "pretest"
-            ],
-            "isBackground": true,
-            "problemMatcher": "$tsc-watch",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "type": "npm",
-            "script": "watch",
-            "problemMatcher": [],
-            "isBackground": true,
-            "presentation": {
-                "reveal": "never"
-            },
-            "group": "build",
-            "label": "npm: watch",
-            "detail": "webpack --mode none --watch --info-verbosity verbose"
-        }
-    ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "yarn",
+			"command": "yarn",
+			"type": "shell",
+			"presentation": {
+				"reveal": "silent"
+			},
+			"args": ["run", "compile", "--loglevel", "silent"],
+			"isBackground": true,
+			"problemMatcher": "$tsc-watch"
+		},
+		{
+			"label": "test-compile",
+			"command": "yarn",
+			"type": "shell",
+			"presentation": {
+				"reveal": "silent"
+			},
+			"args": ["pretest"],
+			"isBackground": true,
+			"problemMatcher": "$tsc-watch",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"type": "npm",
+			"script": "watch",
+			"problemMatcher": [],
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never"
+			},
+			"group": "build",
+			"label": "npm: watch",
+			"detail": "webpack --mode none --watch --info-verbosity verbose"
+		}
+	]
 }
