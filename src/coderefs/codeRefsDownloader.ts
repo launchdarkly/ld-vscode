@@ -21,7 +21,7 @@ export class CodeRefsDownloader {
 		const codeRefsPath = this.ctx.asAbsolutePath(`coderefs/coderefs-${CodeRefs.version}.tar.gz`);
 
 		// Remove all previous versions of the binary
-		await new Promise((resolve) => rr(`${dir}/*`, resolve));
+		await new Promise(resolve => rr(`${dir}/*`, resolve));
 		this.installDir(dir, codeRefsPath);
 	}
 
@@ -60,7 +60,9 @@ export class CodeRefsDownloader {
 			console.log(err);
 		}
 		try {
-			createReadStream(codeRefsPath).pipe(gunzip()).pipe(tar.extract(this.downloadDir));
+			createReadStream(codeRefsPath)
+				.pipe(gunzip())
+				.pipe(tar.extract(this.downloadDir));
 			unlinkSync(codeRefsPath);
 		} catch (err) {
 			console.log(err);
