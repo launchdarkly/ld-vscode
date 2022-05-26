@@ -61,7 +61,7 @@ export class Configuration {
 
 	public streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
 		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-		if (streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+		if (streamingConfigOptions.every((option) => !e.affectsConfiguration(`launchdarkly.${option}`))) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return true;
 		}
@@ -70,7 +70,7 @@ export class Configuration {
 
 	public streamingConfigStartCheck(): boolean {
 		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-		if (!streamingConfigOptions.every(o => !!this[o])) {
+		if (!streamingConfigOptions.every((o) => !!this[o])) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return false;
 		}
