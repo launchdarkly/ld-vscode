@@ -47,7 +47,7 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 				let foundAlias = [];
 				if (typeof this.aliases !== 'undefined') {
 					aliases = this.aliases?.getMap();
-					const aliasKeys = Object.keys(aliases) ? Object.keys(aliases) : [];
+					const aliasKeys = Object.keys(aliases || {});
 					const aliasArr = [...aliasKeys].filter((element) => element !== '');
 					foundAlias = aliasArr.filter((element) => candidate.includes(element));
 				} else {
