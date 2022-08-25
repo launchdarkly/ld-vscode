@@ -42,6 +42,8 @@ export class CodeRefsDownloader {
 			case 'ia32':
 				arch = '386';
 				break;
+			default:
+				arch = process.arch
 		}
 		if (!existsSync(dir)) {
 			mkdirSync(dir);
@@ -51,8 +53,9 @@ export class CodeRefsDownloader {
 		}
 		const file = createWriteStream(codeRefsPath);
 		try {
+			const codeRefsUrl = `https://github.com/launchdarkly/ld-find-code-refs/releases/download/v${CodeRefs.version}/ld-find-code-refs_${CodeRefs.version}_${platform}_${arch}.tar.gz`
 			const archivedFile = await axios.get(
-				`https://github.com/launchdarkly/ld-find-code-refs/releases/download/${CodeRefs.version}/ld-find-code-refs_${CodeRefs.version}_${platform}_${arch}.tar.gz`,
+				codeRefsUrl,
 				{
 					responseType: 'arraybuffer',
 					method: 'GET',
