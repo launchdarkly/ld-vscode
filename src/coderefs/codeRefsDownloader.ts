@@ -70,8 +70,12 @@ export class CodeRefsDownloader {
 			console.log(err);
 		}
 		try {
-			createReadStream(codeRefsPath).pipe(gunzip()).pipe(tar.extract(this.downloadDir));
-			unlinkSync(codeRefsPath);
+			file.on('finish', () => {
+			createReadStream(codeRefsPath)
+			.pipe(gunzip())
+			.pipe(tar.extract(this.downloadDir))
+			//.end(unlinkSync(codeRefsPath))
+		})
 		} catch (err) {
 			console.log(err);
 		}
