@@ -43,6 +43,9 @@ export async function register(
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
 
-	commands.executeCommand('setContext', 'launchdarkly:enableMetricExplorer', workspace.getConfiguration('launchdarkly').get('enableMetricsExplorer', false));
-	
+	commands.executeCommand(
+		'setContext',
+		'launchdarkly:enableMetricExplorer',
+		workspace.getConfiguration('launchdarkly').get('enableMetricsExplorer', false),
+	);
 }

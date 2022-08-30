@@ -69,13 +69,13 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			});
 			return Promise.resolve(items);
 		} else if (this.flagMap?.size > 0) {
-			const CodeLensCmd = new TreeItem('Toggle CodeLens')
+			const CodeLensCmd = new TreeItem('Toggle CodeLens');
 			CodeLensCmd.command = {
-				title: "Command",
-				command: 'launchdarkly.enableCodeLens'
-			}
+				title: 'Command',
+				command: 'launchdarkly.enableCodeLens',
+			};
 
-			items.push(CodeLensCmd)
+			items.push(CodeLensCmd);
 			this.flagMap.forEach((flag) => {
 				items.push(
 					new FlagNode(

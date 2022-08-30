@@ -43,7 +43,7 @@ export class CodeRefsDownloader {
 				arch = '386';
 				break;
 			default:
-				arch = process.arch
+				arch = process.arch;
 		}
 		if (!existsSync(dir)) {
 			mkdirSync(dir);
@@ -53,17 +53,14 @@ export class CodeRefsDownloader {
 		}
 		const file = createWriteStream(codeRefsPath);
 		try {
-			const codeRefsUrl = `https://github.com/launchdarkly/ld-find-code-refs/releases/download/v${CodeRefs.version}/ld-find-code-refs_${CodeRefs.version}_${platform}_${arch}.tar.gz`
-			const archivedFile = await axios.get(
-				codeRefsUrl,
-				{
-					responseType: 'arraybuffer',
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/gzip',
-					},
+			const codeRefsUrl = `https://github.com/launchdarkly/ld-find-code-refs/releases/download/v${CodeRefs.version}/ld-find-code-refs_${CodeRefs.version}_${platform}_${arch}.tar.gz`;
+			const archivedFile = await axios.get(codeRefsUrl, {
+				responseType: 'arraybuffer',
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/gzip',
 				},
-			);
+			});
 			file.write(archivedFile.data);
 			file.end();
 		} catch (err) {
@@ -71,11 +68,9 @@ export class CodeRefsDownloader {
 		}
 		try {
 			file.on('finish', () => {
-			createReadStream(codeRefsPath)
-			.pipe(gunzip())
-			.pipe(tar.extract(this.downloadDir))
-			//.end(unlinkSync(codeRefsPath))
-		})
+				createReadStream(codeRefsPath).pipe(gunzip()).pipe(tar.extract(this.downloadDir));
+				//.end(unlinkSync(codeRefsPath))
+			});
 		} catch (err) {
 			console.log(err);
 		}
