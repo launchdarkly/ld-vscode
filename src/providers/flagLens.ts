@@ -4,7 +4,7 @@ import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
 import { FlagStore } from '../flagStore';
 import { FlagAliases } from './codeRefs';
-import { ConfigurationChangeEvent } from 'vscode';
+import { CancellationToken, CodeLens, ConfigurationChangeEvent } from 'vscode';
 
 const MAX_CODELENS_VALUE = 20;
 /**
@@ -25,7 +25,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		this.regex = /(.+)/g;
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		vscode.workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
-			if (e.affectsConfiguration('launchdarkly')) {
+			if (e.affectsConfiguration('launchdarkly.enableCodeLens')) {
 				this._onDidChangeCodeLenses.fire(null);
 			}
 		});
@@ -84,17 +84,17 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		return JSON.stringify(flag.variations[variation].name) ? flag.variations[variation].name : flagVal;
 	}
 
-	public async provideCodeLenses(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
+	public async provideCodeLenses(document: vscode.TextDocument, token: CancellationToken): Promise<vscode.CodeLens[]> {
 		if (vscode.workspace.getConfiguration('launchdarkly').get('enableCodeLens', false)) {
-			return this.ldCodeLens(document);
+			return this.ldCodeLens(document, token);
 		}
 	}
 
-	public async ldCodeLens(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
+	public async ldCodeLens(document: vscode.TextDocument, token: CancellationToken): Promise<vscode.CodeLens[]> {
 		const codeLenses: vscode.CodeLens[] = [];
 		const regex = new RegExp(this.regex);
 		const text = document.getText();
-
+		if (token.isCancellationRequested) return codeLenses;
 		let flags;
 		if (this.flagStore) {
 			flags = await this.flagStore.allFlagsMetadata();
@@ -113,7 +113,9 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			console.log(err);
 		}
 		let matches;
+		const keys = Object.keys(flags).sort();
 		while ((matches = regex.exec(text)) !== null) {
+			if (token.isCancellationRequested) return codeLenses;
 			const line = document.lineAt(document.positionAt(matches.index).line);
 			const indexOf = line.text.indexOf(matches[0]);
 			if (indexOf == -1) {
@@ -124,7 +126,6 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			const prospect = document.getText(range);
 
 			let flag;
-			const keys = Object.keys(flags);
 			if (typeof keys !== 'undefined') {
 				flag = keys.filter((element) => prospect.includes(element));
 			}
@@ -150,7 +151,10 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		}
 		return codeLenses;
 	}
-	public resolveCodeLens(codeLens: FlagCodeLens): FlagCodeLens {
+	public resolveCodeLens(codeLens: FlagCodeLens, token: CancellationToken): CodeLens {
+		const basicLens = codeLens
+		if (token.isCancellationRequested) return basicLens;
+		
 		try {
 			let preReq = '';
 			if (codeLens.env.prerequisites && codeLens.env.prerequisites.length > 0) {
@@ -175,7 +179,8 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			} else {
 				offVariation = '**Code Fallthrough(No off variation set)**';
 			}
-			codeLens.command = {
+			const newLens = new CodeLens(codeLens.range, )
+			newLens.command = {
 				title: `LaunchDarkly Feature Flag \u2022 ${codeLens.env.key} \u2022 Serving: ${
 					codeLens.env.on ? flagVariations : offVariation
 				} ${preReq}`,
@@ -183,7 +188,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 				command: '',
 				arguments: ['Argument 1', true],
 			};
-			return codeLens;
+			return newLens;
 		} catch (err) {
 			console.log(err);
 		}

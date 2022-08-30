@@ -9,6 +9,7 @@ import {
 	Range,
 	Command,
 	TreeItemCollapsibleState,
+	CancellationTokenSource,
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
@@ -106,11 +107,12 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			return;
 		}
 		let flagsFound;
+		const canceltoken = new CancellationTokenSource();
 		try {
-			flagsFound = await this.lens.ldCodeLens(editor.document);
+			flagsFound = await this.lens.ldCodeLens(editor.document, canceltoken.token);
 		} catch (err) {
 			// Try maximum of 2 times for lens to resolve
-			flagsFound = await this.lens.ldCodeLens(editor.document);
+			flagsFound = await this.lens.ldCodeLens(editor.document, canceltoken.token);
 		}
 		if (typeof flagsFound === 'undefined') {
 			this.refresh();
