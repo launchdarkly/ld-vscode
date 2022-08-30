@@ -211,6 +211,13 @@ export function registerMetricTreeviewRefreshCommand(
 	});
 }
 
+function registerTreeviewRefreshCommand(): vscode.Disposable {
+	return vscode.commands.registerCommand('launchdarkly.treeviewrefresh', (): void => {
+		this.reload();
+		vscode.commands.executeCommand('setContext', 'launchdarkly:enableMetricExplorer', this.config.enableMetricExplorer);
+	});
+}
+
 function generateMetricsHoverString(metric: Metric, config: Configuration): MarkdownString {
 	const metricUri = url.resolve(config.baseUri, metric._site.href);
 	const hoverString = new MarkdownString(

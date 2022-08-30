@@ -185,6 +185,14 @@
 					"light": "resources/light/flagMultipleSearch.svg",
 					"dark": "resources/dark/flagMultipleSearch.svg"
 				}
+			},
+			{
+				"command": "launchdarkly.enableCodeLens",
+				"title": "Toggle LaunchDarkly CodeLens"
+			},
+			{
+				"command": "launchdarkly.enableMetricExplorer",
+				"title": "Toggle LaunchDarkly Metric Explorer"
 			}
 		],
 		"menus": {
@@ -340,7 +348,8 @@
 				},
 				{
 					"id": "launchdarklyMetrics",
-					"name": "Metrics"
+					"name": "Metrics",
+					"when": "launchdarkly:enableMetricExplorer"
 				}
 			]
 		},

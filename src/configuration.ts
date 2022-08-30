@@ -25,6 +25,8 @@ export class Configuration {
 	enableHover = true;
 	enableAutocomplete = true;
 	enableFlagExplorer = true;
+	enableMetricExplorer = false;
+	enableCodeLens = false;
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
 

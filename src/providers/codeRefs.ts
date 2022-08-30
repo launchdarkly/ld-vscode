@@ -1,4 +1,4 @@
-import { EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
+import { commands, Disposable, EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
 import { exec, ExecOptions } from 'child_process';
 import { access, createReadStream, constants } from 'fs';
 import { join } from 'path';
@@ -6,6 +6,8 @@ import { tmpdir } from 'os';
 import csv from 'csv-parser';
 import { Configuration } from '../configuration';
 import { CodeRefs } from '../coderefs/codeRefsVersion';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { promises: Fs } = require('fs')
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const fs = require('fs').promises;
@@ -77,20 +79,18 @@ export class FlagAliases {
 	}
 
 	async getCodeRefsBin(): Promise<string> {
-		await access(
-			join(this.ctx.asAbsolutePath('coderefs'), `${CodeRefs.version}/ld-find-code-refs`),
-			constants.F_OK,
-			(err) => {
-				if (err) {
-					return this.config.codeRefsPath ? this.config.codeRefsPath : '';
-				}
-			},
-		);
-		let codeRefsBin = `${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`;
-		if (process.platform == 'win32') {
-			codeRefsBin = `${codeRefsBin}.exe`;
+		try {
+		await Fs.access(
+			join(this.ctx.asAbsolutePath('coderefs'), `${CodeRefs.version}/ld-find-code-refs`))
+			let codeRefsBin = `${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`;
+			if (process.platform == 'win32') {
+				codeRefsBin = `${codeRefsBin}.exe`;
+			}
+			return codeRefsBin;
+		} catch(err) {
+			return this.config.codeRefsPath ? this.config.codeRefsPath : '';
 		}
-		return codeRefsBin;
+		
 	}
 
 	async generateCsv(directory: string, outDir: string, repoName: string): Promise<void> {
@@ -121,6 +121,10 @@ export class FlagAliases {
 		this.statusBar.show();
 		await this.generateCsv(refsDir, tmpDir, tmpRepo);
 		const aliasFile = join(tmpDir, `coderefs__${tmpRepo}_scan.csv`);
+		fs.access(aliasFile, fs.F_OK, (err) => {
+			if (err) {
+			  return
+			}
 		createReadStream(aliasFile)
 			.pipe(csv())
 			.on('data', (row: FlagAlias) => {
@@ -151,6 +155,7 @@ export class FlagAliases {
 			.on('error', function(_) {
 				console.log("Code Refs file does not exist")
 			});
+		})
 	}
 
 	async codeRefsVersionCheck(): Promise<boolean> {

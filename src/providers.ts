@@ -22,7 +22,7 @@ export async function register(
 
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
-		if (e.affectsConfiguration('launchdarkly')) {
+		if (e.affectsConfiguration('launchdarkly') && !e.affectsConfiguration('launchdarkly.enableCodeLens')) {
 			extensionReload(config, ctx);
 		}
 	});
@@ -42,4 +42,7 @@ export async function register(
 	if (config.enableFlagExplorer) {
 		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
+
+	commands.executeCommand('setContext', 'launchdarkly:enableMetricExplorer', workspace.getConfiguration('launchdarkly').get('enableMetricsExplorer', false));
+	
 }

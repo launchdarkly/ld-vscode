@@ -5,6 +5,7 @@ import { FlagStore } from '../flagStore';
 import createFlagCmd from './createFlag';
 import openInLdCmd from './openLaunchDarkly';
 import toggleFlagCtxCmd from './toggleFlagContext';
+import enableCodeLensConfig from './enableCodeLens';
 
 export default function generalCommands(
 	ctx: ExtensionContext,
@@ -15,7 +16,7 @@ export default function generalCommands(
 	const createFlag = createFlagCmd(ctx, config, api);
 	const toggleFlagCmd = toggleFlagCtxCmd(ctx, config, api, flagStore);
 	const openLdCmd = openInLdCmd(ctx, config, flagStore);
-
-	const disposables = Disposable.from(createFlag, toggleFlagCmd, openLdCmd);
+	const enableCodeLens = enableCodeLensConfig(ctx, config);
+	const disposables = Disposable.from(createFlag, toggleFlagCmd, openLdCmd, enableCodeLens);
 	ctx.globalState.update('commands', disposables);
 }

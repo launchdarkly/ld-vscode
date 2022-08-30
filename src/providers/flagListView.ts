@@ -9,6 +9,7 @@ import {
 	Range,
 	Command,
 	TreeItemCollapsibleState,
+	commands,
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
@@ -68,6 +69,13 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			});
 			return Promise.resolve(items);
 		} else if (this.flagMap?.size > 0) {
+			const CodeLensCmd = new TreeItem('Toggle CodeLens')
+			CodeLensCmd.command = {
+				title: "Command",
+				command: 'launchdarkly.enableCodeLens'
+			}
+
+			items.push(CodeLensCmd)
 			this.flagMap.forEach((flag) => {
 				items.push(
 					new FlagNode(
