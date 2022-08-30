@@ -115,17 +115,17 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 			tooltip,
 			NON_COLLAPSED,
 			[],
-			'metricParentItem',
+			'',
 			metricUri,
 			metric.eventKey,
 		);
 		const child = item.children;
 
-		if (metric.tags) {
+		if (metric.tags.length > 0) {
 			item.collapsibleState = COLLAPSED;
 			const tags: Array<MetricValue> = [];
 			metric.tags.map((tag) => {
-				tags.push(this.metricFactory({ label: tag, ctxValue: 'flagTagItem' }));
+				tags.push(this.metricFactory({ label: tag}));
 			});
 			const childNode = new MetricValue(this.ctx, 'Tags', '', COLLAPSED, tags, 'tags');
 			child.push(childNode);
@@ -187,6 +187,9 @@ export class MetricValue extends vscode.TreeItem {
 	}
 
 	private setIcon(ctx: vscode.ExtensionContext, fileName: string): vscode.ThemeIcon {
+		if (fileName === "") {
+			return
+		}
 		return (this.iconPath = {
 			id: null,
 			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName + '.svg')),

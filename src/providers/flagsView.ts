@@ -406,7 +406,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		 * Build list of tags under "Tags" label
 		 */
 		if (flag.tags.length > 0) {
-			const tags: Array<FlagNode> = flag.tags.map((tag) => this.flagFactory({ label: tag, ctxValue: 'flagTagItem' }));
+			const tags: Array<FlagNode> = flag.tags.map((tag) => this.flagFactory({ label: tag }));
 			renderedFlagFields.push(
 				this.flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }),
 			);

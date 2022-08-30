@@ -120,7 +120,7 @@ export class FlagAliases {
 		this.statusBar.text = `LaunchDarkly: Generating aliases`;
 		this.statusBar.show();
 		await this.generateCsv(refsDir, tmpDir, tmpRepo);
-		const aliasFile = join(tmpDir, `coderefs_${this.config.project}_${tmpRepo}_scan.csv`);
+		const aliasFile = join(tmpDir, `coderefs__${tmpRepo}_scan.csv`);
 		createReadStream(aliasFile)
 			.pipe(csv())
 			.on('data', (row: FlagAlias) => {
@@ -147,6 +147,9 @@ export class FlagAliases {
 				this.aliasUpdates.fire(true);
 				this.statusBar.hide();
 				fs.rmdir(tmpDir, { recursive: true });
+			})
+			.on('error', function(_) {
+				console.log("Code Refs file does not exist")
 			});
 	}
 
