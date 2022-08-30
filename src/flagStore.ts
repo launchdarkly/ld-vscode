@@ -196,7 +196,7 @@ export class FlagStore {
 		}
 	}
 
-	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
+	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore | LaunchDarkly.LDLogger> {
 		// Cannot replace in the config, so updating at call site.
 		const streamUri = this.config.baseUri.replace('app', 'stream');
 		return {
@@ -206,6 +206,7 @@ export class FlagStore {
 			sendEvents: false,
 			featureStore: this.store,
 			streamInitialReconnectDelay: Math.floor(Math.random() * 5) + 1,
+			logger: LaunchDarkly.basicLogger({ level: 'warn' })
 		};
 	}
 

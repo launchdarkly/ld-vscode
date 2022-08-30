@@ -85,7 +85,6 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	}
 
 	public async provideCodeLenses(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
-		console.log(vscode.workspace.getConfiguration('launchdarkly').get('enableCodeLens', false));
 		if (vscode.workspace.getConfiguration('launchdarkly').get('enableCodeLens', false)) {
 			return this.ldCodeLens(document);
 		}
