@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { ExtensionContext } from 'vscode';
-import { mkdirSync, createWriteStream, existsSync, unlinkSync, createReadStream } from 'fs';
+import { mkdirSync, createWriteStream, existsSync, createReadStream } from 'fs';
 import { CodeRefs } from './codeRefsVersion';
 import * as tar from 'tar-fs';
 import axios from 'axios';

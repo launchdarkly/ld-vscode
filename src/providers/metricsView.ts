@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { Metric } from '../models';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
-import { FlagStore } from '../flagStore';
 import * as path from 'path';
 import * as url from 'url';
 import { MarkdownString } from 'vscode';
@@ -14,7 +13,6 @@ const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
 export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvider<MetricValue> {
 	private readonly api: LaunchDarklyAPI;
 	private config: Configuration;
-	private flagStore: FlagStore;
 	private metricValues: Array<MetricValue>;
 	private ctx: vscode.ExtensionContext;
 	private _onDidChangeTreeData: vscode.EventEmitter<MetricValue | null | void> =
@@ -199,13 +197,6 @@ export function registerMetricTreeviewRefreshCommand(
 			'launchdarkly:enableMetricTreeview',
 			this.config.enableMetricsExplorer,
 		);
-	});
-}
-
-function registerTreeviewRefreshCommand(): vscode.Disposable {
-	return vscode.commands.registerCommand('launchdarkly.treeviewrefresh', (): void => {
-		this.reload();
-		vscode.commands.executeCommand('setContext', 'launchdarkly:enableMetricExplorer', this.config.enableMetricExplorer);
 	});
 }
 

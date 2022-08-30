@@ -9,7 +9,6 @@ import {
 	Range,
 	Command,
 	TreeItemCollapsibleState,
-	commands,
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';

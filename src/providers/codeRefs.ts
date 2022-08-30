@@ -1,6 +1,4 @@
 import {
-	commands,
-	Disposable,
 	EventEmitter,
 	ExtensionContext,
 	StatusBarAlignment,
@@ -9,7 +7,7 @@ import {
 	workspace,
 } from 'vscode';
 import { exec, ExecOptions } from 'child_process';
-import { access, createReadStream, constants } from 'fs';
+import { createReadStream } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import csv from 'csv-parser';
@@ -159,7 +157,7 @@ export class FlagAliases {
 					this.statusBar.hide();
 					fs.rmdir(tmpDir, { recursive: true });
 				})
-				.on('error', function (_) {
+				.on('error', function () {
 					console.log('Code Refs file does not exist');
 				});
 		});

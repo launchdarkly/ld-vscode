@@ -4,7 +4,7 @@ import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
 import { FlagStore } from '../flagStore';
 import { FlagAliases } from './codeRefs';
-import { commands, ConfigurationChangeEvent, Disposable } from 'vscode';
+import { ConfigurationChangeEvent } from 'vscode';
 
 const MAX_CODELENS_VALUE = 20;
 /**

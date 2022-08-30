@@ -1,4 +1,4 @@
-import { Disposable, ExtensionContext, QuickPickItem, window, workspace } from 'vscode';
+import { ExtensionContext, QuickPickItem, window, workspace } from 'vscode';
 
 import { MultiStepInput } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
