@@ -12,19 +12,20 @@ import {
 	CancellationTokenSource,
 } from 'vscode';
 import { Configuration } from '../configuration';
-import { FeatureFlag, FlagConfiguration } from '../models';
-import { FlagCodeLens, FlagCodeLensProvider } from './flagLens';
+import { FlagStore } from '../flagStore';
+import { FlagCodeLensProvider, SimpleCodeLens } from './flagLens';
 
 export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> {
 	private config: Configuration;
 	private lens: FlagCodeLensProvider;
+	private flagStore: FlagStore;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
-	private flagsInFile: Array<FlagList> = [];
 	private flagMap: Map<string, FlagList> = new Map();
-	constructor(config: Configuration, lens: FlagCodeLensProvider) {
+	constructor(config: Configuration, lens: FlagCodeLensProvider, flagStore: FlagStore) {
 		this.config = config;
 		this.lens = lens;
+		this.flagStore = flagStore;
 		this.setFlagsinDocument();
 	}
 
@@ -77,15 +78,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 
 			items.push(CodeLensCmd);
 			this.flagMap.forEach((flag) => {
-				items.push(
-					new FlagNode(
-						`${flag.flag.name ? flag.flag.name : flag.env.key}`,
-						TreeItemCollapsibleState.Collapsed,
-						flag.env.key,
-						null,
-						'flag',
-					),
-				);
+				items.push(new FlagNode(`${flag.flag}`, TreeItemCollapsibleState.Collapsed, flag.name, null, 'flag'));
 			});
 			return Promise.resolve(items);
 		} else {
@@ -109,55 +102,65 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		let flagsFound;
 		const canceltoken = new CancellationTokenSource();
 		try {
-			flagsFound = await this.lens.ldCodeLens(editor.document, canceltoken.token);
+			flagsFound = await this.lens.ldCodeLens(editor.document, canceltoken.token, false);
 		} catch (err) {
 			// Try maximum of 2 times for lens to resolve
-			flagsFound = await this.lens.ldCodeLens(editor.document, canceltoken.token);
+			console.log('error');
+			flagsFound = await this.lens.ldCodeLens(editor.document, canceltoken.token, false);
 		}
+		console.log(flagsFound);
 		if (typeof flagsFound === 'undefined') {
 			this.refresh();
 			return;
 		}
+		let flagMeta;
+		try {
+			flagMeta = await this.flagStore.allFlagsMetadata();
+		} catch (err) {
+			//nothing
+		}
+
 		flagsFound.map((flag) => {
-			const codelensFlag = flag as FlagCodeLens;
-			if (codelensFlag?.env?.key) {
-				const getElement = this.flagMap.get(codelensFlag.env.key);
+			const codelensFlag = flag as FlagList;
+			if (codelensFlag.flag) {
+				const getElement = this.flagMap.get(codelensFlag.flag);
 				if (getElement) {
 					getElement.list.push(codelensFlag.range);
 				} else {
-					const newElement = new FlagList(
+					let name;
+					if (typeof flagMeta !== 'undefined') {
+						name = flagMeta[codelensFlag.flag].name;
+					} else {
+						name = codelensFlag.flag;
+					}
+					const newElement = new FlagList(codelensFlag.range, name, codelensFlag.flag, this.config, [
 						codelensFlag.range,
-						codelensFlag.flag,
-						codelensFlag.env,
-						codelensFlag.config,
-						[codelensFlag.range],
-					);
-					this.flagMap.set(codelensFlag.env.key, newElement);
+					]);
+					this.flagMap.set(codelensFlag.flag, newElement);
 				}
 			}
 		});
+
 		this.refresh();
+		return;
 	};
 }
 
-class FlagList extends FlagCodeLens {
+class FlagList extends SimpleCodeLens {
 	public list?: Array<Range>;
-	public readonly flag: FeatureFlag;
-	public readonly env: FlagConfiguration;
+	public readonly name: string;
 	public config: Configuration;
 	constructor(
 		range: Range,
-		flag: FeatureFlag,
-		env: FlagConfiguration,
+		flag: string,
+		name: string,
 		config: Configuration,
 		list?: Array<Range>,
 		command?: Command | undefined,
 	) {
-		super(range, flag, env, config, command);
-		this.flag = flag;
-		this.env = env;
-		this.config = config;
+		super(range, flag, config, command);
 		this.list = list;
+		this.name = name;
 	}
 }
 

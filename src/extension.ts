@@ -8,6 +8,7 @@ import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
 import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
 import { CodeRefs as cr } from './coderefs/codeRefsVersion';
+import { createCipher } from 'crypto';
 
 let config: Configuration;
 let flagStore: FlagStore;
@@ -63,9 +64,13 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 		});
 	}
 
-	registerProviders(ctx, config, flagStore, api);
+	try {
+		await registerProviders(ctx, config, flagStore, api);
+	} catch (err) {
+		console.log(err);
+	}
 }
 
-export function deactivate(): void {
+export async function deactivate(): Promise<void> {
 	flagStore && flagStore.stop();
 }

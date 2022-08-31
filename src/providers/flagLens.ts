@@ -90,18 +90,22 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		}
 	}
 
-	public async ldCodeLens(document: vscode.TextDocument, token: CancellationToken): Promise<vscode.CodeLens[]> {
+	public async ldCodeLens(
+		document: vscode.TextDocument,
+		token: CancellationToken,
+		firstFlagOnly = true,
+	): Promise<vscode.CodeLens[]> {
 		const codeLenses: vscode.CodeLens[] = [];
 		const regex = new RegExp(this.regex);
 		const text = document.getText();
 		if (token.isCancellationRequested) return codeLenses;
-		let flags;
+		let keys;
 		if (this.flagStore) {
-			flags = await this.flagStore.allFlagsMetadata();
+			keys = await this.flagStore.listFlags();
 		} else {
 			return;
 		}
-		const env = await this.flagStore.allFlags();
+
 		let aliasesLocal: Map<string, string>;
 		let aliasArr;
 		try {
@@ -113,7 +117,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			console.log(err);
 		}
 		let matches;
-		const keys = Object.keys(flags).sort();
+
 		while ((matches = regex.exec(text)) !== null) {
 			if (token.isCancellationRequested) return codeLenses;
 			const line = document.lineAt(document.positionAt(matches.index).line);
@@ -126,63 +130,76 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			const prospect = document.getText(range);
 
 			let flag;
+			let foundAliases;
+
 			if (typeof keys !== 'undefined') {
 				flag = keys.filter((element) => prospect.includes(element));
 			}
-			let foundAliases;
-			if (typeof aliasesLocal !== 'undefined') {
+
+			if (flag.length == 0 && typeof aliasesLocal !== 'undefined') {
 				foundAliases = aliasArr.filter((element) => prospect.includes(element));
 			}
 
-			// Use first found flag
-			const firstFlag = flag[0];
-			if (range && typeof flag !== 'undefined' && flags[firstFlag]) {
-				const codeLens = new FlagCodeLens(range, flags[firstFlag], env[firstFlag], this.config);
-				codeLenses.push(codeLens);
-			} else if (range && foundAliases?.length > 0 && flags[aliasesLocal[foundAliases]]) {
-				const codeLens = new FlagCodeLens(
-					range,
-					flags[aliasesLocal[foundAliases]],
-					env[aliasesLocal[foundAliases]],
-					this.config,
-				);
-				codeLenses.push(codeLens);
+			// Use first found flag on line for inlay codelens
+			if (firstFlagOnly) {
+				const firstFlag = flag[0] ? flag[0] : aliasesLocal[foundAliases[0]];
+				if (range && firstFlag) {
+					const codeLens = new SimpleCodeLens(range, firstFlag, this.config);
+					codeLenses.push(codeLens);
+				}
+			} else {
+				flag.forEach((flag) => {
+					const codeLens = new SimpleCodeLens(range, flag, this.config);
+					codeLenses.push(codeLens);
+				});
+				foundAliases.forEach((flag) => {
+					const codeLens = new SimpleCodeLens(range, aliasesLocal[flag], this.config);
+					codeLenses.push(codeLens);
+				});
 			}
 		}
 		return codeLenses;
 	}
-	public resolveCodeLens(codeLens: FlagCodeLens, token: CancellationToken): CodeLens {
-		const basicLens = codeLens
+	public async resolveCodeLens(codeLens: SimpleCodeLens, token: CancellationToken): Promise<CodeLens> {
+		if (!(codeLens instanceof SimpleCodeLens)) return Promise.reject<CodeLens>(undefined);
+		const basicLens = codeLens;
 		if (token.isCancellationRequested) return basicLens;
-		
+		let flags;
+		if (this.flagStore) {
+			flags = await this.flagStore.allFlagsMetadata();
+		} else {
+			return;
+		}
+
+		const flagEnv = await this.flagStore.getFlagConfig(codeLens.flag);
+		const flagData = flags[codeLens.flag];
+
 		try {
 			let preReq = '';
-			if (codeLens.env.prerequisites && codeLens.env.prerequisites.length > 0) {
-				preReq = codeLens.env.prerequisites.length > 0 ? `\u2022 Prerequisites configured` : ``;
+			if (flagEnv.prerequisites && flagEnv.prerequisites.length > 0) {
+				preReq = flagEnv.prerequisites.length > 0 ? `\u2022 Prerequisites configured` : ``;
 			} else {
 				preReq = '';
 			}
-			const variations = this.getActiveVariations(codeLens.env) as Array<number>;
+			const variations = this.getActiveVariations(flagEnv) as Array<number>;
 			let flagVariations;
 			if (variations.length === 1) {
-				flagVariations = this.getNameorValue(codeLens.flag, 0);
+				flagVariations = this.getNameorValue(flagData, 0);
 			} else if (variations.length === 2) {
-				flagVariations = `${this.getNameorValue(codeLens.flag, 0)}, ${this.getNameorValue(codeLens.flag, 1)}`;
+				flagVariations = `${this.getNameorValue(flagData, 0)}, ${this.getNameorValue(flagData, 1)}`;
 			} else {
 				flagVariations = `${variations.length} variations`;
 			}
 			let offVariation;
-			if (codeLens.env.offVariation !== null) {
-				offVariation = `${JSON.stringify(
-					this.getNameorValue(codeLens.flag, codeLens.env.offVariation),
-				)} - off variation`;
+			if (flagEnv.offVariation !== null) {
+				offVariation = `${JSON.stringify(this.getNameorValue(flagData, flagEnv.offVariation))} - off variation`;
 			} else {
 				offVariation = '**Code Fallthrough(No off variation set)**';
 			}
-			const newLens = new CodeLens(codeLens.range, )
+			const newLens = new CodeLens(codeLens.range);
 			newLens.command = {
-				title: `LaunchDarkly Feature Flag \u2022 ${codeLens.env.key} \u2022 Serving: ${
-					codeLens.env.on ? flagVariations : offVariation
+				title: `LaunchDarkly Feature Flag \u2022 ${flagEnv.key} \u2022 Serving: ${
+					flagEnv.on ? flagVariations : offVariation
 				} ${preReq}`,
 				tooltip: 'Feature Flag Variations',
 				command: '',
@@ -190,6 +207,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			};
 			return newLens;
 		} catch (err) {
+			console.log('Lens error');
 			console.log(err);
 		}
 	}
@@ -210,5 +228,13 @@ export class FlagCodeLens extends vscode.CodeLens {
 		this.flag = flag;
 		this.env = env;
 		this.config = config;
+	}
+}
+
+export class SimpleCodeLens extends vscode.CodeLens {
+	public readonly flag: string;
+	constructor(range: vscode.Range, flag: string, config: Configuration, command?: vscode.Command | undefined) {
+		super(range, command);
+		this.flag = flag;
 	}
 }

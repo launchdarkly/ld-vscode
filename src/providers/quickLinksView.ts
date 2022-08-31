@@ -94,21 +94,20 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 	async getChildren(element?: LinkNode): Promise<LinkNode[]> {
 		const baseUrl = `${this.config.baseUri}/${this.config.project}/${this.config.env}`;
 		const items = [];
-		items.push(new LinkNode(`Open Flags`, NON_COLLAPSED, `${baseUrl}/features`));
-		items.push(new LinkNode(`Open Segments`, NON_COLLAPSED, `${baseUrl}/segments`));
-		items.push(new LinkNode(`Open Users`, NON_COLLAPSED, `${baseUrl}/users`));
-		items.push(new LinkNode(`Open Debugger`, NON_COLLAPSED, `${baseUrl}/debugger`));
-		items.push(new LinkNode(`Open Experiments`, NON_COLLAPSED, `${baseUrl}/experiments`));
-		items.push(new LinkNode(`Open Audit Log`, NON_COLLAPSED, `${baseUrl}/audit`));
-		items.push(new LinkNode(`Open Flag Comparison`, NON_COLLAPSED, `${baseUrl}/features/compare`));
+		items.push(new LinkNode(`Feature Flags`, NON_COLLAPSED, `${baseUrl}/features`));
+		items.push(new LinkNode(`Segments`, NON_COLLAPSED, `${baseUrl}/segments`));
+		items.push(new LinkNode(`Users`, NON_COLLAPSED, `${baseUrl}/users`));
+		items.push(new LinkNode(`Debugger`, NON_COLLAPSED, `${baseUrl}/debugger`));
+		items.push(new LinkNode(`Experiments`, NON_COLLAPSED, `${baseUrl}/experiments`));
+		items.push(new LinkNode(`Audit Log`, NON_COLLAPSED, `${baseUrl}/audit`));
+		items.push(new LinkNode(`Flag Comparison`, NON_COLLAPSED, `${baseUrl}/features/compare`));
 		items.push(
-			new LinkNode(`Open Flag Environment Overview`, NON_COLLAPSED, '', {
+			new LinkNode(`Flag Environment Overview`, NON_COLLAPSED, '', {
 				title: 'Open In Browser',
 				command: 'launchdarkly.openCompareFlag',
 			}),
 		);
-		items.push(new LinkNode(`Open Documentation`, NON_COLLAPSED, `https://docs.launchdarkly.com`));
-		items.push(new LinkNode(`Open API Documentation`, NON_COLLAPSED, `https://apidocs.launchdarkly.com`));
+		items.push(new LinkNode(`Documentation`, NON_COLLAPSED, `https://docs.launchdarkly.com`));
 
 		return Promise.resolve(items);
 	}

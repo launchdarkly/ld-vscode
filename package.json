@@ -127,6 +127,14 @@
 				}
 			},
 			{
+				"command": "launchdarkly.configureLaunchDarklyEnvironment",
+				"title": "LaunchDarkly: Configure Environment",
+				"icon": {
+					"light": "resources/light/settings.svg",
+					"dark": "resources/dark/settings.svg"
+				}
+			},
+			{
 				"command": "launchdarkly.refreshEntry",
 				"title": "Refresh feature flags",
 				"icon": {
@@ -251,7 +259,7 @@
 					"group": "navigation"
 				},
 				{
-					"command": "extension.configureLaunchDarkly",
+					"command": "launchdarkly.configureLaunchDarklyEnvironment",
 					"when": "!!config.accessToken && !!config.project && !!config.env && view == launchdarklyFeatureFlags",
 					"group": "navigation"
 				}

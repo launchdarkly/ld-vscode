@@ -36,6 +36,16 @@ export class LaunchDarklyAPI {
 		return projects.sort(sortNameCaseInsensitive);
 	}
 
+	async getProject(projectKey: string): Promise<Project> {
+		const options = this.createOptions(`projects/${projectKey}`);
+		console.log(options);
+		const data = await axios.get(options.url, options);
+		console.log(data);
+		const project = data.data;
+		console.log(project);
+		return project;
+	}
+
 	async getEnvironment(projectKey: string, envKey: string): Promise<Environment> {
 		const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
 		const data = await axios.get(options.url, options);
@@ -139,6 +149,6 @@ export class LaunchDarklyAPI {
 	}
 }
 
-const sortNameCaseInsensitive = (a: Resource, b: Resource) => {
+export const sortNameCaseInsensitive = (a: Resource, b: Resource) => {
 	return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
 };

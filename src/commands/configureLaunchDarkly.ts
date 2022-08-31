@@ -3,6 +3,7 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { ConfigurationMenu } from '../configurationMenu';
 import { FlagStore } from '../flagStore';
+import configureEnvironmentCmd from './configureLaunchDarklyEnvironment';
 
 export default function configureLaunchDarkly(
 	ctx: ExtensionContext,
@@ -26,5 +27,6 @@ export default function configureLaunchDarkly(
 			window.showErrorMessage('An unexpected error occurred, please try again later.');
 		}
 	});
+
 	ctx.subscriptions.push(configureExtension);
 }

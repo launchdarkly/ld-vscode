@@ -1,11 +1,4 @@
-import {
-	EventEmitter,
-	ExtensionContext,
-	StatusBarAlignment,
-	StatusBarItem,
-	window,
-	workspace,
-} from 'vscode';
+import { EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
 import { exec, ExecOptions } from 'child_process';
 import { createReadStream } from 'fs';
 import { join } from 'path';
@@ -128,6 +121,7 @@ export class FlagAliases {
 		const aliasFile = join(tmpDir, `coderefs__${tmpRepo}_scan.csv`);
 		fs.access(aliasFile, fs.F_OK, (err) => {
 			if (err) {
+				this.statusBar.hide();
 				return;
 			}
 			createReadStream(aliasFile)
@@ -151,14 +145,17 @@ export class FlagAliases {
 				.on('end', () => {
 					this.ctx.workspaceState.update('aliasMap', this.map);
 					this.ctx.workspaceState.update('aliasKeys', this.keys);
-					const mapKeys = Object.keys(this.map).filter((element) => element != '').sort();
+					const mapKeys = Object.keys(this.map)
+						.filter((element) => element != '')
+						.sort();
 					this.ctx.workspaceState.update('aliasListOfMapKeys', mapKeys);
 					this.aliasUpdates.fire(true);
 					this.statusBar.hide();
-					fs.rmdir(tmpDir, { recursive: true });
+					fs.rm(tmpDir, { recursive: true });
 				})
 				.on('error', function () {
 					console.log('Code Refs file does not exist');
+					this.statusBar.hide();
 				});
 		});
 	}

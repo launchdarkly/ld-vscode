@@ -48,4 +48,9 @@ export async function register(
 		'launchdarkly:enableMetricExplorer',
 		workspace.getConfiguration('launchdarkly').get('enableMetricsExplorer', false),
 	);
+
+	process.on('unhandledRejection', (reason, p) => {
+		console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+		// application specific logging, throwing an error, or other logic here
+	});
 }
