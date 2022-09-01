@@ -38,11 +38,8 @@ export class LaunchDarklyAPI {
 
 	async getProject(projectKey: string): Promise<Project> {
 		const options = this.createOptions(`projects/${projectKey}`);
-		console.log(options);
 		const data = await axios.get(options.url, options);
-		console.log(data);
 		const project = data.data;
-		console.log(project);
 		return project;
 	}
 
@@ -131,7 +128,7 @@ export class LaunchDarklyAPI {
 			headers: {
 				Authorization: this.config.accessToken,
 				'User-Agent': 'VSCodeExtension/' + PACKAGE_JSON.version,
-				'LD-API-Version': 20191212
+				'LD-API-Version': 20191212,
 			},
 		};
 

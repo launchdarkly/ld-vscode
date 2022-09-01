@@ -11,12 +11,17 @@ export default function configureEnvironmentCmd(
 	const configureEnvironmentCmd = commands.registerCommand(
 		'launchdarkly.configureLaunchDarklyEnvironment',
 		async () => {
-			const project = await api.getProject(config.project);
-			const environments = project.environments.sort(sortNameCaseInsensitive);
-			const newEnvironment = await window.showQuickPick(environments.map((env) => env.key));
-			if (newEnvironment !== 'undefined') {
-				config.update('env', newEnvironment, false);
-				extensionReload(config, ctx);
+			try {
+				const project = await api.getProject(config.project);
+				const environments = project.environments.sort(sortNameCaseInsensitive);
+				const newEnvironment = await window.showQuickPick(environments.map((env) => env.key));
+				if (newEnvironment !== 'undefined') {
+					config.update('env', newEnvironment, false);
+					extensionReload(config, ctx);
+				}
+			} catch (err) {
+				console.log(err);
+				window.showErrorMessage(`[LaunchDarkly] ${err}`);
 			}
 		},
 	);
