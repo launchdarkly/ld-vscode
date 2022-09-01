@@ -131,6 +131,7 @@ export class LaunchDarklyAPI {
 			headers: {
 				Authorization: this.config.accessToken,
 				'User-Agent': 'VSCodeExtension/' + PACKAGE_JSON.version,
+				'LD-API-Version': 20191212
 			},
 		};
 
