@@ -143,7 +143,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 
 			// Use first found flag on line for inlay codelens
 			if (firstFlagOnly) {
-				const firstFlag = flags[0] ? flags[0] : aliasesLocal[foundAliases[0]];
+				const firstFlag = flags ? flags[0] : aliasesLocal[foundAliases[0]];
 				if (range && firstFlag) {
 					const codeLens = new SimpleCodeLens(range, firstFlag, this.config);
 					codeLenses.push(codeLens);

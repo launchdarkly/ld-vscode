@@ -33,14 +33,11 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 		this.ctx = ctx;
 	}
 
-	public provideHover(document: TextDocument, position: Position): Thenable<Hover | undefined> {
+	public async provideHover(document: TextDocument, position: Position): Promise<Hover | undefined> {
 		commands.executeCommand('setContext', 'LDFlagToggle', '');
-		// eslint-disable-next-line no-async-promise-executor
-		return new Promise(async (resolve) => {
-			if (this.config.enableHover && this.flagStore) {
+		if (this.config.enableHover && this.flagStore) {
 				const candidate = document.getText(document.getWordRangeAtPosition(position, FLAG_KEY_REGEX));
 				if (typeof candidate === 'undefined') {
-					resolve(undefined);
 					return;
 				}
 				let aliases;
@@ -57,6 +54,7 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 					let data =
 						(await this.flagStore.getFeatureFlag(candidate)) ||
 						(await this.flagStore.getFeatureFlag(kebabCase(candidate)));
+					console.log(data)
 					if (!data && aliases && foundAlias) {
 						data = await this.flagStore.getFeatureFlag(aliases[foundAlias[0]]);
 					} // We only match on first alias
@@ -64,17 +62,13 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 						commands.executeCommand('setContext', 'LDFlagToggle', data.flag.key);
 						this.ctx.workspaceState.update('LDFlagKey', data.flag.key);
 						const hover = generateHoverString(data.flag, data.config, this.config, this.ctx);
-						resolve(new Hover(hover));
-						return;
+						return new Hover(hover);
 					}
 				} catch (e) {
-					resolve(undefined);
 					return;
 				}
 			}
-			resolve(undefined);
 			return;
-		});
 	}
 }
 
