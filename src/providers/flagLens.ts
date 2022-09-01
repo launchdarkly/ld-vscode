@@ -130,26 +130,26 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			const range = document.getWordRangeAtPosition(position, new RegExp(this.regex));
 			const prospect = document.getText(range);
 
-			let flag;
+			let flags;
 			let foundAliases;
 
 			if (typeof keys !== 'undefined') {
-				flag = keys.filter((element) => prospect.includes(element));
+				flags = keys.filter((element) => prospect.includes(element));
 			}
 
-			if (flag.length == 0 && typeof aliasesLocal !== 'undefined') {
+			if (!(flags.length == 0 && firstFlagOnly) && typeof aliasesLocal !== 'undefined') {
 				foundAliases = aliasArr.filter((element) => prospect.includes(element));
 			}
 
 			// Use first found flag on line for inlay codelens
 			if (firstFlagOnly) {
-				const firstFlag = flag[0] ? flag[0] : aliasesLocal[foundAliases[0]];
+				const firstFlag = flags[0] ? flags[0] : aliasesLocal[foundAliases[0]];
 				if (range && firstFlag) {
 					const codeLens = new SimpleCodeLens(range, firstFlag, this.config);
 					codeLenses.push(codeLens);
 				}
 			} else {
-				flag?.forEach((flag) => {
+				flags?.forEach((flag) => {
 					const codeLens = new SimpleCodeLens(range, flag, this.config);
 					codeLenses.push(codeLens);
 				});

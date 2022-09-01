@@ -321,6 +321,6 @@ export class FlagStore {
 	}
 
 	async listFlags(): Promise<Array<string>> {
-		return await Object.keys(this.allFlagsMetadata());
+		return await Object.keys(await this.allFlagsMetadata());
 	}
 }
