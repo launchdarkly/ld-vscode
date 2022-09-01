@@ -54,7 +54,6 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 				let data =
 					(await this.flagStore.getFeatureFlag(candidate)) ||
 					(await this.flagStore.getFeatureFlag(kebabCase(candidate)));
-				console.log(data);
 				if (!data && aliases && foundAlias) {
 					data = await this.flagStore.getFeatureFlag(aliases[foundAlias[0]]);
 				} // We only match on first alias

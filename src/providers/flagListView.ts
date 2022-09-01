@@ -117,7 +117,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			flagsFound = await this.lens.ldCodeLens(editor.document, canceltoken.token, false);
 		} catch (err) {
 			// Try maximum of 2 times for lens to resolve
-			console.log('error');
+			console.log('trying flag lens again');
 			flagsFound = await this.lens.ldCodeLens(editor.document, canceltoken.token, false);
 		}
 		if (typeof flagsFound === 'undefined') {

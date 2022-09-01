@@ -72,7 +72,8 @@ export class LaunchDarklyAPI {
 
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
 		const envParam = envKey ? 'env=' + envKey : '';
-		const options = this.createOptions(`flags/${projectKey}/?${envParam}&summary=true&sort=name`, 'GET', null, {
+		const url = `flags/${projectKey}/?${envParam}&summary=true&sort=name`
+		const options = this.createOptions(url, 'GET', null, {
 			envParam,
 			summary: true,
 			sort: 'name',

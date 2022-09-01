@@ -160,7 +160,10 @@ export class Configuration {
 	}
 
 	getState(key: string): string {
-		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
+		if (key == 'accessToken') {
+			return this.ctx.globalState.get(key)
+		}
+		return this.ctx.workspaceState.get(key)
 	}
 
 	validateRefreshInterval(interval: number): boolean {
