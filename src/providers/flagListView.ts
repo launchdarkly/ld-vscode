@@ -108,7 +108,6 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			console.log('error');
 			flagsFound = await this.lens.ldCodeLens(editor.document, canceltoken.token, false);
 		}
-		console.log(flagsFound);
 		if (typeof flagsFound === 'undefined') {
 			this.refresh();
 			return;

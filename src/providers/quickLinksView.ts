@@ -94,6 +94,13 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 	async getChildren(element?: LinkNode): Promise<LinkNode[]> {
 		const baseUrl = `${this.config.baseUri}/${this.config.project}/${this.config.env}`;
 		const items = [];
+		items.push(
+			new LinkNode(`Create Boolean Feature Flag`, NON_COLLAPSED, '', {
+				title: 'Create Boolean Feature Flag',
+				command: 'launchdarkly.createFlag',
+			}),
+		);
+		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, `${baseUrl}/features/new`));
 		items.push(new LinkNode(`Feature Flags`, NON_COLLAPSED, `${baseUrl}/features`));
 		items.push(new LinkNode(`Segments`, NON_COLLAPSED, `${baseUrl}/segments`));
 		items.push(new LinkNode(`Users`, NON_COLLAPSED, `${baseUrl}/users`));
