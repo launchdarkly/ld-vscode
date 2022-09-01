@@ -5,6 +5,7 @@ import { FeatureFlag, FlagConfiguration } from '../models';
 import { FlagStore } from '../flagStore';
 import { FlagAliases } from './codeRefs';
 import { CancellationToken, CodeLens, ConfigurationChangeEvent } from 'vscode';
+import { LaunchDarklyTreeViewProvider } from './flagsView';
 
 const MAX_CODELENS_VALUE = 20;
 /**

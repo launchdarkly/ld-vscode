@@ -10,23 +10,34 @@ import {
 	Command,
 	TreeItemCollapsibleState,
 	CancellationTokenSource,
+	ExtensionContext,
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import { FlagCodeLensProvider, SimpleCodeLens } from './flagLens';
+import { FlagNode, FlagParentNode, FlagTreeInterface, LaunchDarklyTreeViewProvider } from './flagsView';
 
 export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> {
 	private config: Configuration;
 	private lens: FlagCodeLensProvider;
 	private flagStore: FlagStore;
+	private flagView: LaunchDarklyTreeViewProvider;
+	private flagNodes: Array<FlagTreeInterface>;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
-	private flagMap: Map<string, FlagList> = new Map();
-	constructor(config: Configuration, lens: FlagCodeLensProvider, flagStore: FlagStore) {
+	private flagMap: Map<string, FlagList | FlagNodeList> = new Map();
+	constructor(
+		config: Configuration,
+		lens: FlagCodeLensProvider,
+		flagStore: FlagStore,
+		flagView?: LaunchDarklyTreeViewProvider,
+	) {
 		this.config = config;
 		this.lens = lens;
 		this.flagStore = flagStore;
+		this.flagView = flagView;
 		this.setFlagsinDocument();
+		this.flagReadyListener();
 	}
 
 	refresh(): void {
@@ -65,12 +76,12 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		if (typeof element !== 'undefined') {
 			const child = this.flagMap.get(element.flagKey);
 			child.list.forEach((entry) => {
-				const newElement = new FlagNode(`Line: ${entry.end.line + 1}`, null, element.flagKey, entry, 'child');
+				const newElement = new FlagItem(`Line: ${entry.end.line + 1}`, null, element.flagKey, [], entry, 'child');
 				items.push(newElement);
 			});
 			return Promise.resolve(items);
 		} else if (this.flagMap?.size > 0) {
-			const CodeLensCmd = new TreeItem('Toggle CodeLens');
+			const CodeLensCmd = new TreeItem('Toggle code lens');
 			CodeLensCmd.command = {
 				title: 'Command',
 				command: 'launchdarkly.enableCodeLens',
@@ -78,7 +89,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 
 			items.push(CodeLensCmd);
 			this.flagMap.forEach((flag) => {
-				items.push(new FlagNode(`${flag.flag}`, TreeItemCollapsibleState.Collapsed, flag.name, null, 'flag'));
+				items.push(flag);
 			});
 			return Promise.resolve(items);
 		} else {
@@ -88,6 +99,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 
 	public setFlagsinDocument = async (): Promise<void> => {
 		this.refresh();
+		this.flagNodes = [];
 		this.flagMap = new Map();
 		const editor = window.activeTextEditor;
 		if (typeof editor === 'undefined' || typeof editor.document === 'undefined') {
@@ -113,28 +125,32 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			return;
 		}
 		let flagMeta;
+
 		try {
 			flagMeta = await this.flagStore.allFlagsMetadata();
 		} catch (err) {
 			//nothing
 		}
 
-		flagsFound.map((flag) => {
+		flagsFound.map(async (flag) => {
 			const codelensFlag = flag as FlagList;
 			if (codelensFlag.flag) {
 				const getElement = this.flagMap.get(codelensFlag.flag);
 				if (getElement) {
 					getElement.list.push(codelensFlag.range);
 				} else {
-					let name;
+					let newElement;
 					if (typeof flagMeta !== 'undefined') {
-						name = flagMeta[codelensFlag.flag].name;
+						const flagEnv = await this.flagStore.getFlagConfig(codelensFlag.flag);
+						newElement = (await this.flagView.flagToValues(flagMeta[codelensFlag.flag], flagEnv, null)) as FlagNodeList;
+						newElement.list = [codelensFlag.range];
+						this.flagNodes.push(newElement);
 					} else {
-						name = codelensFlag.flag;
+						newElement = new FlagItem(codelensFlag.flag, TreeItemCollapsibleState.Collapsed, codelensFlag.flag, [
+							codelensFlag.range,
+						]);
 					}
-					const newElement = new FlagList(codelensFlag.range, name, codelensFlag.flag, this.config, [
-						codelensFlag.range,
-					]);
+
 					this.flagMap.set(codelensFlag.flag, newElement);
 				}
 			}
@@ -143,6 +159,40 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		this.refresh();
 		return;
 	};
+
+	private async flagReadyListener() {
+		this.flagStore.storeReady.event(async () => {
+			try {
+				this.flagUpdateListener();
+			} catch (err) {
+				console.error('Failed to update LaunchDarkly flag tree view:', err);
+			}
+		});
+	}
+
+	private async flagUpdateListener() {
+		// Setup listener for flag changes
+		this.flagStore.on('update', async (keys: string) => {
+			try {
+				const flagKeys = Object.values(keys);
+				flagKeys.map((key) => {
+					this.flagStore.getFeatureFlag(key).then((updatedFlag) => {
+						const existingFlag = this.flagMap.get(key);
+						if (typeof existingFlag !== 'undefined') {
+							this.flagView.flagToValues(updatedFlag.flag, updatedFlag.config).then((newFlagValue) => {
+								const updatedFlagValue = newFlagValue as FlagNodeList;
+								updatedFlagValue.list = existingFlag.list;
+								this.flagMap.set(key, updatedFlagValue);
+								this.refresh();
+							});
+						}
+					});
+				});
+			} catch (err) {
+				console.error('Failed to update LaunchDarkly flag tree view:', err);
+			}
+		});
+	}
 }
 
 class FlagList extends SimpleCodeLens {
@@ -163,14 +213,16 @@ class FlagList extends SimpleCodeLens {
 	}
 }
 
-export class FlagNode extends TreeItem {
+export class FlagItem extends TreeItem {
 	flagKey: string;
 	range?: Range;
 	contextValue?: string;
+	list?: Array<Range>;
 	constructor(
 		public readonly label: string,
 		public collapsibleState: TreeItemCollapsibleState,
 		flagKey: string,
+		list?: Array<Range>,
 		range?: Range,
 		contextValue?: string,
 	) {
@@ -178,5 +230,40 @@ export class FlagNode extends TreeItem {
 		this.flagKey = flagKey;
 		this.range = range;
 		this.contextValue = contextValue;
+		this.list = list;
+	}
+}
+
+export class FlagNodeList extends FlagParentNode {
+	public list?: Array<Range>;
+	range?: Range;
+	children: Array<FlagNode> | undefined;
+	contextValue?: string;
+	uri?: string;
+	flagKey?: string;
+	flagParentName?: string;
+	flagVersion: number;
+	command?: Command;
+
+	constructor(
+		ctx: ExtensionContext,
+		public readonly tooltip: string,
+		public readonly label: string,
+		public collapsibleState: TreeItemCollapsibleState,
+		flagKey: string,
+		uri: string,
+		range?: Range,
+		contextValue?: string,
+		list?: Array<Range>,
+		children?: FlagNode[],
+		flagVersion?: number,
+		enabled?: boolean,
+		aliases?: string[],
+	) {
+		super(ctx, tooltip, label, uri, collapsibleState, children, flagKey, flagVersion, enabled, aliases, contextValue);
+		this.flagKey = flagKey;
+		this.range = range;
+		this.contextValue = contextValue;
+		this.list = list;
 	}
 }

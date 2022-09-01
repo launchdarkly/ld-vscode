@@ -3,7 +3,7 @@ import { commands, window, ExtensionContext, workspace, ConfigurationChangeEvent
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
 import { FlagStore } from './flagStore';
-import { FlagNode } from './providers/flagListView';
+import { FlagItem } from './providers/flagListView';
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
 import { extensionReload, setupComponents } from './utils';
@@ -33,7 +33,7 @@ export async function register(
 		setupComponents(api, config, ctx, flagStore);
 
 		ctx.subscriptions.push(
-			commands.registerCommand('launchdarkly.OpenFlag', (node: FlagNode) =>
+			commands.registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
 				window.activeTextEditor.revealRange(node.range),
 			),
 		);

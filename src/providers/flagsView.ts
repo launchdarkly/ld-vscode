@@ -359,7 +359,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		return item;
 	}
 
-	private async flagToValues(
+	async flagToValues(
 		flag: FeatureFlag,
 		env: FlagConfiguration = null,
 		flagParent?: FlagParentNode,
