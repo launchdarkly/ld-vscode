@@ -68,7 +68,7 @@ export class ConfigurationMenu {
 
 		const pick = await input.showQuickPick({
 			title: this.title,
-			step: 1,
+			step: 2,
 			totalSteps: this.totalSteps,
 			placeholder: 'Use your existing LaunchDarkly access token, or enter a new one.',
 			items: selectionOptions,
@@ -100,7 +100,7 @@ export class ConfigurationMenu {
 		state.accessToken = '';
 		state.accessToken = await input.showInputBox({
 			title: this.title,
-			step: 1,
+			step: 2,
 			totalSteps: this.totalSteps,
 			value: typeof state.accessToken === 'string' ? state.accessToken : '',
 			prompt: 'Enter your LaunchDarkly access token',
