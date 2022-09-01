@@ -149,11 +149,11 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 					codeLenses.push(codeLens);
 				}
 			} else {
-				flag.forEach((flag) => {
+				flag?.forEach((flag) => {
 					const codeLens = new SimpleCodeLens(range, flag, this.config);
 					codeLenses.push(codeLens);
 				});
-				foundAliases.forEach((flag) => {
+				foundAliases?.forEach((flag) => {
 					const codeLens = new SimpleCodeLens(range, aliasesLocal[flag], this.config);
 					codeLenses.push(codeLens);
 				});
