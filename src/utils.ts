@@ -63,7 +63,7 @@ export function setupComponents(
 	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 
 	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
-	const listView = new LaunchDarklyFlagListProvider(config, codeLens, flagStore, ctx, flagView);
+	const listView = new LaunchDarklyFlagListProvider(config, codeLens, flagStore, flagView);
 	window.registerTreeDataProvider('launchdarklyFlagList', listView);
 
 	const LD_MODE: DocumentFilter = {
@@ -75,8 +75,10 @@ export function setupComponents(
 		new LaunchDarklyHoverProvider(config, flagStore, ctx, aliases),
 	);
 
-	const listViewDisp = commands.registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument())
-
+	const listViewDisp = commands.registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument());
+	const flagToggle = commands.registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
+		await showToggleMenu(flagStore, api, config);
+	});
 	ctx.subscriptions.push(
 		window.onDidChangeActiveTextEditor(listView.setFlagsinDocument),
 		languages.registerCodeLensProvider('*', codeLens),
@@ -87,12 +89,37 @@ export function setupComponents(
 			'"',
 		),
 		hoverProviderDisp,
-		listViewDisp
+		listViewDisp,
+		flagToggle,
 	);
 
 	codeLens.start();
 
 	const disposables = generalCommands(ctx, config, api, flagStore);
-	const allDisposables = Disposable.from(disposables, hoverProviderDisp, listViewDisp);
+	const allDisposables = Disposable.from(disposables, hoverProviderDisp, listViewDisp, flagToggle);
 	ctx.globalState.update('commands', allDisposables);
+}
+
+async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config: Configuration) {
+	const flags = await flagStore.allFlagsMetadata();
+	const items = [];
+	const flagsArr = Object.keys(flags);
+	flagsArr.forEach((flag) =>
+		items.push({
+			label: flags[flag].key,
+			description: flags[flag].name,
+			detail: flags[flag]?.description,
+			value: flags[flag].key,
+		}),
+	);
+	const flagWindow = await window.showQuickPick(items, {
+		title: 'Select Feature Flag to Toggle',
+		placeHolder: 'Type flag key to toggle',
+		matchOnDescription: true,
+	});
+
+	if (typeof flagWindow !== 'undefined') {
+		const enabled = await flagStore.getFlagConfig(flagWindow.value);
+		await api.patchFeatureFlagOn(config.project, flagWindow.value, !enabled.on);
+	}
 }

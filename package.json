@@ -106,6 +106,10 @@
 				"when": "LDFlagToggle"
 			},
 			{
+				"command": "launchdarkly.toggleFlagCmdPrompt",
+				"title": "LaunchDarkly: Toggle Flag"
+			},
+			{
 				"command": "launchdarkly.OpenFlag",
 				"title": "Jump to line in file",
 				"icon": {
