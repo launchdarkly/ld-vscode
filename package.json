@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "4.0.0",
+	"version": "3.0.6",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.68.0"
@@ -125,6 +125,10 @@
 					"light": "resources/light/settings.svg",
 					"dark": "resources/dark/settings.svg"
 				}
+			},
+			{
+				"command": "launchdarkly.migrateConfiguration",
+				"title": "LaunchDarkly: Migrate Configuration"
 			},
 			{
 				"command": "launchdarkly.configureLaunchDarklyEnvironment",
@@ -368,7 +372,7 @@
 		"viewsWelcome": [
 			{
 				"view": "launchdarklyFeatureFlags",
-				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension."
+				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension. \nIf you had a previous version installed you may need to \n[Migrate Configuration](command:launchdarkly.migrateConfiguration)\n Previous versions allowed for global configuration, the current version is configured per workspace."
 			}
 		]
 	},

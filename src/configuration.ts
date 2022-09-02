@@ -38,7 +38,7 @@ export class Configuration {
 	reload(): void {
 		const config = workspace.getConfiguration('launchdarkly');
 		for (const option in this) {
-			if (option === 'ctx') {
+			if (option === 'ctx' || option === 'project' || option === 'env') {
 				continue;
 			}
 			this[option] = config.get(option);
@@ -161,9 +161,9 @@ export class Configuration {
 
 	getState(key: string): string {
 		if (key == 'accessToken') {
-			return this.ctx.globalState.get(key)
+			return this.ctx.globalState.get(key);
 		}
-		return this.ctx.workspaceState.get(key)
+		return this.ctx.workspaceState.get(key);
 	}
 
 	validateRefreshInterval(interval: number): boolean {

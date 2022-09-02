@@ -49,8 +49,17 @@ export async function register(
 		workspace.getConfiguration('launchdarkly').get('enableMetricsExplorer', false),
 	);
 
-	process.on('unhandledRejection', (reason, p) => {
-		console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
-		// application specific logging, throwing an error, or other logic here
-	});
+	ctx.subscriptions.push(
+		commands.registerCommand('launchdarkly.migrateConfiguration', async () => {
+			try {
+				const localConfig = workspace.getConfiguration('launchdarkly');
+				await ctx.workspaceState.update('project', localConfig['project']);
+				await ctx.workspaceState.update('env', localConfig['env']);
+				extensionReload(config, ctx);
+				window.showInformationMessage('LaunchDarkly configured successfully');
+			} catch (err) {
+				window.showErrorMessage(`[LaunchDarkly] ${err}`);
+			}
+		}),
+	);
 }
