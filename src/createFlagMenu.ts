@@ -40,7 +40,7 @@ export class CreateFlagMenu {
 		this.config = config;
 		this.api = api;
 		this.title = 'Create Feature Flag';
-		this.totalSteps = 4;
+		this.totalSteps = 3;
 		workspace.name && this.totalSteps++;
 	}
 
@@ -81,50 +81,51 @@ export class CreateFlagMenu {
 			validate: (token) => isValidKey(token),
 		});
 		state.key = key;
-		return (input: MultiStepInput) => this.setFlagDescription(input, state);
-	}
-
-	async setFlagDescription(input: MultiStepInput, state: Partial<State>) {
-		const description = await input.showInputBox({
-			title: this.title,
-			step: 3,
-			value: '',
-			prompt: 'Enter Flag Description',
-			totalSteps: this.totalSteps,
-			shouldResume: this.shouldResume,
-			validate: (token) => isValidName(token),
-		});
-		state.description = description;
-		return (input: MultiStepInput) => this.setFlagTags(input, state);
-	}
-
-	async setFlagTags(input: MultiStepInput, state: Partial<State>) {
-		const tags = await input.showInputBox({
-			title: this.title,
-			step: 4,
-			value: '',
-			prompt: 'Enter Flag Tags(comma separated list)',
-			totalSteps: this.totalSteps,
-			shouldResume: this.shouldResume,
-			validate: (token) => isValidTags(token),
-		});
-		state.tags = tags.split(',').filter((i) => i);
-		return (input: MultiStepInput) => this.setType(input, state);
-	}
-
-	async setType(input: MultiStepInput, state: Partial<State>) {
-		const flagType = await input.showQuickPick({
-			title: this.title,
-			step: 4,
-			items: [{ label: 'True' }, { label: 'False' }],
-			placeholder: 'Is Flag Permanent?',
-			totalSteps: this.totalSteps,
-			shouldResume: this.shouldResume,
-		});
-
-		state.temporary = !(flagType.label === 'True');
 		return (input: MultiStepInput) => this.setAvailability(input, state);
 	}
+
+	// async setFlagDescription(input: MultiStepInput, state: Partial<State>) {
+	// 	const description = await input.showInputBox({
+	// 		title: this.title,
+	// 		step: 3,
+	// 		value: '',
+	// 		prompt: 'Enter Flag Description',
+	// 		totalSteps: this.totalSteps,
+	// 		shouldResume: this.shouldResume,
+	// 		validate: (token) => isValidName(token),
+	// 	});
+	// 	state.description = description;
+	// 	return (input: MultiStepInput) => this.setFlagTags(input, state);
+	// }
+
+	// async setFlagTags(input: MultiStepInput, state: Partial<State>) {
+	// 	const tags = await input.showInputBox({
+	// 		title: this.title,
+	// 		step: 4,
+	// 		value: '',
+	// 		prompt: 'Enter Flag Tags(comma separated list)',
+	// 		totalSteps: this.totalSteps,
+	// 		shouldResume: this.shouldResume,
+	// 		validate: (token) => isValidTags(token),
+	// 	});
+	// 	state.tags = tags.split(',').filter((i) => i);
+	// 	return (input: MultiStepInput) => this.setType(input, state);
+	// }
+
+	// async setType(input: MultiStepInput, state: Partial<State>) {
+	// 	const flagType = await input.showQuickPick({
+	// 		title: this.title,
+	// 		step: 5,
+	// 		items: [{ label: 'True' }, { label: 'False' }],
+	// 		placeholder: 'Is Flag Permanent?',
+	// 		totalSteps: this.totalSteps,
+	// 		shouldResume: this.shouldResume,
+	// 	});
+
+	// 	state.temporary = !(flagType.label === 'True');
+	// 	return (input: MultiStepInput) => this.setAvailability(input, state);
+	// }
+
 	async setAvailability(input: MultiStepInput, state: Partial<State>) {
 		const enableClient = 'Enable Client Side';
 		const enableMobile = 'Enable Mobile Side';
@@ -132,7 +133,7 @@ export class CreateFlagMenu {
 
 		const availability = await input.showQuickPick({
 			title: this.title,
-			step: 4,
+			step: 3,
 			items: [{ label: enableClient }, { label: enableMobile }, { label: enableBoth }],
 			placeholder: 'Select Client-side Availability',
 			totalSteps: this.totalSteps,

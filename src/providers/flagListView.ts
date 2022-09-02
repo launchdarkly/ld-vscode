@@ -81,7 +81,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 			});
 			return Promise.resolve(items);
 		} else if (this.flagMap?.size > 0) {
-			const CodeLensCmd = new TreeItem('Toggle code lens');
+			const CodeLensCmd = new TreeItem('Toggle Flag lens');
 			CodeLensCmd.command = {
 				title: 'Command',
 				command: 'launchdarkly.enableCodeLens',
