@@ -1,5 +1,6 @@
 import { reject } from 'lodash';
 import * as url from 'url';
+import { window } from 'vscode';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const axios = require('axios').default;
 
@@ -37,23 +38,35 @@ export class LaunchDarklyAPI {
 	}
 
 	async getProject(projectKey: string): Promise<Project> {
-		const options = this.createOptions(`projects/${projectKey}`);
-		const data = await axios.get(options.url, options);
-		const project = data.data;
-		return project;
+		try {
+			const options = this.createOptions(`projects/${projectKey}`);
+			const data = await axios.get(options.url, options);
+			const project = data.data;
+			return project;
+		} catch (err) {
+			window.showErrorMessage(`[LaunchDarkly] Error getting Project: ${projectKey}\n${err}`);
+		}
 	}
 
 	async getEnvironment(projectKey: string, envKey: string): Promise<Environment> {
-		const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
-		const data = await axios.get(options.url, options);
-		return data.data;
+		try {
+			const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
+			const data = await axios.get(options.url, options);
+			return data.data;
+		} catch (err) {
+			window.showErrorMessage(`[LaunchDarkly] Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`);
+		}
 	}
 
 	async getMetrics(projectKey: string): Promise<Array<Metric>> {
-		// TODO: Update to use cursor and get all
-		const options = this.createOptions(`metrics/${projectKey}?limit=50`);
-		const data = await axios.get(options.url, options);
-		return data.data.items;
+		try {
+			// TODO: Update to use cursor and get all
+			const options = this.createOptions(`metrics/${projectKey}?limit=50`);
+			const data = await axios.get(options.url, options);
+			return data.data.items;
+		} catch (err) {
+			window.showErrorMessage(`[LaunchDarkly] Error getting Metrics for Project: ${projectKey}\n${err}`);
+		}
 	}
 
 	async getFeatureFlag(projectKey: string, flagKey: string, envKey?: string): Promise<FeatureFlag> {

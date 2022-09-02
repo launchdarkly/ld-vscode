@@ -25,12 +25,12 @@
 				"launchdarkly.project": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Your LaunchDarkly project key. [More information](https://docs.launchdarkly.com/home/managing-flags/projects)."
+					"markdownDescription": "DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
 				},
 				"launchdarkly.env": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Your LaunchDarkly environment key. [More information](https://docs.launchdarkly.com/home/managing-flags/environments)"
+					"markdownDescription": "DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
 				},
 				"launchdarkly.baseUri": {
 					"type": "string",

@@ -98,8 +98,14 @@ export class Configuration {
 	}
 
 	public streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
-		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-		if (streamingConfigOptions.every((option) => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri'];
+		const currProj = this.ctx.workspaceState.get('project');
+		const currEnv = this.ctx.workspaceState.get('env');
+		if (
+			streamingConfigOptions.every((option) => !e.affectsConfiguration(`launchdarkly.${option}`)) &&
+			typeof currProj !== 'undefined' &&
+			typeof currEnv !== 'undefined'
+		) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return true;
 		}
@@ -107,8 +113,14 @@ export class Configuration {
 	}
 
 	public streamingConfigStartCheck(): boolean {
-		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-		if (!streamingConfigOptions.every((o) => !!this[o])) {
+		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri'];
+		const currProj = this.ctx.workspaceState.get('project');
+		const currEnv = this.ctx.workspaceState.get('env');
+		if (
+			!streamingConfigOptions.every((o) => !!this[o]) &&
+			typeof currProj !== 'undefined' &&
+			typeof currEnv !== 'undefined'
+		) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return false;
 		}
