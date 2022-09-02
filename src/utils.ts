@@ -106,9 +106,8 @@ async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config
 	const flagsArr = Object.keys(flags);
 	flagsArr.forEach((flag) =>
 		items.push({
-			label: flags[flag].key,
-			description: flags[flag].name,
-			detail: flags[flag]?.description,
+			label: flags[flag].name,
+			description: flags[flag].key,
 			value: flags[flag].key,
 		}),
 	);
