@@ -63,7 +63,7 @@ export function setupComponents(
 	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 
 	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
-	const listView = new LaunchDarklyFlagListProvider(config, codeLens, flagStore, flagView);
+	const listView = new LaunchDarklyFlagListProvider(config, codeLens, flagStore, ctx, flagView);
 	window.registerTreeDataProvider('launchdarklyFlagList', listView);
 
 	const LD_MODE: DocumentFilter = {
@@ -75,6 +75,8 @@ export function setupComponents(
 		new LaunchDarklyHoverProvider(config, flagStore, ctx, aliases),
 	);
 
+	const listViewDisp = commands.registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument())
+
 	ctx.subscriptions.push(
 		window.onDidChangeActiveTextEditor(listView.setFlagsinDocument),
 		languages.registerCodeLensProvider('*', codeLens),
@@ -85,11 +87,12 @@ export function setupComponents(
 			'"',
 		),
 		hoverProviderDisp,
+		listViewDisp
 	);
 
 	codeLens.start();
 
 	const disposables = generalCommands(ctx, config, api, flagStore);
-	const allDisposables = Disposable.from(disposables, hoverProviderDisp);
+	const allDisposables = Disposable.from(disposables, hoverProviderDisp, listViewDisp);
 	ctx.globalState.update('commands', allDisposables);
 }
