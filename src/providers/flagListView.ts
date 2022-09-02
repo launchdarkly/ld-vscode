@@ -11,6 +11,7 @@ import {
 	TreeItemCollapsibleState,
 	CancellationTokenSource,
 	ExtensionContext,
+	commands,
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
@@ -38,6 +39,8 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		this.flagView = flagView;
 		this.setFlagsinDocument();
 		this.flagReadyListener();
+		commands.registerCommand('launchdarkly.refreshFlagLens', () => this.setFlagsinDocument())
+
 	}
 
 	refresh(): void {

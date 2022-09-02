@@ -142,6 +142,14 @@
 				}
 			},
 			{
+				"command": "launchdarkly.refreshFlagLens",
+				"title": "Refresh flags in file",
+				"icon": {
+					"light": "resources/light/refresh.svg",
+					"dark": "resources/dark/refresh.svg"
+				}
+			},
+			{
 				"command": "launchdarkly.copyKey",
 				"title": "Copy flag key",
 				"icon": {
@@ -217,6 +225,10 @@
 					"when": "false"
 				},
 				{
+					"command": "launchdarkly.refreshFlagLens",
+					"when": "false"
+				},
+				{
 					"command": "launchdarkly.treeviewrefresh",
 					"when": "false"
 				},
@@ -274,6 +286,11 @@
 				{
 					"command": "launchdarkly.refreshEntry",
 					"when": "view == launchdarklyFeatureFlags",
+					"group": "navigation"
+				},
+				{
+					"command": "launchdarkly.refreshFlagLens",
+					"when": "view == launchdarklyFlagList",
 					"group": "navigation"
 				},
 				{
