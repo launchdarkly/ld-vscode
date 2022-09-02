@@ -103,8 +103,7 @@ export function setupComponents(
 async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config: Configuration) {
 	const flags = await flagStore.allFlagsMetadata();
 	const items = [];
-	const flagsArr = Object.keys(flags);
-	flagsArr.forEach((flag) =>
+	Object.keys(flags).forEach((flag) =>
 		items.push({
 			label: flags[flag].name,
 			description: flags[flag].key,
