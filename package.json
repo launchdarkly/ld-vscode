@@ -370,6 +370,11 @@
 				"key": "ctrl+alt+g",
 				"mac": "cmd+alt+g",
 				"when": "editorTextFocus"
+			},
+			{
+				"command": "launchdarkly.toggleFlagCmdPrompt",
+				"key": "ctrl+alt+t",
+				"mac": "shift+cmd+t"
 			}
 		],
 		"viewsContainers": {

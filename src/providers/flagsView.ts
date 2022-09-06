@@ -8,6 +8,7 @@ import * as path from 'path';
 import { debounce, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
 import checkExistingCommand from '../utils';
+import { Command, commands } from 'vscode';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -80,7 +81,26 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	async getChildren(element?: FlagTreeInterface): Promise<FlagTreeInterface[]> {
 		if (this.config.isConfigured() && (typeof this.flagNodes === 'undefined' || this.flagNodes.length == 0)) {
-			return Promise.resolve([new FlagNode(this.ctx, 'No Flags Found.', NON_COLLAPSED)]);
+			const linkUrl = `${this.config.baseUri}/${this.config.project}/${this.config.env}/get-started/connect-an-sdk`;
+			const QuickStartCmd: Command = {
+				title: 'Open QuickStart',
+				command: 'launchdarkly.openBrowser',
+				arguments: [linkUrl],
+			};
+			return Promise.resolve([
+				new FlagNode(
+					this.ctx,
+					'No Flags Found. Click here to view Quickstart',
+					NON_COLLAPSED,
+					[],
+					'',
+					'',
+					'',
+					'',
+					0,
+					QuickStartCmd,
+				),
+			]);
 		}
 
 		if (typeof element !== 'undefined') {
