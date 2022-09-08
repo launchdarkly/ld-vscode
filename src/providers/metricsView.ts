@@ -23,8 +23,8 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 		this.api = api;
 		this.config = config;
 		this.ctx = ctx;
-		this.registerCommands();
-		this.start();
+		//this.registerCommands();
+		//this.start();
 	}
 
 	refresh(): void {
@@ -49,15 +49,20 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 	}
 
 	async getMetrics(): Promise<void> {
+		if (this.config.project === '' || this.config.env === '') {
+			return;
+		}
 		const metrics = await this.api.getMetrics(this.config.project);
 		const metricValues = [];
-		metrics.map((metric) => {
-			if (metric.kind == 'custom') {
-				metricValues.push(this.metricToValues(metric));
-			}
-		});
-		this.metricValues = metricValues;
-		this.refresh();
+		if (typeof metrics !== 'undefined') {
+			metrics.map((metric) => {
+				if (metric.kind == 'custom') {
+					metricValues.push(this.metricToValues(metric));
+				}
+			});
+			this.metricValues = metricValues;
+			this.refresh();
+		}
 	}
 
 	async registerCommands(): Promise<void> {

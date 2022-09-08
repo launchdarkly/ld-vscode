@@ -23,14 +23,14 @@ export async function register(
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly') && !e.affectsConfiguration('launchdarkly.enableCodeLens')) {
-			extensionReload(config, ctx);
+			await extensionReload(config, ctx, true);
 		}
 	});
 	if (!config.isConfigured) {
 		return;
 	}
 	if (typeof flagStore !== 'undefined') {
-		setupComponents(api, config, ctx, flagStore);
+		await setupComponents(api, config, ctx, flagStore);
 
 		ctx.subscriptions.push(
 			commands.registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
@@ -40,10 +40,10 @@ export async function register(
 	}
 
 	if (config.enableFlagExplorer) {
-		commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
+		await commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
 
-	commands.executeCommand(
+	await commands.executeCommand(
 		'setContext',
 		'launchdarkly:enableMetricExplorer',
 		workspace.getConfiguration('launchdarkly').get('enableMetricsExplorer', false),
@@ -55,8 +55,8 @@ export async function register(
 				const localConfig = workspace.getConfiguration('launchdarkly');
 				await ctx.workspaceState.update('project', localConfig['project']);
 				await ctx.workspaceState.update('env', localConfig['env']);
-				extensionReload(config, ctx);
-				window.showInformationMessage('LaunchDarkly configured successfully');
+				await extensionReload(config, ctx);
+				window.showInformationMessage('[LaunchDarkly] Configured successfully');
 			} catch (err) {
 				window.showErrorMessage(`[LaunchDarkly] ${err}`);
 			}

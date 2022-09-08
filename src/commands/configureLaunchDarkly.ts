@@ -3,7 +3,6 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { ConfigurationMenu } from '../configurationMenu';
 import { FlagStore } from '../flagStore';
-import configureEnvironmentCmd from './configureLaunchDarklyEnvironment';
 
 export default function configureLaunchDarkly(
 	ctx: ExtensionContext,
@@ -21,7 +20,7 @@ export default function configureLaunchDarkly(
 				await flagStore.reload();
 			}
 			await ctx.globalState.update('LDConfigured', true);
-			window.showInformationMessage('LaunchDarkly configured successfully');
+			window.showInformationMessage('[LaunchDarkly] Configured successfully');
 		} catch (err) {
 			console.error(`Failed configuring LaunchDarkly Extension(provider): ${err}`);
 			window.showErrorMessage('An unexpected error occurred, please try again later.');

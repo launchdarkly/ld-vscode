@@ -55,10 +55,16 @@ export class ConfigurationMenu {
 		const existingTokenName = 'Use the existing access token';
 		const clearOverrides = 'Clear Workspace Specific Configurations';
 		const clearGlobalOverrides = 'Clear All LaunchDarkly Configurations';
-		const options = [
-			{ name: existingTokenName, key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6) },
-			{ name: 'Enter a new access token' },
-		];
+		const options = [];
+		const currentToken = this.currentAccessToken.substr(this.currentAccessToken.length - 6);
+		if (currentToken.length > 0) {
+			options.push({
+				name: existingTokenName,
+				key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6),
+			});
+		}
+		options.push({ name: 'Enter a new access token' });
+
 		if (this.config.localIsConfigured()) {
 			options.push({ name: clearOverrides, key: 'clear overrides' });
 		}
@@ -162,6 +168,7 @@ export class ConfigurationMenu {
 			items: projectOptions,
 			activeItem: typeof state.project !== 'string' ? state.project : undefined,
 			shouldResume: this.shouldResume,
+			matchOnDescription: true,
 		});
 
 		state.project = pick.description;
@@ -181,13 +188,18 @@ export class ConfigurationMenu {
 			items: environmentOptions,
 			activeItem: typeof state.env !== 'string' ? state.env : undefined,
 			shouldResume: this.shouldResume,
+			matchOnDescription: true,
 		});
 
 		state.env = pick.description;
 		Object.keys(state).forEach(async (key) => {
 			await this.config.update(key, state[key], false);
 		});
-		extensionReload(this.config, this.ctx);
+		pick.alwaysShow = false;
+
+		window.showInformationMessage('[LaunchDarkly] Updating Configuration');
+		// want menu to close while updating
+		await extensionReload(this.config, this.ctx);
 	}
 
 	async validateAccessToken(token: string, invalidAccessToken: string) {

@@ -11,6 +11,7 @@ import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { LaunchDarklyHoverProvider } from './providers/hover';
 import { LaunchDarklyMetricsTreeViewProvider } from './providers/metricsView';
 import { QuickLinksListProvider } from './providers/quickLinksView';
+import { setTimeout, setImmediate, setInterval } from 'timers/promises';
 
 export default async function checkExistingCommand(commandName: string): Promise<boolean> {
 	const checkCommands = await commands.getCommands(false);
@@ -20,23 +21,29 @@ export default async function checkExistingCommand(commandName: string): Promise
 	return false;
 }
 
-export function extensionReload(config: Configuration, ctx: ExtensionContext) {
+export async function extensionReload(config: Configuration, ctx: ExtensionContext, reload = false) {
 	// Read in latest version of config
 	config.reload();
 	const newApi = new LaunchDarklyAPI(config);
 	const flagStore = new FlagStore(config, newApi);
-	setupComponents(newApi, config, ctx, flagStore);
+	await setupComponents(newApi, config, ctx, flagStore, reload);
 }
 
-export function setupComponents(
+export async function setupComponents(
 	api: LaunchDarklyAPI,
 	config: Configuration,
 	ctx: ExtensionContext,
 	flagStore: FlagStore,
+	reload = false,
 ) {
 	const cmds = ctx.globalState.get<Disposable>('commands');
 	if (typeof cmds?.dispose === 'function') {
 		cmds.dispose();
+	}
+
+	if (reload) {
+		// Disposables.from does not wait for async disposal so need to wait here.
+		await setTimeout(1000);
 	}
 
 	// Add metrics view
@@ -95,9 +102,9 @@ export function setupComponents(
 
 	codeLens.start();
 
-	const disposables = generalCommands(ctx, config, api, flagStore);
+	const disposables = await generalCommands(ctx, config, api, flagStore);
 	const allDisposables = Disposable.from(disposables, hoverProviderDisp, listViewDisp, flagToggle);
-	ctx.globalState.update('commands', allDisposables);
+	await ctx.globalState.update('commands', allDisposables);
 }
 
 async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config: Configuration) {

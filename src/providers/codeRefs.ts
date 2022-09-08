@@ -96,7 +96,7 @@ export class FlagAliases {
 			const codeRefsBin = await this.getCodeRefsBin();
 			const command = `${codeRefsBin} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${this.config.project}" --repoName="${repoName}" --baseUri="${this.config.baseUri}" --contextLines=-1 --branch=scan --revision=0`;
 			const output = await this.exec(command, {
-				env: { LD_ACCESS_TOKEN: this.config.accessToken, GOMAXPROCS: 1 },
+				env: { LD_ACCESS_TOKEN: this.config.accessToken, GOMAXPROCS: '1' },
 				timeout: 20 * 60000,
 			});
 			if (output.stderr) {

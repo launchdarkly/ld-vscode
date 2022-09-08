@@ -3,11 +3,11 @@ import { LaunchDarklyAPI, sortNameCaseInsensitive } from '../api';
 import { Configuration } from '../configuration';
 import { extensionReload } from '../utils';
 
-export default function configureEnvironmentCmd(
+export default async function configureEnvironmentCmd(
 	ctx: ExtensionContext,
 	config: Configuration,
 	api: LaunchDarklyAPI,
-): Disposable {
+): Promise<Disposable> {
 	const configureEnvironmentCmd = commands.registerCommand(
 		'launchdarkly.configureLaunchDarklyEnvironment',
 		async () => {
@@ -16,8 +16,8 @@ export default function configureEnvironmentCmd(
 				const environments = project.environments.sort(sortNameCaseInsensitive);
 				const newEnvironment = await window.showQuickPick(environments.map((env) => env.key));
 				if (newEnvironment !== 'undefined') {
-					config.update('env', newEnvironment, false);
-					extensionReload(config, ctx);
+					await config.update('env', newEnvironment, false);
+					await extensionReload(config, ctx, true);
 				}
 			} catch (err) {
 				console.log(err);

@@ -9,7 +9,7 @@ import enableCodeLensConfig from './enableCodeLens';
 import configureEnvironmentCmd from './configureLaunchDarklyEnvironment';
 import { LaunchDarklyHoverProvider } from '../providers/hover';
 
-export default function generalCommands(
+export default async function generalCommands(
 	ctx: ExtensionContext,
 	config: Configuration,
 	api: LaunchDarklyAPI,
@@ -19,7 +19,7 @@ export default function generalCommands(
 	const toggleFlagCmd = toggleFlagCtxCmd(ctx, config, api, flagStore);
 	const openLdCmd = openInLdCmd(ctx, config, flagStore);
 	const enableCodeLens = enableCodeLensConfig(ctx, config);
-	const envCmd = configureEnvironmentCmd(ctx, config, api);
+	const envCmd = await configureEnvironmentCmd(ctx, config, api);
 
 	return Disposable.from(createFlag, toggleFlagCmd, openLdCmd, enableCodeLens, envCmd);
 }
