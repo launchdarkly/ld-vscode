@@ -11,7 +11,7 @@ import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { LaunchDarklyHoverProvider } from './providers/hover';
 import { LaunchDarklyMetricsTreeViewProvider } from './providers/metricsView';
 import { QuickLinksListProvider } from './providers/quickLinksView';
-import { setTimeout, setImmediate, setInterval } from 'timers/promises';
+import { setTimeout } from 'timers/promises';
 
 export default async function checkExistingCommand(commandName: string): Promise<boolean> {
 	const checkCommands = await commands.getCommands(false);
@@ -43,7 +43,7 @@ export async function setupComponents(
 
 	if (reload) {
 		// Disposables.from does not wait for async disposal so need to wait here.
-		await setTimeout(1000);
+		await setTimeout(700);
 	}
 
 	// Add metrics view

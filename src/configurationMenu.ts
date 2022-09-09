@@ -199,7 +199,7 @@ export class ConfigurationMenu {
 
 		window.showInformationMessage('[LaunchDarkly] Updating Configuration');
 		// want menu to close while updating
-		await extensionReload(this.config, this.ctx);
+		await extensionReload(this.config, this.ctx, true);
 	}
 
 	async validateAccessToken(token: string, invalidAccessToken: string) {

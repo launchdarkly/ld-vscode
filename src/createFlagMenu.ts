@@ -127,6 +127,7 @@ export class CreateFlagMenu {
 	// }
 
 	async setAvailability(input: MultiStepInput, state: Partial<State>) {
+		const enableServer = 'Only make flag available on Server';
 		const enableClient = 'Enable Client Side';
 		const enableMobile = 'Enable Mobile Side';
 		const enableBoth = 'Enable Both Mobile and Client';
@@ -134,7 +135,7 @@ export class CreateFlagMenu {
 		const availability = await input.showQuickPick({
 			title: this.title,
 			step: 3,
-			items: [{ label: enableClient }, { label: enableMobile }, { label: enableBoth }],
+			items: [{ label: enableServer }, { label: enableClient }, { label: enableMobile }, { label: enableBoth }],
 			placeholder: 'Select Client-side Availability',
 			totalSteps: this.totalSteps,
 			shouldResume: this.shouldResume,
@@ -154,6 +155,8 @@ export class CreateFlagMenu {
 			case enableBoth:
 				flagAvailability.usingEnvironmentId = true;
 				flagAvailability.usingMobileKey = true;
+				break;
+			default:
 				break;
 		}
 
