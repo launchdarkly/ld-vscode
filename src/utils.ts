@@ -1,4 +1,4 @@
-import { commands, Disposable, DocumentFilter, ExtensionContext, languages, window } from 'vscode';
+import { commands, Disposable, DocumentFilter, ExtensionContext, languages, ProgressLocation, window } from 'vscode';
 import { LaunchDarklyAPI } from './api';
 import generalCommands from './commands/generalCommands';
 import { Configuration } from './configuration';
@@ -124,7 +124,26 @@ async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config
 	});
 
 	if (typeof flagWindow !== 'undefined') {
-		const enabled = await flagStore.getFlagConfig(flagWindow.value);
-		await api.patchFeatureFlagOn(config.project, flagWindow.value, !enabled.on);
+		window.withProgress(
+			{
+				location: ProgressLocation.Notification,
+				title: `LaunchDarkly: Toggling Flag ${flagWindow.value}`,
+				cancellable: true,
+			},
+			async (progress, token) => {
+				token.onCancellationRequested(() => {
+					console.log('User canceled the long running operation');
+				});
+
+				progress.report({ increment: 0 });
+
+				const enabled = await flagStore.getFlagConfig(flagWindow.value);
+				progress.report({ increment: 10, message: `Setting flag Enabled: ${!enabled.on}` });
+
+				await api.patchFeatureFlagOn(config.project, flagWindow.value, !enabled.on);
+
+				progress.report({ increment: 90, message: 'Flag Toggled' });
+			},
+		);
 	}
 }
