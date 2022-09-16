@@ -31,12 +31,6 @@ export async function register(
 	}
 	if (typeof flagStore !== 'undefined') {
 		await setupComponents(api, config, ctx, flagStore);
-
-		ctx.subscriptions.push(
-			commands.registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
-				window.activeTextEditor.revealRange(node.range),
-			),
-		);
 	}
 
 	if (config.enableFlagExplorer) {

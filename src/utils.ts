@@ -6,7 +6,7 @@ import { FlagStore } from './flagStore';
 import { FlagAliases } from './providers/codeRefs';
 import LaunchDarklyCompletionItemProvider from './providers/completion';
 import { FlagCodeLensProvider } from './providers/flagLens';
-import { LaunchDarklyFlagListProvider } from './providers/flagListView';
+import { FlagItem, LaunchDarklyFlagListProvider } from './providers/flagListView';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { LaunchDarklyHoverProvider } from './providers/hover';
 import { LaunchDarklyMetricsTreeViewProvider } from './providers/metricsView';
@@ -86,6 +86,11 @@ export async function setupComponents(
 	const flagToggle = commands.registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
 		await showToggleMenu(flagStore, api, config);
 	});
+
+	const openFlag = commands.registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
+		window.activeTextEditor.revealRange(node.range),
+	);
+
 	ctx.subscriptions.push(
 		window.onDidChangeActiveTextEditor(listView.setFlagsinDocument),
 		languages.registerCodeLensProvider('*', codeLens),
@@ -98,12 +103,13 @@ export async function setupComponents(
 		hoverProviderDisp,
 		listViewDisp,
 		flagToggle,
+		openFlag,
 	);
 
 	codeLens.start();
 
 	const disposables = await generalCommands(ctx, config, api, flagStore);
-	const allDisposables = Disposable.from(disposables, hoverProviderDisp, listViewDisp, flagToggle);
+	const allDisposables = Disposable.from(disposables, hoverProviderDisp, listViewDisp, flagToggle, openFlag);
 	await ctx.globalState.update('commands', allDisposables);
 }
 
