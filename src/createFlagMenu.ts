@@ -175,7 +175,7 @@ export class CreateFlagMenu {
 	}
 }
 
-const keyRegexp = /^[\w\d][.A-Za-z_\-0-9]*$/;
+const keyRegexp = /^[\w\d][.A-Za-z_\-0-9]*$/u;
 const capitalizedWordRegexp = /^[A-Z0-9][a-z0-9]*$/;
 const tagRegexp = /^[.A-Za-z_\-0-9]+$/;
 
