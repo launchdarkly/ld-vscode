@@ -178,7 +178,7 @@ export class ConfigurationMenu {
 	async pickEnvironment(input: MultiStepInput, state: Partial<CMState>) {
 		const selectedProject = this.projects.find((proj) => proj.key === state.project);
 		const environments = selectedProject.environments;
-		const environmentOptions = environments.map(item => this.createEnvQuickPickItem(item));
+		const environmentOptions = environments.sort(item().map(item => this.createEnvQuickPickItem(item));
 
 		const pick = await input.showQuickPick({
 			title: this.title,
