@@ -1,8 +1,8 @@
-import { ExtensionContext, QuickPickItem, window, workspace } from 'vscode';
+import { ExtensionContext, QuickPickItem, QuickPickItemKind, window, workspace } from 'vscode';
 
 import { MultiStepInput } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
-import { Resource, Project } from './models';
+import { Resource, Project, Environment } from './models';
 import { Configuration } from './configuration';
 import { extensionReload } from './utils';
 interface CMState {
@@ -178,7 +178,7 @@ export class ConfigurationMenu {
 	async pickEnvironment(input: MultiStepInput, state: Partial<CMState>) {
 		const selectedProject = this.projects.find((proj) => proj.key === state.project);
 		const environments = selectedProject.environments;
-		const environmentOptions = environments.map(this.createQuickPickItem);
+		const environmentOptions = environments.map(item => this.createEnvQuickPickItem(item));
 
 		const pick = await input.showQuickPick({
 			title: this.title,
@@ -228,5 +228,17 @@ export class ConfigurationMenu {
 			description: resource.key,
 			detail: resource.tags && resource.tags.length > 0 && `Tags: ${resource.tags.join(', ')}`,
 		};
+	}
+
+	createEnvQuickPickItem(resource: Environment): QuickPickItem {
+		if (resource.apiKey.includes("sdk-*")) {
+			return {
+				label: resource.name,
+				kind: QuickPickItemKind.Separator,
+			};
+		}
+
+		return this.createQuickPickItem(resource)
+		
 	}
 }
