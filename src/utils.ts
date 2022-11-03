@@ -1,4 +1,13 @@
-import { commands, Disposable, DocumentFilter, ExtensionContext, languages, ProgressLocation, QuickPickItemKind, window } from 'vscode';
+import {
+	commands,
+	Disposable,
+	DocumentFilter,
+	ExtensionContext,
+	languages,
+	ProgressLocation,
+	QuickPickItemKind,
+	window,
+} from 'vscode';
 import { LaunchDarklyAPI } from './api';
 import generalCommands from './commands/generalCommands';
 import { Configuration } from './configuration';
@@ -14,7 +23,7 @@ import { QuickLinksListProvider } from './providers/quickLinksView';
 import { setTimeout } from 'timers/promises';
 import { MruCache } from './mruCache';
 
-const cache = new MruCache()
+const cache = new MruCache();
 
 export default async function checkExistingCommand(commandName: string): Promise<boolean> {
 	const checkCommands = await commands.getCommands(false);
@@ -119,25 +128,25 @@ export async function setupComponents(
 async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config: Configuration) {
 	const flags = await flagStore.allFlagsMetadata();
 	const items = [];
-	const cachedFlags = Array.from(cache.get())
+	const cachedFlags = Array.from(cache.get()).reverse();
 	if (cachedFlags.length > 0) {
-	items.push({
-		label: "Recently toggled Feature Flags",
-		kind: QuickPickItemKind.Separator
-	})
-	cachedFlags.forEach(flag => {
 		items.push({
-			label: flags[flag].name,
-			description: flags[flag].key,
-			value: flags[flag].key,	
-		})
-	})
-	
-	items.push({
-		label: "Feature Flag List",
-		kind: QuickPickItemKind.Separator
-	})
-}
+			label: 'Recently toggled Feature Flags',
+			kind: QuickPickItemKind.Separator,
+		});
+		cachedFlags.forEach((flag) => {
+			items.push({
+				label: flags[flag].name,
+				description: flags[flag].key,
+				value: flags[flag].key,
+			});
+		});
+
+		items.push({
+			label: 'Feature Flag List',
+			kind: QuickPickItemKind.Separator,
+		});
+	}
 	Object.keys(flags).forEach((flag) =>
 		items.push({
 			label: flags[flag].name,
@@ -167,7 +176,7 @@ async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config
 
 				const enabled = await flagStore.getFlagConfig(flagWindow.value);
 				progress.report({ increment: 10, message: `Setting flag Enabled: ${!enabled.on}` });
-				cache.set(flagWindow.value)
+				cache.set(flagWindow.value);
 				await api.patchFeatureFlagOn(config.project, flagWindow.value, !enabled.on);
 
 				progress.report({ increment: 90, message: 'Flag Toggled' });

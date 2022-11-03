@@ -178,14 +178,23 @@ export class ConfigurationMenu {
 	async pickEnvironment(input: MultiStepInput, state: Partial<CMState>) {
 		const selectedProject = this.projects.find((proj) => proj.key === state.project);
 		const environments = selectedProject.environments;
-		const environmentOptions = environments.sort(item().map(item => this.createEnvQuickPickItem(item));
+		const selectEnvironmentOptions = environments
+			.filter((item) => this.createEnvQuickPickItem(item))
+			.map((item) => this.createQuickPickItem(item));
+		const cannotSelectEnvironmentOptions = environments
+			.filter((item) => !this.createEnvQuickPickItem(item))
+			.map((item) => this.createQuickPickItem(item));
+		const envSeparator = {
+			label: 'These environments do not have their SDK Available to select. Configuration will fail.',
+			kind: QuickPickItemKind.Separator,
+		};
 
 		const pick = await input.showQuickPick({
 			title: this.title,
 			step: 4,
 			totalSteps: this.totalSteps,
 			placeholder: 'Select an environment',
-			items: environmentOptions,
+			items: [...selectEnvironmentOptions, envSeparator, ...cannotSelectEnvironmentOptions],
 			activeItem: typeof state.env !== 'string' ? state.env : undefined,
 			shouldResume: this.shouldResume,
 			matchOnDescription: true,
@@ -230,15 +239,10 @@ export class ConfigurationMenu {
 		};
 	}
 
-	createEnvQuickPickItem(resource: Environment): QuickPickItem {
-		if (resource.apiKey.includes("sdk-*")) {
-			return {
-				label: resource.name,
-				kind: QuickPickItemKind.Separator,
-			};
+	createEnvQuickPickItem(resource: Environment): number {
+		if (resource.apiKey.includes('sdk-*')) {
+			return 0;
 		}
-
-		return this.createQuickPickItem(resource)
-		
+		return 1;
 	}
 }
