@@ -167,7 +167,7 @@ async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config
 	});
 
 	if (typeof flagWindow !== 'undefined') {
-		window.withProgress(
+		await window.withProgress(
 			{
 				location: ProgressLocation.Notification,
 				title: `LaunchDarkly: Toggling Flag ${flagWindow.value}`,
@@ -186,11 +186,15 @@ async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config
 				try {
 					await api.patchFeatureFlagOn(config.project, flagWindow.value, !enabled.on);
 				} catch (err) {
-					if (err.statusCode === 403) {
-						progress.report({ increment: 100 });
-						window.showErrorMessage('Unauthorized: Your key does not have permissions to change the flag.', err);
+					progress.report({ increment: 100 });
+					if (err.response.status === 403) {
+						window.showErrorMessage(
+							`Unauthorized: Your key does not have permissions to update the flag: ${flagWindow.value}`,
+						);
 					} else {
-						window.showErrorMessage(`Could not update flag: ${err.message}`);
+						window.showErrorMessage(`Could not update flag: ${flagWindow.value}
+						code: ${err.response.status}
+						message: ${err.message}`);
 					}
 				}
 
