@@ -126,7 +126,13 @@ export async function setupComponents(
 }
 
 async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config: Configuration) {
-	const flags = await flagStore.allFlagsMetadata();
+	let flags;
+	try {
+		flags = await flagStore.allFlagsMetadata();
+	} catch (err) {
+		window.showErrorMessage('[LaunchDarkly] Unable to retrieve flags, please check configuration.');
+		return;
+	}
 	const items = [];
 	const cachedFlags = Array.from(cache.get()).reverse();
 	if (cachedFlags.length > 0) {
@@ -177,7 +183,16 @@ async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config
 				const enabled = await flagStore.getFlagConfig(flagWindow.value);
 				progress.report({ increment: 10, message: `Setting flag Enabled: ${!enabled.on}` });
 				cache.set(flagWindow.value);
-				await api.patchFeatureFlagOn(config.project, flagWindow.value, !enabled.on);
+				try {
+					await api.patchFeatureFlagOn(config.project, flagWindow.value, !enabled.on);
+				} catch (err) {
+					if (err.statusCode === 403) {
+						progress.report({ increment: 100 });
+						window.showErrorMessage('Unauthorized: Your key does not have permissions to change the flag.', err);
+					} else {
+						window.showErrorMessage(`Could not update flag: ${err.message}`);
+					}
+				}
 
 				progress.report({ increment: 90, message: 'Flag Toggled' });
 			},
