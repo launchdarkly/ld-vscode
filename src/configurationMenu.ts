@@ -96,6 +96,7 @@ export class ConfigurationMenu {
 		if (pick.label === clearGlobalOverrides) {
 			await this.config.clearLocalConfig();
 			await this.config.clearGlobalConfig();
+			await extensionReload(this.config, this.ctx, true);
 			return (input: MultiStepInput) => this.pickInstance(input, state);
 		}
 

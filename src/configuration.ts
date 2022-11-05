@@ -6,7 +6,6 @@ import {
 	ConfigurationTarget,
 	window,
 } from 'vscode';
-import { extensionReload } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const package_json = require('../package.json');
@@ -171,7 +170,6 @@ export class Configuration {
 		await config.update('project', undefined, ConfigurationTarget.Global);
 		await config.update('env', undefined, ConfigurationTarget.Global);
 		await this.reload();
-		await extensionReload(this, this.ctx, false);
 	}
 
 	getState(key: string): string {
