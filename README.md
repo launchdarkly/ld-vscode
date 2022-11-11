@@ -19,7 +19,8 @@ Read our official documentation about this extension at <https://docs.launchdark
 ### Hover
 Show LaunchDarkly feature flag information right in your code. Anywhere a feature flag key is wrapped in string delimiters or if your application leverages [Code References](https://docs.launchdarkly.com/home/code/code-references) you can find aliases throughout the code base and a informational hover will appear when you mouseover them.
 
-![Feature Flag in Code Hover](images/hover.png)
+<img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/hover.png?raw=true" alt="Hover in code">
+
 ### Create Boolean Flag
 *Using Command Palette (CMD/CTRL + Shift + P)* &rarr; `LaunchDarkly: Create Boolean Flag`     
 
@@ -30,7 +31,7 @@ Information required:
 * Flag key, name from step 1 will convert to a flag key in the same format as the LaunchDarkly UI handles it.
 * SDK Availability
 
-![Create Boolean Walkthrough](images/create-boolean-flag.gif)
+<img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/create-boolean-flag.gif?raw=true" alt="Create feature flag command">
 
 ### Toggle Feature Flag
 Change the enabled state of a feature flag without moving your hands from your keyboard.
@@ -39,20 +40,20 @@ Change the enabled state of a feature flag without moving your hands from your k
 
 You can select from a list of all the feature flags in the project. The most recently toggled feature flags will be at the top of the list.
 
-![Toggle Feature Flag Walkthrough](images/toggle-flag.gif)
+<img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/toggle-flag.gif?raw=true" alt="Toggle feature flag command">
 
 
 ### Quick Links
 Each link to will open your browser to specific pages in LaunchDarkly UI.
 
-![Quick Link Screenshot](images/quicklinks.png)
+<img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/quicklinks.png" alt="Quick links sidebar">
 
 
 
 ### Flags in File
  List of all flags found in the file. Added/Removed flags will not show until switching to another file and back.
  
-![Flags in File View](images/flags-in-file.png)
+<img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/flags-in-file.png" alt="Flags in file sidebar">
 
 
 ### Feature Flag Explorer
@@ -60,11 +61,11 @@ The feature flag explorer will automatically refresh whenever environment-specif
 
 New flags will automatically be added to the end of the feature flag list until next reload of the application.
 
-![Feature Flag Explorer View](images/feature-flag-explorer.png)
+<img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/feature-flag-explorer.png?raw=true" alt="Feature flag explorer sidebar">
 
 Flag names in the treeview can be right-clicked where you can update a flag's state, default rule when on, and default off variation
  
- ![Feature Flag right click menu](images/treeview-right-click.png)
+ <img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/treeview-right-click.png?raw=true" alt="right click menu options">
 
 
 ## Contributing
