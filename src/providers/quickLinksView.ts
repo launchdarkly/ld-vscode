@@ -13,7 +13,7 @@ import {
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
-import checkExistingCommand from '../utils';
+import checkExistingCommand from '../utils/common';
 
 const NON_COLLAPSED = TreeItemCollapsibleState.None;
 

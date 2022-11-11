@@ -7,8 +7,8 @@ import { generateHoverString } from './hover';
 import * as path from 'path';
 import { debounce, map } from 'lodash';
 import { FlagAliases } from './codeRefs';
-import checkExistingCommand from '../utils';
-import { Command, commands } from 'vscode';
+import checkExistingCommand from '../utils/common';
+import { Command } from 'vscode';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
