@@ -84,48 +84,6 @@ export class CreateFlagMenu {
 		return (input: MultiStepInput) => this.setAvailability(input, state);
 	}
 
-	// async setFlagDescription(input: MultiStepInput, state: Partial<State>) {
-	// 	const description = await input.showInputBox({
-	// 		title: this.title,
-	// 		step: 3,
-	// 		value: '',
-	// 		prompt: 'Enter Flag Description',
-	// 		totalSteps: this.totalSteps,
-	// 		shouldResume: this.shouldResume,
-	// 		validate: (token) => isValidName(token),
-	// 	});
-	// 	state.description = description;
-	// 	return (input: MultiStepInput) => this.setFlagTags(input, state);
-	// }
-
-	// async setFlagTags(input: MultiStepInput, state: Partial<State>) {
-	// 	const tags = await input.showInputBox({
-	// 		title: this.title,
-	// 		step: 4,
-	// 		value: '',
-	// 		prompt: 'Enter Flag Tags(comma separated list)',
-	// 		totalSteps: this.totalSteps,
-	// 		shouldResume: this.shouldResume,
-	// 		validate: (token) => isValidTags(token),
-	// 	});
-	// 	state.tags = tags.split(',').filter((i) => i);
-	// 	return (input: MultiStepInput) => this.setType(input, state);
-	// }
-
-	// async setType(input: MultiStepInput, state: Partial<State>) {
-	// 	const flagType = await input.showQuickPick({
-	// 		title: this.title,
-	// 		step: 5,
-	// 		items: [{ label: 'True' }, { label: 'False' }],
-	// 		placeholder: 'Is Flag Permanent?',
-	// 		totalSteps: this.totalSteps,
-	// 		shouldResume: this.shouldResume,
-	// 	});
-
-	// 	state.temporary = !(flagType.label === 'True');
-	// 	return (input: MultiStepInput) => this.setAvailability(input, state);
-	// }
-
 	async setAvailability(input: MultiStepInput, state: Partial<State>) {
 		const enableServer = 'Only make flag available on Server';
 		const enableClient = 'Enable Client Side';
