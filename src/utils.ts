@@ -21,17 +21,9 @@ import { LaunchDarklyHoverProvider } from './providers/hover';
 import { LaunchDarklyMetricsTreeViewProvider } from './providers/metricsView';
 import { QuickLinksListProvider } from './providers/quickLinksView';
 import { setTimeout } from 'timers/promises';
-import { MruCache } from './mruCache';
+import { ToggleCache } from './toggleCache';
 
-const cache = new MruCache();
-
-export default async function checkExistingCommand(commandName: string): Promise<boolean> {
-	const checkCommands = await commands.getCommands(false);
-	if (checkCommands.includes(commandName)) {
-		return true;
-	}
-	return false;
-}
+const cache = new ToggleCache();
 
 export async function extensionReload(config: Configuration, ctx: ExtensionContext, reload = false) {
 	// Read in latest version of config

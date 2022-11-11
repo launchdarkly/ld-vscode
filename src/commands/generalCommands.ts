@@ -1,4 +1,4 @@
-import { Disposable, ExtensionContext, languages } from 'vscode';
+import { Disposable, ExtensionContext } from 'vscode';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
@@ -7,8 +7,6 @@ import openInLdCmd from './openLaunchDarkly';
 import toggleFlagCtxCmd from './toggleFlagContext';
 import enableCodeLensConfig from './enableCodeLens';
 import configureEnvironmentCmd from './configureLaunchDarklyEnvironment';
-import { LaunchDarklyHoverProvider } from '../providers/hover';
-
 export default async function generalCommands(
 	ctx: ExtensionContext,
 	config: Configuration,

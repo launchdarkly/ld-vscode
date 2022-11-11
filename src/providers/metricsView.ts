@@ -5,7 +5,7 @@ import { Configuration } from '../configuration';
 import * as path from 'path';
 import * as url from 'url';
 import { MarkdownString } from 'vscode';
-import checkExistingCommand from '../utils';
+import checkExistingCommand from '../utils/common';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
