@@ -40,7 +40,7 @@ export class CreateFlagMenu {
 		this.config = config;
 		this.api = api;
 		this.title = 'Create Feature Flag';
-		this.totalSteps = 3;
+		this.totalSteps = 2;
 		workspace.name && this.totalSteps++;
 	}
 
