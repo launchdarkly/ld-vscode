@@ -24,7 +24,7 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 		this.config = config;
 		this.flagStore = flagStore;
 		this.aliases = aliases;
-		this.ctx = ctx;
+		this.ctx = global.ldContext;
 	}
 
 	public async provideHover(document: TextDocument, position: Position): Promise<Hover | undefined> {

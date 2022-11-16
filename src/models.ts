@@ -421,3 +421,16 @@ export class Metric {
 	isNumeric: boolean;
 	eventKey: string;
 }
+
+export interface NewFlag {
+	name: string;
+	key: string;
+	description: string;
+	tags: string[];
+	kind: string;
+	clientSideAvailability: {
+		usingEnvironmentId: boolean;
+		usingMobileKey: boolean;
+	};
+	temporary: boolean;
+}

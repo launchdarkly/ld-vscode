@@ -70,7 +70,7 @@ export async function setupComponents(
 	}
 
 	// Add Flag view
-	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, ctx, aliases);
+	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, aliases);
 	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 
 	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
@@ -83,7 +83,7 @@ export async function setupComponents(
 
 	const hoverProviderDisp = languages.registerHoverProvider(
 		LD_MODE,
-		new LaunchDarklyHoverProvider(config, flagStore, ctx, aliases),
+		new LaunchDarklyHoverProvider(config, flagStore, aliases),
 	);
 
 	const listViewDisp = commands.registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument());

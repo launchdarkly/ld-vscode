@@ -10,7 +10,6 @@ import {
 	Command,
 	TreeItemCollapsibleState,
 	CancellationTokenSource,
-	ExtensionContext,
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
@@ -248,7 +247,6 @@ export class FlagNodeList extends FlagParentNode {
 	command?: Command;
 
 	constructor(
-		ctx: ExtensionContext,
 		public readonly tooltip: string,
 		public readonly label: string,
 		public collapsibleState: TreeItemCollapsibleState,
@@ -262,7 +260,7 @@ export class FlagNodeList extends FlagParentNode {
 		enabled?: boolean,
 		aliases?: string[],
 	) {
-		super(ctx, tooltip, label, uri, collapsibleState, children, flagKey, flagVersion, enabled, aliases, contextValue);
+		super(global.ldContext, tooltip, label, uri, collapsibleState, children, flagKey, flagVersion, enabled, aliases, contextValue);
 		this.flagKey = flagKey;
 		this.range = range;
 		this.contextValue = contextValue;

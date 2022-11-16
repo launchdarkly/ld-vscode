@@ -4,7 +4,7 @@ import { MultiStepInput } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
 import { Configuration } from './configuration';
 import { kebabCase } from 'lodash';
-
+import { NewFlag } from './models';
 export interface State {
 	name: string;
 	key: string;
@@ -13,19 +13,6 @@ export interface State {
 	kind: string;
 	clientAvailability: string;
 	mobileAvailability: string;
-	temporary: boolean;
-}
-
-export interface NewFlag {
-	name: string;
-	key: string;
-	description: string;
-	tags: string[];
-	kind: string;
-	clientSideAvailability: {
-		usingEnvironmentId: boolean;
-		usingMobileKey: boolean;
-	};
 	temporary: boolean;
 }
 

@@ -5,7 +5,7 @@ import { window } from 'vscode';
 const axios = require('axios').default;
 
 import { Configuration } from './configuration';
-import { NewFlag } from './createFlagMenu';
+import { NewFlag } from './models';
 import { Resource, Project, FeatureFlag, Environment, PatchOperation, PatchComment, Metric } from './models';
 //import { FeatureFlag } from 'launchdarkly-api-typescript';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
