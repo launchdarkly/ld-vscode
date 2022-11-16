@@ -20,7 +20,7 @@ jobs:
           node-version: '14'
       - run: yarn
       - run: yarn prepare-beta
-      - run: yarn test
+      - run: DISPLAY=:1 yarn test
       - run: yarn run prettier:check
       - run: yarn run lint
         if: ${{ steps.extract_branch.outputs.branch == 'beta' }}
