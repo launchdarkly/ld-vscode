@@ -23,7 +23,7 @@ jobs:
       - name: Run headless test
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: DISPLAY=:1 yarn test
+          run: yarn test
       - run: yarn run prettier:check
       - run: yarn run lint
         if: ${{ steps.extract_branch.outputs.branch == 'beta' }}
