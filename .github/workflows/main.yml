@@ -18,6 +18,16 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
+      - name: Setup Build Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libnss3 libasound2 libgbm-dev
+          sudo cp test/xvfb.init /etc/init.d/xvfb
+          sudo chmod +x /etc/init.d/xvfb
+          sudo update-rc.d xvfb defaults
+          sudo service xvfb start
+          sudo service dbus restart
+          export $(dbus-launch)
       - run: yarn
       - run: yarn prepare-beta
       - run: DISPLAY=:1 yarn test
