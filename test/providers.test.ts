@@ -7,7 +7,7 @@ const expect = require('expect');
 const toMatchSnapshot = require('expect-mocha-snapshot');
 
 expect.extend({ toMatchSnapshot });
-import { generateHoverString } from '../src/providers/hover';
+import { generateHoverString } from '../src/utils/hover';
 import { FeatureFlag, FlagConfiguration } from '../src/models';
 import { Configuration } from '../src/configuration';
 import { isPrecedingCharStringDelimiter } from '../src/providers/completion';

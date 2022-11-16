@@ -8,12 +8,12 @@ import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
 import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
 import { CodeRefs as cr } from './coderefs/codeRefsVersion';
-import { createCipher } from 'crypto';
 
 let config: Configuration;
 let flagStore: FlagStore;
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
+	global.ldContext = ctx
 	config = new Configuration(ctx);
 	const validationError = config.validate();
 	const configuredOnce = ctx.globalState.get('LDConfigured');

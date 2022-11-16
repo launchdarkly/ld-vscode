@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 
 import * as flagsView from '../src/providers/flagsView';
+import { FlagNode, FlagParentNode,flagNodeFactory } from '../src/utils/FlagNode';
 import { FeatureFlag } from '../src/models';
 
 const flag = new FeatureFlag({
@@ -12,8 +13,8 @@ const flag = new FeatureFlag({
 });
 
 suite('flagNode tests', () => {
-	const flagValue = new flagsView.FlagNode(null, flag.name, vscode.TreeItemCollapsibleState.None, [], 'testContext');
-	const flagFunc = flagsView.flagNodeFactory({ label: 'test-label', uri: '/test', flagKey: 'flag-key' });
+	const flagValue = new FlagNode(null, flag.name, vscode.TreeItemCollapsibleState.None, [], 'testContext');
+	const flagFunc = flagNodeFactory({ label: 'test-label', uri: '/test', flagKey: 'flag-key' });
 	test('testFlagValue label', () => {
 		assert.equal(flagValue.label, 'Test');
 	});
@@ -30,12 +31,12 @@ suite('flagNode tests', () => {
 
 		assert.equal(children, 0);
 
-		assert.equal(flagFunc instanceof flagsView.FlagNode, true);
+		assert.equal(flagFunc instanceof FlagNode, true);
 	});
 });
 
 suite('flagParentNode tests', () => {
-	const flagValue = new flagsView.FlagParentNode(
+	const flagValue = new FlagParentNode(
 		null,
 		flag.name,
 		flag.description,

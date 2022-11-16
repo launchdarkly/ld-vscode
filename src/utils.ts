@@ -74,7 +74,7 @@ export async function setupComponents(
 	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
 
 	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
-	const listView = new LaunchDarklyFlagListProvider(config, codeLens, flagStore, flagView);
+	const listView = new LaunchDarklyFlagListProvider(config, codeLens, flagStore);
 	window.registerTreeDataProvider('launchdarklyFlagList', listView);
 
 	const LD_MODE: DocumentFilter = {

@@ -14,15 +14,18 @@ import {
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
+import { flagToValues } from '../utils/FlagNode';
 import { FlagCodeLensProvider, SimpleCodeLens } from './flagLens';
-import { FlagNode, FlagParentNode, FlagTreeInterface, LaunchDarklyTreeViewProvider } from './flagsView';
+import { FlagTreeInterface } from './flagsView';
+import { FlagNode, FlagParentNode } from '../utils/FlagNode';
+import { FlagAliases } from './codeRefs';
 
 export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> {
 	private config: Configuration;
 	private lens: FlagCodeLensProvider;
 	private flagStore: FlagStore;
-	private flagView: LaunchDarklyTreeViewProvider;
 	private flagNodes: Array<FlagTreeInterface>;
+	private aliases?: FlagAliases;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
 	private flagMap: Map<string, FlagList | FlagNodeList> = new Map();
@@ -30,12 +33,12 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		config: Configuration,
 		lens: FlagCodeLensProvider,
 		flagStore: FlagStore,
-		flagView?: LaunchDarklyTreeViewProvider,
+		aliases?: FlagAliases,
 	) {
 		this.config = config;
 		this.lens = lens;
 		this.flagStore = flagStore;
-		this.flagView = flagView;
+		this.aliases = aliases;
 		this.setFlagsinDocument();
 		this.flagReadyListener();
 	}
@@ -141,7 +144,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 					let newElement;
 					if (typeof flagMeta !== 'undefined') {
 						const flagEnv = await this.flagStore.getFlagConfig(codelensFlag.flag);
-						newElement = (await this.flagView.flagToValues(flagMeta[codelensFlag.flag], flagEnv, null)) as FlagNodeList;
+						newElement = (await flagToValues(flagMeta[codelensFlag.flag], flagEnv, this.config, this.aliases)) as FlagNodeList;
 						newElement.list = [codelensFlag.range];
 						this.flagNodes.push(newElement);
 					} else {
@@ -178,7 +181,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 					this.flagStore.getFeatureFlag(key).then((updatedFlag) => {
 						const existingFlag = this.flagMap.get(key);
 						if (typeof existingFlag !== 'undefined') {
-							this.flagView.flagToValues(updatedFlag.flag, updatedFlag.config).then((newFlagValue) => {
+							flagToValues(updatedFlag.flag, updatedFlag.config, this.config, this.aliases).then((newFlagValue) => {
 								const updatedFlagValue = newFlagValue as FlagNodeList;
 								updatedFlagValue.list = existingFlag.list;
 								this.flagMap.set(key, updatedFlagValue);
