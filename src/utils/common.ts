@@ -1,4 +1,4 @@
-import { commands } from "vscode";
+import { commands } from 'vscode';
 
 export default async function checkExistingCommand(commandName: string): Promise<boolean> {
 	const checkCommands = await commands.getCommands(false);

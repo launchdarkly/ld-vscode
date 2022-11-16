@@ -3,7 +3,7 @@
  */
 
 import * as path from 'path';
-import { Command, ExtensionContext, MarkdownString, ThemeIcon, TreeItem, TreeItemCollapsibleState } from "vscode";
+import { Command, ExtensionContext, MarkdownString, ThemeIcon, TreeItem, TreeItemCollapsibleState } from 'vscode';
 import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
 import { FlagAliases } from '../providers/codeRefs';
@@ -32,7 +32,7 @@ export function flagNodeFactory({
  * Class representing a Feature flag as vscode TreeItem
  * It is a nested array of FlagNode's to build the view
  */
- export class FlagNode extends TreeItem {
+export class FlagNode extends TreeItem {
 	children: Array<unknown> | undefined;
 	contextValue?: string;
 	uri?: string;
@@ -145,9 +145,7 @@ export async function flagToValues(
 	 */
 	if (flag.tags.length > 0) {
 		const tags: Array<FlagNode> = flag.tags.map((tag) => flagFactory({ label: tag }));
-		renderedFlagFields.push(
-			flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }),
-		);
+		renderedFlagFields.push(flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }));
 	}
 	if (aliases) {
 		const aliasKeys = aliases.getKeys();
@@ -180,7 +178,9 @@ export async function flagToValues(
 	if (typeof flagPrereqs !== 'undefined' && flagPrereqs.length > 0) {
 		flagPrereqs.map((prereq) => {
 			prereqs.push(flagFactory({ label: `Flag: ${prereq.key}`, collapsed: NON_COLLAPSED }));
-			prereqs.push(flagFactory({ label: `Variation: ${prereq.variation}`, collapsed: NON_COLLAPSED, ctx: global.ldContext}));
+			prereqs.push(
+				flagFactory({ label: `Variation: ${prereq.variation}`, collapsed: NON_COLLAPSED, ctx: global.ldContext }),
+			);
 		});
 		renderedFlagFields.push(
 			flagFactory({
@@ -358,8 +358,7 @@ function flagFactory({
 	flagKey = '',
 	flagParentName = '',
 	flagVersion = 0,
-	ctx = null
-
+	ctx = null,
 }) {
 	return flagNodeFactory({
 		ctx: ctx,

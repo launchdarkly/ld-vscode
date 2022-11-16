@@ -1,11 +1,4 @@
-import {
-	commands,
-	ExtensionContext,
-	Hover,
-	HoverProvider,
-	Position,
-	TextDocument,
-} from 'vscode';
+import { commands, ExtensionContext, Hover, HoverProvider, Position, TextDocument } from 'vscode';
 import { FlagStore } from '../flagStore';
 import { FlagAliases } from './codeRefs';
 import { Configuration } from '../configuration';

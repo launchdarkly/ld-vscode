@@ -13,7 +13,7 @@ let config: Configuration;
 let flagStore: FlagStore;
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
-	global.ldContext = ctx
+	global.ldContext = ctx;
 	config = new Configuration(ctx);
 	const validationError = config.validate();
 	const configuredOnce = ctx.globalState.get('LDConfigured');

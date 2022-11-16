@@ -23,12 +23,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		new vscode.EventEmitter<FlagTreeInterface | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<FlagTreeInterface | null | void> = this._onDidChangeTreeData.event;
 
-	constructor(
-		api: LaunchDarklyAPI,
-		config: Configuration,
-		flagStore: FlagStore,
-		aliases?: FlagAliases,
-	) {
+	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
 		this.api = api;
 		this.config = config;
 		this.flagStore = flagStore;
@@ -107,7 +102,13 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			} else {
 				const updatedFlag = await this.flagStore.getFeatureFlag(element.flagKey);
 				const updatedIdx = this.flagNodes.findIndex((v) => v.flagKey === element.flagKey);
-				const newFlag = await flagToValues(updatedFlag.flag, updatedFlag.config, this.config, this.aliases, element as FlagParentNode);
+				const newFlag = await flagToValues(
+					updatedFlag.flag,
+					updatedFlag.config,
+					this.config,
+					this.aliases,
+					element as FlagParentNode,
+				);
 				this.flagNodes[updatedIdx] = newFlag;
 				return newFlag.children;
 			}
@@ -353,8 +354,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		return item;
 	}
 }
-
-
 
 export interface FlagTreeInterface {
 	children: unknown;

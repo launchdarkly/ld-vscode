@@ -1,4 +1,4 @@
-import { ColorThemeKind, ExtensionContext, MarkdownString, window } from "vscode";
+import { ColorThemeKind, ExtensionContext, MarkdownString, window } from 'vscode';
 import { FeatureFlag, FlagConfiguration } from '../models';
 import { Configuration } from '../configuration';
 import * as fs from 'fs';

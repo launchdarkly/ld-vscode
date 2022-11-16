@@ -28,12 +28,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
 	private flagMap: Map<string, FlagList | FlagNodeList> = new Map();
-	constructor(
-		config: Configuration,
-		lens: FlagCodeLensProvider,
-		flagStore: FlagStore,
-		aliases?: FlagAliases,
-	) {
+	constructor(config: Configuration, lens: FlagCodeLensProvider, flagStore: FlagStore, aliases?: FlagAliases) {
 		this.config = config;
 		this.lens = lens;
 		this.flagStore = flagStore;
@@ -143,7 +138,12 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 					let newElement;
 					if (typeof flagMeta !== 'undefined') {
 						const flagEnv = await this.flagStore.getFlagConfig(codelensFlag.flag);
-						newElement = (await flagToValues(flagMeta[codelensFlag.flag], flagEnv, this.config, this.aliases)) as FlagNodeList;
+						newElement = (await flagToValues(
+							flagMeta[codelensFlag.flag],
+							flagEnv,
+							this.config,
+							this.aliases,
+						)) as FlagNodeList;
 						newElement.list = [codelensFlag.range];
 						this.flagNodes.push(newElement);
 					} else {
@@ -260,7 +260,19 @@ export class FlagNodeList extends FlagParentNode {
 		enabled?: boolean,
 		aliases?: string[],
 	) {
-		super(global.ldContext, tooltip, label, uri, collapsibleState, children, flagKey, flagVersion, enabled, aliases, contextValue);
+		super(
+			global.ldContext,
+			tooltip,
+			label,
+			uri,
+			collapsibleState,
+			children,
+			flagKey,
+			flagVersion,
+			enabled,
+			aliases,
+			contextValue,
+		);
 		this.flagKey = flagKey;
 		this.range = range;
 		this.contextValue = contextValue;
