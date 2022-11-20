@@ -100,26 +100,29 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 				command: 'launchdarkly.createFlag',
 			}),
 		);
-		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, `${baseUrl}/features/new`));
-		items.push(new LinkNode(`Feature Flags`, NON_COLLAPSED, `${baseUrl}/features`));
-		items.push(new LinkNode(`Segments`, NON_COLLAPSED, `${baseUrl}/segments`));
-		items.push(new LinkNode(`Users`, NON_COLLAPSED, `${baseUrl}/users`));
-		items.push(new LinkNode(`Debugger`, NON_COLLAPSED, `${baseUrl}/debugger`));
-		items.push(new LinkNode(`Experiments`, NON_COLLAPSED, `${baseUrl}/experiments`));
-		items.push(new LinkNode(`Audit Log`, NON_COLLAPSED, `${baseUrl}/audit`));
-		items.push(new LinkNode(`Flag Comparison`, NON_COLLAPSED, `${baseUrl}/features/compare`));
+		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/features/new`)));
+		items.push(new LinkNode(`Feature Flags`, NON_COLLAPSED, addUtm(`${baseUrl}/features`)));
+		items.push(new LinkNode(`Segments`, NON_COLLAPSED, addUtm(`${baseUrl}/segments`)));
+		items.push(new LinkNode(`Users`, NON_COLLAPSED, addUtm(`${baseUrl}/users`)));
+		items.push(new LinkNode(`Debugger`, NON_COLLAPSED, addUtm(`${baseUrl}/debugger`)));
+		items.push(new LinkNode(`Experiments`, NON_COLLAPSED, addUtm(`${baseUrl}/experiments`)));
+		items.push(new LinkNode(`Audit Log`, NON_COLLAPSED, addUtm(`${baseUrl}/audit`)));
+		items.push(new LinkNode(`Flag Comparison`, NON_COLLAPSED, addUtm(`${baseUrl}/features/compare`)));
 		items.push(
 			new LinkNode(`Flag Environment Overview`, NON_COLLAPSED, '', {
 				title: 'Open In Browser',
 				command: 'launchdarkly.openCompareFlag',
 			}),
 		);
-		items.push(new LinkNode(`Documentation`, NON_COLLAPSED, `https://docs.launchdarkly.com`));
+		items.push(new LinkNode(`Documentation`, NON_COLLAPSED, addUtm(`https://docs.launchdarkly.com`)));
 
 		return Promise.resolve(items);
 	}
 }
 
+function addUtm(url: string) {
+	return `${url}?utm_source=vscode`
+}
 export class LinkNode extends TreeItem {
 	environment: string;
 	uri: string;
