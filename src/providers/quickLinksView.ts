@@ -121,7 +121,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 }
 
 function addUtm(url: string) {
-	return `${url}?utm_source=vscode`
+	return `${url}?utm_source=vscode`;
 }
 export class LinkNode extends TreeItem {
 	environment: string;
