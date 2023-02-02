@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "3.9.1",
+	"version": "3.9.2",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.68.0"

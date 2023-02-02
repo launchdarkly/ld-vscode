@@ -3,7 +3,6 @@ import { commands, window, ExtensionContext, workspace, ConfigurationChangeEvent
 import { Configuration } from './configuration';
 import { LaunchDarklyAPI } from './api';
 import { FlagStore } from './flagStore';
-import { FlagItem } from './providers/flagListView';
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
 import { extensionReload, setupComponents } from './utils';
@@ -26,9 +25,7 @@ export async function register(
 			await extensionReload(config, ctx, true);
 		}
 	});
-	if (!config.isConfigured) {
-		return;
-	}
+
 	if (typeof flagStore !== 'undefined') {
 		await setupComponents(api, config, ctx, flagStore);
 	}
@@ -49,6 +46,7 @@ export async function register(
 				const localConfig = workspace.getConfiguration('launchdarkly');
 				await ctx.workspaceState.update('project', localConfig['project']);
 				await ctx.workspaceState.update('env', localConfig['env']);
+				await ctx.secrets.store('launchdarkly_accessToken', localConfig['accessToken']);
 				await extensionReload(config, ctx);
 				window.showInformationMessage('[LaunchDarkly] Configured successfully');
 			} catch (err) {

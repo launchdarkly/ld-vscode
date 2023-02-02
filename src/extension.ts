@@ -15,7 +15,8 @@ let flagStore: FlagStore;
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	global.ldContext = ctx;
 	config = new Configuration(ctx);
-	const validationError = config.validate();
+	await config.reload();
+	const validationError = await config.validate();
 	const configuredOnce = ctx.globalState.get('LDConfigured');
 	switch (validationError) {
 		case 'unconfigured':

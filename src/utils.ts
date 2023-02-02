@@ -18,7 +18,6 @@ import { FlagCodeLensProvider } from './providers/flagLens';
 import { FlagItem, LaunchDarklyFlagListProvider } from './providers/flagListView';
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { LaunchDarklyHoverProvider } from './providers/hover';
-import { LaunchDarklyMetricsTreeViewProvider } from './providers/metricsView';
 import { QuickLinksListProvider } from './providers/quickLinksView';
 import { setTimeout } from 'timers/promises';
 import { ToggleCache } from './toggleCache';
@@ -27,7 +26,7 @@ const cache = new ToggleCache();
 
 export async function extensionReload(config: Configuration, ctx: ExtensionContext, reload = false) {
 	// Read in latest version of config
-	config.reload();
+	await config.reload();
 	const newApi = new LaunchDarklyAPI(config);
 	const flagStore = new FlagStore(config, newApi);
 	await setupComponents(newApi, config, ctx, flagStore, reload);
@@ -49,10 +48,6 @@ export async function setupComponents(
 		// Disposables.from does not wait for async disposal so need to wait here.
 		await setTimeout(700);
 	}
-
-	// Add metrics view
-	const metricsView = new LaunchDarklyMetricsTreeViewProvider(api, config, ctx);
-	window.registerTreeDataProvider('launchdarklyMetrics', metricsView);
 
 	// Add Quick Links view
 	const quickLinksView = new QuickLinksListProvider(config, flagStore);

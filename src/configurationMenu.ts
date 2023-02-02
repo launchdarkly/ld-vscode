@@ -33,14 +33,16 @@ export class ConfigurationMenu {
 		this.ctx = ctx;
 	}
 
-	async collectInputs() {
-		const state = {} as Partial<CMState>;
+	async collectInputs(): Promise<CMState> {
+		const state = {} as CMState;
 		if (this.currentAccessToken) {
 			await MultiStepInput.run((input) => this.pickInstance(input, state));
 			return;
 		}
 
 		await MultiStepInput.run((input) => this.pickInstance(input, state));
+
+		return state;
 	}
 
 	shouldResume(): Promise<boolean> {
@@ -50,11 +52,12 @@ export class ConfigurationMenu {
 		return new Promise<boolean>(() => {});
 	}
 
-	async pickCurrentOrNewAccessToken(input: MultiStepInput, state: Partial<CMState>) {
+	async pickCurrentOrNewAccessToken(input: MultiStepInput, state: CMState) {
 		this.useGlobalState = false;
 		const existingTokenName = 'Use the existing access token';
 		const clearOverrides = 'Clear Workspace Specific Configurations';
 		const clearGlobalOverrides = 'Clear All LaunchDarkly Configurations';
+		const newToken = 'Enter a new access token';
 		const options = [];
 		const currentToken = this.currentAccessToken.substr(this.currentAccessToken.length - 6);
 		if (currentToken.length > 0) {
@@ -63,9 +66,9 @@ export class ConfigurationMenu {
 				key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6),
 			});
 		}
-		options.push({ name: 'Enter a new access token' });
+		options.push({ name: newToken });
 
-		if (this.config.localIsConfigured()) {
+		if (await this.config.localIsConfigured()) {
 			options.push({ name: clearOverrides, key: 'clear overrides' });
 		}
 		options.push({ name: clearGlobalOverrides, key: 'clear all configuration data' });
@@ -89,7 +92,7 @@ export class ConfigurationMenu {
 
 		if (pick.label === clearOverrides) {
 			await this.config.clearLocalConfig();
-			this.config.reload();
+			await this.config.reload();
 			return (input: MultiStepInput) => this.pickInstance(input, state);
 		}
 
@@ -100,10 +103,10 @@ export class ConfigurationMenu {
 			return (input: MultiStepInput) => this.pickInstance(input, state);
 		}
 
-		return (input: MultiStepInput) => this.inputAccessToken(input, state);
+		return async (input: MultiStepInput) => await this.inputAccessToken(input, state);
 	}
 
-	async inputAccessToken(input: MultiStepInput, state: Partial<CMState>) {
+	async inputAccessToken(input: MultiStepInput, state: CMState) {
 		state.accessToken = '';
 		state.accessToken = await input.showInputBox({
 			title: this.title,
@@ -114,7 +117,6 @@ export class ConfigurationMenu {
 			validate: (token) => this.validateAccessToken(token, this.invalidAccessToken),
 			shouldResume: this.shouldResume,
 		});
-
 		try {
 			this.updateAPI(state);
 			await this.api.getAccount();
@@ -130,7 +132,7 @@ export class ConfigurationMenu {
 		}
 	}
 
-	async pickInstance(input: MultiStepInput, state: Partial<CMState>) {
+	async pickInstance(input: MultiStepInput, state: CMState) {
 		const baseUri = await input.showInputBox({
 			title: this.title,
 			step: 1,
@@ -145,7 +147,7 @@ export class ConfigurationMenu {
 		return (input: MultiStepInput) => this.pickCurrentOrNewAccessToken(input, state);
 	}
 
-	async pickProject(input: MultiStepInput, state: Partial<CMState>) {
+	async pickProject(input: MultiStepInput, state: CMState) {
 		let projectOptions: QuickPickItem[];
 		try {
 			this.updateAPI(state);
@@ -176,7 +178,7 @@ export class ConfigurationMenu {
 		return (input: MultiStepInput) => this.pickEnvironment(input, state);
 	}
 
-	async pickEnvironment(input: MultiStepInput, state: Partial<CMState>) {
+	async pickEnvironment(input: MultiStepInput, state: CMState) {
 		const selectedProject = this.projects.find((proj) => proj.key === state.project);
 		const environments = selectedProject.environments;
 		const selectEnvironmentOptions = environments
@@ -202,14 +204,9 @@ export class ConfigurationMenu {
 		});
 
 		state.env = pick.description;
-		Object.keys(state).forEach(async (key) => {
-			await this.config.update(key, state[key], false);
-		});
 		pick.alwaysShow = false;
-
+		this.state = state;
 		window.showInformationMessage('[LaunchDarkly] Updating Configuration');
-		// want menu to close while updating
-		await extensionReload(this.config, this.ctx, true);
 	}
 
 	async validateAccessToken(token: string, invalidAccessToken: string) {
@@ -227,9 +224,12 @@ export class ConfigurationMenu {
 
 	async configure() {
 		await this.collectInputs();
-		['accessToken', 'baseUri', 'project', 'env'].forEach(async (option) => {
-			await this.config.update(option, this[option], this.useGlobalState);
-		});
+		const params = ['accessToken', 'baseUri', 'project', 'env'];
+		for await (const option of params) {
+			await this.config.update(params[option], this.state[params[option]], this.useGlobalState);
+		}
+		// want menu to close while updating
+		await extensionReload(this.config, this.ctx, true);
 	}
 
 	createQuickPickItem(resource: Resource): QuickPickItem {
