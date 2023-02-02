@@ -12,7 +12,7 @@ const package_json = require('../package.json');
 
 const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
 const DEFAULT_STREAM_URI = 'https://stream.launchdarkly.com';
-const ACCESS_TOKEN = 'launchdarkly_accessToken'
+const ACCESS_TOKEN = 'launchdarkly_accessToken';
 
 export class Configuration {
 	private readonly ctx: ExtensionContext;
