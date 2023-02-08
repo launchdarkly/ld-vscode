@@ -46,7 +46,7 @@ export class Configuration {
 		}
 
 		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
-		const oldToken = await this.ctx.globalState.get('accessToken')
+		const oldToken = await this.ctx.globalState.get('accessToken');
 		// Delete the old token once it's in new secrets API.
 		if (typeof oldToken !== 'undefined') {
 			await this.ctx.secrets.store(ACCESS_TOKEN, oldToken as string);
