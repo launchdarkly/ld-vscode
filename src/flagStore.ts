@@ -92,7 +92,12 @@ export class FlagStore {
 			this.setFlagListeners();
 			this.setLDClientBackgroundCheck();
 		} catch (err) {
-			window.showErrorMessage('Failed to setup LaunchDarkly client');
+			window
+				.showErrorMessage('[LaunchDarkly] Failed to setup LaunchDarkly client', 'Configure LaunchDarkly Extension')
+				.then((selection) => {
+					if (selection === 'Configure LaunchDarkly Extension')
+						commands.executeCommand('extension.configureLaunchDarkly');
+				});
 			this.rejectLDClient();
 			console.error(`Failed to setup client: ${err}`);
 		}

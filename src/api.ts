@@ -1,6 +1,6 @@
 import { reject } from 'lodash';
 import * as url from 'url';
-import { window } from 'vscode';
+import { commands, window } from 'vscode';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const axios = require('axios').default;
 
@@ -44,7 +44,15 @@ export class LaunchDarklyAPI {
 			const project = data.data;
 			return project;
 		} catch (err) {
-			window.showErrorMessage(`[LaunchDarkly] Error getting Project: ${projectKey}\n${err}`);
+			window
+				.showErrorMessage(
+					`[LaunchDarkly] Error getting Project: ${projectKey}\n${err}`,
+					'Configure LaunchDarkly Extension',
+				)
+				.then((selection) => {
+					if (selection === 'Configure LaunchDarkly Extension')
+						commands.executeCommand('extension.configureLaunchDarkly');
+				});
 		}
 	}
 
@@ -54,7 +62,15 @@ export class LaunchDarklyAPI {
 			const data = await axios.get(options.url, options);
 			return data.data;
 		} catch (err) {
-			window.showErrorMessage(`[LaunchDarkly] Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`);
+			window
+				.showErrorMessage(
+					`[LaunchDarkly] Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`,
+					'Configure LaunchDarkly Extension',
+				)
+				.then((selection) => {
+					if (selection === 'Configure LaunchDarkly Extension')
+						commands.executeCommand('extension.configureLaunchDarkly');
+				});
 		}
 	}
 
@@ -65,7 +81,15 @@ export class LaunchDarklyAPI {
 			const data = await axios.get(options.url, options);
 			return data.data.items;
 		} catch (err) {
-			window.showErrorMessage(`[LaunchDarkly] Error getting Metrics for Project: ${projectKey}\n${err}`);
+			window
+				.showErrorMessage(
+					`[LaunchDarkly] Error getting Metrics for Project: ${projectKey}\n${err}`,
+					'Configure LaunchDarkly Extension',
+				)
+				.then((selection) => {
+					if (selection === 'Configure LaunchDarkly Extension')
+						commands.executeCommand('extension.configureLaunchDarkly');
+				});
 		}
 	}
 

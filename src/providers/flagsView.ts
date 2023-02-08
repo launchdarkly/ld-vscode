@@ -129,13 +129,14 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			const nodes = [];
 			if (this.flagStore) {
 				const flags = await this.flagStore.allFlagsMetadata();
-				if (flags?.length == 0 && this.config.isConfigured()) {
+				const checkFlags = Object.keys(flags)?.length;
+				if (checkFlags == 0 && this.config.isConfigured()) {
 					setInterval(() => {
 						this.debouncedReload();
 					}, 5000);
 				}
 
-				if (Object.keys(flags).length > 0) {
+				if (checkFlags > 0) {
 					map(flags, (value) => {
 						setImmediate(() => {
 							this.flagToParent(value).then((node) => {

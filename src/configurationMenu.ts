@@ -226,7 +226,7 @@ export class ConfigurationMenu {
 		await this.collectInputs();
 		const params = ['accessToken', 'baseUri', 'project', 'env'];
 		for await (const option of params) {
-			await this.config.update(params[option], this.state[params[option]], this.useGlobalState);
+			await this.config.update(option, this.state[option], this.useGlobalState);
 		}
 		// want menu to close while updating
 		await extensionReload(this.config, this.ctx, true);
