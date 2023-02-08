@@ -20,13 +20,13 @@ jobs:
           node-version: '14'
       - run: yarn
       - run: yarn prepare-beta
+        if: ${{ steps.extract_branch.outputs.branch == 'beta' }}
       - name: Run headless test
         uses: GabrielBB/xvfb-action@v1
         with:
           run: yarn test
       - run: yarn run prettier:check
       - run: yarn run lint
-        if: ${{ steps.extract_branch.outputs.branch == 'beta' }}
       - name: Publish to Visual Studio Marketplace
         if: ${{ steps.extract_branch.outputs.branch != 'prerelease' }}
         uses: HaaLeo/publish-vscode-extension@v1
