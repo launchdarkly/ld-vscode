@@ -48,7 +48,7 @@ export class Configuration {
 		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
 		const oldToken = await this.ctx.globalState.get('accessToken');
 		// Delete the old token once it's in new secrets API.
-		if (typeof oldToken !== 'undefined') {
+		if (oldToken) {
 			await this.ctx.secrets.store(ACCESS_TOKEN, oldToken as string);
 			await this.ctx.globalState.update('accessToken', null);
 			await this.ctx.workspaceState.update('accessToken', null);
@@ -151,7 +151,7 @@ export class Configuration {
 		const token = await this.ctx.secrets.get(ACCESS_TOKEN);
 		const proj = await this.ctx.workspaceState.get('project');
 		const env = await this.ctx.workspaceState.get('env');
-		const check = token !== '' && proj !== '' && env !== '';
+		const check = token !== null && token.length > 0 && proj !== '' && env !== '';
 		return check;
 	}
 
