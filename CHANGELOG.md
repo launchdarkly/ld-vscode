@@ -2,16 +2,38 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [4.0.0] - 2023-02-09
+
+### Changed
+
+- Moved Flag tree view to new LaunchDarkly Explorer view
+- API Tokens are now stored using Secrets API
+
+### Added
+
+- Quick Links to various LaunchDarkly pages
+- Create flags from VS Code
+- Find flags in file view
+- New command `LaunchDarkly: Toggle Flag` to toggle flags from command palette
+
+### Fixed
+
+- Various fixes for streaming connections
+
 ## [3.0.6] - 2021-09-14
+
 ### Changed
 
 - Updates for Marketplace
+
 ## [3.0.5] - 2021-09-14
+
 ### Changed
 
 - Update icon
 
 ## [2.4.0] - 2020-11-10
+
 ### Changed
 
 - Show flag status(on/off) at top level of treeview
@@ -60,6 +82,7 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 - Fixed an error log when cursor position was in an invalid state
 
 ### Changed
+
 - Cleaned up debug logging
 - The extension will no longer initially display a warning message when not configured.
 

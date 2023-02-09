@@ -1,11 +1,13 @@
 import { EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
 import { exec, ExecOptions } from 'child_process';
-import { access, createReadStream, constants } from 'fs';
+import { createReadStream } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import * as csv from 'csv-parser';
+import csv from 'csv-parser';
 import { Configuration } from '../configuration';
 import { CodeRefs } from '../coderefs/codeRefsVersion';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { promises: Fs } = require('fs');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const fs = require('fs').promises;
@@ -77,20 +79,16 @@ export class FlagAliases {
 	}
 
 	async getCodeRefsBin(): Promise<string> {
-		await access(
-			join(this.ctx.asAbsolutePath('coderefs'), `${CodeRefs.version}/ld-find-code-refs`),
-			constants.F_OK,
-			err => {
-				if (err) {
-					return this.config.codeRefsPath ? this.config.codeRefsPath : '';
-				}
-			},
-		);
-		let codeRefsBin = `${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`;
-		if (process.platform == 'win32') {
-			codeRefsBin = `${codeRefsBin}.exe`;
+		try {
+			await Fs.access(join(this.ctx.asAbsolutePath('coderefs'), `${CodeRefs.version}/ld-find-code-refs`));
+			let codeRefsBin = `${this.ctx.asAbsolutePath('coderefs')}/${CodeRefs.version}/ld-find-code-refs`;
+			if (process.platform == 'win32') {
+				codeRefsBin = `${codeRefsBin}.exe`;
+			}
+			return codeRefsBin;
+		} catch (err) {
+			return this.config.codeRefsPath ? this.config.codeRefsPath : '';
 		}
-		return codeRefsBin;
 	}
 
 	async generateCsv(directory: string, outDir: string, repoName: string): Promise<void> {
@@ -98,11 +96,11 @@ export class FlagAliases {
 			const codeRefsBin = await this.getCodeRefsBin();
 			const command = `${codeRefsBin} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${this.config.project}" --repoName="${repoName}" --baseUri="${this.config.baseUri}" --contextLines=-1 --branch=scan --revision=0`;
 			const output = await this.exec(command, {
-				env: { LD_ACCESS_TOKEN: this.config.accessToken, GOMAXPROCS: 1 },
+				env: { LD_ACCESS_TOKEN: this.config.accessToken, GOMAXPROCS: '1' },
 				timeout: 20 * 60000,
 			});
 			if (output.stderr) {
-				window.showErrorMessage(output.stderr);
+				window.showErrorMessage(`[LaunchDarkly] finding Code References failed ${output.stderr}`);
 			}
 		} catch (err) {
 			window.showErrorMessage(err.error);
@@ -120,31 +118,46 @@ export class FlagAliases {
 		this.statusBar.text = `LaunchDarkly: Generating aliases`;
 		this.statusBar.show();
 		await this.generateCsv(refsDir, tmpDir, tmpRepo);
-		const aliasFile = join(tmpDir, `coderefs_${this.config.project}_${tmpRepo}_scan.csv`);
-		createReadStream(aliasFile)
-			.pipe(csv())
-			.on('data', (row: FlagAlias) => {
-				const findKey = this.keys[row.flagKey];
-				const aliases = row.aliases.split(' ');
-				if (findKey === undefined) {
-					this.keys[row.flagKey] = [...new Set(aliases)].filter(Boolean);
-				} else {
-					const items = [...findKey, ...aliases];
-					this.keys[row.flagKey] = [...new Set(items)].filter(Boolean);
-				}
-				aliases.map(alias => {
-					this.map[alias] = row.flagKey;
-				});
-			})
-			.on('end', () => {
-				this.ctx.workspaceState.update('aliasMap', this.map);
-				this.ctx.workspaceState.update('aliasKeys', this.keys);
-				const mapKeys = Object.keys(this.map).filter(element => element != '');
-				this.ctx.workspaceState.update('aliasListOfMapKeys', mapKeys);
-				this.aliasUpdates.fire(true);
+		const aliasFile = join(tmpDir, `coderefs__${tmpRepo}_scan.csv`);
+		fs.access(aliasFile, fs.F_OK, (err) => {
+			if (err) {
 				this.statusBar.hide();
-				fs.rmdir(tmpDir, { recursive: true });
-			});
+				return;
+			}
+			createReadStream(aliasFile)
+				.pipe(csv())
+				.on('data', (row: FlagAlias) => {
+					const findKey = this.keys[row.flagKey];
+					const aliases = row.aliases.split(' ');
+					if (findKey === undefined) {
+						this.keys[row.flagKey] = [...new Set(aliases)].filter(Boolean);
+					} else {
+						const items = [...findKey, ...aliases];
+						this.keys[row.flagKey] = [...new Set(items)].filter(Boolean);
+					}
+					aliases.map((alias) => {
+						if (alias == '') {
+							return;
+						}
+						this.map[alias] = row.flagKey;
+					});
+				})
+				.on('end', () => {
+					this.ctx.workspaceState.update('aliasMap', this.map);
+					this.ctx.workspaceState.update('aliasKeys', this.keys);
+					const mapKeys = Object.keys(this.map)
+						.filter((element) => element != '')
+						.sort();
+					this.ctx.workspaceState.update('aliasListOfMapKeys', mapKeys);
+					this.aliasUpdates.fire(true);
+					this.statusBar.hide();
+					fs.rm(tmpDir, { recursive: true });
+				})
+				.on('error', function () {
+					console.log('Code Refs file does not exist');
+					this.statusBar.hide();
+				});
+		});
 	}
 
 	async codeRefsVersionCheck(): Promise<boolean> {
