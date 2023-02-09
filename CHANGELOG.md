@@ -2,6 +2,13 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [4.0.1] - 2023-02-09
+
+### Fixed
+
+- Fixed readiness check
+- Fixed error with automatic migration of API tokens
+
 ## [4.0.0] - 2023-02-09
 
 ### Changed
