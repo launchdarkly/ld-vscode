@@ -1,17 +1,25 @@
-import { WorkspaceConfiguration, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
+import {
+	WorkspaceConfiguration,
+	WorkspaceFolder,
+	workspace,
+	ExtensionContext,
+	ConfigurationChangeEvent,
+	ConfigurationTarget,
+	window,
+} from 'vscode';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const package_json = require('../package.json');
 
 const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
 const DEFAULT_STREAM_URI = 'https://stream.launchdarkly.com';
+const ACCESS_TOKEN = 'launchdarkly_accessToken';
 
 export class Configuration {
 	private readonly ctx: ExtensionContext;
-	accessToken = '';
-	sdkKey = '';
 	project = '';
 	env = '';
+	accessToken = '';
 	codeRefsPath = '';
 	refreshRate = 120;
 	codeRefsRefreshRate = 240;
@@ -19,40 +27,72 @@ export class Configuration {
 	enableHover = true;
 	enableAutocomplete = true;
 	enableFlagExplorer = true;
+	enableMetricExplorer = false;
+	enableCodeLens = false;
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
 
 	constructor(ctx: ExtensionContext) {
 		this.ctx = ctx;
-		this.reload();
 	}
 
-	reload(): void {
+	async reload(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
 		for (const option in this) {
-			if (option === 'ctx') {
+			if (option === 'ctx' || option === 'project' || option === 'env' || option === 'accessToken') {
 				continue;
 			}
 			this[option] = config.get(option);
 		}
 
 		// If accessToken is configured in state, use it. Otherwise, fall back to the legacy access token.
-		this.accessToken = this.getState('accessToken') || this.accessToken;
+		const oldToken = await this.ctx.globalState.get('accessToken');
+		// Delete the old token once it's in new secrets API.
+		if (typeof oldToken !== 'undefined') {
+			await this.ctx.secrets.store(ACCESS_TOKEN, oldToken as string);
+			await this.ctx.globalState.update('accessToken', null);
+			await this.ctx.workspaceState.update('accessToken', null);
+		}
+		const accessToken = await this.ctx.secrets.get(ACCESS_TOKEN);
+		let env = await this.getState('env');
+		if (typeof env === 'undefined') {
+			env = '';
+		}
+		let project = await this.getState('project');
+		if (typeof project === 'undefined') {
+			project = '';
+		}
+		const baseUri = await this.getState('baseUri');
+		if (!accessToken) {
+			return;
+		}
+		if (!accessToken.startsWith('api')) {
+			console.error(`Access Token does not start with api-. token: ${accessToken}`);
+			window.showErrorMessage('[LaunchDarkly] Access Token does not start with api-. Please reconfigure.');
+		}
+		this.accessToken = accessToken;
+		this.env = env as string;
+		this.project = project as string;
+		this.baseUri = typeof baseUri === 'undefined' ? baseUri : DEFAULT_BASE_URI;
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {
 		if (typeof this[key] !== typeof value) {
 			return;
 		}
-
-		let config: WorkspaceConfiguration = workspace.getConfiguration('launchdarkly');
+		const config: WorkspaceConfiguration = workspace.getConfiguration('launchdarkly');
 		if (key === 'accessToken') {
-			const ctxState = global ? this.ctx.globalState : this.ctx.workspaceState;
-			await ctxState.update(key, value);
+			await this.ctx.secrets.store(ACCESS_TOKEN, value as string);
+			this[key] = value as string;
 			return;
+		} else if (key === 'env' || key === 'project' || key === 'baseUri') {
+			const ctxState = this.ctx.workspaceState;
+			await ctxState.update(key, value);
+			this[key] = value as string;
+			return;
+		} else {
+			await config.update(key, value, global);
 		}
-		await config.update(key, value, global);
-		config = workspace.getConfiguration('launchdarkly');
 
 		this[key] = value;
 		// eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -60,8 +100,14 @@ export class Configuration {
 	}
 
 	public streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
-		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-		if (streamingConfigOptions.every(option => !e.affectsConfiguration(`launchdarkly.${option}`))) {
+		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri'];
+		const currProj = this.ctx.workspaceState.get('project');
+		const currEnv = this.ctx.workspaceState.get('env');
+		if (
+			streamingConfigOptions.every((option) => !e.affectsConfiguration(`launchdarkly.${option}`)) &&
+			typeof currProj !== 'undefined' &&
+			typeof currEnv !== 'undefined'
+		) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return true;
 		}
@@ -69,15 +115,21 @@ export class Configuration {
 	}
 
 	public streamingConfigStartCheck(): boolean {
-		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri', 'project', 'env'];
-		if (!streamingConfigOptions.every(o => !!this[o])) {
+		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri'];
+		const currProj = this.ctx.workspaceState.get('project');
+		const currEnv = this.ctx.workspaceState.get('env');
+		if (
+			!streamingConfigOptions.every((o) => !!this[o]) &&
+			typeof currProj !== 'undefined' &&
+			typeof currEnv !== 'undefined'
+		) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return false;
 		}
 		return true;
 	}
 
-	validate(): string {
+	async validate(): Promise<string> {
 		const version = package_json.version;
 		const ctx = this.ctx;
 		ctx.globalState.update('version', undefined);
@@ -89,17 +141,74 @@ export class Configuration {
 		}
 
 		// Only recommend configuring the extension on install and update
-		if (!isDisabledForWorkspace && version != storedVersion && !this.isConfigured()) {
+		const checkConfig = await this.isConfigured();
+		if (!isDisabledForWorkspace && version != storedVersion && !checkConfig) {
 			return 'unconfigured';
 		}
 	}
 
-	isConfigured(): boolean {
-		return !!this.accessToken && !!this.project && !!this.env;
+	async isConfigured(): Promise<boolean> {
+		const token = await this.ctx.secrets.get(ACCESS_TOKEN);
+		const proj = await this.ctx.workspaceState.get('project');
+		const env = await this.ctx.workspaceState.get('env');
+		const check = token !== '' && proj !== '' && env !== '';
+		return check;
 	}
 
-	getState(key: string): string {
-		return this.ctx.workspaceState.get(key) || this.ctx.globalState.get(key);
+	async localIsConfigured(): Promise<boolean> {
+		const config = workspace.getConfiguration('launchdarkly');
+		return (
+			!!(await this.ctx.secrets.get(ACCESS_TOKEN)) ||
+			!!config.inspect('project').workspaceValue ||
+			!!config.inspect('env').workspaceValue
+		);
+	}
+
+	async clearLocalConfig(): Promise<void> {
+		const config = workspace.getConfiguration('launchdarkly');
+		await this.ctx.workspaceState.update('accessToken', undefined);
+		await config.update('project', undefined, ConfigurationTarget.Workspace);
+		await config.update('env', undefined, ConfigurationTarget.Workspace);
+	}
+
+	async clearGlobalConfig(): Promise<void> {
+		const config = workspace.getConfiguration('launchdarkly');
+		await this.ctx.globalState.update('accessToken', undefined);
+		await config.update('project', undefined, ConfigurationTarget.Global);
+		await config.update('env', undefined, ConfigurationTarget.Global);
+		await this.ctx.secrets.delete(ACCESS_TOKEN);
+		await this.reload();
+	}
+
+	async getState(key: string): Promise<string | unknown> {
+		// if (key == 'accessToken') {
+		// 	const token = await this.ctx.secrets.get(ACCESS_TOKEN);
+		// 	return token;
+		// }
+		const currValue = await this.ctx.workspaceState.get(key);
+		if (typeof currValue === 'undefined') {
+			const workDir = workspace.workspaceFolders[0];
+			if (typeof workDir !== 'undefined') {
+				const config = workspace.getConfiguration('launchdarkly', workspace.workspaceFolders[0]);
+				const configValue = await config.get(key);
+				if (configValue !== '') {
+					// Updating Workspace from old config values, these could be workspace or global.
+					await this.ctx.workspaceState.update(key, configValue);
+					await config.update(key, undefined);
+					return configValue;
+				}
+			}
+			const globalConfig = workspace.getConfiguration('launchdarkly');
+			const globalConfigValue = await globalConfig.get(key);
+			if (globalConfigValue !== '') {
+				// Updating Workspace from old config values, these could be workspace or global.
+				await this.ctx.workspaceState.update(key, globalConfigValue);
+				await globalConfig.update(key, undefined);
+				return globalConfigValue;
+			}
+		} else {
+			return currValue;
+		}
 	}
 
 	validateRefreshInterval(interval: number): boolean {

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // https://github.com/microsoft/vscode-extension-samples/blob/master/quickinput-sample/src/multiStepInput.ts
 // LICENSE: https://github.com/microsoft/vscode-extension-samples/blob/master/LICENSE
 
@@ -34,7 +36,7 @@ interface InputBoxParameters {
 }
 
 export class MultiStepInput {
-	static async run<T>(start: InputStep): Promise<void> {
+	static async run<T>(start: InputStep) {
 		const input = new MultiStepInput();
 		return input.stepThrough(start);
 	}
@@ -42,7 +44,7 @@ export class MultiStepInput {
 	private current?: QuickInput;
 	private steps: InputStep[] = [];
 
-	private async stepThrough<T>(start: InputStep): Promise<void> {
+	private async stepThrough<T>(start: InputStep) {
 		let step: InputStep | void = start;
 		while (step) {
 			this.steps.push(step);
@@ -70,7 +72,6 @@ export class MultiStepInput {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>({
 		title,
 		step,
@@ -85,8 +86,6 @@ export class MultiStepInput {
 		try {
 			return await new Promise<T | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
 				const input = window.createQuickPick<T>();
-				input.matchOnDescription = true;
-				input.matchOnDetail = true;
 				input.title = title;
 				input.step = step;
 				input.totalSteps = totalSteps;
@@ -97,15 +96,14 @@ export class MultiStepInput {
 				}
 				input.buttons = [...(this.steps.length > 1 ? [QuickInputButtons.Back] : []), ...(buttons || [])];
 				disposables.push(
-					input.onDidTriggerButton(item => {
+					input.onDidTriggerButton((item) => {
 						if (item === QuickInputButtons.Back) {
 							reject(InputFlowAction.back);
 						} else {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							resolve(<any>item);
 						}
 					}),
-					input.onDidChangeSelection(items => resolve(items[0])),
+					input.onDidChangeSelection((items) => resolve(items[0])),
 					input.onDidHide(() => {
 						(async () => {
 							reject(shouldResume && (await shouldResume()) ? InputFlowAction.resume : InputFlowAction.cancel);
@@ -119,11 +117,10 @@ export class MultiStepInput {
 				this.current.show();
 			});
 		} finally {
-			disposables.forEach(d => d.dispose());
+			disposables.forEach((d) => d.dispose());
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 	async showInputBox<P extends InputBoxParameters>({
 		title,
 		step,
@@ -146,11 +143,10 @@ export class MultiStepInput {
 				input.buttons = [...(this.steps.length > 1 ? [QuickInputButtons.Back] : []), ...(buttons || [])];
 				let validating = validate('');
 				disposables.push(
-					input.onDidTriggerButton(item => {
+					input.onDidTriggerButton((item) => {
 						if (item === QuickInputButtons.Back) {
 							reject(InputFlowAction.back);
 						} else {
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							resolve(<any>item);
 						}
 					}),
@@ -164,7 +160,7 @@ export class MultiStepInput {
 						input.enabled = true;
 						input.busy = false;
 					}),
-					input.onDidChangeValue(async text => {
+					input.onDidChangeValue(async (text) => {
 						const current = validate(text);
 						validating = current;
 						const validationMessage = await current;
@@ -185,7 +181,7 @@ export class MultiStepInput {
 				this.current.show();
 			});
 		} finally {
-			disposables.forEach(d => d.dispose());
+			disposables.forEach((d) => d.dispose());
 		}
 	}
 }

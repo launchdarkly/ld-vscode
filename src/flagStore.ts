@@ -36,7 +36,7 @@ export class FlagStore {
 		this.config = config;
 		this.api = api;
 		this.store = InMemoryFeatureStore();
-		this.start();
+		this.reload();
 	}
 
 	async reload(e?: ConfigurationChangeEvent): Promise<void> {
@@ -67,7 +67,14 @@ export class FlagStore {
 		try {
 			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
 			this.flagMetadata = keyBy(flags, 'key');
+		} catch (err) {
+			console.log(`Error getting flags ${err}`);
+		}
+		try {
 			const sdkKey = await this.getLatestSDKKey();
+			if (sdkKey === '' || !sdkKey.startsWith('sdk-')) {
+				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
+			}
 			const ldConfig = this.ldConfig();
 			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
 			this.resolveLDClient(ldClient);
@@ -82,51 +89,130 @@ export class FlagStore {
 				}
 			}
 			this.storeUpdates.fire(true);
-			this.on('update', async (keys: string) => {
-				const flagKeys = Object.values(keys);
-				flagKeys.map(key => {
-					this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
-						if (!res) {
-							return;
-						}
-						if (this.flagMetadata[key]?.variations.length !== res.variations.length) {
-							this.flagMetadata[key] = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
-							this.storeUpdates.fire(true);
-						}
-					});
-				});
-			});
-			window.onDidChangeWindowState(async e => {
-				const ldClient = await this.ldClient;
-				if (e.focused) {
-					if (typeof this.offlineTimer !== 'undefined') {
-						clearTimeout(this.offlineTimer);
-						this.offlineTimerSet = false;
-					}
-					if (this.offlineTimer) {
-						await this.reload();
-						this.offlineTimerSet = false;
-					}
-				} else {
-					if (typeof this.offlineTimer === 'undefined') {
-						this.offlineTimer = setTimeout(async () => {
-							this.offlineTimerSet = true;
-							await ldClient.close();
-						}, 600000);
-					}
-				}
-			});
+			this.setFlagListeners();
+			this.setLDClientBackgroundCheck();
 		} catch (err) {
+			window
+				.showErrorMessage('[LaunchDarkly] Failed to setup LaunchDarkly client', 'Configure LaunchDarkly Extension')
+				.then((selection) => {
+					if (selection === 'Configure LaunchDarkly Extension')
+						commands.executeCommand('extension.configureLaunchDarkly');
+				});
 			this.rejectLDClient();
-			console.error(err);
+			console.error(`Failed to setup client: ${err}`);
 		}
 	}
 
+	private setFlagListeners() {
+		this.on('update', async (keys: string) => {
+			const flagKeys = Object.values(keys);
+			flagKeys.map((key) => {
+				this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
+					if (!res) {
+						return;
+					}
+					if (this.flagMetadata[key]?.variations.length !== res.variations.length) {
+						this.flagMetadata[key] = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
+						this.storeUpdates.fire(true);
+					}
+				});
+			});
+		});
+		this.on('error', async (err: string) => {
+			console.log(err);
+			this.debouncedReload();
+		});
+	}
+
+	private setLDClientBackgroundCheck() {
+		return window.onDidChangeWindowState(async (e) => {
+			const ldClient = await this.ldClient;
+			if (e.focused) {
+				if (this.offlineTimerSet) {
+					await this.reload();
+					this.offlineTimerSet = false;
+				}
+				if (typeof this.offlineTimer !== 'undefined') {
+					clearTimeout(this.offlineTimer);
+					delete this.offlineTimer;
+					this.offlineTimerSet = false;
+				}
+			} else {
+				if (typeof this.offlineTimer === 'undefined') {
+					this.offlineTimer = setTimeout(async () => {
+						this.offlineTimerSet = true;
+						await ldClient.close();
+					}, 300000);
+				}
+			}
+		});
+	}
+
 	private async startGlobalFlagUpdateTask(interval: number) {
-		const ms = interval * 60 * 1000;
+		// Add jitter, if all instances are reopened as part of reboot they do not query at same time.
+		const ms = interval * 60 * 1000 + Math.floor(Math.random() * 120) + 1 * 1000;
 		setInterval(() => {
 			this.updateFlags();
 		}, ms);
+	}
+
+	private readonly debounceUpdate = debounce(
+		async () => {
+			try {
+				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				this.flagMetadata = keyBy(flags, 'key');
+				this.storeUpdates.fire(true);
+			} catch (err) {
+				let errMsg;
+				if (err.statusCode == 404) {
+					errMsg = `Project does not exist`;
+				} else if (err.statusCode == 401) {
+					errMsg = `Unauthorized`;
+				} else if (err.code == 'ENOTFOUND' || err.code == 'ECONNRESET') {
+					// We know the domain should exist.
+					console.log(err); // Still want to log that this is happening
+					return;
+				} else {
+					errMsg = err.message;
+					console.log(`${err}`);
+					return;
+				}
+				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+			}
+		},
+		5000,
+		{ trailing: true },
+	);
+
+	private async getLatestSDKKey(): Promise<string> {
+		try {
+			const env = await this.api.getEnvironment(this.config.project, this.config.env);
+			return env.apiKey;
+		} catch (err) {
+			if (err.statusCode === 404) {
+				window
+					.showErrorMessage(
+						'Your configured LaunchDarkly environment does not exist. Please reconfigure the extension.',
+						'Configure',
+					)
+					.then((item) => item && commands.executeCommand('extension.configureLaunchDarkly'));
+			}
+			throw err;
+		}
+	}
+
+	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore | LaunchDarkly.LDLogger> {
+		// Cannot replace in the config, so updating at call site.
+		const streamUri = this.config.baseUri.replace('app', 'stream');
+		return {
+			timeout: 5,
+			baseUri: this.config.baseUri,
+			streamUri: streamUri,
+			sendEvents: false,
+			featureStore: this.store,
+			streamInitialReconnectDelay: Math.floor(Math.random() * 5) + 1,
+			logger: LaunchDarkly.basicLogger({ level: 'warn' }),
+		};
 	}
 
 	async updateFlags(): Promise<void> {
@@ -159,6 +245,7 @@ export class FlagStore {
 			this.rejectLDClient();
 			const ldClient = await this.ldClient;
 			ldClient.close();
+			delete this.ldClient;
 		} catch {
 			// ldClient was rejected, nothing to do
 		}
@@ -168,39 +255,11 @@ export class FlagStore {
 		});
 	}
 
-	private async getLatestSDKKey(): Promise<string> {
-		try {
-			const env = await this.api.getEnvironment(this.config.project, this.config.env);
-			return env.apiKey;
-		} catch (err) {
-			if (err.statusCode === 404) {
-				window
-					.showErrorMessage(
-						'Your configured LaunchDarkly environment does not exist. Please reconfigure the extension.',
-						'Configure',
-					)
-					.then(item => item && commands.executeCommand('extension.configureLaunchDarkly'));
-			}
-			throw err;
-		}
-	}
-
-	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore> {
-		// Cannot replace in the config, so updating at call site.
-		const streamUri = this.config.baseUri.replace('app', 'stream');
-		return {
-			timeout: 5,
-			baseUri: this.config.baseUri,
-			streamUri: streamUri,
-			sendEvents: false,
-			featureStore: this.store,
-		};
-	}
-
-	getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
+	async getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
 		if (this.flagMetadata === undefined) {
-			return null;
+			await this.debounceUpdate();
 		}
+
 		let flag = this.flagMetadata[key];
 		return new Promise((resolve, reject) => {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
@@ -224,41 +283,49 @@ export class FlagStore {
 		});
 	}
 
+	async forceFeatureFlagUpdate(flagKey: string): Promise<void> {
+		this.flagMetadata[flagKey] = await this.api.getFeatureFlag(this.config.project, flagKey, this.config.env);
+		this.storeUpdates.fire(true);
+	}
+
 	allFlags(): Promise<FlagConfiguration[]> {
-		return new Promise(resolve => {
+		return new Promise((resolve) => {
 			this.store.all(DATA_KIND, resolve);
 		});
 	}
 
-	async allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
-		await this.ldClient; // Just waiting for initialization to complete, don't actually need the client
-		return this.flagMetadata;
+	async getFlagConfig(flag: string): Promise<FlagConfiguration> {
+		return new Promise((resolve) => {
+			this.store.get(DATA_KIND, flag, async (res: FlagConfiguration) => {
+				resolve(res);
+			});
+		});
 	}
 
-	private readonly debounceUpdate = debounce(
-		async () => {
+	async getFlagMetadata(flag: string): Promise<FeatureFlag> {
+		await this.ldClient;
+		if (this.flagMetadata === undefined && this.config.isConfigured()) {
+			await this.allFlagsMetadata();
+		}
+		return await this.flagMetadata[flag];
+	}
+
+	async allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
+		await this.ldClient; // Just waiting for initialization to complete, don't actually need the client
+		if (this.flagMetadata === undefined && this.config.isConfigured()) {
 			try {
-				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
-				this.flagMetadata = keyBy(flags, 'key');
-				this.storeUpdates.fire(true);
+				await this.debounceUpdate();
+				return this.flagMetadata;
 			} catch (err) {
-				let errMsg;
-				if (err.statusCode == 404) {
-					errMsg = `Project does not exist`;
-				} else if (err.statusCode == 401) {
-					errMsg = `Unauthorized`;
-				} else if (err.includes('ENOTFOUND') || err.includes('ECONNRESET')) {
-					// We know the domain should exist.
-					console.log(err); // Still want to log that this is happening
-					return;
-				} else {
-					errMsg = err.message;
-				}
-				console.log(`${err}`);
-				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+				console.log(`Failed getting Metadata: ${err}`);
+				window.showErrorMessage(`[LaunchDarkly] ${err}`);
 			}
-		},
-		5000,
-		{ leading: true, trailing: true },
-	);
+		} else {
+			return this.flagMetadata;
+		}
+	}
+
+	async listFlags(): Promise<Array<string>> {
+		return await Object.keys(await this.allFlagsMetadata());
+	}
 }

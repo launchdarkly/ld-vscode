@@ -1,0 +1,38 @@
+minimum_pre_commit_version: '2.9.3'
+
+repos:
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 2.1.5
+    hooks:
+      - id: shellcheck
+        types: [shell]
+        exclude: '^vendor/'
+        additional_dependencies: []
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-json
+        exclude: "(\\.vscode/launch.json|\\.vscode/tasks.json)"
+      - id: check-symlinks
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: no-commit-to-branch
+      - id: trailing-whitespace
+        exclude: 'test/__snapshots__/providers.test.js.snap'
+
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: yarn prettier:write
+        types_or: [javascript, ts, tsx, json, css, markdown, yaml]
+        language: system
+
+      - id: eslint
+        name: eslint
+        entry: yarn lint:fix
+        types_or: [javascript, ts, tsx]
+        language: system
+        pass_filenames: false

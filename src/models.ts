@@ -14,17 +14,22 @@ export class Project extends Resource {
 // 	version: number;
 // 	_site: { href: string };
 // }
+
+export class PubNub {
+	channel: string;
+	cipherKey: string;
+}
 export class Environment {
 	links?: Links;
 	id?: Id;
 	/**
 	 * The key for the environment.
 	 */
-	key?: string;
+	key: string;
 	/**
 	 * The name of the environment.
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * The SDK key for backend LaunchDarkly SDKs.
 	 */
@@ -52,7 +57,7 @@ export class Environment {
 	/**
 	 * An array of tags for this environment.
 	 */
-	tags?: Array<string>;
+	tags: Array<string>;
 	/**
 	 * Determines if this environment requires comments for flag and segment changes.
 	 */
@@ -61,6 +66,8 @@ export class Environment {
 	 * Determines if this environment requires confirmation for flag and segment changes.
 	 */
 	confirmChanges?: boolean;
+	_pubnub: PubNub;
+	_version: number;
 
 	static discriminator: string | undefined = undefined;
 
@@ -398,4 +405,32 @@ export class PatchOperation {
 export class PatchComment {
 	comment?: string;
 	patch?: Array<PatchOperation>;
+}
+
+export class Metric {
+	key: string;
+	name: string;
+	description: string;
+	kind: string;
+	_attachedFlagCount: number;
+	links?: Links;
+	_site: Link;
+	tags?: Array<string>;
+	creationDate?: number;
+	lastModified?: number;
+	isNumeric: boolean;
+	eventKey: string;
+}
+
+export interface NewFlag {
+	name: string;
+	key: string;
+	description: string;
+	tags: string[];
+	kind: string;
+	clientSideAvailability: {
+		usingEnvironmentId: boolean;
+		usingMobileKey: boolean;
+	};
+	temporary: boolean;
 }

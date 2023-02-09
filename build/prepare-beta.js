@@ -9,6 +9,6 @@ const dt = new Date();
 package.name = 'launchdarkly-beta';
 package.displayName = 'LaunchDarkly Beta';
 package.version = `${dt.getUTCFullYear()}.${dt.getUTCMonth() + 1}.${Math.floor(dt.getTime() / 1000)}`;
-package.contributes.configuration.properties['launchdarkly.enableCodeLens'].default = true;
+//package.contributes.configuration.properties['launchdarkly.enableMetricsExplorer'].default = true;
 fs.renameSync('package.json', 'package.orig.json');
 fs.writeFileSync('package.json', JSON.stringify(package));

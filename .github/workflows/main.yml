@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, beta ]
+    branches: [ main, beta, prerelease ]
   workflow_dispatch:
 
 jobs:
@@ -21,12 +21,27 @@ jobs:
       - run: yarn
       - run: yarn prepare-beta
         if: ${{ steps.extract_branch.outputs.branch == 'beta' }}
+      - name: Run headless test
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: yarn test
+      - run: yarn run prettier:check
+      - run: yarn run lint
       - name: Publish to Visual Studio Marketplace
-        uses: HaaLeo/publish-vscode-extension@v0
+        if: ${{ steps.extract_branch.outputs.branch != 'prerelease' }}
+        uses: HaaLeo/publish-vscode-extension@v1
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
           yarn: true
+      - name: Publish to Visual Studio Marketplace for pre-release
+        if: ${{ steps.extract_branch.outputs.branch == 'prerelease' }}
+        uses: HaaLeo/publish-vscode-extension@v1
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          registryUrl: https://marketplace.visualstudio.com
+          yarn: true
+          preRelease: true
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v0
         with:
