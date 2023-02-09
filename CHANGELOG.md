@@ -6,6 +6,24 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 
 ### Changed
 
+- Moved Flag tree view to new LaunchDarkly Explorer view
+- API Tokens are now stored using Secrets API
+
+### Added
+
+- Quick Links to various LaunchDarkly pages
+- Create flags from VS Code
+- Find flags in file view
+- New command `LaunchDarkly: Toggle Flag` to toggle flags from command palette
+
+### Fixed
+
+- Various fixes for streaming connections
+
+## [3.0.6] - 2021-09-14
+
+### Changed
+
 - Updates for Marketplace
 
 ## [3.0.5] - 2021-09-14
