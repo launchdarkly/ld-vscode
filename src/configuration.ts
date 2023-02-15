@@ -63,6 +63,7 @@ export class Configuration {
 			project = '';
 		}
 		const baseUri = await this.getState('baseUri');
+
 		if (!accessToken) {
 			return;
 		}
@@ -73,7 +74,7 @@ export class Configuration {
 		this.accessToken = accessToken;
 		this.env = env as string;
 		this.project = project as string;
-		this.baseUri = typeof baseUri === 'undefined' ? baseUri : DEFAULT_BASE_URI;
+		this.baseUri = baseUri === 'undefined' ? DEFAULT_BASE_URI : (baseUri as string);
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {
@@ -149,9 +150,15 @@ export class Configuration {
 
 	async isConfigured(): Promise<boolean> {
 		const token = await this.ctx.secrets.get(ACCESS_TOKEN);
-		const proj = await this.ctx.workspaceState.get('project');
-		const env = await this.ctx.workspaceState.get('env');
-		const check = token !== null && token.length > 0 && proj !== '' && env !== '';
+		let proj = await this.ctx.workspaceState.get('project');
+		if (typeof proj === 'undefined') {
+			proj = '';
+		}
+		let env = await this.ctx.workspaceState.get('env');
+		if (typeof env === 'undefined') {
+			env = '';
+		}
+		const check = token !== null && token?.length > 0 && proj !== '' && env !== '';
 		return check;
 	}
 
@@ -169,6 +176,8 @@ export class Configuration {
 		await this.ctx.workspaceState.update('accessToken', undefined);
 		await config.update('project', undefined, ConfigurationTarget.Workspace);
 		await config.update('env', undefined, ConfigurationTarget.Workspace);
+		await this.ctx.workspaceState.update('project', undefined);
+		await this.ctx.workspaceState.update('env', undefined);
 	}
 
 	async clearGlobalConfig(): Promise<void> {
@@ -181,10 +190,6 @@ export class Configuration {
 	}
 
 	async getState(key: string): Promise<string | unknown> {
-		// if (key == 'accessToken') {
-		// 	const token = await this.ctx.secrets.get(ACCESS_TOKEN);
-		// 	return token;
-		// }
 		const currValue = await this.ctx.workspaceState.get(key);
 		if (typeof currValue === 'undefined') {
 			const workDir = workspace.workspaceFolders[0];
