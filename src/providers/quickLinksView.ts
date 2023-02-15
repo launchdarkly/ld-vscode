@@ -43,7 +43,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 			if (typeof this.flagStore !== 'undefined') {
 				const flags = await this.flagStore.allFlagsMetadata();
 				const flagKeys = Object.keys(flags);
-				if (flagKeys.length > 0) {
+				if (flagKeys?.length > 0) {
 					const options = [];
 					flagKeys.map((item) => {
 						options.push({ label: flags[item].key, description: flags[item].name ? flags[item].name : '' });
