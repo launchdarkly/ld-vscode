@@ -38,6 +38,9 @@ export class LaunchDarklyAPI {
 	}
 
 	async getProject(projectKey: string): Promise<Project> {
+		if (!projectKey) {
+			return;
+		}
 		try {
 			const options = this.createOptions(`projects/${projectKey}`);
 			const data = await axios.get(options.url, options);
@@ -57,6 +60,9 @@ export class LaunchDarklyAPI {
 	}
 
 	async getEnvironment(projectKey: string, envKey: string): Promise<Environment> {
+		if (!projectKey || !envKey) {
+			return;
+		}
 		try {
 			const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
 			const data = await axios.get(options.url, options);
@@ -108,6 +114,9 @@ export class LaunchDarklyAPI {
 	}
 
 	async getFeatureFlags(projectKey: string, envKey?: string): Promise<Array<FeatureFlag>> {
+		if (!projectKey) {
+			return;
+		}
 		const envParam = envKey ? 'env=' + envKey : '';
 		const url = `flags/${projectKey}/?${envParam}&summary=true&sort=name`;
 		const options = this.createOptions(url, 'GET', null, {

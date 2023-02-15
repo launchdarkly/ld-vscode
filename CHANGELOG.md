@@ -2,6 +2,18 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [4.0.2] - 2023-02-15
+
+### Fixed
+
+- Fixed error switching instance urls
+- Fixed alias support on hover
+- Fixed handling of project and environment configuration
+
+## Changed
+
+- Added additional guards on validation of API calls
+
 ## [4.0.1] - 2023-02-09
 
 ### Fixed

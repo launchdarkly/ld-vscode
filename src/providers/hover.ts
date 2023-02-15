@@ -13,7 +13,7 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 	private readonly aliases?: FlagAliases;
 	private readonly ctx: ExtensionContext;
 
-	constructor(config: Configuration, flagStore: FlagStore, ctx: ExtensionContext, aliases?: FlagAliases) {
+	constructor(config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
 		this.config = config;
 		this.flagStore = flagStore;
 		this.aliases = aliases;

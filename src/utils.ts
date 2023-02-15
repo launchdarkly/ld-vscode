@@ -58,7 +58,7 @@ export async function setupComponents(
 		aliases = new FlagAliases(config, ctx);
 		if (aliases.codeRefsVersionCheck()) {
 			aliases.setupStatusBar();
-			aliases.start();
+			await aliases.start();
 		} else {
 			window.showErrorMessage('ld-find-code-refs version > 2 supported.');
 		}
