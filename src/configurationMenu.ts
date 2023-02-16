@@ -119,8 +119,6 @@ export class ConfigurationMenu {
 		});
 		try {
 			this.updateAPI(state);
-			await this.api.getAccount();
-
 			return (input: MultiStepInput) => this.pickProject(input, state);
 		} catch (err) {
 			if (err.statusCode === 401) {
