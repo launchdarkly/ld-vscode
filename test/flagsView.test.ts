@@ -1,7 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
-import * as flagsView from '../src/providers/flagsView';
 import { FlagNode, FlagParentNode,flagNodeFactory } from '../src/utils/FlagNode';
 import { FeatureFlag } from '../src/models';
 

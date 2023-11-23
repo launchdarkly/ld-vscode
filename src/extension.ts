@@ -8,6 +8,7 @@ import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
 import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
 import { CodeRefs as cr } from './coderefs/codeRefsVersion';
+import { YamlReader } from './utils/rulesYaml';
 
 let config: Configuration;
 let flagStore: FlagStore;
@@ -70,6 +71,11 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	} catch (err) {
 		console.log(err);
 	}
+
+	
+
+	const data = YamlReader.read('/Users/daniel/.launchdarkly/rules.yaml');
+	console.log(data);
 }
 
 export async function deactivate(): Promise<void> {

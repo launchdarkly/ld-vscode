@@ -212,6 +212,10 @@
 			{
 				"command": "launchdarkly.enableMetricExplorer",
 				"title": "Toggle LaunchDarkly Metric Explorer"
+			},
+			{
+				"command": "launchdarkly.quickPickRules",
+				"title": "LaunchDarkly: Quick Targeting"
 			}
 		],
 		"menus": {
@@ -464,7 +468,7 @@
 		"csv-parser": "^2.3.3",
 		"gunzip-maybe": "^1.4.2",
 		"launchdarkly-api-typescript": "6.0.0",
-		"launchdarkly-node-server-sdk": "^6.4.2",
+		"@launchdarkly/node-server-sdk": "^9.0.3",
 		"lodash": "^4.17.21",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
