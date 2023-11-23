@@ -5,7 +5,7 @@ import { commands, window } from 'vscode';
 const axios = require('axios').default;
 
 import { Configuration } from './configuration';
-import { NewFlag } from './models';
+import { InstructionPatch, NewFlag } from './models';
 import { Resource, Project, FeatureFlag, Environment, PatchOperation, PatchComment, Metric } from './models';
 //import { FeatureFlag } from 'launchdarkly-api-typescript';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -130,7 +130,18 @@ export class LaunchDarklyAPI {
 
 	async patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag | Error> {
 		try {
-			const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value);
+			const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value, false);
+			const data = await axios.patch(options.url, value, options);
+			return new FeatureFlag(data);
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	async patchFeatureFlagSem(projectKey: string, flagKey: string, value?: InstructionPatch): Promise<FeatureFlag | Error> {
+		try {
+			const options = this.createOptions(`flags/${projectKey}/${flagKey}`, 'PATCH', value, null, false, true);
+			console.log(options);
 			const data = await axios.patch(options.url, value, options);
 			return new FeatureFlag(data);
 		} catch (err) {
@@ -160,6 +171,7 @@ export class LaunchDarklyAPI {
 		body?: PatchComment | unknown,
 		params?: unknown,
 		isArray?: boolean,
+		sempatch?: boolean
 	) {
 		const options = {
 			method: method,
@@ -176,11 +188,14 @@ export class LaunchDarklyAPI {
 			options.params = params;
 		}
 
-		if (body && isArray) {
-			options.headers['content-type'] = 'application/json';
-			options['data'] = [JSON.stringify(body)];
+		if (sempatch) {
+			options.headers['content-type'] = 'application/json; domain-model=launchdarkly.semanticpatch';
 		} else {
 			options.headers['content-type'] = 'application/json';
+		}
+		if (body && isArray) {			
+			options['data'] = [JSON.stringify(body)];
+		} else {
 			options['data'] = JSON.stringify(body);
 		}
 		return options;

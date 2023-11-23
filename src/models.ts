@@ -5,6 +5,23 @@ export class Resource {
 	_version: number;
 }
 
+export class Instruction {
+	kind: string;
+	contextKind?: string;
+	values: string[];
+	variationId: string;
+    };
+
+export class InstructionWithFlag {
+	flagKey: string;
+	instruction: InstructionPatch;
+}
+
+export class InstructionPatch {
+environmentKey: string;
+instructions: Instruction[];
+};
+
 export class Project extends Resource {
 	environments: Array<Environment>;
 }
@@ -180,6 +197,7 @@ export class FlagWithConfiguration {
 }
 
 export class Variation {
+	_id?: string;
 	name?: string;
 	description?: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

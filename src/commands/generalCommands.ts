@@ -7,6 +7,8 @@ import openInLdCmd from './openLaunchDarkly';
 import toggleFlagCtxCmd from './toggleFlagContext';
 import enableCodeLensConfig from './enableCodeLens';
 import configureEnvironmentCmd from './configureLaunchDarklyEnvironment';
+import selectRuleCmd from './selectRule';
+
 export default async function generalCommands(
 	ctx: ExtensionContext,
 	config: Configuration,
@@ -18,6 +20,6 @@ export default async function generalCommands(
 	const openLdCmd = openInLdCmd(ctx, config, flagStore);
 	const enableCodeLens = enableCodeLensConfig(ctx, config);
 	const envCmd = await configureEnvironmentCmd(ctx, config, api);
-
-	return Disposable.from(createFlag, toggleFlagCmd, openLdCmd, enableCodeLens, envCmd);
+	const selRuleCmd = selectRuleCmd(ctx, config, api, flagStore)
+	return Disposable.from(createFlag, toggleFlagCmd, openLdCmd, enableCodeLens, envCmd, selRuleCmd);
 }

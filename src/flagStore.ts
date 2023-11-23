@@ -1,7 +1,8 @@
 import { ConfigurationChangeEvent, commands, EventEmitter, window } from 'vscode';
-import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
-import LaunchDarkly = require('launchdarkly-node-server-sdk');
-
+import InMemoryFeatureStore from '@launchdarkly/js-server-sdk-common/dist/store/InMemoryFeatureStore';
+import LaunchDarkly, { LDFeatureStoreKindData, basicLogger, init } from '@launchdarkly/node-server-sdk';
+import { LDClient } from '@launchdarkly/node-server-sdk/dist/src/api';
+import { LDOptions } from '@launchdarkly/node-server-sdk/dist/src/index';
 import { debounce, Dictionary, keyBy } from 'lodash';
 
 import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
@@ -11,7 +12,7 @@ import { LaunchDarklyAPI } from './api';
 const DATA_KIND = { namespace: 'features' };
 
 type FlagUpdateCallback = (flag: string) => void;
-type LDClientResolve = (LDClient: LaunchDarkly.LDClient) => void;
+type LDClientResolve = (LDClient: LDClient) => void;
 type LDClientReject = () => void;
 
 export class FlagStore {
@@ -25,7 +26,7 @@ export class FlagStore {
 	private readonly api: LaunchDarklyAPI;
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
-	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve, reject) => {
+	private ldClient: Promise<LDClient> = new Promise((resolve, reject) => {
 		this.resolveLDClient = resolve;
 		this.rejectLDClient = reject;
 	});
@@ -35,7 +36,7 @@ export class FlagStore {
 	constructor(config: Configuration, api: LaunchDarklyAPI) {
 		this.config = config;
 		this.api = api;
-		this.store = InMemoryFeatureStore();
+		this.store = new InMemoryFeatureStore();
 		this.reload();
 	}
 
@@ -76,7 +77,7 @@ export class FlagStore {
 				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
 			}
 			const ldConfig = this.ldConfig();
-			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
+			const ldClient = await init(sdkKey, ldConfig).waitForInitialization() as LDClient; // Typescript was picking up the LDClient from JSCommon
 			this.resolveLDClient(ldClient);
 			this.storeReady.fire(true);
 			if (this.config.refreshRate) {
@@ -201,18 +202,22 @@ export class FlagStore {
 		}
 	}
 
-	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore | LaunchDarkly.LDLogger> {
+	private ldConfig(): LDOptions {
 		// Cannot replace in the config, so updating at call site.
 		const streamUri = this.config.baseUri.replace('app', 'stream');
-		return {
+		const logger: LaunchDarkly.LDLogger = basicLogger({
+			level: 'warn'
+		      });
+		const options: LDOptions ={
 			timeout: 5,
 			baseUri: this.config.baseUri,
 			streamUri: streamUri,
 			sendEvents: false,
 			featureStore: this.store,
 			streamInitialReconnectDelay: Math.floor(Math.random() * 5) + 1,
-			logger: LaunchDarkly.basicLogger({ level: 'warn' }),
+			logger: logger,
 		};
+		return options;
 	}
 
 	async updateFlags(): Promise<void> {
@@ -288,7 +293,7 @@ export class FlagStore {
 		this.storeUpdates.fire(true);
 	}
 
-	allFlags(): Promise<FlagConfiguration[]> {
+	allFlags(): Promise<FlagConfiguration[] | LDFeatureStoreKindData > {
 		return new Promise((resolve) => {
 			this.store.all(DATA_KIND, resolve);
 		});
