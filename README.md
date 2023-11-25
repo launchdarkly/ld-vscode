@@ -11,8 +11,9 @@ The LaunchDarkly VSCode extension provides utilities that make it easy to work w
 - Open feature flags in LaunchDarkly (Default keybind: `ctrl+alt+g`/`⌘+alt+g`)
 - [Feature flag explorer](#feature-flag-explorer): view a list of your feature flags and their settings in the explorer view
 - [Create Boolean Flag](#create-boolean-flag)
-- [Quick Links](#quick-links) to LaunchDarkly.
+- [Quick Links](#quick-links) to LaunchDarkly
 - [Flags in File](#flags-in-file)
+- [Flag Lens](#flag-lens)
 
 Read our official documentation about this extension at <https://docs.launchdarkly.com/integrations/vscode>
 
@@ -67,6 +68,12 @@ Flag names in the treeview can be right-clicked where you can update a flag's st
  
  <img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/treeview-right-click.png?raw=true" width="350px" height="100px" alt="right click menu options">
 
+### Flag Lens
+The Flag Lens functionality shows insights about the usage and status of LaunchDarkly feature flags directly in the code. For a given feature flag in the codebase, the Flags Lens displays:
+
+_Flag Name_: The unique identifier for the feature flag within LaunchDarkly.
+_Flag Status_: Whether the flag is currently turned on or off.
+_Variation Information_ Which variation or value of the flag is currently being served.
 
 ## Contributing
 
