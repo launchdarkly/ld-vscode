@@ -1,17 +1,17 @@
-import { commands, Disposable, ExtensionContext, window } from 'vscode';
-import { Configuration } from '../configuration';
+import { commands, Disposable, window } from 'vscode';
 import { extensionReload } from '../utils';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
-export default async function globalClearCmd(ctx: ExtensionContext, config: Configuration) {
+export default async function globalClearCmd(config: LDExtensionConfiguration) {
 	const globalClear: Disposable = commands.registerCommand('launchdarkly.clearGlobalContext', async () => {
 		try {
-			await config.clearGlobalConfig();
-			await extensionReload(this, this.ctx, false);
+			await config.getConfig().clearGlobalConfig();
+			await extensionReload(this, false);
 			window.showInformationMessage('LaunchDarkly global settings removed');
 		} catch (err) {
 			console.error(`Failed clearing global context: ${err}`);
 			window.showErrorMessage('An unexpected error occurred, please try again later.');
 		}
 	});
-	ctx.subscriptions.push(globalClear);
+	config.getCtx().subscriptions.push(globalClear);
 }

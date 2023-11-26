@@ -12,6 +12,16 @@
 			//"preLaunchTask": "yarn"
 		},
 		{
+			"name": "Run Debug Extension - Profile",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": ["--profile=vscode-testing", "--extensionDevelopmentPath=${workspaceFolder}", "--enable-proposed-api=launchdarklyofficial.launchdarkly"],
+			"sourceMaps": true,
+			"outFiles": ["${workspaceFolder}/dist/*"]
+			//"preLaunchTask": "yarn"
+		},
+		{
 			"name": "Launch Tests",
 			"type": "extensionHost",
 			"request": "launch",

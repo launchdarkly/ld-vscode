@@ -1,25 +1,19 @@
-import { commands, Disposable, ExtensionContext, window } from 'vscode';
-import { LaunchDarklyAPI } from '../api';
-import { Configuration } from '../configuration';
+import { commands, Disposable, window } from 'vscode';
 import { ConfigurationMenu } from '../configurationMenu';
 import { FlagStore } from '../flagStore';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
-export default function configureLaunchDarkly(
-	ctx: ExtensionContext,
-	config: Configuration,
-	api: LaunchDarklyAPI,
-	flagStore?: FlagStore,
-) {
+export default function configureLaunchDarkly(config: LDExtensionConfiguration) {
 	const configureExtension: Disposable = commands.registerCommand('extension.configureLaunchDarkly', async () => {
 		try {
-			const configurationMenu = new ConfigurationMenu(config, api, ctx);
+			const configurationMenu = new ConfigurationMenu(config);
 			await configurationMenu.configure();
-			if (typeof flagStore === 'undefined') {
-				flagStore = new FlagStore(config, api);
+			if (config.getFlagStore() === null) {
+				config.setFlagStore(new FlagStore(config));
 			} else {
-				await flagStore.reload();
+				await config.getFlagStore().reload();
 			}
-			await ctx.globalState.update('LDConfigured', true);
+			await config.getCtx().globalState.update('LDConfigured', true);
 			window.showInformationMessage('[LaunchDarkly] Configured successfully');
 		} catch (err) {
 			console.error(`Failed configuring LaunchDarkly Extension(provider): ${err}`);
@@ -27,5 +21,5 @@ export default function configureLaunchDarkly(
 		}
 	});
 
-	ctx.subscriptions.push(configureExtension);
+	config.getCtx().subscriptions.push(configureExtension);
 }

@@ -1,6 +1,6 @@
 'use strict';
 
-import { commands, window, ExtensionContext } from 'vscode';
+import { commands, window, ExtensionContext, authentication } from 'vscode';
 import { access, constants } from 'fs';
 import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
@@ -8,16 +8,27 @@ import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
 import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
 import { CodeRefs as cr } from './coderefs/codeRefsVersion';
-
-let config: Configuration;
-let flagStore: FlagStore;
+import { LaunchDarklyAuthenticationProvider, LaunchDarklyAuthenticationSession } from './providers/authProvider';
+import { extensionReload } from './utils';
+import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
-	global.ldContext = ctx;
-	config = new Configuration(ctx);
-	await config.reload();
-	const validationError = await config.validate();
-	const configuredOnce = ctx.globalState.get('LDConfigured');
+	const LDExtConfig = LDExtensionConfiguration.getInstance();
+	LDExtConfig.setCtx(ctx);
+	//global.ldContext.ctx = ctx;
+	//config = new Configuration(ctx);
+	LDExtConfig.setConfig(new Configuration(LDExtConfig.getCtx()));
+	await LDExtConfig.getConfig().reload();
+	const authProv = new LaunchDarklyAuthenticationProvider(LDExtConfig.getCtx());
+	LDExtConfig.getCtx().subscriptions.push(authProv);
+
+	const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false }) as LaunchDarklyAuthenticationSession;
+	LDExtConfig.setSession(session);
+	//global.ldSession = session;
+
+	const validationError = await LDExtConfig.getConfig().validate();
+	const configuredOnce = LDExtConfig.getCtx().globalState.get('LDConfigured');
+
 	switch (validationError) {
 		case 'unconfigured':
 			if (window.activeTextEditor !== undefined && configuredOnce !== true) {
@@ -29,7 +40,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 					.then((item) => {
 						item === 'Configure'
 							? commands.executeCommand('extension.configureLaunchDarkly')
-							: ctx.workspaceState.update('isDisabledForWorkspace', true);
+							: LDExtConfig.getCtx().workspaceState.update('isDisabledForWorkspace', true);
 					});
 			}
 			break;
@@ -42,36 +53,47 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 				.then((item) => {
 					item === 'Configure'
 						? commands.executeCommand('extension.configureLaunchDarkly')
-						: ctx.globalState.update('legacyNotificationDismissed', true);
+						: LDExtConfig.getCtx().globalState.update('legacyNotificationDismissed', true);
 				});
 			break;
 	}
 
-	const api = new LaunchDarklyAPI(config);
-	let flagStore: FlagStore;
+	LDExtConfig.getCtx().subscriptions.push(
+		commands.registerCommand('vscode-launchdarkly-authprovider.signIn', async () => {
+			const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: true }) as LaunchDarklyAuthenticationSession;
+			LDExtConfig.setSession(session);
+			//global.ldSession = session;
+		}),
+	);
+	authentication.onDidChangeSessions(async (e) => {
+		console.dir(e);
+		if (e.provider.id === 'launchdarkly') {
+			await extensionReload(LDExtConfig);
+		}
+	});
+	LDExtConfig.setApi(new LaunchDarklyAPI(LDExtConfig.getConfig(), LDExtConfig));
 	if (validationError !== 'unconfigured') {
-		flagStore = new FlagStore(config, api);
+		LDExtConfig.setFlagStore(new FlagStore(LDExtConfig));
 	}
 
-	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${cr.version}`;
+	const codeRefsVersionDir = `${LDExtConfig.getCtx().asAbsolutePath('coderefs')}/${cr.version}`;
 	// Check to see if coderefs is already installed. Need more logic if specific config path is set.
-	if (config.enableAliases) {
+	if (LDExtConfig.getConfig().enableAliases) {
 		access(codeRefsVersionDir, constants.F_OK, (err) => {
 			if (err) {
-				const CodeRefs = new CodeRefsDownloader(ctx, codeRefsVersionDir);
+				const CodeRefs = new CodeRefsDownloader(LDExtConfig.getCtx(), codeRefsVersionDir);
 				CodeRefs.download();
 				return;
 			}
 		});
 	}
-
 	try {
-		await registerProviders(ctx, config, flagStore, api);
+		await registerProviders(LDExtConfig);
 	} catch (err) {
 		console.log(err);
 	}
 }
 
 export async function deactivate(): Promise<void> {
-	flagStore && flagStore.stop();
+	global.ldContext.flagStore && global.ldContext.flagStore.stop();
 }

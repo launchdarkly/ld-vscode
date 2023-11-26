@@ -10,7 +10,7 @@ export class Instruction {
 	contextKind?: string;
 	values: string[];
 	variationId: string;
-    };
+}
 
 export class InstructionWithFlag {
 	flagKey: string;
@@ -18,9 +18,9 @@ export class InstructionWithFlag {
 }
 
 export class InstructionPatch {
-environmentKey: string;
-instructions: Instruction[];
-};
+	environmentKey: string;
+	instructions: Instruction[];
+}
 
 export class Project extends Resource {
 	environments: Array<Environment>;
@@ -236,9 +236,12 @@ export class Clause {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	values?: Array<any>;
 	negate?: boolean;
+	contextKind?: string;
+	_key: any;
 }
 export class Rule {
 	id?: string;
+	description: string;
 	variation?: number;
 	trackEvents?: boolean;
 	rollout?: Rollout;
@@ -307,6 +310,11 @@ export class Role {
 	}
 }
 
+export class Team {
+	customRoleKeys: string[];
+	key: string;
+	name: string;
+}
 export class Member {
 	links?: Links;
 	id?: Id;
@@ -316,7 +324,8 @@ export class Member {
 	lastName?: string;
 	pendingInvite?: boolean;
 	isBeta?: boolean;
-	customRoles?: Array<Id>;
+	customRoles?: string[];
+	teams: Team[];
 }
 
 export class Defaults {
@@ -418,7 +427,7 @@ export class FeatureFlag {
 export class PatchOperation {
 	op: string;
 	path: string;
-	value: unknown;
+	value?: unknown;
 }
 export class PatchComment {
 	comment?: string;
@@ -451,4 +460,79 @@ export interface NewFlag {
 		usingMobileKey: boolean;
 	};
 	temporary: boolean;
+}
+
+export class Branch {
+	name: string;
+	headSha: string;
+	updateSequenceId: number | null;
+	syncTime: number;
+	references: ReferenceFile[];
+	commitTime: number | null;
+}
+
+export class ReferenceFile {
+	path: string;
+	hint: string;
+	hunks: Hunk[];
+}
+
+export class HunkWithFileId {
+	fileId: string;
+	path: string;
+	hunk: Hunk;
+}
+
+export class Hunk {
+	projKey: string;
+	flagKey: string;
+	startingLineNumber: number;
+	lines: string;
+	aliases: string[];
+}
+
+export class FlagLink {
+	_links: { [key: string]: { href: string; type: string } };
+	_key: string;
+	_integrationKey: string;
+	_id: string;
+	_deepLink: string;
+	_timestamp: { milliseconds: number; seconds: number; rfc3339: string; simple: string };
+	_metadata: { [key: string]: string };
+	_createdAt: number;
+	_member: { _links: { self: { href: string; type: string } }; _id: string; firstName: string; lastName: string };
+}
+
+export class ReleasePipeline {
+	name: string;
+	key: string;
+	description: string;
+	tags: string[];
+}
+
+export interface MemberTeamSummaryRep {
+	/**
+	 * A list of keys of the custom roles this team has access to
+	 * @type {Array<string>}
+	 * @memberof MemberTeamSummaryRep
+	 */
+	customRoleKeys: Array<string>;
+	/**
+	 * The team key
+	 * @type {string}
+	 * @memberof MemberTeamSummaryRep
+	 */
+	key: string;
+	/**
+	 *
+	 * @type {{ [key: string]: Link; }}
+	 * @memberof MemberTeamSummaryRep
+	 */
+	_links?: { [key: string]: Link };
+	/**
+	 * The team name
+	 * @type {string}
+	 * @memberof MemberTeamSummaryRep
+	 */
+	name: string;
 }

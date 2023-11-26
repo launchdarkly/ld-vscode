@@ -1,36 +1,28 @@
-import { commands, window, ExtensionContext, workspace, ConfigurationChangeEvent } from 'vscode';
+import { commands, window, workspace, ConfigurationChangeEvent } from 'vscode';
 
-import { Configuration } from './configuration';
-import { LaunchDarklyAPI } from './api';
-import { FlagStore } from './flagStore';
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
 import { extensionReload, setupComponents } from './utils';
+import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 
-export async function register(
-	ctx: ExtensionContext,
-	config: Configuration,
-	flagStore: FlagStore,
-	api: LaunchDarklyAPI,
-): Promise<void> {
-	await globalClearCmd(ctx, config);
-
-	await configureLaunchDarkly(ctx, config, api, flagStore);
+export async function register(config: LDExtensionConfiguration): Promise<void> {
+	await globalClearCmd(config);
+	await configureLaunchDarkly(config);
 
 	// Handle manual changes to extension configuration
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 		if (e.affectsConfiguration('launchdarkly') && !e.affectsConfiguration('launchdarkly.enableCodeLens')) {
-			await extensionReload(config, ctx, true);
+			await extensionReload(config, true);
 		}
 	});
 
-	if (typeof flagStore !== 'undefined') {
-		await setupComponents(api, config, ctx, flagStore);
+	if (config.getFlagStore() !== null) {
+		await setupComponents(config);
 	}
 
-	if (config.enableFlagExplorer) {
+	if (config.getConfig().enableFlagExplorer) {
 		await commands.executeCommand('setContext', 'launchdarkly:enableFlagExplorer', true);
 	}
 
@@ -40,14 +32,14 @@ export async function register(
 		workspace.getConfiguration('launchdarkly').get('enableMetricsExplorer', false),
 	);
 
-	ctx.subscriptions.push(
+	config.getCtx().subscriptions.push(
 		commands.registerCommand('launchdarkly.migrateConfiguration', async () => {
 			try {
 				const localConfig = workspace.getConfiguration('launchdarkly');
-				await ctx.workspaceState.update('project', localConfig['project']);
-				await ctx.workspaceState.update('env', localConfig['env']);
-				await ctx.secrets.store('launchdarkly_accessToken', localConfig['accessToken']);
-				await extensionReload(config, ctx);
+				await config.getCtx().workspaceState.update('project', localConfig['project']);
+				await config.getCtx().workspaceState.update('env', localConfig['env']);
+				await config.getCtx().secrets.store('launchdarkly_accessToken', localConfig['accessToken']);
+				await extensionReload(config);
 				window.showInformationMessage('[LaunchDarkly] Configured successfully');
 			} catch (err) {
 				window.showErrorMessage(`[LaunchDarkly] ${err}`);

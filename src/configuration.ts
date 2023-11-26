@@ -1,11 +1,10 @@
 import {
 	WorkspaceConfiguration,
-	WorkspaceFolder,
 	workspace,
 	ExtensionContext,
 	ConfigurationChangeEvent,
 	ConfigurationTarget,
-	window,
+	authentication,
 } from 'vscode';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -53,7 +52,7 @@ export class Configuration {
 			await this.ctx.globalState.update('accessToken', null);
 			await this.ctx.workspaceState.update('accessToken', null);
 		}
-		const accessToken = await this.ctx.secrets.get(ACCESS_TOKEN);
+		//const accessToken = await this.ctx.secrets.get(ACCESS_TOKEN);
 		let env = await this.getState('env');
 		if (typeof env === 'undefined') {
 			env = '';
@@ -64,14 +63,14 @@ export class Configuration {
 		}
 		const baseUri = await this.getState('baseUri');
 
-		if (!accessToken) {
-			return;
-		}
-		if (!accessToken.startsWith('api')) {
-			console.error(`Access Token does not start with api-. token: ${accessToken}`);
-			window.showErrorMessage('[LaunchDarkly] Access Token does not start with api-. Please reconfigure.');
-		}
-		this.accessToken = accessToken;
+		// if (!accessToken) {
+		// 	return;
+		// }
+		// if (!accessToken.startsWith('api')) {
+		// 	console.error(`Access Token does not start with api-. token: ${accessToken}`);
+		// 	window.showErrorMessage('[LaunchDarkly] Access Token does not start with api-. Please reconfigure.');
+		// }
+		//this.accessToken = accessToken;
 		this.env = env as string;
 		this.project = project as string;
 		this.baseUri = baseUri === 'undefined' ? DEFAULT_BASE_URI : (baseUri as string);
@@ -82,11 +81,12 @@ export class Configuration {
 			return;
 		}
 		const config: WorkspaceConfiguration = workspace.getConfiguration('launchdarkly');
-		if (key === 'accessToken') {
-			await this.ctx.secrets.store(ACCESS_TOKEN, value as string);
-			this[key] = value as string;
-			return;
-		} else if (key === 'env' || key === 'project' || key === 'baseUri') {
+		// if (key === 'accessToken') {
+		// 	await this.ctx.secrets.store(ACCESS_TOKEN, value as string);
+		// 	this[key] = value as string;
+		// 	return;
+		//} else
+		if (key === 'env' || key === 'project' || key === 'baseUri') {
 			const ctxState = this.ctx.workspaceState;
 			await ctxState.update(key, value);
 			this[key] = value as string;
@@ -101,7 +101,7 @@ export class Configuration {
 	}
 
 	public streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
-		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri'];
+		const streamingConfigOptions = ['baseUri', 'streamUri'];
 		const currProj = this.ctx.workspaceState.get('project');
 		const currEnv = this.ctx.workspaceState.get('env');
 		if (
@@ -116,13 +116,14 @@ export class Configuration {
 	}
 
 	public streamingConfigStartCheck(): boolean {
-		const streamingConfigOptions = ['accessToken', 'baseUri', 'streamUri'];
+		const streamingConfigOptions = ['baseUri', 'streamUri'];
 		const currProj = this.ctx.workspaceState.get('project');
 		const currEnv = this.ctx.workspaceState.get('env');
 		if (
 			!streamingConfigOptions.every((o) => !!this[o]) &&
 			typeof currProj !== 'undefined' &&
 			typeof currEnv !== 'undefined'
+			//global.ldSession !== undefined
 		) {
 			console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
 			return false;
@@ -149,7 +150,7 @@ export class Configuration {
 	}
 
 	async isConfigured(): Promise<boolean> {
-		const token = await this.ctx.secrets.get(ACCESS_TOKEN);
+		//const token = await this.ctx.secrets.get(ACCESS_TOKEN);
 		let proj = await this.ctx.workspaceState.get('project');
 		if (typeof proj === 'undefined') {
 			proj = '';
@@ -158,22 +159,23 @@ export class Configuration {
 		if (typeof env === 'undefined') {
 			env = '';
 		}
-		const check = token !== null && token?.length > 0 && proj !== '' && env !== '';
+		// We need to check session here because the LDExtensionConfiguration is not yet initialized.
+		const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
+		const check = proj !== '' && env !== '' && session !== undefined;
 		return check;
 	}
 
 	async localIsConfigured(): Promise<boolean> {
 		const config = workspace.getConfiguration('launchdarkly');
 		return (
-			!!(await this.ctx.secrets.get(ACCESS_TOKEN)) ||
-			!!config.inspect('project').workspaceValue ||
-			!!config.inspect('env').workspaceValue
+			//!!(await this.ctx.secrets.get(ACCESS_TOKEN)) ||
+			!!config.inspect('project').workspaceValue || !!config.inspect('env').workspaceValue
 		);
 	}
 
 	async clearLocalConfig(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
-		await this.ctx.workspaceState.update('accessToken', undefined);
+		//await this.ctx.workspaceState.update('accessToken', undefined);
 		await config.update('project', undefined, ConfigurationTarget.Workspace);
 		await config.update('env', undefined, ConfigurationTarget.Workspace);
 		await this.ctx.workspaceState.update('project', undefined);
@@ -182,11 +184,27 @@ export class Configuration {
 
 	async clearGlobalConfig(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
-		await this.ctx.globalState.update('accessToken', undefined);
+		//await this.ctx.globalState.update('accessToken', undefined);
 		await config.update('project', undefined, ConfigurationTarget.Global);
 		await config.update('env', undefined, ConfigurationTarget.Global);
 		await this.ctx.secrets.delete(ACCESS_TOKEN);
 		await this.reload();
+	}
+
+	async copyWorkspaceToGlobal(): Promise<void> {
+		const config = workspace.getConfiguration('launchdarkly');
+		await this.ctx.globalState.update('project', config.get('project'));
+		await this.ctx.globalState.update('env', config.get('env'));
+	}
+
+	async setGlobalDefault(): Promise<void> {
+		const config = workspace.getConfiguration('launchdarkly');
+		const currentGlobal = await config.get('globalDefault');
+		const swapCurrent = !currentGlobal;
+		await config.update('globalDefault', swapCurrent);
+		if (swapCurrent) {
+			await this.copyWorkspaceToGlobal();
+		}
 	}
 
 	async getState(key: string): Promise<string | unknown> {

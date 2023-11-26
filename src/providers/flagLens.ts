@@ -4,8 +4,7 @@ import { Configuration } from '../configuration';
 import { FeatureFlag, FlagConfiguration } from '../models';
 import { FlagStore } from '../flagStore';
 import { FlagAliases } from './codeRefs';
-import { CancellationToken, CodeLens, ConfigurationChangeEvent } from 'vscode';
-import { LaunchDarklyTreeViewProvider } from './flagsView';
+import { CancellationToken, CodeLens, ConfigurationChangeEvent, authentication } from 'vscode';
 
 const MAX_CODELENS_VALUE = 20;
 /**
@@ -14,7 +13,7 @@ const MAX_CODELENS_VALUE = 20;
 export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	private config: Configuration;
 	private regex: RegExp;
-	private flagStore: FlagStore;
+	private flagStore: FlagStore | null;
 	private aliases: FlagAliases;
 	private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 	public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
@@ -28,6 +27,14 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 		vscode.workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
 			if (e.affectsConfiguration('launchdarkly.enableCodeLens')) {
 				this._onDidChangeCodeLenses.fire(null);
+			}
+		});
+		authentication.onDidChangeSessions(async (e) => {
+			if (e.provider.id === 'launchdarkly') {
+				const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
+				if (session === undefined) {
+					this.flagStore = null;
+				}
 			}
 		});
 		this.start();
@@ -149,14 +156,13 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 					codeLenses.push(codeLens);
 				}
 			} else {
-				flags?.forEach((flag) => {
-					const codeLens = new SimpleCodeLens(range, flag, this.config);
+				const flag = flags?.[0];
+				const alias = foundAliases?.[0];
+				const flagOrAlias = flag || aliasesLocal[alias];
+				if (flagOrAlias) {
+					const codeLens = new SimpleCodeLens(range, flagOrAlias, this.config);
 					codeLenses.push(codeLens);
-				});
-				foundAliases?.forEach((flag) => {
-					const codeLens = new SimpleCodeLens(range, aliasesLocal[flag], this.config);
-					codeLenses.push(codeLens);
-				});
+				}
 			}
 		}
 		return codeLenses;

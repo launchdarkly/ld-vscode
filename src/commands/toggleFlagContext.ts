@@ -1,19 +1,18 @@
 import { commands, Disposable, ExtensionContext, window } from 'vscode';
 import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
-import { FlagStore } from '../flagStore';
 
 export default function toggleFlagCtxCmd(
 	ctx: ExtensionContext,
 	config: Configuration,
 	api: LaunchDarklyAPI,
-	flagStore: FlagStore,
 ): Disposable {
-	const toggleFlagCtxCmd = commands.registerCommand('launchdarkly.toggleFlagContext', async () => {
+	const toggleFlagCtxCmd = commands.registerCommand('launchdarkly.toggleFlagContext', async (args) => {
 		try {
-			const key = ctx.workspaceState.get('LDFlagKey') as string;
+			const key = args ? args : (ctx.workspaceState.get('LDFlagKey') as string);
+
 			if (key) {
-				const env = await flagStore.getFeatureFlag(key);
+				const env = await global.ldContext.flagStore.getFeatureFlag(key);
 				await api.patchFeatureFlagOn(config.project, key, !env.config.on);
 			}
 		} catch (err) {
