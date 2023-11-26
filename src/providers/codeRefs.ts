@@ -6,6 +6,7 @@ import { tmpdir } from 'os';
 import csv from 'csv-parser';
 import { Configuration } from '../configuration';
 import { CodeRefs } from '../coderefs/codeRefsVersion';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { promises: Fs } = require('fs');
 
@@ -23,14 +24,16 @@ type FlagAlias = {
 export class FlagAliases {
 	private config: Configuration;
 	private ctx: ExtensionContext;
+	private ldConfig: LDExtensionConfiguration
 	public readonly aliasUpdates: EventEmitter<boolean | null> = new EventEmitter();
 	map = new Map();
 	keys = new Map();
 	private statusBar: StatusBarItem;
 
-	constructor(config: Configuration, ctx: ExtensionContext) {
+	constructor(config: Configuration, ctx: ExtensionContext, ldConfig: LDExtensionConfiguration) {
 		this.config = config;
 		this.ctx = ctx;
+		this.ldConfig = ldConfig;
 	}
 	aliases: Array<string>;
 
@@ -96,7 +99,7 @@ export class FlagAliases {
 			const codeRefsBin = await this.getCodeRefsBin();
 			const command = `${codeRefsBin} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${this.config.project}" --repoName="${repoName}" --baseUri="${this.config.baseUri}" --contextLines=-1 --branch=scan --revision=0`;
 			const output = await this.exec(command, {
-				env: { LD_ACCESS_TOKEN: this.config.accessToken, GOMAXPROCS: '1' },
+				env: { LD_ACCESS_TOKEN: `Bearer ${this.ldConfig.getSession().accessToken}`, GOMAXPROCS: '1' },
 				timeout: 20 * 60000,
 			});
 			if (output.stderr) {

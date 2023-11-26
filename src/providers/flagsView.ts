@@ -4,11 +4,11 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import { debounce, map } from 'lodash';
-import { FlagAliases } from './codeRefs';
 import checkExistingCommand from '../utils/common';
-import { Command } from 'vscode';
+import { Command, authentication } from 'vscode';
 import { FlagNode, FlagParentNode, flagToValues } from '../utils/FlagNode';
 import { generateHoverString } from '../utils/hover';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -16,20 +16,35 @@ const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
 export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<FlagTreeInterface | FlagTreeInterface[]> {
 	private readonly api: LaunchDarklyAPI;
 	private config: Configuration;
+	private ldConfig: LDExtensionConfiguration;
 	private flagStore: FlagStore;
 	private flagNodes: Array<FlagTreeInterface>;
-	private aliases: FlagAliases;
 	private _onDidChangeTreeData: vscode.EventEmitter<FlagTreeInterface | null | void> =
 		new vscode.EventEmitter<FlagTreeInterface | null | void>();
 	readonly onDidChangeTreeData: vscode.Event<FlagTreeInterface | null | void> = this._onDidChangeTreeData.event;
 
-	constructor(api: LaunchDarklyAPI, config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
+	constructor(
+		api: LaunchDarklyAPI,
+		config: Configuration,
+		ldConfig: LDExtensionConfiguration,
+		flagStore: FlagStore,
+	) {
 		this.api = api;
 		this.config = config;
+		this.ldConfig = ldConfig;
 		this.flagStore = flagStore;
-		this.aliases = aliases;
 		this.registerCommands();
 		this.start();
+		authentication.onDidChangeSessions(async (e) => {
+			if (e.provider.id === 'launchdarkly') {
+				const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
+				if (session === undefined) {
+					this.flagNodes = null;
+					await this.refresh();
+					await this.stop();
+				}
+			}
+		});
 	}
 
 	refresh(): void {
@@ -81,7 +96,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			};
 			return Promise.resolve([
 				new FlagNode(
-					global.ldContext,
+					this.ldConfig.getCtx(),
 					'No Flags Found. Click here to view Quickstart',
 					NON_COLLAPSED,
 					[],
@@ -105,8 +120,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				const newFlag = await flagToValues(
 					updatedFlag.flag,
 					updatedFlag.config,
-					this.config,
-					this.aliases,
+					this.ldConfig,
 					element as FlagParentNode,
 				);
 				this.flagNodes[updatedIdx] = newFlag;
@@ -117,10 +131,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 	}
 
-	setFlagsStore(flagstore: FlagStore): void {
-		this.flagStore = flagstore;
-		this.flagUpdateListener();
-	}
+	// setFlagsStore(flagstore: FlagStore): void {
+	// 	this.flagStore = flagstore;
+	// 	this.flagUpdateListener();
+	// }
 
 	async getFlags(): Promise<void> {
 		// Clear existing flags
@@ -152,10 +166,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		} catch (err) {
 			console.error(`Failed getting flags: ${err}`);
 			const message = `Error retrieving Flags: ${err}`;
-			this.flagNodes = [new FlagParentNode(global.ldContext, message, message, null, NON_COLLAPSED)];
+			this.flagNodes = [new FlagParentNode(this.ldConfig.getCtx(), message, message, null, NON_COLLAPSED)];
 		}
 		if (this.config.isConfigured() && !this.flagNodes) {
-			this.flagNodes = [new FlagParentNode(global.ldContext, 'No Flags Found.', 'No Flags Found', null, NON_COLLAPSED)];
+			this.flagNodes = [
+				new FlagParentNode(this.ldConfig.getCtx(), 'No Flags Found.', 'No Flags Found', null, NON_COLLAPSED),
+			];
 		}
 	}
 
@@ -172,7 +188,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		if (await checkExistingCommand(copyKeyCmd)) {
 			return;
 		}
-		global.ldContext.subscriptions.push(
+		this.ldConfig.getCtx().subscriptions.push(
 			vscode.commands.registerCommand(copyKeyCmd, (node: FlagNode) => vscode.env.clipboard.writeText(node.flagKey)),
 			vscode.commands.registerCommand('launchdarkly.openBrowser', (node: FlagNode | string) => {
 				if (typeof node === 'string') {
@@ -186,8 +202,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode) => {
 				let aliases;
 				let findAliases: string;
-				if (this.aliases) {
-					aliases = this.aliases.getKeys();
+				if (this.ldConfig.getAliases()) {
+					aliases = this.ldConfig.getAliases().getKeys();
 				}
 				if (aliases && aliases[node.flagKey]) {
 					const tempSearch = [...aliases[node.flagKey]];
@@ -206,7 +222,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}),
 			vscode.commands.registerCommand('launchdarkly.toggleFlag', async (node: FlagParentNode) => {
 				try {
-					const env = await this.flagStore.getFeatureFlag(node.flagKey);
+					const env = await this.ldConfig.getFlagStore().getFeatureFlag(node.flagKey);
 					await this.api.patchFeatureFlagOn(this.config.project, node.flagKey, !env.config.on);
 				} catch (err) {
 					vscode.window.showErrorMessage(`Could not toggle flag: ${err.message}`);
@@ -234,6 +250,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return;
 		}
 		await this.reload();
+	}
+
+	async stop(): Promise<void> {
+		this.flagNodes = [];
 	}
 
 	private async flagPatch(node: FlagTreeInterface, path: string, contextValue?: string): Promise<void> {
@@ -282,7 +302,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				flagKeys.map((key) => {
 					this.flagStore.getFeatureFlag(key).then((updatedFlag) => {
 						const updatedIdx = this.flagNodes.findIndex((v) => v.flagKey === key);
-						flagToValues(updatedFlag.flag, updatedFlag.config, this.config, this.aliases).then((newFlagValue) => {
+						flagToValues(updatedFlag.flag, updatedFlag.config, this.ldConfig).then((newFlagValue) => {
 							this.flagNodes[updatedIdx] = newFlagValue;
 						});
 					});
@@ -319,8 +339,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			}
 			this.refresh();
 		});
-		if (this.aliases) {
-			this.aliases.aliasUpdates.event(async () => {
+		if (this.ldConfig.getAliases()) {
+			this.ldConfig.getAliases().aliasUpdates.event(async () => {
 				this.reload();
 			});
 		}
@@ -340,9 +360,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 
 		const item = new FlagParentNode(
-			global.ldContext,
+			this.ldConfig.getCtx(),
 			flag.name,
-			generateHoverString(flag, envConfig, this.config, global.ldContext),
+			generateHoverString(flag, envConfig, this.ldConfig),
 			`${this.config.baseUri}/${this.config.project}/${this.config.env}/features/${flag.key}`,
 			COLLAPSED,
 			[],

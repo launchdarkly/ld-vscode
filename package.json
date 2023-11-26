@@ -16,6 +16,10 @@
 	"activationEvents": [
 		"onStartupFinished"
 	],
+	"enabledApiProposals": [
+		"chatAgents2",
+		"chatRequestAccess"
+	],
 	"main": "./dist/extension",
 	"contributes": {
 		"configuration": {
@@ -91,6 +95,11 @@
 					"type": "boolean",
 					"default": "",
 					"description": "LaunchDarkly Flags in File"
+				},
+				"launchdarkly.globalDefault": {
+					"type": "boolean",
+					"default": false,
+					"description": "LaunchDarkly Global Default"
 				}
 			}
 		},
@@ -216,6 +225,20 @@
 			{
 				"command": "launchdarkly.quickPickRules",
 				"title": "LaunchDarkly: Quick Targeting"
+			},
+			{
+				"command": "vscode-launchdarkly-authprovider.signIn",
+				"title": "Sign in",
+				"category": "LaunchDarkly",
+				"icon": "$(sign-in)"
+			},
+			{
+				"command": "launchdarkly.setMaintainer",
+				"title": "LaunchDarkly: Set Maintainer"
+			},
+			{
+				"command": "launchdarkly.globalDefaults",
+				"title": "LaunchDarkly: Use Global Default"
 			}
 		],
 		"menus": {
@@ -291,6 +314,10 @@
 				}
 			],
 			"view/title": [
+				{
+					"command": "vscode-launchdarkly-authprovider.signIn",
+					"group": "navigation@10"
+				},
 				{
 					"command": "launchdarkly.refreshEntry",
 					"when": "view == launchdarklyFeatureFlags",
@@ -416,8 +443,16 @@
 		"viewsWelcome": [
 			{
 				"view": "launchdarklyFeatureFlags",
-				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension. \nIf you had a previous version installed you may need to \n[Migrate Configuration](command:launchdarkly.migrateConfiguration)\n Previous versions allowed for global configuration, the current version is configured per workspace."
+				"contents": "[Click Here](command:extension.configureLaunchDarkly)\nto your global defaults.",
+				"when": "config.launchdarkly.globalDefault == true"
+			},
+
+			{
+				"view": "launchdarklyFeatureFlags",
+				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension. \nIf you had a previous version installed you may need to \n[Migrate Configuration](command:launchdarkly.migrateConfiguration)\n Previous versions allowed for global configuration, the current version is configured per workspace.",
+				"when": "config.launchdarkly.globalDefault == false"
 			}
+			
 		]
 	},
 	"galleryBanner": {
@@ -462,20 +497,24 @@
 		"webpack-cli": "^4.6.0"
 	},
 	"dependencies": {
+		"@launchdarkly/node-server-sdk": "^9.0.3",
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
 		"axios": "0.21.4",
 		"csv-parser": "^2.3.3",
+		"form-data": "^4.0.0",
 		"gunzip-maybe": "^1.4.2",
 		"launchdarkly-api-typescript": "6.0.0",
-		"@launchdarkly/node-server-sdk": "^9.0.3",
 		"lodash": "^4.17.21",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
+		"node-fetch": "^3.3.2",
 		"opn": "5.3.0",
 		"request": "^2.34",
 		"rimraf": "^3.0.2",
-		"tar-fs": "^2.1.1"
+		"tar-fs": "^2.1.1",
+		"tree-sitter-stack-graphs": "^0.7.0",
+		"uuid": "^9.0.1"
 	},
 	"resolutions": {
 		"node.extend": "^1.1.7",

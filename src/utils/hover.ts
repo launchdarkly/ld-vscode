@@ -1,16 +1,15 @@
 import { ColorThemeKind, ExtensionContext, MarkdownString, window } from 'vscode';
 import { FeatureFlag, FlagConfiguration } from '../models';
-import { Configuration } from '../configuration';
 import * as fs from 'fs';
 import * as url from 'url';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
 const FLAG_STATUS_CACHE = new Map<string, string>();
 
 export function generateHoverString(
 	flag: FeatureFlag,
 	c: FlagConfiguration,
-	config: Configuration,
-	ctx: ExtensionContext,
+	config: LDExtensionConfiguration,
 ): MarkdownString {
 	let env;
 	try {
@@ -19,9 +18,9 @@ export function generateHoverString(
 		console.error(err);
 		return;
 	}
-	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
+	const flagUri = url.resolve(config.getConfig().baseUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(
-		`![Flag status](${getFlagStatusUri(ctx, c.on)}) ${config.project} / ${env} / **[${
+		`![Flag status](${getFlagStatusUri(config.getCtx(), c.on)}) ${config.getConfig().project} / ${env} / **[${
 			flag.key
 		}](${flagUri} "Open in LaunchDarkly")** \n\n`,
 		true,

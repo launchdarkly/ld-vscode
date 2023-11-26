@@ -11,6 +11,7 @@ import { generateHoverString } from '../src/utils/hover';
 import { FeatureFlag, FlagConfiguration } from '../src/models';
 import { Configuration } from '../src/configuration';
 import { isPrecedingCharStringDelimiter } from '../src/providers/completion';
+import { LDExtensionConfiguration } from '../src/ldExtensionConfiguration';
 
 function resolveSrcTestPath(ctx) {
 	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out', '') } });
@@ -52,20 +53,20 @@ const flagConfig: FlagConfiguration = {
 	version: 1,
 };
 
-const mockConfig = mock(Configuration);
-when(mockConfig.baseUri).thenReturn('https://example.com');
-when(mockConfig.project).thenReturn('abc');
+const mockLDConfig = mock(LDExtensionConfiguration);
+const mockConfig = mock(Configuration)
+mockLDConfig.setConfig(mockConfig);
+when(mockLDConfig.getConfig().baseUri).thenReturn('https://example.com');
+when(mockLDConfig.getConfig().project).thenReturn('abc');
 const config = instance(mockConfig);
 
 const mockCtx = mock<vscode.ExtensionContext>();
 when(mockCtx.asAbsolutePath(anyString())).thenReturn(path.normalize(`${__dirname}/../../resources/dark/toggleon.svg`));
-const ctx = instance(mockCtx);
 
 const testPath = path.join(__dirname, '..', '..', 'test');
-
 suite('provider utils tests', function () {
 	test('generateHoverString', function () {
-		expect(generateHoverString(flag, flagConfig, config, ctx).value).toMatchSnapshot(resolveSrcTestPath(this));
+		expect(generateHoverString(flag, flagConfig, mockLDConfig).value).toMatchSnapshot(resolveSrcTestPath(this));
 	});
 
 	test('isPrecedingCharStringDelimeter', async () => {

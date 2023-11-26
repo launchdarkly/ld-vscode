@@ -11,21 +11,18 @@ import {
 	window,
 	commands,
 } from 'vscode';
-import { Configuration } from '../configuration';
-import { FlagStore } from '../flagStore';
 import checkExistingCommand from '../utils/common';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
 const NON_COLLAPSED = TreeItemCollapsibleState.None;
 
 export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
-	private config: Configuration;
+	private config: LDExtensionConfiguration;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
-	private flagStore?: FlagStore;
 
-	constructor(config: Configuration, flagStore?: FlagStore) {
+	constructor(config: LDExtensionConfiguration) {
 		this.config = config;
-		this.flagStore = flagStore;
 		this.start();
 	}
 
@@ -40,8 +37,8 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 		}
 		commands.registerCommand(compareFlagsCmd, async () => {
 			let values: QuickPickItem[] = [{ label: 'No flags found', description: '' }];
-			if (typeof this.flagStore !== 'undefined') {
-				const flags = await this.flagStore.allFlagsMetadata();
+			if (this.config.getFlagStore() !== null) {
+				const flags = await this.config.getFlagStore().allFlagsMetadata();
 				const flagKeys = Object.keys(flags);
 				if (flagKeys?.length > 0) {
 					const options = [];
@@ -56,7 +53,9 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 			quickPick.title = 'Select Flag for Overview';
 			quickPick.placeholder = 'placeholder';
 			quickPick.onDidAccept(() => {
-				const linkUrl = `${this.config.baseUri}/${this.config.project}/${this.config.env}/features/${quickPick.selectedItems[0].label}/compare-flag`;
+				const linkUrl = `${this.config.getConfig().baseUri}/${this.config.getConfig().project}/${
+					this.config.getConfig().env
+				}/features/${quickPick.selectedItems[0].label}/compare-flag`;
 				commands.executeCommand('launchdarkly.openBrowser', linkUrl);
 				quickPick.dispose();
 			});
@@ -64,7 +63,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 		});
 	}
 	async reload(e?: ConfigurationChangeEvent | undefined): Promise<void> {
-		if (e && this.config.streamingConfigReloadCheck(e)) {
+		if (e && this.config.getConfig().streamingConfigReloadCheck(e)) {
 			return;
 		}
 		await this.debouncedReload();
@@ -92,7 +91,9 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async getChildren(element?: LinkNode): Promise<LinkNode[]> {
-		const baseUrl = `${this.config.baseUri}/${this.config.project}/${this.config.env}`;
+		const baseUrl = `${this.config.getConfig().baseUri}/${this.config.getConfig().project}/${
+			this.config.getConfig().env
+		}`;
 		const items = [];
 		items.push(
 			new LinkNode(`Create Boolean Feature Flag`, NON_COLLAPSED, '', {

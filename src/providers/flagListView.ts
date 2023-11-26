@@ -10,31 +10,51 @@ import {
 	Command,
 	TreeItemCollapsibleState,
 	CancellationTokenSource,
+	authentication,
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { FlagStore } from '../flagStore';
 import { flagToValues } from '../utils/FlagNode';
 import { FlagCodeLensProvider, SimpleCodeLens } from './flagLens';
 import { FlagTreeInterface } from './flagsView';
-import { FlagNode, FlagParentNode } from '../utils/FlagNode';
+import { FlagNode } from '../utils/FlagNode';
 import { FlagAliases } from './codeRefs';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
 export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> {
 	private config: Configuration;
+	private ldConfig: LDExtensionConfiguration;
 	private lens: FlagCodeLensProvider;
-	private flagStore: FlagStore;
-	private flagNodes: Array<FlagTreeInterface>;
+	private flagStore: FlagStore | null;
+	private flagNodes: Array<FlagTreeInterface> | null;
 	private aliases?: FlagAliases;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
 	private flagMap: Map<string, FlagList | FlagNodeList> = new Map();
-	constructor(config: Configuration, lens: FlagCodeLensProvider, flagStore: FlagStore, aliases?: FlagAliases) {
+	constructor(
+		config: Configuration,
+		ldConfig: LDExtensionConfiguration,
+		lens: FlagCodeLensProvider,
+		flagStore: FlagStore,
+		aliases?: FlagAliases,
+	) {
 		this.config = config;
+		this.ldConfig = ldConfig;
 		this.lens = lens;
 		this.flagStore = flagStore;
 		this.aliases = aliases;
 		this.setFlagsinDocument();
 		this.flagReadyListener();
+		authentication.onDidChangeSessions(async (e) => {
+			if (e.provider.id === 'launchdarkly') {
+				const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
+				if (session === undefined) {
+					this.flagNodes = null;
+					this.flagStore = null;
+					await this.refresh();
+				}
+			}
+		});
 	}
 
 	refresh(): void {
@@ -123,7 +143,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		let flagMeta;
 
 		try {
-			flagMeta = await this.flagStore.allFlagsMetadata();
+			flagMeta = await this.flagStore?.allFlagsMetadata();
 		} catch (err) {
 			//nothing
 		}
@@ -141,8 +161,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 						newElement = (await flagToValues(
 							flagMeta[codelensFlag.flag],
 							flagEnv,
-							this.config,
-							this.aliases,
+							this.ldConfig,
 						)) as FlagNodeList;
 						newElement.list = [codelensFlag.range];
 						this.flagNodes.push(newElement);
@@ -180,7 +199,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 					this.flagStore.getFeatureFlag(key).then((updatedFlag) => {
 						const existingFlag = this.flagMap.get(key);
 						if (typeof existingFlag !== 'undefined') {
-							flagToValues(updatedFlag.flag, updatedFlag.config, this.config, this.aliases).then((newFlagValue) => {
+							flagToValues(updatedFlag.flag, updatedFlag.config, this.ldConfig).then((newFlagValue) => {
 								const updatedFlagValue = newFlagValue as FlagNodeList;
 								updatedFlagValue.list = existingFlag.list;
 								this.flagMap.set(key, updatedFlagValue);
@@ -235,47 +254,17 @@ export class FlagItem extends TreeItem {
 	}
 }
 
-export class FlagNodeList extends FlagParentNode {
-	public list?: Array<Range>;
+export type FlagNodeList = {
+	tooltip: string;
+	label: string;
+	collapsibleState: TreeItemCollapsibleState;
+	flagKey: string;
+	uri: string;
 	range?: Range;
-	children: Array<FlagNode> | undefined;
 	contextValue?: string;
-	uri?: string;
-	flagKey?: string;
-	flagParentName?: string;
-	flagVersion: number;
-	command?: Command;
-
-	constructor(
-		public readonly tooltip: string,
-		public readonly label: string,
-		public collapsibleState: TreeItemCollapsibleState,
-		flagKey: string,
-		uri: string,
-		range?: Range,
-		contextValue?: string,
-		list?: Array<Range>,
-		children?: FlagNode[],
-		flagVersion?: number,
-		enabled?: boolean,
-		aliases?: string[],
-	) {
-		super(
-			global.ldContext,
-			tooltip,
-			label,
-			uri,
-			collapsibleState,
-			children,
-			flagKey,
-			flagVersion,
-			enabled,
-			aliases,
-			contextValue,
-		);
-		this.flagKey = flagKey;
-		this.range = range;
-		this.contextValue = contextValue;
-		this.list = list;
-	}
-}
+	list?: Array<Range>;
+	children?: FlagNode[];
+	flagVersion?: number;
+	enabled?: boolean;
+	aliases?: string[];
+};
