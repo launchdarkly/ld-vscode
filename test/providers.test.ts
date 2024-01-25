@@ -9,9 +9,10 @@ const toMatchSnapshot = require('expect-mocha-snapshot');
 expect.extend({ toMatchSnapshot });
 import { generateHoverString } from '../src/utils/hover';
 import { FeatureFlag, FlagConfiguration } from '../src/models';
-import { Configuration } from '../src/configuration';
 import { isPrecedingCharStringDelimiter } from '../src/providers/completion';
 import { LDExtensionConfiguration } from '../src/ldExtensionConfiguration';
+import { Configuration } from '../src/configuration';
+import { LaunchDarklyAuthenticationSession } from '../src/providers/authProvider';
 
 function resolveSrcTestPath(ctx) {
 	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out', '') } });
@@ -37,6 +38,10 @@ const flag = new FeatureFlag({
 			description: 'first flag',
 		},
 	],
+	clientSideAvailability: {
+		usingMobileKey: false,
+		usingEnvironmentId: false,
+	}
 });
 
 const flagConfig: FlagConfiguration = {
@@ -54,19 +59,28 @@ const flagConfig: FlagConfiguration = {
 };
 
 const mockLDConfig = mock(LDExtensionConfiguration);
-const mockConfig = mock(Configuration)
-mockLDConfig.setConfig(mockConfig);
-when(mockLDConfig.getConfig().baseUri).thenReturn('https://example.com');
-when(mockLDConfig.getConfig().project).thenReturn('abc');
-const config = instance(mockConfig);
-
+const mockConfig = mock(Configuration);
 const mockCtx = mock<vscode.ExtensionContext>();
+const mockSession = mock<LaunchDarklyAuthenticationSession>();
+
+const ctx = instance(mockCtx);
+const config = instance(mockConfig);
+const ldConfig = instance(mockLDConfig);
+const session = instance(mockSession);
+
+when(mockLDConfig.getConfig()).thenReturn(config);
+when(mockConfig.project).thenReturn('abc');
+
+when(mockLDConfig.getSession()).thenReturn(session);
+when(mockSession.fullUri).thenReturn('https://example.com');
+
+when(mockLDConfig.getCtx()).thenReturn(ctx);
 when(mockCtx.asAbsolutePath(anyString())).thenReturn(path.normalize(`${__dirname}/../../resources/dark/toggleon.svg`));
 
 const testPath = path.join(__dirname, '..', '..', 'test');
 suite('provider utils tests', function () {
 	test('generateHoverString', function () {
-		expect(generateHoverString(flag, flagConfig, mockLDConfig).value).toMatchSnapshot(resolveSrcTestPath(this));
+		expect(generateHoverString(flag, flagConfig, ldConfig).value).toMatchSnapshot(resolveSrcTestPath(this));
 	});
 
 	test('isPrecedingCharStringDelimeter', async () => {

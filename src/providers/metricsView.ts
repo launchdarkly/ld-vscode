@@ -4,7 +4,7 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import * as path from 'path';
 import * as url from 'url';
-import { MarkdownString } from 'vscode';
+import { MarkdownString, Uri } from 'vscode';
 import checkExistingCommand from '../utils/common';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
@@ -180,12 +180,11 @@ export class MetricValue extends vscode.TreeItem {
 		}
 	}
 
-	private setIcon(ctx: vscode.ExtensionContext, fileName: string): vscode.ThemeIcon {
+	private setIcon(ctx: vscode.ExtensionContext, fileName: string): { light: string | Uri; dark: string | Uri } {
 		if (fileName === '') {
 			return;
 		}
 		return (this.iconPath = {
-			id: null,
 			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName + '.svg')),
 			dark: ctx.asAbsolutePath(path.join('resources', 'dark', fileName + '.svg')),
 		});

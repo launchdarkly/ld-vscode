@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
-import { FlagNode, FlagParentNode,flagNodeFactory } from '../src/utils/FlagNode';
+import { FlagNode, FlagParentNode, flagNodeFactory } from '../src/utils/FlagNode';
 import { FeatureFlag } from '../src/models';
 
 const flag = new FeatureFlag({

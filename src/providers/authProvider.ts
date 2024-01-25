@@ -12,16 +12,18 @@ import {
 	Uri,
 	UriHandler,
 	window,
+	workspace,
 } from 'vscode';
 import { v4 as uuid } from 'uuid';
 import { PromiseAdapter, promiseFromEvent } from '../utils/common';
 import fetch from 'node-fetch';
-import { Team } from '../models';
+import { Member, Team } from '../models';
+import { legacyAuth } from '../utils';
 
 export const AUTH_TYPE = `launchdarkly`;
 const AUTH_NAME = `LaunchDarkly`;
-const CLIENT_ID = `512d1733-ea07-4414-95e8-37e8e1b9716a`; // Replace with your LaunchDarkly Client ID
 const LAUNCHDARKLY_OAUTH_DOMAIN = `hello-world-restless-violet-9097.dobrien-nj.workers.dev`; // Adjust if necessary
+//const LAUNCHDARKLY_OAUTH_DOMAIN = `ldprobotdevo.ngrok.io/vscode`; // Adjust if necessary
 const SESSIONS_SECRET_KEY = `${AUTH_TYPE}.sessions`;
 
 class UriEventHandler extends EventEmitter<Uri> implements UriHandler {
@@ -33,12 +35,18 @@ class UriEventHandler extends EventEmitter<Uri> implements UriHandler {
 export interface LaunchDarklyAuthenticationSession extends AuthenticationSession {
 	refreshToken: string;
 	baseUri: string;
+	fullUri: string;
 	teams: Team[];
+	apiToken?: string;
 }
 
 interface TokenInformation {
 	access_token: string;
 	refresh_token: string;
+}
+
+interface TokenInformationWithBase extends TokenInformation {
+	baseUri: string;
 }
 export class LaunchDarklyAuthenticationProvider implements AuthenticationProvider, Disposable {
 	private _sessionChangeEmitter = new EventEmitter<AuthenticationProviderAuthenticationSessionsChangeEvent>();
@@ -58,18 +66,18 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 		return this._sessionChangeEmitter.event;
 	}
 
-	get redirectUri() {
-		const publisher = this.context.extension.packageJSON.publisher;
-		const name = this.context.extension.packageJSON.name;
-		return `${env.uriScheme}://${publisher}.${name}`;
-	}
+	// get redirectUri() {
+	// 	const publisher = this.context.extension.packageJSON.publisher;
+	// 	const name = this.context.extension.packageJSON.name;
+	// 	return `${env.uriScheme}://${publisher}.${name}`;
+	// }
 
 	/**
 	 * Get the existing sessions
 	 * @param scopes
 	 * @returns
 	 */
-	public async getSessions(scopes?: string[]): Promise<readonly LaunchDarklyAuthenticationSession[]> {
+	public async getSessions(): Promise<readonly LaunchDarklyAuthenticationSession[]> {
 		try {
 			const allSessions = await this.context.secrets.get(SESSIONS_SECRET_KEY);
 			if (allSessions.length === 2) {
@@ -78,9 +86,10 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 
 			const sessions = JSON.parse(allSessions) as LaunchDarklyAuthenticationSession;
 			const session = sessions[0];
-			if (session && session.refreshToken) {
+			const useLegacy = legacyAuth();
+			if (session && session.refreshToken && !useLegacy) {
 				const refreshToken = session.refreshToken;
-				const { access_token } = await this.getAccessToken(refreshToken, CLIENT_ID);
+				const { access_token } = await this.getAccessToken(refreshToken);
 
 				if (access_token) {
 					const updatedSession = Object.assign({}, session, { accessToken: access_token, scopes: 'writer' });
@@ -93,6 +102,9 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 			}
 		} catch (e) {
 			// Nothing to do
+			console.log(e);
+			console.log('Error in session');
+			return [];
 		}
 
 		return [];
@@ -105,17 +117,16 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 	 */
 	public async createSession(scopes: string[]): Promise<AuthenticationSession> {
 		try {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			//@ts-ignore
 			const { access_token, refresh_token, baseUri } = await this.login(scopes);
 			if (!access_token) {
 				throw new Error(`LaunchDarkly login failure`);
 			}
-
+			const fullUri = `https://${baseUri}`;
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			const userInfo: { firstName: string; lastName: string; email: string; teams: Team[] } = await this.getUserInfo(
 				access_token,
+				fullUri,
 			);
 
 			const session: LaunchDarklyAuthenticationSession = {
@@ -127,6 +138,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 					id: userInfo.email,
 				},
 				baseUri: baseUri,
+				fullUri: fullUri,
 				teams: userInfo.teams,
 				scopes: ['writer'],
 			};
@@ -173,7 +185,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 	 * Log in to LaunchDarkly
 	 */
 	private async login(scopes: string[] = []) {
-		return await window.withProgress<string>(
+		return await window.withProgress<TokenInformationWithBase>(
 			{
 				location: ProgressLocation.Notification,
 				title: 'Signing in to LaunchDarkly...',
@@ -187,7 +199,12 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 				const pickInstance = await window.showQuickPick(instances, {
 					title: 'LaunchDarkly Instance',
 					placeHolder: 'Select LaunchDarkly Instance',
+					ignoreFocusOut: true,
 				});
+				if (!pickInstance.label) {
+					window.showInformationMessage('No instance selected');
+					return;
+				}
 				let ldBaseUri;
 				let appBaseUri;
 				switch (pickInstance.label) {
@@ -197,19 +214,48 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 						break;
 					case 'Federal':
 						ldBaseUri = 'app.launchdarkly.us';
-						appBaseUri = `app.launchdarkly.com`;
+						appBaseUri = `app.launchdarkly.us`;
 						break;
 					case 'Other': {
-						const baseUris = await window.showInputBox({
-							title: 'LaunchDarkly Instance',
-							placeHolder: 'Enter LaunchDarkly Instance',
-						});
+						let baseUris;
+						if (workspace.getConfiguration('launchdarkly').get('baseUri', '')) {
+							const base = workspace.getConfiguration('launchdarkly').get('baseUri', '').replace('https://', '');
+							baseUris = `unused,${base}`;
+						} else {
+							baseUris = await window.showInputBox({
+								title: 'LaunchDarkly Instance',
+								placeHolder: 'Enter LaunchDarkly Instance',
+								ignoreFocusOut: true,
+							});
+						}
 						[ldBaseUri, appBaseUri] = baseUris.split(',');
 						break;
 					}
 				}
 
-				const uri = Uri.parse(`https://${ldBaseUri}/login?bbb`);
+				const useLegacy = legacyAuth();
+				if (useLegacy) {
+					let updatedToken;
+					const existingToken = await this.context.secrets.get('launchdarkly_accessToken');
+					const token = await window.showInputBox({
+						title: 'LaunchDarkly API Token',
+						placeHolder: 'Enter LaunchDarkly API Token',
+						value: existingToken ? 'xxxx' + existingToken.substr(existingToken.length - 6) : '',
+						ignoreFocusOut: true,
+					});
+					if (existingToken?.includes(token.substring(4))) {
+						updatedToken = existingToken;
+						await this.context.secrets.delete('launchdarkly.apiToken');
+					} else {
+						updatedToken = token;
+					}
+					// If secret existed in secret store, it's now moved to session.
+					await this.context.secrets.delete('launchdarkly_accessToken');
+					
+					return { access_token: updatedToken, refresh_token: '', baseUri: appBaseUri };
+				}
+
+				const uri = Uri.parse(`https://${ldBaseUri}/login`);
 				await env.openExternal(uri);
 
 				let codeExchangePromise = this._codeExchangePromises.get(scopeString);
@@ -222,6 +268,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 					return await Promise.race([
 						codeExchangePromise.promise,
 						new Promise<string>((_, reject) => setTimeout(() => reject('Cancelled'), 60000)),
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						promiseFromEvent<any, any>(token.onCancellationRequested, (_, __, reject) => {
 							reject('User Cancelled');
 						}).promise,
@@ -240,6 +287,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 	 * @param scopes
 	 * @returns
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private handleUri: (scopes: readonly string[], baseUri: string) => PromiseAdapter<Uri, any> =
 		(scopes, baseUri) => async (uri, resolve, reject) => {
 			const query = new URLSearchParams(uri.query);
@@ -249,7 +297,6 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 				reject(new Error('No token'));
 				return;
 			}
-
 			// Check if it is a valid auth request started by the extension
 			// if (!this._pendingStates.some(n => n === state)) {
 			// reject(new Error('State not found'));
@@ -264,13 +311,22 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 	 * @param token
 	 * @returns
 	 */
-	private async getUserInfo(token: string) {
-		const response = await fetch(`https://app.launchdarkly.com/api/v2/members/me`, {
+	private async getUserInfo(token: string, fullUri): Promise<Member> {
+		const apiToken = legacyAuth() ? token : `Bearer ${token}`;
+		const response = await fetch(`${fullUri}/api/v2/members/me`, {
 			headers: {
-				Authorization: `Bearer ${token}`,
+				Authorization: apiToken,
 			},
 		});
-		return await response.json();
+		const serviceTokenError = `reflexive member id 'me' is invalid when authenticated with a service token`;
+		const res = await response;
+
+		if (await res.text() === serviceTokenError || res.status == 404) {
+			return { firstName: 'Service', lastName: 'Account', email: 'none', teams: [] };
+		} else if (res.status !== 200 && res.status !== 201) {
+			window.showErrorMessage(`[LaunchDarkly] Failed to get user info: ${res.status}`);
+		}
+		return (await response.json()) as Member;
 	}
 
 	/**
@@ -279,11 +335,10 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 	 * @param clientId
 	 * @returns
 	 */
-	private async getAccessToken(refreshToken: string, clientId: string): Promise<TokenInformation> {
+	private async getAccessToken(refreshToken: string): Promise<TokenInformation> {
 		try {
 			// only token is needed for request but leaving rest if we fix in future.
 			const body = {
-				client_id: clientId,
 				grant_type: 'refresh_token',
 				refresh_token: refreshToken,
 			};

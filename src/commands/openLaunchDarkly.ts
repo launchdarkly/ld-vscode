@@ -1,13 +1,13 @@
-import { commands, Disposable, ExtensionContext, window } from 'vscode';
-import { Configuration } from '../configuration';
+import { commands, Disposable, window } from 'vscode';
 import { FLAG_KEY_REGEX } from '../providers';
 import { kebabCase } from 'lodash';
 import { FlagStore } from '../flagStore';
 import { FeatureFlagConfig } from '../models';
 import * as url from 'url';
 import opn = require('opn');
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
-export default function openInLdCmd(ctx: ExtensionContext, config: Configuration, flagStore: FlagStore): Disposable {
+export default function openInLdCmd(config: LDExtensionConfiguration): Disposable {
 	const openInLdCmd = commands.registerTextEditorCommand('launchdarkly.openInLaunchDarkly', async (editor) => {
 		const flagKey = editor.document.getText(
 			editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
@@ -17,25 +17,25 @@ export default function openInLdCmd(ctx: ExtensionContext, config: Configuration
 			return;
 		}
 
-		if (!config.accessToken) {
+		if (!config.getConfig().accessToken) {
 			window.showErrorMessage('[LaunchDarkly] accessToken is not set.');
 			return;
 		}
 
-		if (!config.project) {
+		if (!config.getConfig().project) {
 			window.showErrorMessage('[LaunchDarkly] project is not set.');
 			return;
 		}
 
 		try {
-			const fKey = ctx.workspaceState.get('LDFlagKey') as string;
-			await openFlagInBrowser(config, fKey, flagStore);
+			const fKey = config.getCtx().workspaceState.get('LDFlagKey') as string;
+			await openFlagInBrowser(config, fKey, config.getFlagStore());
 		} catch (err) {
 			let errMsg = `Encountered an unexpected error retrieving the flag ${flagKey}`;
 			if (err.statusCode == 404) {
 				// Try resolving the flag key to kebab case
 				try {
-					await openFlagInBrowser(config, kebabCase(flagKey), flagStore);
+					await openFlagInBrowser(config, kebabCase(flagKey), config.getFlagStore());
 					return;
 				} catch (err) {
 					if (err.statusCode == 404) {
@@ -47,27 +47,29 @@ export default function openInLdCmd(ctx: ExtensionContext, config: Configuration
 			window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
 		}
 	});
-	ctx.subscriptions.push(openInLdCmd);
+	config.getCtx().subscriptions.push(openInLdCmd);
 
 	return openInLdCmd;
 }
 
-const openFlagInBrowser = async (config: Configuration, flagKey: string, flagStore: FlagStore) => {
+const openFlagInBrowser = async (config: LDExtensionConfiguration, flagKey: string, flagStore: FlagStore) => {
 	const { flag } = await flagStore.getFeatureFlag(flagKey);
 
 	// Default to first environment
 	let env: FeatureFlagConfig = Object.values(flag.environments)[0];
 	let sitePath = env._site.href;
 
-	if (!config.env) {
+	if (!config.getConfig().env) {
 		window.showWarningMessage('[LaunchDarkly] env is not set. Falling back to first environment.');
-	} else if (!flag.environments[config.env]) {
+	} else if (!flag.environments[config.getConfig().env]) {
 		window.showWarningMessage(
-			`[LaunchDarkly] Configured environment '${config.env}' has been deleted. Falling back to first environment.`,
+			`[LaunchDarkly] Configured environment '${
+				config.getConfig().env
+			}' has been deleted. Falling back to first environment.`,
 		);
 	} else {
-		env = flag.environments[config.env];
+		env = flag.environments[config.getConfig().env];
 		sitePath = env._site.href;
 	}
-	opn(url.resolve(config.baseUri, sitePath));
+	opn(url.resolve(config.getSession().fullUri, sitePath));
 };

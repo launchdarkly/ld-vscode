@@ -3,7 +3,7 @@
 		"module": "commonjs",
 		"target": "es6",
 		"outDir": "./out",
-		"lib": ["es2020"],
+		"lib": ["ES2022", "DOM"], // DOM is Temporary work around for node-fetch blob issue https://github.com/node-fetch/node-fetch/issues/1617
 		"sourceMap": true,
 		"rootDir": ".",
 		"esModuleInterop": true,

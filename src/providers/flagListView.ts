@@ -1,6 +1,5 @@
-import { debounce } from 'lodash';
+import { Dictionary, debounce } from 'lodash';
 import {
-	ConfigurationChangeEvent,
 	Event,
 	EventEmitter,
 	TreeItem,
@@ -11,46 +10,38 @@ import {
 	TreeItemCollapsibleState,
 	CancellationTokenSource,
 	authentication,
+	workspace,
+	ConfigurationChangeEvent,
 } from 'vscode';
 import { Configuration } from '../configuration';
-import { FlagStore } from '../flagStore';
 import { flagToValues } from '../utils/FlagNode';
 import { FlagCodeLensProvider, SimpleCodeLens } from './flagLens';
 import { FlagTreeInterface } from './flagsView';
 import { FlagNode } from '../utils/FlagNode';
-import { FlagAliases } from './codeRefs';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
+import { FeatureFlag } from '../models';
+import { logDebugMessage } from '../utils';
 
 export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> {
-	private config: Configuration;
 	private ldConfig: LDExtensionConfiguration;
 	private lens: FlagCodeLensProvider;
-	private flagStore: FlagStore | null;
 	private flagNodes: Array<FlagTreeInterface> | null;
-	private aliases?: FlagAliases;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
 	private flagMap: Map<string, FlagList | FlagNodeList> = new Map();
-	constructor(
-		config: Configuration,
-		ldConfig: LDExtensionConfiguration,
-		lens: FlagCodeLensProvider,
-		flagStore: FlagStore,
-		aliases?: FlagAliases,
-	) {
-		this.config = config;
+	constructor(ldConfig: LDExtensionConfiguration, lens: FlagCodeLensProvider) {
 		this.ldConfig = ldConfig;
 		this.lens = lens;
-		this.flagStore = flagStore;
-		this.aliases = aliases;
 		this.setFlagsinDocument();
 		this.flagReadyListener();
+		this.docListener();
+
 		authentication.onDidChangeSessions(async (e) => {
 			if (e.provider.id === 'launchdarkly') {
 				const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
 				if (session === undefined) {
 					this.flagNodes = null;
-					this.flagStore = null;
+					//this.ldConfig.getFlagstore() = null;
 					await this.refresh();
 				}
 			}
@@ -61,61 +52,25 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		this._onDidChangeTreeData.fire(null);
 	}
 
-	async reload(e?: ConfigurationChangeEvent | undefined): Promise<void> {
-		if (e && this.config.streamingConfigReloadCheck(e)) {
-			return;
-		}
-		await this.debouncedReload();
-	}
-
-	private readonly debouncedReload = debounce(
-		async () => {
-			try {
-				this.refresh();
-			} catch (err) {
-				console.error(`Failed reloading Flagview: ${err}`);
+	docListener = () => {
+		workspace.onDidChangeTextDocument(async (event) => {
+			if (event?.document === window?.activeTextEditor?.document) {
+				//this.setFlagsinDocument();
+				await this.debouncedFlags();
+				//{ leading: true, trailing: true },
 			}
+		});
+	};
+
+	private debouncedFlags = debounce(
+		async () => {
+			await this.setFlagsinDocument();
 		},
-		5000,
-		{ leading: false, trailing: true },
+		200,
+		//{ leading: true, trailing: true },
 	);
 
-	async getTreeItem(element: TreeItem): Promise<TreeItem> {
-		if (element.label == 'No Flags Found') {
-			return element;
-		}
-
-		return element;
-	}
-
-	async getChildren(element?: FlagNode): Promise<TreeItem[]> {
-		const items = [];
-		if (typeof element !== 'undefined') {
-			const child = this.flagMap.get(element.flagKey);
-			child.list.forEach((entry) => {
-				const newElement = new FlagItem(`Line: ${entry.end.line + 1}`, null, element.flagKey, [], entry, 'child');
-				items.push(newElement);
-			});
-			return Promise.resolve(items);
-		} else if (this.flagMap?.size > 0) {
-			const CodeLensCmd = new TreeItem('Toggle Flag lens');
-			CodeLensCmd.command = {
-				title: 'Command',
-				command: 'launchdarkly.enableCodeLens',
-			};
-
-			items.push(CodeLensCmd);
-			this.flagMap.forEach((flag) => {
-				items.push(flag);
-			});
-			return Promise.resolve(items);
-		} else {
-			return Promise.resolve([new TreeItem('No Flags found in file')]);
-		}
-	}
-
 	public setFlagsinDocument = async (): Promise<void> => {
-		this.refresh();
 		this.flagNodes = [];
 		this.flagMap = new Map();
 		const editor = window.activeTextEditor;
@@ -143,70 +98,146 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		let flagMeta;
 
 		try {
-			flagMeta = await this.flagStore?.allFlagsMetadata();
+			flagMeta = await this.ldConfig.getFlagStore()?.allFlagsMetadata();
 		} catch (err) {
 			//nothing
 		}
-
-		flagsFound.map(async (flag) => {
-			const codelensFlag = flag as FlagList;
-			if (codelensFlag.flag) {
-				const getElement = this.flagMap.get(codelensFlag.flag);
-				if (getElement) {
-					getElement.list.push(codelensFlag.range);
-				} else {
-					let newElement;
-					if (typeof flagMeta !== 'undefined') {
-						const flagEnv = await this.flagStore.getFlagConfig(codelensFlag.flag);
-						newElement = (await flagToValues(
-							flagMeta[codelensFlag.flag],
-							flagEnv,
-							this.ldConfig,
-						)) as FlagNodeList;
-						newElement.list = [codelensFlag.range];
-						this.flagNodes.push(newElement);
-					} else {
-						newElement = new FlagItem(codelensFlag.flag, TreeItemCollapsibleState.Collapsed, codelensFlag.flag, [
-							codelensFlag.range,
-						]);
-					}
-
-					this.flagMap.set(codelensFlag.flag, newElement);
+		logDebugMessage(`Flags in file: ${flagsFound}`);
+		if (flagsFound.length > 0) {
+			for await (const flag of flagsFound) {
+				const codelensFlag = flag as FlagList;
+				if (codelensFlag.flag) {
+					await this.parseFlags(codelensFlag, flagMeta);
 				}
 			}
-		});
+		}
 
 		this.refresh();
 		return;
 	};
 
-	private async flagReadyListener() {
-		this.flagStore.storeReady.event(async () => {
-			try {
-				this.flagUpdateListener();
-			} catch (err) {
-				console.error('Failed to update LaunchDarkly flag tree view:', err);
+	parseFlags = async (codelensFlag: FlagList, flagMeta: Dictionary<FeatureFlag>) => {
+		const testElement = this.flagMap.has(codelensFlag.flag);
+		if (testElement) {
+			const getElement = this.flagMap.get(codelensFlag.flag);
+			for (const range of getElement.list) {
+				if (range.start.line === codelensFlag.range.start.line) {
+					logDebugMessage(`Flag: ${codelensFlag.flag} range matches`);
+					return;
+				}
 			}
-		});
+			getElement.list.push(codelensFlag.range);
+			logDebugMessage(`Flag: ${codelensFlag.flag} range added`);
+			this.flagMap.set(codelensFlag.flag, getElement);
+		} else {
+			let newElement;
+			if (typeof flagMeta !== 'undefined') {
+				const flagEnv = await this.ldConfig.getFlagStore().getFlagConfig(codelensFlag.flag);
+				newElement = (await flagToValues(flagMeta[codelensFlag.flag], flagEnv, this.ldConfig)) as FlagNodeList;
+				if (newElement === undefined) {
+					return;
+				}
+				newElement.list = [codelensFlag.range];
+				this.flagNodes.push(newElement);
+			} else {
+				newElement = new FlagItem(codelensFlag.flag, TreeItemCollapsibleState.Collapsed, codelensFlag.flag, [
+					codelensFlag.range,
+				], null, 'FlagItem');
+			}
+			logDebugMessage(`Setting Flag: ${JSON.stringify(codelensFlag)}`);
+			this.flagMap.set(codelensFlag.flag, newElement);
+		}
+	};
+
+	async reload(e?: ConfigurationChangeEvent | undefined): Promise<void> {
+		if (e && this.ldConfig.getConfig()?.streamingConfigReloadCheck(e)) {
+			return;
+		}
+		await this.debouncedReload();
+	}
+
+	async getTreeItem(element: TreeItem): Promise<TreeItem> {
+		// if (element.label == 'No Flags Found') {
+		// 	return element;
+		// }
+
+		return element;
+	}
+
+	async getChildren(element?: FlagNode): Promise<TreeItem[]> {
+		if (await this.ldConfig.getConfig()?.isConfigured()) {
+			const items: TreeItem[] = [];
+			if (typeof element !== 'undefined' && element.flagKey) {
+				const child = this.flagMap.get(element.flagKey);
+				child.list.forEach((entry) => {
+					const newElement = new FlagItem(`Line: ${entry.end.line + 1}`, null, element.flagKey, [], entry, 'child');
+					items.push(newElement);
+				});
+				return Promise.resolve(items);
+			} else if (this.flagMap?.size > 0) {
+				const CodeLensCmd = new TreeItem('Toggle Flag lens');
+				CodeLensCmd.command = {
+					title: 'Command',
+					command: 'launchdarkly.enableCodeLens',
+				};
+
+				items.push(CodeLensCmd);
+				this.flagMap.forEach((flag) => {
+					items.push(flag);
+				});
+				return Promise.resolve(items);
+			} else {
+				return Promise.resolve([new TreeItem('No Flags found in file')]);
+			}
+		}
+	}
+
+	private readonly debouncedReload = debounce(
+		async () => {
+			try {
+				this.refresh();
+			} catch (err) {
+				console.error(`Failed reloading Flagview: ${err}`);
+			}
+		},
+		5000,
+		{ leading: false, trailing: true },
+	);
+
+	private async flagReadyListener() {
+		if (await this.ldConfig.getConfig()?.isConfigured()) {
+			this.ldConfig.getFlagStore()?.ready?.event(async () => {
+				try {
+					this.flagUpdateListener();
+				} catch (err) {
+					console.error('Failed to update LaunchDarkly flag tree view:', err);
+				}
+			});
+		}
 	}
 
 	private async flagUpdateListener() {
 		// Setup listener for flag changes
-		this.flagStore.on('update', async (keys: string) => {
+		this.ldConfig.getFlagStore()?.on('update', async (keys: string) => {
 			try {
 				const flagKeys = Object.values(keys);
 				flagKeys.map((key) => {
-					this.flagStore.getFeatureFlag(key).then((updatedFlag) => {
-						const existingFlag = this.flagMap.get(key);
-						if (typeof existingFlag !== 'undefined') {
-							flagToValues(updatedFlag.flag, updatedFlag.config, this.ldConfig).then((newFlagValue) => {
-								const updatedFlagValue = newFlagValue as FlagNodeList;
-								updatedFlagValue.list = existingFlag.list;
-								this.flagMap.set(key, updatedFlagValue);
-								this.refresh();
-							});
-						}
-					});
+					logDebugMessage(`Flags in File: Flag update detected for ${key}`);
+					this.ldConfig
+						.getFlagStore()
+						?.getFeatureFlag(key)
+						.then((updatedFlag) => {
+							const existingFlag = this.flagMap.get(key);
+							if (typeof existingFlag !== 'undefined') {
+								logDebugMessage(`Flags in file: Flag found, updating node`);
+								flagToValues(updatedFlag.flag, updatedFlag.config, this.ldConfig).then((newFlagValue) => {
+									const updatedFlagValue = newFlagValue as FlagNodeList;
+									updatedFlagValue.list = existingFlag.list;
+									this.flagMap.set(key, updatedFlagValue);
+									this.refresh();
+								});
+							}
+						});
 				});
 			} catch (err) {
 				console.error('Failed to update LaunchDarkly flag tree view:', err);
@@ -219,15 +250,8 @@ class FlagList extends SimpleCodeLens {
 	public list?: Array<Range>;
 	public readonly name: string;
 	public config: Configuration;
-	constructor(
-		range: Range,
-		flag: string,
-		name: string,
-		config: Configuration,
-		list?: Array<Range>,
-		command?: Command | undefined,
-	) {
-		super(range, flag, config, command);
+	constructor(range: Range, flag: string, name: string, list?: Array<Range>, command?: Command | undefined) {
+		super(range, flag, command);
 		this.list = list;
 		this.name = name;
 	}
