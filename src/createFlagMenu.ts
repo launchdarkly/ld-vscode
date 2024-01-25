@@ -1,10 +1,10 @@
-import { QuickPickItem, env, window, workspace } from 'vscode';
+import { ProgressLocation, QuickInput, QuickPickItem, env, tasks, window, workspace } from 'vscode';
 
 import { MultiStepInput, QuickPickParameters } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
-import { Configuration } from './configuration';
 import { kebabCase } from 'lodash';
 import { FeatureFlag, NewFlag, ReleasePipeline } from './models';
+import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 export interface State {
 	name: string;
 	key: string;
@@ -35,7 +35,7 @@ interface PipelineQuickPickItem extends QuickPickItem {
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 export class CreateFlagMenu {
-	private readonly config: Configuration;
+	private readonly config: LDExtensionConfiguration;
 	private api: LaunchDarklyAPI;
 	private title: string;
 	private totalSteps: number;
@@ -43,9 +43,8 @@ export class CreateFlagMenu {
 	public flag: FeatureFlag;
 	private pipelines: Array<ReleasePipeline>;
 
-	constructor(config: Configuration, api: LaunchDarklyAPI, defaults?: flagDefaultSettings) {
+	constructor(config: LDExtensionConfiguration, defaults?: flagDefaultSettings) {
 		this.config = config;
-		this.api = api;
 		this.defaults = defaults || undefined;
 		this.title = 'Create Feature Flag';
 		this.totalSteps = 3;
@@ -54,7 +53,7 @@ export class CreateFlagMenu {
 
 	async collectInputs() {
 		const state = {} as Partial<State>;
-		this.pipelines = await this.api.getReleasePipelines(this.config.project);
+		this.pipelines = await this.config.getApi().getReleasePipelines(this.config.getConfig().project);
 		await MultiStepInput.run((input) => this.setFlagName(input, state));
 		return this.flag;
 	}
@@ -62,11 +61,10 @@ export class CreateFlagMenu {
 	shouldResume(): Promise<boolean> {
 		// Required by multiStepInput
 		// Could show a notification with the option to resume.
-		//eslint-disable-next-line @typescript-eslint/no-empty-function
 		return new Promise<boolean>(() => {});
 	}
 
-	async setFlagName(input: MultiStepInput, state: Partial<State>) {
+	async setFlagName(input: MultiStepInput<QuickInput>, state: Partial<State>) {
 		const name = await input.showInputBox({
 			title: this.title,
 			step: 1,
@@ -77,10 +75,10 @@ export class CreateFlagMenu {
 			validate: (token) => isValidName(token),
 		});
 		state.name = name;
-		return (input: MultiStepInput) => this.setFlagKey(input, state);
+		return (input: MultiStepInput<QuickInput>) => this.setFlagKey(input, state);
 	}
 
-	async setFlagKey(input: MultiStepInput, state: Partial<State>) {
+	async setFlagKey(input: MultiStepInput<QuickInput>, state: Partial<State>) {
 		const key = await input.showInputBox({
 			title: this.title,
 			step: 2,
@@ -92,12 +90,12 @@ export class CreateFlagMenu {
 		});
 		state.key = key;
 		if (this.defaults?.flagDescription) {
-			return (input: MultiStepInput) => this.setFlagDescription(input, state);
+			return (input: MultiStepInput<QuickInput>) => this.setFlagDescription(input, state);
 		}
-		return (input: MultiStepInput) => this.setAvailability(input, state);
+		return (input: MultiStepInput<QuickInput>) => this.setAvailability(input, state);
 	}
 
-	async setFlagDescription(input: MultiStepInput, state: Partial<State>) {
+	async setFlagDescription(input: MultiStepInput<QuickInput>, state: Partial<State>) {
 		const description = await input.showInputBox({
 			title: this.title,
 			step: 3,
@@ -108,10 +106,10 @@ export class CreateFlagMenu {
 			validate: (token) => isValidDescription(token),
 		});
 		state.description = description;
-		return (input: MultiStepInput) => this.setAvailability(input, state);
+		return (input: MultiStepInput<QuickInput>) => this.setAvailability(input, state);
 	}
 
-	async setAvailability(input: MultiStepInput, state: Partial<State>) {
+	async setAvailability(input: MultiStepInput<QuickPickItem>, state: Partial<State>) {
 		const enableServer = 'Only make flag available on Server';
 		const enableClient = 'Enable Client Side';
 		const enableMobile = 'Enable Mobile Side';
@@ -145,9 +143,9 @@ export class CreateFlagMenu {
 				break;
 		}
 
-		if (this.pipelines) {
+		if (this.pipelines.length > 0) {
 			state.clientSideAvailability = flagAvailability;
-			return (input: MultiStepInput) => this.setPipeline(input, state);
+			return (input: MultiStepInput<QuickInput>) => this.setPipeline(input, state);
 		}
 		const buildFlag: NewFlag = Object.assign(state);
 		buildFlag['clientSideAvailability'] = flagAvailability;
@@ -155,16 +153,33 @@ export class CreateFlagMenu {
 		Object.keys(buildFlag).forEach((k) => buildFlag[k] == null && delete buildFlag[k]);
 
 		try {
-			const flag = await this.api.postFeatureFlag(this.config.project, buildFlag);
+			const flag = await this.config.getApi().postFeatureFlag(this.config.getConfig().project, buildFlag);
 			env.clipboard.writeText(flag.key);
-			window.showInformationMessage(`Flag: ${flag.key} created and key copied to your clipboard.`);
+			window.withProgress(
+				{
+					location: ProgressLocation.Notification,
+					title: '[LaunchDarkly] Flag: ${flag.key} created and key copied to your clipboard.',
+					cancellable: false,
+				},
+				() => {
+					return new Promise((resolve) => {
+						setTimeout(resolve, 2000);
+					});
+				},
+			);
 			this.flag = flag;
+			const getTasks = await tasks.fetchTasks();
+			for (const t of getTasks) {
+				if (t.name === 'LDFlagGenerator') {
+					await tasks.executeTask(t);
+				}
+			}
 		} catch (err) {
 			window.showErrorMessage(`[LaunchDarkly] Creating flag ${err}`);
 		}
 	}
 
-	async setPipeline(input: MultiStepInput, state: Partial<State>) {
+	async setPipeline(input: MultiStepInput<QuickInput>, state: Partial<State>) {
 		const emptyPipeline = {
 			label: 'Skip Pipeline',
 			value: '',
@@ -184,9 +199,7 @@ export class CreateFlagMenu {
 			placeholder: 'Select a pipeline',
 			shouldResume: this.shouldResume,
 		});
-		console.dir(pipeline);
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+
 		if (pipeline.value) {
 			state.releasePipelineKey = pipeline.value;
 		}
@@ -196,7 +209,7 @@ export class CreateFlagMenu {
 		Object.keys(buildFlag).forEach((k) => buildFlag[k] == null && delete buildFlag[k]);
 
 		try {
-			const flag = await this.api.postFeatureFlag(this.config.project, buildFlag);
+			const flag = await this.config.getApi().postFeatureFlag(this.config.getConfig().project, buildFlag);
 			env.clipboard.writeText(flag.key);
 			window.showInformationMessage(`Flag: ${flag.key} created and key copied to your clipboard.`);
 			this.flag = flag;
@@ -208,7 +221,7 @@ export class CreateFlagMenu {
 
 const keyRegexp = /^[\w\d][.A-Za-z_\-0-9]*$/u;
 const capitalizedWordRegexp = /^[A-Z0-9][a-z0-9]*$/;
-const tagRegexp = /^[.A-Za-z_\-0-9]+$/;
+//const tagRegexp = /^[.A-Za-z_\-0-9]+$/;
 
 export const convertToKey = (input: string) => {
 	if (!keyRegexp.test(input)) {
@@ -233,17 +246,7 @@ const isValidName = async (v: string): Promise<string> => {
 	return '';
 };
 
-const isValidTags = async (v: string): Promise<string> => {
-	const tags = v.split(',').filter((i) => i);
-	for (const tag of tags) {
-		if (!tagRegexp.test(tag)) {
-			return `Tag: ${tag} is invalid it must contain only letters, number, '.', '_' or '-'`;
-		}
-	}
-
-	return '';
-};
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isValidDescription = async (v: string): Promise<string> => {
 	return '';
 };

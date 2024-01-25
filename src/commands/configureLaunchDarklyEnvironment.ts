@@ -1,5 +1,5 @@
 import { commands, Disposable, window } from 'vscode';
-import { sortNameCaseInsensitive } from '../api';
+//import { sortNameCaseInsensitive } from '../api';
 import { extensionReload } from '../utils';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
@@ -8,10 +8,20 @@ export default async function configureEnvironmentCmd(config: LDExtensionConfigu
 		'launchdarkly.configureLaunchDarklyEnvironment',
 		async () => {
 			try {
-				const project = await config.getApi().getProject(config.getConfig().project);
-				const environments = project.environments.sort(sortNameCaseInsensitive);
+				//const intConfig = config.getConfig();
+				const api = config.getApi();
+				if (!config.getConfig()) {
+					return;
+				}
+				const project = await api?.getProject(config.getConfig().project);
+				if (!project) {
+					window.showErrorMessage(`[LaunchDarkly] Please Configure LaunchDarkly Extension`);
+					return;
+				}
+				//const environments = project.environments.sort(sortNameCaseInsensitive);
+				const environments = project.environments.items;
 				const newEnvironment = await window.showQuickPick(environments.map((env) => env.key));
-				if (newEnvironment !== 'undefined') {
+				if (newEnvironment) {
 					await config.getConfig().update('env', newEnvironment, false);
 					await extensionReload(config, true);
 				}

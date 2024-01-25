@@ -23,7 +23,9 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 
 	constructor(config: LDExtensionConfiguration) {
 		this.config = config;
-		this.start();
+		if (this.config.getSession() !== undefined) {
+			this.start();
+		}
 	}
 
 	refresh(): void {
@@ -53,7 +55,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 			quickPick.title = 'Select Flag for Overview';
 			quickPick.placeholder = 'placeholder';
 			quickPick.onDidAccept(() => {
-				const linkUrl = `${this.config.getConfig().baseUri}/${this.config.getConfig().project}/${
+				const linkUrl = `${this.config.getSession().fullUri}/${this.config.getConfig().project}/${
 					this.config.getConfig().env
 				}/features/${quickPick.selectedItems[0].label}/compare-flag`;
 				commands.executeCommand('launchdarkly.openBrowser', linkUrl);
@@ -91,7 +93,10 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async getChildren(element?: LinkNode): Promise<LinkNode[]> {
-		const baseUrl = `${this.config.getConfig().baseUri}/${this.config.getConfig().project}/${
+		if (this.config.getSession() === undefined) {
+			return [];
+		}
+		const baseUrl = `${this.config.getSession().fullUri}/${this.config.getConfig().project}/${
 			this.config.getConfig().env
 		}`;
 		const items = [];
@@ -101,11 +106,11 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 				command: 'launchdarkly.createFlag',
 			}),
 		);
-		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/features/new`)));
+		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/features/create`)));
 		items.push(new LinkNode(`Feature Flags`, NON_COLLAPSED, addUtm(`${baseUrl}/features`)));
 		items.push(new LinkNode(`Segments`, NON_COLLAPSED, addUtm(`${baseUrl}/segments`)));
-		items.push(new LinkNode(`Users`, NON_COLLAPSED, addUtm(`${baseUrl}/users`)));
-		items.push(new LinkNode(`Debugger`, NON_COLLAPSED, addUtm(`${baseUrl}/debugger`)));
+		items.push(new LinkNode(`Contexts`, NON_COLLAPSED, addUtm(`${baseUrl}/contexts`)));
+		items.push(new LinkNode(`Live Events`, NON_COLLAPSED, addUtm(`${baseUrl}/debugger`)));
 		items.push(new LinkNode(`Experiments`, NON_COLLAPSED, addUtm(`${baseUrl}/experiments`)));
 		items.push(new LinkNode(`Audit Log`, NON_COLLAPSED, addUtm(`${baseUrl}/audit`)));
 		items.push(new LinkNode(`Flag Comparison`, NON_COLLAPSED, addUtm(`${baseUrl}/features/compare`)));
@@ -142,6 +147,6 @@ export class LinkNode extends TreeItem {
 					title: 'Open In Browser',
 					command: 'launchdarkly.openBrowser',
 					arguments: [this.uri],
-			  };
+				};
 	}
 }

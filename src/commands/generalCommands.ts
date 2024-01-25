@@ -7,14 +7,28 @@ import configureEnvironmentCmd from './configureLaunchDarklyEnvironment';
 import selectRuleCmd from './selectRule';
 import setMaintainerCmd from './setMaintainer';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
+import { SetGlobalCmd } from './setGlobal';
+import flagCmd from './flagActions';
 
 export default async function generalCommands(LDExtenConfig: LDExtensionConfiguration) {
-	const createFlag = createFlagCmd(LDExtenConfig.getCtx(), LDExtenConfig.getConfig(), LDExtenConfig.getApi());
-	const toggleFlagCmd = toggleFlagCtxCmd(LDExtenConfig.getCtx(), LDExtenConfig.getConfig(), LDExtenConfig.getApi());
+	const createFlag = createFlagCmd(LDExtenConfig);
+	const toggleFlagCmd = toggleFlagCtxCmd(LDExtenConfig);
 	const setMaintainerCmd1 = setMaintainerCmd(LDExtenConfig);
-	const openLdCmd = openInLdCmd(LDExtenConfig.getCtx(), LDExtenConfig.getConfig(), LDExtenConfig.getFlagStore());
-	const enableCodeLens = enableCodeLensConfig(LDExtenConfig.getCtx(), LDExtenConfig.getConfig());
+	const openLdCmd = openInLdCmd(LDExtenConfig);
+	const enableCodeLens = enableCodeLensConfig(LDExtenConfig);
 	const envCmd = await configureEnvironmentCmd(LDExtenConfig);
 	const selRuleCmd = selectRuleCmd(LDExtenConfig);
-	return Disposable.from(createFlag, toggleFlagCmd, openLdCmd, enableCodeLens, envCmd, selRuleCmd, setMaintainerCmd1);
+	const setGlobal = SetGlobalCmd(LDExtenConfig.getCtx());
+	const flgActionsCmd = flagCmd(LDExtenConfig);
+	return Disposable.from(
+		createFlag,
+		toggleFlagCmd,
+		openLdCmd,
+		enableCodeLens,
+		envCmd,
+		selRuleCmd,
+		setMaintainerCmd1,
+		setGlobal,
+		flgActionsCmd,
+	);
 }

@@ -5,7 +5,7 @@ import { LDClient } from '@launchdarkly/node-server-sdk/dist/src/api';
 import { LDOptions } from '@launchdarkly/node-server-sdk/dist/src/index';
 import { debounce, Dictionary, keyBy } from 'lodash';
 
-import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
+import { FeatureFlag, FlagConfiguration, FlagWithConfiguration, InstructionPatch, PatchComment } from './models';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 
 const DATA_KIND = { namespace: 'features' };
@@ -31,6 +31,7 @@ export class FlagStore {
 	});
 	private offlineTimer: NodeJS.Timer;
 	private offlineTimerSet = false;
+	public readonly ready: EventEmitter<boolean | null> = new EventEmitter();
 
 	constructor(config: LDExtensionConfiguration) {
 		this.config = config;
@@ -60,7 +61,7 @@ export class FlagStore {
 	);
 
 	async start(): Promise<void> {
-		if (!this.config.getConfig().streamingConfigStartCheck()) {
+		if (!(await this.config.getConfig().isConfigured())) {
 			return;
 		}
 
@@ -68,6 +69,7 @@ export class FlagStore {
 			const flags = await this.config
 				.getApi()
 				.getFeatureFlags(this.config.getConfig().project, this.config.getConfig().env);
+
 			this.flagMetadata = keyBy(flags, 'key');
 		} catch (err) {
 			console.log(`Error getting flags ${err}`);
@@ -105,6 +107,7 @@ export class FlagStore {
 			this.rejectLDClient();
 			console.error(`Failed to setup client: ${err}`);
 		}
+		this.ready.fire(true);
 	}
 
 	private setFlagListeners() {
@@ -139,7 +142,7 @@ export class FlagStore {
 					this.offlineTimerSet = false;
 				}
 				if (typeof this.offlineTimer !== 'undefined') {
-					clearTimeout(this.offlineTimer);
+					clearTimeout(this.offlineTimer as NodeJS.Timeout);
 					delete this.offlineTimer;
 					this.offlineTimerSet = false;
 				}
@@ -213,13 +216,13 @@ export class FlagStore {
 
 	private ldConfig(): LDOptions {
 		// Cannot replace in the config, so updating at call site.
-		const streamUri = this.config.getConfig().baseUri.replace('app', 'stream');
+		const streamUri = this.config.getSession().fullUri.replace('app', 'stream');
 		const logger: LaunchDarkly.LDLogger = basicLogger({
 			level: 'error',
 		});
 		const options: LDOptions = {
 			timeout: 5,
-			baseUri: this.config.getConfig().baseUri,
+			baseUri: this.config.getSession().fullUri,
 			streamUri: streamUri,
 			sendEvents: false,
 			featureStore: this.store,
@@ -229,6 +232,11 @@ export class FlagStore {
 		return options;
 	}
 
+	async variationDetail(flag: string, context: LaunchDarkly.LDContext): Promise<LaunchDarkly.LDEvaluationDetail> {
+		const ldClient = await this.ldClient;
+		const details = await ldClient.variationDetail(flag, context, false);
+		return details;
+	}
 	async updateFlags(): Promise<void> {
 		await this.debounceUpdate();
 	}
@@ -270,11 +278,10 @@ export class FlagStore {
 		});
 	}
 
-	async getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
+	async getFeatureFlag(key: string, fullFlag?: boolean): Promise<FlagWithConfiguration | null> {
 		if (this.flagMetadata === undefined) {
 			await this.debounceUpdate();
 		}
-
 		let flag = this.flagMetadata[key];
 		return new Promise((resolve, reject) => {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
@@ -283,11 +290,11 @@ export class FlagStore {
 					return;
 				}
 
-				if (!flag) {
+				if (!flag.environments || (!flag.environments[this.config.getConfig().env] && fullFlag)) {
 					try {
 						flag = await this.config
 							.getApi()
-							.getFeatureFlag(this.config.getConfig().project, key, this.config.getConfig().env);
+							.getFeatureFlag(this.config.getConfig().project, key, this.config.getConfig().env, true);
 						this.flagMetadata[key] = flag;
 					} catch (e) {
 						console.error(`Could not retrieve feature flag metadata for ${key}: ${e}`);
@@ -346,5 +353,21 @@ export class FlagStore {
 
 	async listFlags(): Promise<Array<string>> {
 		return await Object.keys(await this.allFlagsMetadata());
+	}
+
+	async executeAndUpdateFlagStore(
+		func: (
+			projectKey: string,
+			flagKey: string,
+			value?: PatchComment | InstructionPatch,
+		) => Promise<FeatureFlag | Error>,
+		projectKey: string,
+		flagKey: string,
+		value?: PatchComment | InstructionPatch,
+	) {
+		const result = (await func(projectKey, flagKey, value)) as FeatureFlag;
+		this.flagMetadata[result.key] = result;
+		this.storeUpdates.fire(true);
+		return result;
 	}
 }

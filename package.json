@@ -2,10 +2,10 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "4.0.2",
+	"version": "4.99.8",
 	"publisher": "launchdarklyofficial",
 	"engines": {
-		"vscode": "^1.68.0"
+		"vscode": "^1.82.0"
 	},
 	"repository": "https://github.com/launchdarkly/ld-vscode",
 	"categories": [
@@ -16,35 +16,101 @@
 	"activationEvents": [
 		"onStartupFinished"
 	],
-	"enabledApiProposals": [
-		"chatAgents2",
-		"chatRequestAccess"
-	],
 	"main": "./dist/extension",
 	"contributes": {
+		"walkthroughs": [
+			{
+				"id": "extsetup",
+				"title": "LaunchDarkly Extension Walkthrough",
+				"description": "A LaunchDarkly setup extension walkthrough",
+				"steps": [
+					{
+						"id": "signign",
+						"title": "Sign In to LaunchDarkly with VSCode",
+						"description": "For this you will need an API token.\n[Sign In](command:vscode-launchdarkly-authprovider.signIn)",
+						"media": {
+							"markdown": "media/signin.md"
+						},
+						"completionEvents": [
+							"onCommand:vscode-launchdarkly-authprovider.signIn"
+						]
+					},
+					{
+						"id": "configuresetting",
+						"title": "Configure Settings",
+						"description": "This step will have you setup your LaunchDarkly Project and Environment\n[Configure Settings](command:extension.configureLaunchDarkly)",
+						"media": {
+							"markdown": "media/configuresettings.md"
+						},
+						"completionEvents": [
+							"onCommand:extension.configureLaunchDarkly"
+						]
+					},
+					{
+						"id": "flagactions",
+						"title": "Flag Actions Command",
+						"description": "This step will have you run the Flag Actions command to see what is available.\n[Open Flag Actions](command:launchdarkly.quickFlag)",
+						"media": {
+							"markdown": "media/flagactions.md"
+						},
+						"completionEvents": [
+							"onCommand:launchdarkly.quickFlag"
+						]
+					},
+					{
+						"id": "learnldwindow",
+						"title": "Learn about the LaunchDarkly view",
+						"description": "Understand the information in the LaunchDarkly view. [Click to view](command:launchdarklyFeatureFlags.focus)",
+						"media": {
+							"image": "media/extension-view.png",
+							"altText": "LaunchDarkly View including, Flags in File, Quick Links, and Flag List"
+						},
+						"completionEvents": [
+							"onCommand:launchdarklyFeatureFlags.focus"
+						]
+					},
+					{
+						"id": "createflag",
+						"title": "Create a boolean flag",
+						"description": "This step will have create a boolean flag in your configured Project.\n[Create Flag](command:launchdarkly.createFlag)",
+						"media": {
+							"image": "media/create-boolean-flag.gif",
+							"altText": "Create Boolean Flag Example"
+						},
+						"completionEvents": [
+							"onCommand:launchdarkly.createFlag"
+						]
+					},
+					{
+						"id": "advancedusage",
+						"title": "Advanced Examples",
+						"description": "",
+						"media": {
+							"markdown": "media/advanced.md"
+						},
+						"completionEvents": []
+					}
+				]
+			}
+		],
 		"configuration": {
 			"type": "object",
 			"title": "LaunchDarkly",
 			"properties": {
-				"launchdarkly.project": {
-					"type": "string",
-					"default": "",
-					"markdownDescription": "DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
-				},
-				"launchdarkly.env": {
-					"type": "string",
-					"default": "",
-					"markdownDescription": "DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
-				},
 				"launchdarkly.baseUri": {
 					"type": "string",
-					"default": "https://app.launchdarkly.com",
-					"description": "LaunchDarkly base URI. Change only if you are using the Relay Proxy. [More information](https://docs.launchdarkly.com/home/advanced/relay-proxy/using)"
+					"default": "",
+					"description": "LaunchDarkly base URI. This is only used with 'Enable Legacy Auth' configuration."
 				},
-				"launchdarkly.streamUri": {
+				"launchdarkly.globalDefault": {
 					"type": "string",
-					"default": "https://stream.launchdarkly.com",
-					"markdownDescription": "LaunchDarkly stream URI. Change only if you are using the Relay Proxy. [More information](https://docs.launchdarkly.com/home/advanced/relay-proxy/using)"
+					"default": "off",
+					"enum": [
+						"off",
+						"use global defaults (no autoload)",
+						"use global defaults (autoload)"
+					],
+					"description": "Experimental(not supported): LaunchDarkly use global Defaults"
 				},
 				"launchdarkly.enableHover": {
 					"type": "boolean",
@@ -61,45 +127,45 @@
 					"default": true,
 					"description": "Enable feature flag explorer in your sidebar"
 				},
-				"launchdarkly.refreshRate": {
+				"launchdarkly.refreshRate.flags": {
 					"type": "number",
 					"default": 120,
 					"description": "How often in minutes to refresh feature flag metadata via API. If `0` global flag metadata does not update. Max is 1440 (1 Day)."
+				},
+				"launchdarkly.refreshRate.codeRefs": {
+					"type": "number",
+					"default": 240,
+					"description": "How often in minutes to refresh feature flag metadata via API. If `0` code references does not update. Max is 1440 (1 Day)."
 				},
 				"launchdarkly.enableAliases": {
 					"type": "boolean",
 					"default": true,
 					"markdownDescription": "Enable reading in flag aliases via [Code References](https://docs.launchdarkly.com/integrations/code-references). As of v3 of this extension, Code References is bundled with this extension."
 				},
-				"launchdarkly.codeRefsRefreshRate": {
-					"type": "number",
-					"default": 240,
-					"description": "How often in minutes to refresh feature flag metadata via API. If `0` code references does not update. Max is 1440 (1 Day)."
-				},
 				"launchdarkly.enableCodeLens": {
 					"type": "boolean",
 					"default": false,
 					"description": "Control whether flag data is inlined when a reference is found in a file."
 				},
-				"launchdarkly.enableMetricsExplorer": {
+				"launchdarkly.enableFlagsInFile": {
 					"type": "boolean",
-					"default": false,
-					"description": "Enable Metrics Explorer"
-				},
-				"launchdarkly.accessToken": {
-					"type": "string",
-					"default": "",
-					"description": "DEPRECATED: Run the 'LaunchDarkly: Configure' command instead."
-				},
-				"launchdarkly.flagsInFile": {
-					"type": "boolean",
-					"default": "",
+					"default": true,
 					"description": "LaunchDarkly Flags in File"
 				},
-				"launchdarkly.globalDefault": {
+				"launchdarkly.enableReleasesView": {
 					"type": "boolean",
 					"default": false,
-					"description": "LaunchDarkly Global Default"
+					"description": "Experimental LaunchDarkly Releases View"
+				},
+				"launchdarkly.debugLogging": {
+					"type": "boolean",
+					"default": false,
+					"description": "Enable Debug Logging"
+				},
+				"launchdarkly.streamUri": {
+					"type": "string",
+					"default": "https://stream.launchdarkly.com",
+					"markdownDescription": "LaunchDarkly stream URI. Change only if you are using the Relay Proxy. [More information](https://docs.launchdarkly.com/home/advanced/relay-proxy/using)"
 				}
 			}
 		},
@@ -191,6 +257,11 @@
 				"title": "Toggle treeview"
 			},
 			{
+				"command": "launchdarkly.enableWorkspace",
+				"title": "LaunchDarkly: Enable Workspace",
+				"when": "workspaceState.isDisabledForWorkspace == true"
+			},
+			{
 				"command": "launchdarkly.openBrowser",
 				"title": "Open in LaunchDarkly",
 				"icon": {
@@ -219,10 +290,6 @@
 				"title": "Toggle LaunchDarkly CodeLens"
 			},
 			{
-				"command": "launchdarkly.enableMetricExplorer",
-				"title": "Toggle LaunchDarkly Metric Explorer"
-			},
-			{
 				"command": "launchdarkly.quickPickRules",
 				"title": "LaunchDarkly: Quick Targeting"
 			},
@@ -230,15 +297,25 @@
 				"command": "vscode-launchdarkly-authprovider.signIn",
 				"title": "Sign in",
 				"category": "LaunchDarkly",
-				"icon": "$(sign-in)"
+				"icon": "$(sign-in)",
+				"when": false
 			},
 			{
 				"command": "launchdarkly.setMaintainer",
 				"title": "LaunchDarkly: Set Maintainer"
 			},
 			{
-				"command": "launchdarkly.globalDefaults",
-				"title": "LaunchDarkly: Use Global Default"
+				"command": "launchdarkly.setGlobalDefaults",
+				"title": "LaunchDarkly: Set Global Default"
+			},
+			{
+				"command": "launchdarkly.clearGlobalContext",
+				"title": "LaunchDarkly: Clear Global Context",
+				"when": "config.launchdarkly.globalDefault == 'off'"
+			},
+			{
+				"command": "launchdarkly.quickFlag",
+				"title": "LaunchDarkly: Flag Actions"
 			}
 		],
 		"menus": {
@@ -296,8 +373,8 @@
 					"when": "false"
 				},
 				{
-					"command": "launchdarkly.enableMetricExplorer",
-					"when": "false"
+				"command": "launchdarkly.setMaintainer",
+				"when": "false"
 				}
 			],
 			"editor/context": [
@@ -315,10 +392,6 @@
 			],
 			"view/title": [
 				{
-					"command": "vscode-launchdarkly-authprovider.signIn",
-					"group": "navigation@10"
-				},
-				{
 					"command": "launchdarkly.refreshEntry",
 					"when": "view == launchdarklyFeatureFlags",
 					"group": "navigation"
@@ -330,34 +403,34 @@
 				},
 				{
 					"command": "launchdarkly.configureLaunchDarklyEnvironment",
-					"when": "!!config.accessToken && !!config.project && !!config.env && view == launchdarklyFeatureFlags",
+					"when": "view == launchdarklyFeatureFlags",
 					"group": "navigation"
 				}
 			],
 			"view/item/context": [
 				{
 					"command": "launchdarkly.copyKey",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
+					"when": "viewItem == flagParentItem || viewItem == flagInFile",
 					"group": "inline"
 				},
 				{
 					"command": "launchdarkly.openBrowser",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
+					"when": "viewItem == flagParentItem || viewItem == flagInFile",
 					"group": "inline"
 				},
 				{
 					"command": "launchdarkly.flagMultipleSearch",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem",
+					"when": "viewItem == flagParentItem || viewItem == flagInFile",
 					"group": "inline"
 				},
 				{
-					"command": "launchdarkly.metricMultipleSearch",
-					"when": "view == launchdarklyMetrics && viewItem == metricParentItem",
+					"command": "launchdarkly.flagMultipleSearch",
+					"when": "view == launchdarklyReleases && viewItem == releaseFlag",
 					"group": "inline"
 				},
 				{
 					"command": "launchdarkly.toggleFlag",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItem"
+					"when": "viewItem == flagParentItem || viewItem == flagInFile"
 				},
 				{
 					"command": "launchdarkly.toggleFlag",
@@ -390,7 +463,7 @@
 				},
 				{
 					"command": "launchdarkly.openBrowser",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser || view == launchdarklyMetrics && viewItem == metricViewBrowser",
+					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser",
 					"group": "inline"
 				}
 			]
@@ -406,6 +479,11 @@
 				"command": "launchdarkly.toggleFlagCmdPrompt",
 				"key": "ctrl+alt+t",
 				"mac": "shift+cmd+t"
+			},
+			{
+				"command": "launchdarkly.quickPickRules",
+				"key": "ctrl+alt+q",
+				"mac": "alt+cmd+q"
 			}
 		],
 		"viewsContainers": {
@@ -426,33 +504,31 @@
 				{
 					"id": "launchdarklyFlagList",
 					"name": "Flags in File",
-					"when": "launchdarkly:enableFlagExplorer"
+					"when": "config.launchdarkly.enableFlagsInFile"
 				},
 				{
 					"id": "launchdarklyFeatureFlags",
 					"name": "Feature Flags",
-					"when": "launchdarkly:enableFlagExplorer"
+					"when": "config.launchdarkly.enableFlagExplorer"
 				},
 				{
-					"id": "launchdarklyMetrics",
-					"name": "Metrics",
-					"when": "launchdarkly:enableMetricExplorer"
+					"id": "launchdarklyReleases",
+					"name": "Releases",
+					"when": "config.launchdarkly.enableReleasesView"
 				}
 			]
 		},
 		"viewsWelcome": [
 			{
 				"view": "launchdarklyFeatureFlags",
-				"contents": "[Click Here](command:extension.configureLaunchDarkly)\nto your global defaults.",
-				"when": "config.launchdarkly.globalDefault == true"
+				"contents": "Use your global defaults\n[Click Here](command:launchdarkly.enableWorkspace)",
+				"when": "config.launchdarkly.globalDefault !== 'off'"
 			},
-
 			{
 				"view": "launchdarklyFeatureFlags",
 				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension. \nIf you had a previous version installed you may need to \n[Migrate Configuration](command:launchdarkly.migrateConfiguration)\n Previous versions allowed for global configuration, the current version is configured per workspace.",
-				"when": "config.launchdarkly.globalDefault == false"
+				"when": "config.launchdarkly.globalDefault == 'off'"
 			}
-			
 		]
 	},
 	"galleryBanner": {
@@ -471,28 +547,35 @@
 		"test": "node ./out/test/runTest.js",
 		"lint": "npx eslint . --ext .ts",
 		"lint:fix": "npx eslint . --fix --ext .ts",
-		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,tests}/**/*.ts\"",
-		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,tests}/**/*.ts\"",
+		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,test}/**/*.ts\"",
+		"prettier:check": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --list-different \"{src,test}/**/*.ts\"",
 		"prepare-beta": "node build/prepare-beta.js"
 	},
 	"devDependencies": {
-		"@types/mocha": "^2.2.32",
-		"@types/node": "^16.11.58",
-		"@types/vscode": "1.68.0",
-		"@typescript-eslint/eslint-plugin": "5.10.0",
-		"@typescript-eslint/parser": "5.10.0",
-		"eslint": "8.7.0",
-		"eslint-config-prettier": "8.3.0",
+		"@types/mocha": "^10.0.6",
+		"@types/node": "^18.3.0",
+		"@types/vscode": "1.82.0",
+		"@typescript-eslint/eslint-plugin": "6.14.0",
+		"@typescript-eslint/parser": "6.14.0",
+		"@vscode/test-cli": "^0.0.4",
+		"@vscode/test-electron": "^2.3.8",
+		"chai": "^4.3.10",
+		"eslint": "8.55.0",
+		"eslint-config-prettier": "9.1.0",
 		"expect": "^26.1.0",
 		"expect-mocha-snapshot": "2.1.5",
 		"glob": "7.2.0",
-		"mocha": "8.0.1",
-		"prettier": "^2.5.1",
+		"mocha": "10.2.0",
+		"mock-fs": "^5.2.0",
+		"nyc": "^15.1.0",
+		"prettier": "^3.1.1",
 		"pretty-error": "^2.1.1",
+		"proxyquire": "^2.1.3",
+		"sinon": "^17.0.1",
 		"ts-loader": "^8.2.0",
 		"ts-mockito": "2.6.1",
-		"typescript": "^4.2.4",
-		"vscode-test": "^1.4.1",
+		"typescript": "^5.3.3",
+		"vscode-test": "^1.6.1",
 		"webpack": "^5.35.1",
 		"webpack-cli": "^4.6.0"
 	},
@@ -500,7 +583,10 @@
 		"@launchdarkly/node-server-sdk": "^9.0.3",
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
+		"ajv": "^6.12.6",
 		"axios": "0.21.4",
+		"axios-retry": "4.0.0",
+		"axios-retry-after": "2.0.0",
 		"csv-parser": "^2.3.3",
 		"form-data": "^4.0.0",
 		"gunzip-maybe": "^1.4.2",

@@ -1,4 +1,4 @@
-import { commands, window, workspace, ConfigurationChangeEvent } from 'vscode';
+import { commands, window, workspace } from 'vscode';
 
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
@@ -12,13 +12,13 @@ export async function register(config: LDExtensionConfiguration): Promise<void> 
 	await configureLaunchDarkly(config);
 
 	// Handle manual changes to extension configuration
-	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
-		if (e.affectsConfiguration('launchdarkly') && !e.affectsConfiguration('launchdarkly.enableCodeLens')) {
-			await extensionReload(config, true);
-		}
-	});
+	// workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
+	// 	if (e.affectsConfiguration('launchdarkly') && e.affectsConfiguration('launchdarkly.enableCodeLens')) {
+	// 		await extensionReload(config, true);
+	// 	}
+	// });
 
-	if (config.getFlagStore() !== null) {
+	if (config.getFlagStore() !== undefined) {
 		await setupComponents(config);
 	}
 

@@ -1,3 +1,5 @@
+import { ClientSideAvailability } from 'launchdarkly-api-typescript';
+
 export class Resource {
 	name: string;
 	key: string;
@@ -8,7 +10,7 @@ export class Resource {
 export class Instruction {
 	kind: string;
 	contextKind?: string;
-	values: string[];
+	values?: string[];
 	variationId: string;
 }
 
@@ -26,6 +28,12 @@ export class Project extends Resource {
 	environments: Array<Environment>;
 }
 
+export class EnvironmentAPI {
+	items: Array<Environment>;
+}
+export class ProjectAPI {
+	environments: EnvironmentAPI;
+}
 // export class Environment extends Resource {
 // 	apiKey: string;
 // 	version: number;
@@ -182,9 +190,9 @@ export class FlagConfiguration {
 	key: string;
 	variations: Array<any>;
 	offVariation: number | undefined;
-	fallthrough: any;
+	fallthrough: Fallthrough;
 	prerequisites: any;
-	targets: any;
+	targets: Array<Target>;
 	rules: Array<any>;
 	on: boolean;
 	version: number;
@@ -218,6 +226,7 @@ export class CustomProperty {
 export class Target {
 	values?: Array<string>;
 	variation?: number;
+	contextKind?: string;
 }
 
 export class Rollout {
@@ -237,10 +246,10 @@ export class Clause {
 	values?: Array<any>;
 	negate?: boolean;
 	contextKind?: string;
-	_key: any;
+	_key?: string;
 }
 export class Rule {
-	id?: string;
+	_id?: string;
 	description: string;
 	variation?: number;
 	trackEvents?: boolean;
@@ -422,6 +431,8 @@ export class FeatureFlag {
 	 * Used by plugin to make sure number of variations has not changed
 	 */
 	variationLength?: number;
+	rules?: Rule[];
+	clientSideAvailability: ClientSideAvailability;
 }
 
 export class PatchOperation {
@@ -508,8 +519,21 @@ export class ReleasePipeline {
 	key: string;
 	description: string;
 	tags: string[];
+	phases: ReleasePhase[];
 }
 
+export class ReleasePhase {
+	flagKey: string;
+	name: string;
+	id: string;
+	audiences: Audience[];
+	_completedAt?: number;
+}
+
+export class Audience {
+	name: string;
+	environments: Environment[];
+}
 export interface MemberTeamSummaryRep {
 	/**
 	 * A list of keys of the custom roles this team has access to

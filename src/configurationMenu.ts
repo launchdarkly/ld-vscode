@@ -1,9 +1,18 @@
-import { ExtensionContext, QuickPickItem, QuickPickItemKind, window, workspace } from 'vscode';
+import {
+	ExtensionContext,
+	ProgressLocation,
+	QuickPick,
+	QuickPickItem,
+	QuickPickItemKind,
+	authentication,
+	window,
+	workspace,
+} from 'vscode';
 
 import { MultiStepInput } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
 import { Resource, Project, Environment } from './models';
-import { extensionReload } from './utils';
+import { extensionReload, logDebugMessage } from './utils';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 interface CMState {
 	baseUri: string;
@@ -24,17 +33,13 @@ export class ConfigurationMenu {
 		this.config = config;
 		this.api = config.getApi();
 		this.title = 'Configure LaunchDarkly';
-		this.totalSteps = 3;
+		this.totalSteps = 1;
 		workspace.name && this.totalSteps++;
 		this.ctx = config.getCtx();
 	}
 
 	async collectInputs(): Promise<CMState> {
 		const state = {} as CMState;
-		// if (this.currentAccessToken) {
-		// 	await MultiStepInput.run((input) => this.pickProject(input, state));
-		// 	return;
-		// }
 
 		await MultiStepInput.run((input) => this.pickProject(input, state));
 
@@ -48,106 +53,31 @@ export class ConfigurationMenu {
 		return new Promise<boolean>(() => {});
 	}
 
-	// async pickCurrentOrNewAccessToken(input: MultiStepInput, state: CMState) {
-	// 	this.useGlobalState = false;
-	// 	const existingTokenName = 'Use the existing access token';
-	// 	const clearOverrides = 'Clear Workspace Specific Configurations';
-	// 	const clearGlobalOverrides = 'Clear All LaunchDarkly Configurations';
-	// 	const newToken = 'Enter a new access token';
-	// 	const options = [];
-	// 	const currentToken = this.currentAccessToken.substr(this.currentAccessToken.length - 6);
-	// 	if (currentToken.length > 0) {
-	// 		options.push({
-	// 			name: existingTokenName,
-	// 			key: 'xxxx' + this.currentAccessToken.substr(this.currentAccessToken.length - 6),
-	// 		});
-	// 	}
-	// 	options.push({ name: newToken });
+	async pickProject(input: MultiStepInput<QuickPickItem>, state: CMState) {
+		const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
+		if (session === undefined) {
+			window
+				.showInformationMessage(
+					'You are not logged into LaunchDarkly. Please sign in to LaunchDarkly to continue.',
+					'Sign In',
+				)
+				.then((selection) => {
+					if (selection === 'Sign In') {
+						authentication.getSession('launchdarkly', ['writer'], { createIfNone: true });
+					}
+				});
+		}
+		const projectOptions: QuickPickItem[] = [
+			{ label: 'Retrieving projects...it may take a moment.', description: '', detail: '' },
+		];
 
-	// 	if (await this.config.localIsConfigured()) {
-	// 		options.push({ name: clearOverrides, key: 'clear overrides' });
-	// 	}
-	// 	options.push({ name: clearGlobalOverrides, key: 'clear all configuration data' });
-
-	// 	const selectionOptions = options.map(this.createQuickPickItem);
-
-	// 	const pick = await input.showQuickPick({
-	// 		title: this.title,
-	// 		step: 2,
-	// 		totalSteps: this.totalSteps,
-	// 		placeholder: 'Use your existing LaunchDarkly access token, or enter a new one.',
-	// 		items: selectionOptions,
-	// 		shouldResume: this.shouldResume,
-	// 	});
-
-	// 	if (pick.label === existingTokenName) {
-	// 		state.accessToken = this.currentAccessToken;
-	// 		this.invalidAccessToken = '';
-	// 		return (input: MultiStepInput) => this.pickProject(input, state);
-	// 	}
-
-	// 	if (pick.label === clearOverrides) {
-	// 		await this.config.clearLocalConfig();
-	// 		await this.config.reload();
-	// 		return (input: MultiStepInput) => this.pickInstance(input, state);
-	// 	}
-
-	// 	if (pick.label === clearGlobalOverrides) {
-	// 		await this.config.clearLocalConfig();
-	// 		await this.config.clearGlobalConfig();
-	// 		await extensionReload(this.config, this.ctx, true);
-	// 		return (input: MultiStepInput) => this.pickInstance(input, state);
-	// 	}
-
-	// 	return async (input: MultiStepInput) => await this.inputAccessToken(input, state);
-	// }
-
-	// async inputAccessToken(input: MultiStepInput, state: CMState) {
-	// 	state.accessToken = '';
-	// 	state.accessToken = await input.showInputBox({
-	// 		title: this.title,
-	// 		step: 2,
-	// 		totalSteps: this.totalSteps,
-	// 		value: typeof state.accessToken === 'string' ? state.accessToken : '',
-	// 		prompt: 'Enter your LaunchDarkly access token',
-	// 		validate: (token) => this.validateAccessToken(token, this.invalidAccessToken),
-	// 		shouldResume: this.shouldResume,
-	// 	});
-	// 	try {
-	// 		this.updateAPI(state);
-	// 		return (input: MultiStepInput) => this.pickProject(input, state);
-	// 	} catch (err) {
-	// 		if (err.statusCode === 401) {
-	// 			this.invalidAccessToken = state.accessToken;
-	// 			window.showErrorMessage('Invalid access token, please try again.');
-	// 			return (input: MultiStepInput) => this.inputAccessToken(input, state);
-	// 		}
-	// 		throw err;
-	// 	}
-	// }
-
-	// async pickInstance(input: MultiStepInput, state: CMState) {
-	// 	const baseUri = await input.showInputBox({
-	// 		title: this.title,
-	// 		step: 1,
-	// 		value: this.config.baseUri,
-	// 		prompt: 'Enter LaunchDarkly Instance URL',
-	// 		totalSteps: this.totalSteps,
-	// 		shouldResume: this.shouldResume,
-	// 		validate: (token) => this.validateAccessToken(token, this.invalidAccessToken),
-	// 	});
-
-	// 	state.baseUri = baseUri;
-	// 	return (input: MultiStepInput) => this.pickProject(input, state);
-	// }
-
-	async pickProject(input: MultiStepInput, state: CMState) {
-		let projectOptions: QuickPickItem[];
 		try {
-			//this.updateAPI(state);
-			const projects = await this.api.getProjects();
-			this.projects = projects;
-			projectOptions = projects.map(this.createQuickPickItem);
+			this.api.getProjects().then((projects) => {
+				this.projects = projects;
+				const current = input.current as QuickPick<QuickPickItem>;
+				current.items = projects.map(this.createQuickPickItem);
+				input.current.busy = false;
+			});
 		} catch (err) {
 			if (err.statusCode === 401) {
 				//this.invalidAccessToken = state.accessToken;
@@ -159,39 +89,53 @@ export class ConfigurationMenu {
 
 		const pick = await input.showQuickPick({
 			title: this.title,
-			step: 3,
+			step: 1,
 			totalSteps: this.totalSteps,
 			placeholder: 'Select a project',
 			items: projectOptions,
 			activeItem: typeof state.project !== 'string' ? state.project : undefined,
 			shouldResume: this.shouldResume,
-			matchOnDescription: true,
+			busy: true,
 		});
 
 		state.project = pick.description;
-		return (input: MultiStepInput) => this.pickEnvironment(input, state);
+		return (input: MultiStepInput<QuickPickItem>) => this.pickEnvironment(input, state);
 	}
 
-	async pickEnvironment(input: MultiStepInput, state: CMState) {
-		const selectedProject = this.projects.find((proj) => proj.key === state.project);
-		const environments = selectedProject.environments;
-		const selectEnvironmentOptions = environments
-			.filter((item) => this.createEnvQuickPickItem(item))
-			.map((item) => this.createQuickPickItem(item));
-		const cannotSelectEnvironmentOptions = environments
-			.filter((item) => !this.createEnvQuickPickItem(item))
-			.map((item) => this.createQuickPickItem(item));
-		const envSeparator = {
-			label: 'These environments do not have their SDK Available to select. Configuration will fail.',
-			kind: QuickPickItemKind.Separator,
+	async pickEnvironment(input: MultiStepInput<QuickPickItem>, state: CMState) {
+		const choices = [{ label: 'Retrieving environments...it may take a moment.', description: '', detail: '' }];
+		const project = await this.config.getApi().getProject(state.project);
+		logDebugMessage(`Environment picker project: ${state.project}`);
+		logDebugMessage(`Environment project data: ${JSON.stringify(project)}`);
+		const environments = project.environments.items;
+		logDebugMessage(`Environment picker environments: ${environments}`);
+		const envs = async () => {
+			const selectEnvironmentOptions = environments
+				.filter((item) => this.createEnvQuickPickItem(item))
+				.map((item) => this.createQuickPickItem(item));
+			logDebugMessage(`selectEnvironmentOptions: ${selectEnvironmentOptions}`);
+			const cannotSelectEnvironmentOptions = environments
+				.filter((item) => !this.createEnvQuickPickItem(item))
+				.map((item) => this.createQuickPickItem(item));
+			logDebugMessage(`cannotSelectEnvironmentOptions: ${cannotSelectEnvironmentOptions}`);
+			const envSeparator = {
+				label: 'These environments do not have their SDK Available to select. Configuration will fail.',
+				kind: QuickPickItemKind.Separator,
+			};
+			return [...selectEnvironmentOptions, envSeparator, ...cannotSelectEnvironmentOptions];
 		};
+
+		envs().then((envs) => {
+			const current = input.current as QuickPick<QuickPickItem>;
+			current.items = envs;
+		});
 
 		const pick = await input.showQuickPick({
 			title: this.title,
-			step: 4,
+			step: 2,
 			totalSteps: this.totalSteps,
 			placeholder: 'Select an environment',
-			items: [...selectEnvironmentOptions, envSeparator, ...cannotSelectEnvironmentOptions],
+			items: choices,
 			activeItem: typeof state.env !== 'string' ? state.env : undefined,
 			shouldResume: this.shouldResume,
 			matchOnDescription: true,
@@ -200,7 +144,18 @@ export class ConfigurationMenu {
 		state.env = pick.description;
 		pick.alwaysShow = false;
 		this.state = state;
-		window.showInformationMessage('[LaunchDarkly] Updating Configuration');
+		window.withProgress(
+			{
+				location: ProgressLocation.Notification,
+				title: '[LaunchDarkly] Updating Configuration',
+				cancellable: false,
+			},
+			() => {
+				return new Promise((resolve) => {
+					setTimeout(resolve, 3000);
+				});
+			},
+		);
 	}
 
 	async validateAccessToken(token: string, invalidAccessToken: string) {
@@ -209,19 +164,13 @@ export class ConfigurationMenu {
 		}
 	}
 
-	// updateAPI(state: Partial<CMState>) {
-	// 	const configWithUpdatedToken = Object.assign({}, this.config);
-	// 	//configWithUpdatedToken.accessToken = state.accessToken;
-	// 	//configWithUpdatedToken.baseUri = state.baseUri;
-	// 	this.api = new LaunchDarklyAPI(configWithUpdatedToken);
-	// }
-
 	async configure() {
 		await this.collectInputs();
 		//const params = ['accessToken', 'baseUri', 'project', 'env'];
 		const params = ['project', 'env'];
 		for await (const option of params) {
-			await this.config.getConfig().update(option, this.state[option], this.useGlobalState);
+			logDebugMessage(`Updating ${option} to ${this.state[option]}`);
+			await this.config.getConfig().update(option, this.state[option], false);
 		}
 		// want menu to close while updating
 		await extensionReload(this.config, true);

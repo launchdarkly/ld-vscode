@@ -1,11 +1,9 @@
 import { commands, Disposable, window } from 'vscode';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
-// This function is only called from a location that already checks if a team is available. 
+// This function is only called from a location that already checks if a team is available.
 // If that changes more logic needs to be moved here
-export default function setMaintainerCmd(
-	config: LDExtensionConfiguration,
-): Disposable {
+export default function setMaintainerCmd(config: LDExtensionConfiguration): Disposable {
 	const setMaintainerCmd = commands.registerCommand('launchdarkly.setMaintainer', async (args) => {
 		try {
 			const key = args;

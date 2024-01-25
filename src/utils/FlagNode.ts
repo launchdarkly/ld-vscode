@@ -126,7 +126,7 @@ export async function flagToValues(
 			ldConfig.getCtx(),
 			flag.name ? flag.name : flag.key,
 			generateHoverString(flag, envConfig, ldConfig),
-			`${config.baseUri}/${config.project}/${config.env}/features/${flag.key}`,
+			`${ldConfig.getSession().fullUri}/${config.project}/${config.env}/features/${flag.key}`,
 			COLLAPSED,
 			[],
 			flag.key,
@@ -181,7 +181,7 @@ export async function flagToValues(
 		flagPrereqs.map((prereq) => {
 			prereqs.push(flagFactory({ label: `Flag: ${prereq.key}`, collapsed: NON_COLLAPSED }));
 			prereqs.push(
-				flagFactory({ label: `Variation: ${prereq.variation}`, collapsed: NON_COLLAPSED, ctx: this.ldConfig.getCtx() }),
+				flagFactory({ label: `Variation: ${prereq.variation}`, collapsed: NON_COLLAPSED, ctx: ldConfig.getCtx() }),
 			);
 		});
 		renderedFlagFields.push(

@@ -18,7 +18,7 @@ export function generateHoverString(
 		console.error(err);
 		return;
 	}
-	const flagUri = url.resolve(config.getConfig().baseUri, flag.environments[env]._site.href);
+	const flagUri = url.resolve(config.getSession().fullUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(
 		`![Flag status](${getFlagStatusUri(config.getCtx(), c.on)}) ${config.getConfig().project} / ${env} / **[${
 			flag.key
@@ -30,7 +30,12 @@ export function generateHoverString(
 	hoverString.appendText('\n');
 	hoverString.appendMarkdown(flag.description);
 	hoverString.appendText('\n');
-
+	const clientSDK = flag.clientSideAvailability.usingEnvironmentId ? '$(browser)' : '';
+	const mobileSDK = flag.clientSideAvailability.usingMobileKey ? '$(device-mobile)' : '';
+	const sdkAvailability = `Client-side SDK availability: ${clientSDK}${clientSDK && mobileSDK ? ' ' : ''}${mobileSDK}${
+		!clientSDK && !mobileSDK ? '$(server)' : ''
+	}\n\n`;
+	hoverString.appendMarkdown(sdkAvailability);
 	if (c.prerequisites && c.prerequisites.length > 0) {
 		hoverString.appendMarkdown(
 			`* Prerequisites: ${c.prerequisites

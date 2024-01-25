@@ -4,7 +4,7 @@ import { FlagStore } from '../flagStore';
 import { FLAG_KEY_REGEX } from '../providers';
 import { FlagAliases } from './codeRefs';
 
-const STRING_DELIMETERS = ['"', "'", '`'];
+export const STRING_DELIMITERS = ['"', "'", '`'];
 
 export default class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
 	private readonly flagStore: FlagStore;
@@ -51,7 +51,7 @@ export function isPrecedingCharStringDelimiter(document: TextDocument, position:
 		range.start.character,
 	);
 	const candidate = document.getText(c).trim().replace('(', '');
-	return STRING_DELIMETERS.indexOf(candidate) !== -1;
+	return STRING_DELIMITERS.indexOf(candidate) !== -1;
 }
 
 const candidateTextStartLocation = (char: number) => (char === 1 ? 0 : char - 2);

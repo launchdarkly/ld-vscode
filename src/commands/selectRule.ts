@@ -1,32 +1,39 @@
-import { commands, Disposable, ProgressLocation, QuickPickItemKind, window } from 'vscode';
-import { YamlReader } from '../utils/rulesYaml';
+import { commands, Disposable, ProgressLocation, QuickPickItem, QuickPickItemKind, window } from 'vscode';
+import { YAMLIndividualTarget, YamlReader, YAMLRuleTarget } from '../utils/rulesYaml';
 import { ToggleCache } from '../toggleCache';
 import os from 'os';
-import { Clause, Rule } from '../models';
-import { v4 as uuidv4 } from 'uuid';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
+import { Dictionary, isArray } from 'lodash';
+import crypto from 'crypto';
+import { Clause, FeatureFlag } from '../models';
+import { logDebugMessage } from '../utils';
 
 const cache = new ToggleCache();
 const revertLastCmd = {};
+const secondToLastCmd = {};
 
-type yamlIndividualTarget = {
-	name: string;
-	contextKind: string;
-	values: string | string[];
+type RuleSelection = {
+	label: string;
+	description?: string;
+	value: YAMLIndividualTarget | YAMLRuleTarget;
+	type?: 'rule' | 'target';
 };
+
+export interface FlagQuickPickItem extends QuickPickItem {
+	value: string;
+}
 
 export default function selectRuleCmd(config: LDExtensionConfiguration): Disposable {
 	const selectRuleCmd = commands.registerCommand('launchdarkly.quickPickRules', async () => {
-		let flags;
-		try {
-			flags = await config.getFlagStore().allFlagsMetadata();
-		} catch (err) {
-			window.showErrorMessage('[LaunchDarkly] Unable to retrieve flags, please check configuration.');
+		const flags = await config.getFlagStore()?.allFlagsMetadata();
+		if (flags === undefined) {
+			// Errors would be handled in the flagStore
 			return;
 		}
-		const items = [];
-		const cachedFlags = Array.from(cache.get()).reverse();
-		if (cachedFlags.length > 0) {
+		const items: Array<RuleSelection | { label: string; kind: QuickPickItemKind } | FlagQuickPickItem> = [];
+		const cacheResult = cache.get();
+		const cachedFlags = cacheResult ? Array.from(cacheResult).reverse() : [];
+		if (cachedFlags?.length > 0) {
 			items.push({
 				label: 'Recently updated Feature Flags',
 				kind: QuickPickItemKind.Separator,
@@ -35,6 +42,7 @@ export default function selectRuleCmd(config: LDExtensionConfiguration): Disposa
 				items.push({
 					label: flags[flag].name,
 					description: flags[flag].key,
+					detail: flags[flag].description,
 					value: flags[flag].key,
 				});
 			});
@@ -48,116 +56,20 @@ export default function selectRuleCmd(config: LDExtensionConfiguration): Disposa
 			items.push({
 				label: flags[flag].name,
 				description: flags[flag].key,
+				detail: flags[flag].description,
 				value: flags[flag].key,
 			}),
 		);
-		const flagWindow = await window.showQuickPick(items, {
+		const flagWindow = (await window.showQuickPick(items, {
 			title: 'Select Feature Flag for rule',
 			placeHolder: 'Type flag key to toggle',
 			matchOnDescription: true,
-		});
-
-		const addRemove = [];
-		if (typeof revertLastCmd[flagWindow.value] !== 'undefined') {
-			addRemove.push({
-				label: 'Revert Last Targeting Change',
-				description: 'Revert Last Targeting Change',
-				value: 'revert',
-			});
-		}
-
-		addRemove.push(
-			{
-				label: 'Add',
-				description: 'Add targeting to flag',
-				value: 'add',
-			},
-			{
-				label: 'Remove',
-				description: 'Remove targeting from flag',
-				value: 'remove',
-			},
-		);
-
-		const addRemoveTargeting = await window.showQuickPick(addRemove, {
-			title: 'Select Feature Flag for rule',
-			placeHolder: 'Type flag key to toggle',
-			matchOnDescription: true,
-		});
-		if (addRemoveTargeting.value === 'revert') {
-			const instruction = createTargetInstruction(
-				config.getConfig().env,
-				revertLastCmd[flagWindow.value].instructions[0].kind,
-				revertLastCmd[flagWindow.value].instructions[0].contextKind,
-				revertLastCmd[flagWindow.value].instructions[0].values,
-				revertLastCmd[flagWindow.value].instructions[0].variationId,
-			);
-			await updateFlag(flagWindow, cache, config.getApi(), config.getConfig(), instruction);
+			ignoreFocusOut: true,
+		})) as FlagQuickPickItem;
+		if (!flagWindow) {
 			return;
 		}
-
-		const filePath = os.homedir() + '/.launchdarkly/rules.yaml';
-		const rules = YamlReader.read(filePath);
-
-		//const ruleNames = mapObjects(rules['rules'], 'name', 'rule');
-		const targetNames = mapObjects(rules['targets'], 'name', 'target');
-		const targetDivider = {
-			label: 'Individual Targeting',
-			kind: QuickPickItemKind.Separator,
-		};
-		// const rulesDivider = {
-		// 	label: 'Rule Targeting',
-		// 	kind: QuickPickItemKind.Separator,
-		// };
-		const ruleList = [targetDivider, ...targetNames];
-		const selectedRule = await window.showQuickPick<{ label: string; value: yamlIndividualTarget | any }>(ruleList, {
-			placeHolder: `Select a target for ${flagWindow.value}`,
-		});
-
-		const flagVariations = flags[flagWindow.value].variations.map((variation, idx) => {
-			return `${idx}. ${variation.name ? variation.name : variation.value}`;
-		});
-
-		const selectedVariation = await window.showQuickPick(flagVariations, {
-			placeHolder: `Select which flag variation to update targets`,
-		});
-		let instruction;
-		if (selectedVariation) {
-			const varIdx = selectedVariation.split('.')[0];
-			const ctxKind = selectedRule.value.contextKind ? selectedRule.value.contextKind : 'user';
-	
-			switch (addRemoveTargeting.value) {
-				case 'add': {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					//@ts-ignore
-					instruction = createTargetInstruction(
-						config.getConfig().env,
-						'addTargets',
-						ctxKind,
-						[selectedRule.value.values],
-						flags[flagWindow.value].variations[varIdx]._id,
-					);
-					break;
-				}
-				case 'remove': {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					//@ts-ignore
-					instruction = createTargetInstruction(
-						config.getConfig().env,
-						'removeTargets',
-						ctxKind,
-						[selectedRule.value.values],
-						flags[flagWindow.value].variations[varIdx]._id,
-					);
-					break;
-				}
-				case 'revert': {
-					break;
-				}
-			}
-		}
-		await updateFlag(flagWindow, cache, config.getApi(), config.getConfig(), instruction);
-		config.getCtx().subscriptions.push(selectRuleCmd);
+		await targetFlag(flagWindow, cache, config, flags);
 	});
 	return selectRuleCmd;
 }
@@ -185,31 +97,59 @@ function createTargetInstruction(environmentKey, kind, ctxKind, values, variatio
 	};
 }
 
-function createAddRuleInstruction(
-	environmentKey: string,
-	kind: string,
-	variationId: string,
-	description: string,
-	clauses: Clause[],
-) {
-	//const clausesWithKey = clauses.map((clause) => { return { ...clause, "_key": uuidv4() } })
+function createSingleTargetInstruction(kind, ctxKind, values, variationId) {
 	return {
-		//comment: "",
-		environmentKey: environmentKey,
+		kind,
+		contextKind: ctxKind,
+		values: values,
+		variationId: variationId,
+	};
+}
+
+function createAddRuleInstruction(ruleTarget: YAMLRuleTarget, environment: string, varIdx: string) {
+	return {
+		environmentKey: environment,
 		instructions: [
 			{
-				//description: description,
-				kind,
-				variationId,
-				clauses: clauses,
-				//ruleId: uuidv4()
+				kind: 'addRule',
+				variationId: varIdx,
+				ref: generateRefFromClauses(ruleTarget.clauses),
+				clauses: ruleTarget.clauses.map((clause) => ({
+					attribute: clause.attribute,
+					op: clause.op,
+					contextKind: clause.contextKind,
+					values: clause.values,
+					negate: clause.negate,
+				})),
 			},
 		],
 	};
 }
 
-async function updateFlag(flagWindow, cache, api, config, instruction) {
+function removeRuleInstruction(
+	environment: string,
+	{ ruleTarget, clauses }: { ruleTarget?: YAMLRuleTarget; clauses?: Array<Clause> },
+) {
+	return {
+		environmentKey: environment,
+		instructions: [
+			{
+				kind: 'removeRule',
+				ref: generateRefFromClauses(clauses ? clauses : ruleTarget.clauses),
+			},
+		],
+	};
+}
+
+async function updateFlag(
+	flagWindow,
+	cache,
+	config: LDExtensionConfiguration,
+	instruction,
+	origFlag?: FeatureFlag,
+): Promise<FeatureFlag | undefined> {
 	if (typeof flagWindow !== 'undefined') {
+		let flag: FeatureFlag | undefined;
 		await window.withProgress(
 			{
 				location: ProgressLocation.Notification,
@@ -225,25 +165,84 @@ async function updateFlag(flagWindow, cache, api, config, instruction) {
 				progress.report({ increment: 10, message: `Updating flag` });
 
 				try {
-					await api.patchFeatureFlagSem(config.project, flagWindow.value, instruction);
+					flag = await config
+						.getFlagStore()
+						.executeAndUpdateFlagStore(
+							config.getApi().patchFeatureFlagSem.bind(config.getApi()),
+							config.getConfig().project,
+							flagWindow.value,
+							instruction,
+						);
 					cache.set(flagWindow.value);
+					const previousCommand = secondToLastCmd[flagWindow.value];
+					if (Object.keys(revertLastCmd)?.length > 0) {
+						Object.assign(secondToLastCmd, revertLastCmd);
+					}
 					if (instruction.instructions[0].kind === 'addTargets') {
 						revertLastCmd[flagWindow.value] = instruction;
 						revertLastCmd[flagWindow.value].instructions[0].kind = 'removeTargets';
-					} else {
+					} else if (instruction.instructions[0].kind === 'removeTargets') {
 						revertLastCmd[flagWindow.value] = instruction;
 						revertLastCmd[flagWindow.value].instructions[0].kind = 'addTargets';
+					} else if (instruction.instructions[0].kind === 'addRule') {
+						revertLastCmd[flagWindow.value] = removeRuleInstruction(config.getConfig().env, {
+							clauses: instruction.instructions[0].clauses,
+						});
+						secondToLastCmd[flagWindow.value] = instruction;
+					} else if (instruction.instructions[0].kind === 'removeRule') {
+						revertLastCmd[flagWindow.value] = previousCommand[flagWindow.value];
 					}
 				} catch (err) {
 					console.log(err);
 					progress.report({ increment: 100 });
-					if (err.response.status === 403) {
+					if (err?.response?.status === 403) {
 						window.showErrorMessage(
 							`Unauthorized: Your key does not have permissions to update the flag: ${flagWindow.value}`,
 						);
+					} else if (
+						err?.response?.status === 400 &&
+						err.response.data.message.includes('ref') &&
+						err.response.data.message.includes('already exists')
+					) {
+						window.showInformationMessage(`Rule already exists on flag: ${flagWindow.value}`);
+					} else if (err?.response?.status === 400 && instruction.instructions[0].kind === 'addTargets') {
+						// This is a hack to get around the fact that the API does not support in place updates to targets
+						const sdkFlag = await config.getFlagStore().getFlagConfig(flagWindow.value);
+
+						const instructions = [];
+						for (const target in sdkFlag['targets']) {
+							if (sdkFlag['targets'][target].values?.includes(instruction.instructions[0].values[0])) {
+								instructions.push(
+									createSingleTargetInstruction(
+										'removeTargets',
+										sdkFlag['targets'][target].contextKind,
+										[instruction.instructions[0].values[0]],
+										origFlag.variations[sdkFlag['targets'][target].variation]._id,
+									),
+								);
+								// No need to loop over the rest of targets
+								break;
+							}
+							instructions.push(instruction.instructions[0]);
+
+							const newPatch = {
+								environmentKey: config.getConfig().env,
+								instructions,
+							};
+							const newFlag = await config
+								.getApi()
+								.patchFeatureFlagSem(config.getConfig().project, flagWindow.value, newPatch);
+							if (newFlag instanceof Error) {
+								window.showErrorMessage(`Could not update flag: ${flagWindow.value}\n\n${newFlag.message}`);
+							}
+						}
+					} else if (err?.response?.status === 400) {
+						window.showErrorMessage(
+							`Could not update flag: ${flagWindow.value}\nIs this context targeting? Is it used by another variation?\n\n Status: ${err?.response?.status}\n\nMessage: ${err.message}`,
+						);
 					} else {
 						window.showErrorMessage(`Could not update flag: ${flagWindow.value}
-					code: ${err.response.status}
+					code: ${err?.response?.status}
 					message: ${err.message}`);
 					}
 				}
@@ -251,5 +250,183 @@ async function updateFlag(flagWindow, cache, api, config, instruction) {
 				progress.report({ increment: 90, message: 'Flag Updated' });
 			},
 		);
+		return flag;
+	}
+}
+
+function handleTargetUpdate(targetingCase: string, env: string, selectedRule: RuleSelection, varIdx: string) {
+	const rule = selectedRule.value as YAMLIndividualTarget;
+	const ctxKind = rule.contextKind ? rule.contextKind : 'user';
+	switch (targetingCase) {
+		case 'add': {
+			return createTargetInstruction(
+				env,
+				'addTargets',
+				ctxKind,
+				isArray(rule.values) ? rule.values : [rule.values],
+				varIdx,
+			);
+		}
+		case 'remove': {
+			return createTargetInstruction(
+				env,
+				'removeTargets',
+				ctxKind,
+				isArray(rule.values) ? rule.values : [rule.values],
+				varIdx,
+			);
+		}
+		case 'revert': {
+			break;
+		}
+	}
+}
+
+function handleRuleUpdate(targetingCase: string, env: string, selectedRule: YAMLRuleTarget, varIdx: string) {
+	switch (targetingCase) {
+		case 'add': {
+			return createAddRuleInstruction(selectedRule, env, varIdx);
+		}
+		case 'remove': {
+			return removeRuleInstruction(env, { ruleTarget: selectedRule });
+		}
+		case 'revert': {
+			break;
+		}
+	}
+}
+
+function generateRefFromClauses(clauses) {
+	const joinedClauses = clauses.map((clause) => {
+		`${clause.attribute}${clause.op}${clause.values.join('')}${clause.contextKind || ''}${clause.negate}`;
+	});
+
+	const hash = crypto.createHash('sha256');
+	hash.update(joinedClauses.join(''));
+	const hashedClause = hash.digest('hex').substring(0, 20);
+	return `vscode${hashedClause}`;
+}
+
+export async function targetFlag(
+	flagWindow,
+	cache: ToggleCache,
+	config: LDExtensionConfiguration,
+	flags: Dictionary<FeatureFlag>,
+) {
+	const addRemove: Array<FlagQuickPickItem> = [];
+	if (typeof revertLastCmd[flagWindow.value] !== 'undefined') {
+		addRemove.push({
+			label: 'Revert Last Targeting Change',
+			description: 'Revert Last Targeting Change',
+			value: 'revert',
+		});
+	}
+
+	addRemove.push(
+		{
+			label: 'Add',
+			description: 'Add targeting to flag',
+			value: 'add',
+		},
+		{
+			label: 'Remove',
+			description: 'Remove targeting from flag',
+			value: 'remove',
+		},
+	);
+
+	const addRemoveTargeting = await window.showQuickPick(addRemove, {
+		title: 'Select Feature Flag for rule',
+		placeHolder: 'Type flag key to toggle',
+		matchOnDescription: true,
+		matchOnDetail: true,
+		ignoreFocusOut: true,
+	});
+	if (!addRemoveTargeting) {
+		return;
+	}
+
+	if (addRemoveTargeting.value === 'revert') {
+		let instruction;
+		if (revertLastCmd[flagWindow.value].instructions[0].kind === 'removeRule') {
+			instruction = revertLastCmd[flagWindow.value];
+		} else {
+			instruction = createTargetInstruction(
+				config.getConfig().env,
+				revertLastCmd[flagWindow.value].instructions[0].kind,
+				revertLastCmd[flagWindow.value].instructions[0].contextKind,
+				revertLastCmd[flagWindow.value].instructions[0].values,
+				revertLastCmd[flagWindow.value].instructions[0].variationId,
+			);
+		}
+		await updateFlag(flagWindow, cache, config, instruction, flags[flagWindow.value]);
+		return;
+	}
+
+	const filePath = os.homedir() + '/.launchdarkly/rules.yaml';
+	const rules = YamlReader.read(filePath);
+	if (rules === undefined || rules?.length === 0) {
+		window.showInformationMessage('No rules found in rules.yaml');
+		return;
+	}
+	const ruleNames = mapObjects(rules['rules'], 'name', 'rule');
+	const targetNames = mapObjects(rules['targets'], 'name', 'target');
+	const targetDivider = {
+		label: 'Individual Targeting',
+		kind: QuickPickItemKind.Separator,
+	};
+	const rulesDivider = {
+		label: 'Rule Targeting',
+		kind: QuickPickItemKind.Separator,
+	};
+	const ruleList = [targetDivider, ...targetNames, rulesDivider, ...ruleNames];
+	const selectedRule = await window.showQuickPick<RuleSelection>(ruleList, {
+		placeHolder: `Select a target for ${flagWindow.value}`,
+		ignoreFocusOut: true,
+	});
+
+	const flagVariations = flags[flagWindow.value].variations.map((variation, idx) => {
+		return `${idx}. ${variation.name ? variation.name : variation.value}`;
+	});
+
+	const selectedVariation = await window.showQuickPick(flagVariations, {
+		placeHolder: `Select which flag variation to update targets`,
+		ignoreFocusOut: true,
+	});
+	let instruction;
+	if (selectedVariation && selectedRule) {
+		const varIdx = selectedVariation.split('.')[0];
+		const variationID = flags[flagWindow.value].variations[varIdx]._id;
+		if (selectedRule.value.type === 'target') {
+			instruction = handleTargetUpdate(addRemoveTargeting.value, config.getConfig()!.env, selectedRule, variationID);
+		} else {
+			instruction = handleRuleUpdate(
+				addRemoveTargeting.value,
+				config.getConfig()!.env,
+				selectedRule.value as YAMLRuleTarget,
+				variationID,
+			);
+		}
+		logDebugMessage(`Instruction for ${flagWindow.value}: ${JSON.stringify(instruction)}`);
+	}
+	const updatedFlag = await updateFlag(flagWindow, cache, config, instruction, flags[flagWindow.value]);
+	if (!updatedFlag?.environments[config.getConfig().env].on) {
+		window
+			.showInformationMessage(
+				`Flag: ${flagWindow.value} is not on in environment: ${config.getConfig().env}.
+			Only the Off Variation will be served.
+			Would you like to turn the flag on?`,
+				{ modal: true },
+				{ title: 'Turn flag on', command: 'launchdarkly.openRule' },
+			)
+			.then(async (selection) => {
+				if (selection?.title === 'Turn flag on') {
+					const onInstruction = {
+						environmentKey: config.getConfig().env,
+						instructions: [{ kind: 'turnFlagOn' }],
+					};
+					await updateFlag(flagWindow, cache, config, onInstruction);
+				}
+			});
 	}
 }
