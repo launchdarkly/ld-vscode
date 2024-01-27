@@ -48,7 +48,7 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 
 	if (reload) {
 		// Disposables.from does not wait for async disposal so need to wait here.
-		await setTimeout(2000);
+		await setTimeout(2200);
 	}
 
 	if (config.getConfig().enableAliases) {

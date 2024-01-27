@@ -14,6 +14,7 @@ import { LaunchDarklyAPI } from './api';
 import { Resource, Project, Environment } from './models';
 import { extensionReload, logDebugMessage } from './utils';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
+import { LaunchDarklyAuthenticationSession } from './providers/authProvider';
 interface CMState {
 	baseUri: string;
 	env: string;
@@ -56,16 +57,17 @@ export class ConfigurationMenu {
 	async pickProject(input: MultiStepInput<QuickPickItem>, state: CMState) {
 		const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
 		if (session === undefined) {
-			window
+			const selection = await window
 				.showInformationMessage(
 					'You are not logged into LaunchDarkly. Please sign in to LaunchDarkly to continue.',
 					'Sign In',
 				)
-				.then((selection) => {
+				if (selection) {
 					if (selection === 'Sign In') {
-						authentication.getSession('launchdarkly', ['writer'], { createIfNone: true });
+						const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: true }) as LaunchDarklyAuthenticationSession;
+						this.config.setSession(session);
 					}
-				});
+				}
 		}
 		const projectOptions: QuickPickItem[] = [
 			{ label: 'Retrieving projects...it may take a moment.', description: '', detail: '' },
