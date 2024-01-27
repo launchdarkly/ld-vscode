@@ -32,6 +32,10 @@ export class LaunchDarklyReleaseProvider implements TreeDataProvider<TreeItem> {
 		this.refresh();
 	}
 
+	// getReleasedFlags(): ReleaseFlagNode[] {
+	// 	const released = this.nodes.filter((node) => node.label === 'Released')[0] as ReleaseFlagNode;
+	// 	return released.children
+	// }
 	periodicRefresh(): void {
 		setTimeout(
 			async () => {

@@ -101,7 +101,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 		});
 	}
 
-	if ((ctx.secrets.get('launchdarkly_accessToken') || semver.lt(storedVersion, '5.0.0')) && session === undefined) {
+	if ((ctx.secrets.get('launchdarkly_accessToken') || semver.lt(storedVersion, '4.99.10')) && session === undefined) {
 	//if (semver.lt(storedVersion, '4.99.1')) {
 		window
 			.showInformationMessage(

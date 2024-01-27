@@ -318,10 +318,10 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 				Authorization: apiToken,
 			},
 		});
-		const serviceTokenError = `reflexive member id 'me' is invalid when authenticated with a service token`;
+		//const serviceTokenError = `reflexive member id 'me' is invalid when authenticated with a service token`;
 		const res = await response;
 
-		if (await res.text() === serviceTokenError || res.status == 404) {
+		if (res.status == 404) {
 			return { firstName: 'Service', lastName: 'Account', email: 'none', teams: [] };
 		} else if (res.status !== 200 && res.status !== 201) {
 			window.showErrorMessage(`[LaunchDarkly] Failed to get user info: ${res.status}`);
