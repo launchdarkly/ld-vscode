@@ -46,7 +46,7 @@ jobs:
     #   run: yarn run vscode:prepublish
 
     - name: Test
-      run: DISPLAY=:1 yarn test
+      run: yarn test
 
     - name: Prettier
       run: yarn run prettier:check
