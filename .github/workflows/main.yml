@@ -41,7 +41,6 @@ jobs:
       uses: GabrielBB/xvfb-action@v1.4
       with:
         run: yarn run vscode:prepublish 
-          yarn test
 
     - name: Run xvfb test
       uses: GabrielBB/xvfb-action@v1.4
