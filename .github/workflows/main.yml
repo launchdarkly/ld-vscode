@@ -1,49 +1,50 @@
-name: CI
+name: Node CI
 
-on:
-  push:
-    branches: [ main, beta, prerelease ]
-  workflow_dispatch:
+on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-      - run: yarn
-      - run: yarn prepare-beta
-        if: ${{ steps.extract_branch.outputs.branch == 'beta' }}
-      - name: Run headless test
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: yarn test
-      - run: yarn run prettier:check
-      - run: yarn run lint
-      - name: Publish to Visual Studio Marketplace
-        if: ${{ steps.extract_branch.outputs.branch != 'prerelease' }}
-        uses: HaaLeo/publish-vscode-extension@v1
-        with:
-          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
-          registryUrl: https://marketplace.visualstudio.com
-          yarn: true
-      - name: Publish to Visual Studio Marketplace for pre-release
-        if: ${{ steps.extract_branch.outputs.branch == 'prerelease' }}
-        uses: HaaLeo/publish-vscode-extension@v1
-        with:
-          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
-          registryUrl: https://marketplace.visualstudio.com
-          yarn: true
-          preRelease: true
-      - name: Publish to Open VSX Registry
-        uses: HaaLeo/publish-vscode-extension@v0
-        with:
-          pat: ${{ secrets.OPEN_VSX_TOKEN }}
-          yarn: true
+    - uses: actions/checkout@v2
+
+    - name: Use Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18.19.0'
+
+    - name: Cache Node.js modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.OS }}-node-
+          ${{ runner.OS }}-
+
+    - name: Install dependencies
+      run: yarn
+
+    - name: Setup build environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libnss3 libasound2 libgbm-dev
+        sudo cp test/xvfb.init /etc/init.d/xvfb
+        sudo chmod +x /etc/init.d/xvfb
+        sudo update-rc.d xvfb defaults
+        sudo service xvfb start
+        sudo service dbus restart
+        export $(dbus-launch)
+
+    - name: Build
+      run: yarn run vscode:prepublish
+
+    - name: Test
+      run: DISPLAY=:1 yarn test
+
+    - name: Prettier
+      run: yarn run prettier:check
+
+    - name: Lint
+      run: yarn run lint
