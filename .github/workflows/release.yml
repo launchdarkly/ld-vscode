@@ -17,7 +17,7 @@ jobs:
         id: extract_branch
       - uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '18.19.0'
       - run: yarn
       - run: yarn prepare-beta
         if: ${{ steps.extract_branch.outputs.branch == 'beta' }}
