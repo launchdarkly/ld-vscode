@@ -5,7 +5,6 @@
 import * as path from 'path';
 import { Command, ExtensionContext, MarkdownString, TreeItem, TreeItemCollapsibleState, Uri } from 'vscode';
 import { FeatureFlag, FlagConfiguration } from '../models';
-import { FlagAliases } from '../providers/codeRefs';
 import { generateHoverString } from './hover';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
