@@ -40,13 +40,15 @@ jobs:
     - name: Setup xvfb
       uses: GabrielBB/xvfb-action@v1.4
       with:
-        run: yarn run vscode:prepublish
+        run: |
+          yarn run vscode:prepublish
+          yarn test
 
     # - name: Build
     #   run: yarn run vscode:prepublish
 
-    - name: Test
-      run: yarn test
+    # - name: Test
+    #   run: 
 
     - name: Prettier
       run: yarn run prettier:check
