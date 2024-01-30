@@ -41,7 +41,7 @@ const flag = new FeatureFlag({
 	clientSideAvailability: {
 		usingMobileKey: false,
 		usingEnvironmentId: false,
-	}
+	},
 });
 
 const flagConfig: FlagConfiguration = {

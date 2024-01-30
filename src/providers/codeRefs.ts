@@ -106,9 +106,7 @@ export class FlagAliases {
 		if (!session || !intConfig) {
 			return;
 		}
-		const apiToken = legacyAuth()
-			? session.accessToken
-			: `Bearer ${session.accessToken}`;
+		const apiToken = legacyAuth() ? session.accessToken : `Bearer ${session.accessToken}`;
 		try {
 			const codeRefsBin = await this.getCodeRefsBin();
 			const command = `${codeRefsBin} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${intConfig.project}" --repoName="${repoName}" --baseUri="${session.fullUri}" --contextLines=-1 --branch=scan --revision=0`;

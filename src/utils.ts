@@ -67,27 +67,20 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 	const flagView = new LaunchDarklyTreeViewProvider(config);
 	const codeLens = new FlagCodeLensProvider(config);
 
-	const enableFlagListView = workspace.getConfiguration('launchdarkly').get('enableFlagsInFile', false)
+	const enableFlagListView = workspace.getConfiguration('launchdarkly').get('enableFlagsInFile', false);
 	let listViewDisp = Disposable.from();
 	if (enableFlagListView) {
 		const listView = new LaunchDarklyFlagListProvider(config, codeLens);
 		window.registerTreeDataProvider('launchdarklyFlagList', listView);
 		listViewDisp = commands.registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument());
-		config
-			.getCtx()
-			.subscriptions.push(
-				window.onDidChangeActiveTextEditor(listView.setFlagsinDocument),
-				listViewDisp
-			);
+		config.getCtx().subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsinDocument), listViewDisp);
 	}
- 	
 
-	const enableReleasesView = workspace.getConfiguration('launchdarkly').get('enableReleasesView', false)
+	const enableReleasesView = workspace.getConfiguration('launchdarkly').get('enableReleasesView', false);
 	if (enableReleasesView) {
 		const releaseView = new LaunchDarklyReleaseProvider(config);
 		window.registerTreeDataProvider('launchdarklyReleases', releaseView);
 	}
-	
 
 	config.setFlagView(flagView);
 
@@ -98,8 +91,6 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 			treeDataProvider: flagView,
 		}),
 	);
-	
-	
 
 	const LD_MODE: DocumentFilter = {
 		scheme: 'file',
@@ -107,7 +98,6 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 	const hoverProviderDisp = languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config));
 
 	try {
-		
 		const flagToggle = commands.registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
 			await showToggleMenu(config);
 		});
@@ -311,6 +301,6 @@ function createFallthroughOrOffInstruction(kind: string, variationId: string) {
 }
 
 export function legacyAuth() {
-	return true; 
+	return true;
 	//workspace.getConfiguration('launchdarkly').get('legacyAuth', false)
 }
