@@ -140,9 +140,14 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 				newElement.list = [codelensFlag.range];
 				this.flagNodes.push(newElement);
 			} else {
-				newElement = new FlagItem(codelensFlag.flag, TreeItemCollapsibleState.Collapsed, codelensFlag.flag, [
-					codelensFlag.range,
-				], null, 'FlagItem');
+				newElement = new FlagItem(
+					codelensFlag.flag,
+					TreeItemCollapsibleState.Collapsed,
+					codelensFlag.flag,
+					[codelensFlag.range],
+					null,
+					'FlagItem',
+				);
 			}
 			logDebugMessage(`Setting Flag: ${JSON.stringify(codelensFlag)}`);
 			this.flagMap.set(codelensFlag.flag, newElement);

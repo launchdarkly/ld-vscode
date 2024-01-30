@@ -102,11 +102,11 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	}
 
 	if ((ctx.secrets.get('launchdarkly_accessToken') || semver.lt(storedVersion, '4.99.10')) && session === undefined) {
-	//if (semver.lt(storedVersion, '4.99.1')) {
+		//if (semver.lt(storedVersion, '4.99.1')) {
 		window
 			.showInformationMessage(
 				`LaunchDarkly: Please [Sign In](command:vscode-launchdarkly-authprovider.signIn) as part your extension update.`,
-				`Sign In`
+				`Sign In`,
 			)
 			.then(async (item) => {
 				switch (item) {

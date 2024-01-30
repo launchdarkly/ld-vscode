@@ -57,17 +57,18 @@ export class ConfigurationMenu {
 	async pickProject(input: MultiStepInput<QuickPickItem>, state: CMState) {
 		const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
 		if (session === undefined) {
-			const selection = await window
-				.showInformationMessage(
-					'You are not logged into LaunchDarkly. Please sign in to LaunchDarkly to continue.',
-					'Sign In',
-				)
-				if (selection) {
-					if (selection === 'Sign In') {
-						const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: true }) as LaunchDarklyAuthenticationSession;
-						this.config.setSession(session);
-					}
+			const selection = await window.showInformationMessage(
+				'You are not logged into LaunchDarkly. Please sign in to LaunchDarkly to continue.',
+				'Sign In',
+			);
+			if (selection) {
+				if (selection === 'Sign In') {
+					const session = (await authentication.getSession('launchdarkly', ['writer'], {
+						createIfNone: true,
+					})) as LaunchDarklyAuthenticationSession;
+					this.config.setSession(session);
 				}
+			}
 		}
 		const projectOptions: QuickPickItem[] = [
 			{ label: 'Retrieving projects...it may take a moment.', description: '', detail: '' },

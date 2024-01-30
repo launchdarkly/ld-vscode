@@ -251,7 +251,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 					}
 					// If secret existed in secret store, it's now moved to session.
 					await this.context.secrets.delete('launchdarkly_accessToken');
-					
+
 					return { access_token: updatedToken, refresh_token: '', baseUri: appBaseUri };
 				}
 
