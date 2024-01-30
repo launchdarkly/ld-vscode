@@ -38,14 +38,10 @@ jobs:
     #     export $(dbus-launch)
 
     - name: Setup xvfb
-      uses: GabrielBB/xvfb-action@v1.4
-      with:
-        run: yarn run vscode:prepublish 
+      run: xvfb-run -a yarn run vscode:prepublish 
 
     - name: Run xvfb test
-      uses: GabrielBB/xvfb-action@v1.4
-      with:
-        run: yarn test
+      run: xvfb-run -a yarn test
     # - name: Build
     #   run: yarn run vscode:prepublish
 
