@@ -544,7 +544,7 @@
 		"compile": "webpack --mode none",
 		"watch": "webpack --mode none --watch",
 		"pretest": "tsc -p ./ && cp ./package.json ./out/package.json",
-		"test": "node ./out/test/runTest.js",
+		"test": "vscode-test",
 		"lint": "npx eslint . --ext .ts",
 		"lint:fix": "npx eslint . --fix --ext .ts",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,test}/**/*.ts\"",
