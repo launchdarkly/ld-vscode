@@ -2,6 +2,7 @@ import { commands } from 'vscode';
 import { Disposable, Event, EventEmitter } from 'vscode';
 
 export interface PromiseAdapter<T, U> {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(value: T, resolve: (value: U | PromiseLike<U>) => void, reject: (reason: any) => void): any;
 }
 
@@ -13,6 +14,7 @@ export default async function checkExistingCommand(commandName: string): Promise
 	return false;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const passthrough = (value: any, resolve: (value?: any) => void) => resolve(value);
 
 /**
@@ -38,7 +40,7 @@ export function promiseFromEvent<T, U>(
 
 	return {
 		promise: new Promise<U>((resolve, reject) => {
-			cancel.event((_) => reject('Cancelled'));
+			cancel.event(() => reject('Cancelled'));
 			subscription = event((value: T) => {
 				try {
 					Promise.resolve(adapter(value, resolve, reject)).catch(reject);
