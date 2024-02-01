@@ -72,8 +72,12 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 	if (enableFlagListView) {
 		const listView = new LaunchDarklyFlagListProvider(config, codeLens);
 		window.registerTreeDataProvider('launchdarklyFlagList', listView);
-		listViewDisp = commands.registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument());
-		config.getCtx().subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsinDocument), listViewDisp);
+		if (!reload) {
+			listViewDisp = commands.registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument());
+			config.getCtx().subscriptions.push(listViewDisp);
+		}
+
+		config.getCtx().subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsinDocument));
 	}
 
 	const enableReleasesView = workspace.getConfiguration('launchdarkly').get('enableReleasesView', false);
@@ -98,12 +102,6 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 	const hoverProviderDisp = languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config));
 
 	try {
-		const flagToggle = commands.registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
-			await showToggleMenu(config);
-		});
-		const openFlag = commands.registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
-			window.activeTextEditor.revealRange(node.range),
-		);
 		const codeLensProv = languages.registerCodeLensProvider([LD_MODE], codeLens);
 
 		config
@@ -117,23 +115,31 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 					'"',
 				),
 				hoverProviderDisp,
-				flagToggle,
-				openFlag,
 			);
 
 		codeLens.start();
 
-		const disposables = await generalCommands(config);
+		if (!reload) {
+			const flagToggle = commands.registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
+				await showToggleMenu(config);
+			});
+			const openFlag = commands.registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
+				window.activeTextEditor.revealRange(node.range),
+			);
 
-		const allDisposables = Disposable.from(
-			disposables,
-			hoverProviderDisp,
-			listViewDisp,
-			flagToggle,
-			openFlag,
-			codeLensProv,
-		);
-		await config.getCtx().globalState.update('commands', allDisposables);
+			const disposables = await generalCommands(config);
+
+			const allDisposables = Disposable.from(
+				disposables,
+				hoverProviderDisp,
+				listViewDisp,
+				flagToggle,
+				openFlag,
+				codeLensProv,
+			);
+			await config.getCtx().globalState.update('commands', allDisposables);
+			config.getCtx().subscriptions.push(flagToggle, openFlag);
+		}
 	} catch (err) {
 		console.error(err);
 	}
