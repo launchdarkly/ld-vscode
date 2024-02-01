@@ -433,10 +433,6 @@
 					"when": "viewItem == flagParentItem || viewItem == flagInFile"
 				},
 				{
-					"command": "launchdarkly.toggleFlag",
-					"when": "view == launchdarklyFlagList && viewItem == flagParentItem"
-				},
-				{
 					"command": "launchdarkly.fallthroughChange",
 					"when": "view == launchdarklyFeatureFlags && viewItem == variationDefault"
 				},

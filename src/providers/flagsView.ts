@@ -137,7 +137,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 				} else {
 					const updatedFlag = await this.ldConfig.getFlagStore()?.getFeatureFlag(element.flagKey);
 					const updatedIdx = this.flagNodes?.findIndex((v) => v.flagKey === element.flagKey);
-					if (!updatedFlag || !updatedIdx) {
+					if (!updatedFlag || updatedIdx == -1) {
 						return [];
 					}
 					const newFlag = await flagToValues(
