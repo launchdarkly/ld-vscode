@@ -102,7 +102,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		} catch (err) {
 			//nothing
 		}
-		logDebugMessage(`Flags in file: ${flagsFound}`);
+		logDebugMessage(`Flags in file: ${JSON.stringify(flagsFound)}`);
 		if (flagsFound.length > 0) {
 			for await (const flag of flagsFound) {
 				const codelensFlag = flag as FlagList;

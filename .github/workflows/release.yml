@@ -36,7 +36,7 @@ jobs:
           yarn: true
       - name: Publish to Visual Studio Marketplace for pre-release
         if: ${{ steps.extract_branch.outputs.branch == 'prerelease' }}
-        uses: HaaLeo/publish-vscode-extension@v1
+        uses: HaaLeo/publish-vscode-extension@v1.6.0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
