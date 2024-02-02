@@ -1,4 +1,4 @@
-import { commands, Disposable, QuickPickItemKind, window } from 'vscode';
+import { Disposable, QuickPickItemKind, window } from 'vscode';
 import { ToggleCache } from '../toggleCache';
 import os from 'os';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
