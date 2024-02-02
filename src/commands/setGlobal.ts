@@ -1,9 +1,10 @@
-import { ExtensionContext, commands, window } from 'vscode';
+import { ExtensionContext, window } from 'vscode';
+import { registerCommand } from '../utils';
 
 export function SetGlobalCmd(ctx: ExtensionContext) {
 	const proj = ctx.workspaceState.get('project');
 	const env = ctx.workspaceState.get('env');
-	const disposable = commands.registerCommand('launchdarkly.setGlobalDefaults', () => {
+	const disposable = registerCommand('launchdarkly.setGlobalDefaults', () => {
 		// The code you want to run when the command is executed
 		window
 			.showInformationMessage(

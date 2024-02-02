@@ -1,9 +1,8 @@
-import { commands } from 'vscode';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { extensionReload } from '../utils';
+import { extensionReload, registerCommand } from '../utils';
 
 export function SetWorkspaceCmd(config: LDExtensionConfiguration) {
-	const disposable = commands.registerCommand('launchdarkly.enableWorkspace', async () => {
+	const disposable = registerCommand('launchdarkly.enableWorkspace', async () => {
 		// The code you want to run when the command is executed
 		if (
 			config.getCtx().workspaceState.get('isDisabledForWorkspace') !== false ||

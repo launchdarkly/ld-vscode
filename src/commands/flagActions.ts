@@ -2,12 +2,12 @@ import { QuickPickItemKind, Disposable, commands, window } from 'vscode';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { FlagQuickPickItem, targetFlag } from './selectRule';
 import { ToggleCache } from '../toggleCache';
-import { flagCodeSearch, flagOffFallthroughPatch, toggleFlag } from '../utils';
+import { flagCodeSearch, flagOffFallthroughPatch, registerCommand, toggleFlag } from '../utils';
 
 const cache = new ToggleCache();
 
 export default function flagCmd(config: LDExtensionConfiguration): Disposable {
-	const flagCmd = commands.registerCommand('launchdarkly.quickFlag', async () => {
+	const flagCmd = registerCommand('launchdarkly.quickFlag', async () => {
 		const flags = await config.getFlagStore()?.allFlagsMetadata();
 		if (flags === undefined) {
 			// Errors would be handled in the flagStore
