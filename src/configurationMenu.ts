@@ -111,16 +111,15 @@ export class ConfigurationMenu {
 		logDebugMessage(`Environment picker project: ${state.project}`);
 		logDebugMessage(`Environment project data: ${JSON.stringify(project)}`);
 		const environments = project.environments.items;
-		logDebugMessage(`Environment picker environments: ${environments}`);
 		const envs = async () => {
 			const selectEnvironmentOptions = environments
 				.filter((item) => this.createEnvQuickPickItem(item))
 				.map((item) => this.createQuickPickItem(item));
-			logDebugMessage(`selectEnvironmentOptions: ${selectEnvironmentOptions}`);
+			logDebugMessage(`selectEnvironmentOptions: ${JSON.stringify(selectEnvironmentOptions)}`);
 			const cannotSelectEnvironmentOptions = environments
 				.filter((item) => !this.createEnvQuickPickItem(item))
 				.map((item) => this.createQuickPickItem(item));
-			logDebugMessage(`cannotSelectEnvironmentOptions: ${cannotSelectEnvironmentOptions}`);
+			logDebugMessage(`cannotSelectEnvironmentOptions: ${JSON.stringify(cannotSelectEnvironmentOptions)}`);
 			const envSeparator = {
 				label: 'These environments do not have their SDK Available to select. Configuration will fail.',
 				kind: QuickPickItemKind.Separator,
