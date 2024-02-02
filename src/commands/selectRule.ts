@@ -1,4 +1,4 @@
-import { commands, Disposable, ProgressLocation, QuickPickItem, QuickPickItemKind, window } from 'vscode';
+import { Disposable, ProgressLocation, QuickPickItem, QuickPickItemKind, window } from 'vscode';
 import { YAMLIndividualTarget, YamlReader, YAMLRuleTarget } from '../utils/rulesYaml';
 import { ToggleCache } from '../toggleCache';
 import os from 'os';

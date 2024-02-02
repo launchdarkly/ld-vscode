@@ -1,4 +1,4 @@
-import { commands, Disposable, window } from 'vscode';
+import { Disposable, window } from 'vscode';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { registerCommand } from '../utils';
 

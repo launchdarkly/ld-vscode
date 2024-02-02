@@ -119,28 +119,28 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 
 		codeLens.start();
 
-			const flagToggle = registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
-				await showToggleMenu(config);
-			});
-			const openFlag = registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
-				window.activeTextEditor.revealRange(node.range),
-			);
+		const flagToggle = registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
+			await showToggleMenu(config);
+		});
+		const openFlag = registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
+			window.activeTextEditor.revealRange(node.range),
+		);
 
-			const disposables = await generalCommands(config);
+		const disposables = await generalCommands(config);
 
-			const allDisposables = Disposable.from(
-				disposables,
-				hoverProviderDisp,
-				listViewDisp,
-				flagToggle,
-				openFlag,
-				codeLensProv,
-			);
-			await config.getCtx().globalState.update('commands', allDisposables);
-			config.getCtx().subscriptions.push(flagToggle, openFlag);
-		} catch(err) {
-			logDebugMessage(err);
-		}
+		const allDisposables = Disposable.from(
+			disposables,
+			hoverProviderDisp,
+			listViewDisp,
+			flagToggle,
+			openFlag,
+			codeLensProv,
+		);
+		await config.getCtx().globalState.update('commands', allDisposables);
+		config.getCtx().subscriptions.push(flagToggle, openFlag);
+	} catch (err) {
+		logDebugMessage(err);
+	}
 }
 
 async function showToggleMenu(config: LDExtensionConfiguration) {
@@ -309,7 +309,7 @@ export function legacyAuth() {
 	//workspace.getConfiguration('launchdarkly').get('legacyAuth', false)
 }
 
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function registerCommand(command: string, callback: (...args: any[]) => any) {
 	try {
 		return commands.registerCommand(command, callback);
