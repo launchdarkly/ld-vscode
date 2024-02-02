@@ -6,7 +6,7 @@ import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { Dictionary, isArray } from 'lodash';
 import crypto from 'crypto';
 import { Clause, FeatureFlag } from '../models';
-import { logDebugMessage } from '../utils';
+import { logDebugMessage, registerCommand } from '../utils';
 
 const cache = new ToggleCache();
 const revertLastCmd = {};
@@ -24,7 +24,7 @@ export interface FlagQuickPickItem extends QuickPickItem {
 }
 
 export default function selectRuleCmd(config: LDExtensionConfiguration): Disposable {
-	const selectRuleCmd = commands.registerCommand('launchdarkly.quickPickRules', async () => {
+	const selectRuleCmd = registerCommand('launchdarkly.quickPickRules', async () => {
 		const flags = await config.getFlagStore()?.allFlagsMetadata();
 		if (flags === undefined) {
 			// Errors would be handled in the flagStore
@@ -369,8 +369,8 @@ export async function targetFlag(
 		window.showInformationMessage('No rules found in rules.yaml');
 		return;
 	}
-	const ruleNames = mapObjects(rules['rules'], 'name', 'rule');
-	const targetNames = mapObjects(rules['targets'], 'name', 'target');
+	const ruleNames = rules['rules'] ? mapObjects(rules['rules'], 'name', 'rule') : [];
+	const targetNames = rules['targets'] ? mapObjects(rules['targets'], 'name', 'target') : [];
 	const targetDivider = {
 		label: 'Individual Targeting',
 		kind: QuickPickItemKind.Separator,

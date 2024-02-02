@@ -6,7 +6,7 @@ import { authentication } from 'vscode';
 import { FlagNode, FlagParentNode, flagToValues } from '../utils/FlagNode';
 import { generateHoverString } from '../utils/hover';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { flagCodeSearch, logDebugMessage } from '../utils';
+import { flagCodeSearch, logDebugMessage, registerCommand } from '../utils';
 import { ReleaseFlagNode } from './releaseViewProvider';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
@@ -204,7 +204,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	registerTreeviewRefreshCommand(): vscode.Disposable {
-		return vscode.commands.registerCommand('launchdarkly.treeviewrefresh', (): void => {
+		return registerCommand('launchdarkly.treeviewrefresh', (): void => {
 			this.reload();
 			vscode.commands.executeCommand(
 				'setContext',
@@ -221,23 +221,23 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 			return;
 		}
 		this.ldConfig.getCtx().subscriptions.push(
-			vscode.commands.registerCommand(copyKeyCmd, (node: FlagNode) => vscode.env.clipboard.writeText(node.flagKey)),
-			vscode.commands.registerCommand('launchdarkly.openBrowser', (node: FlagNode | string) => {
+			registerCommand(copyKeyCmd, (node: FlagNode) => vscode.env.clipboard.writeText(node.flagKey)),
+			registerCommand('launchdarkly.openBrowser', (node: FlagNode | string) => {
 				if (typeof node === 'string') {
 					vscode.env.openExternal(vscode.Uri.parse(node));
 				} else if (node.uri) {
 					vscode.env.openExternal(vscode.Uri.parse(node.uri));
 				}
 			}),
-			vscode.commands.registerCommand('launchdarkly.refreshEntry', () => this.reload()),
+			registerCommand('launchdarkly.refreshEntry', () => this.reload()),
 			this.registerTreeviewRefreshCommand(),
-			vscode.commands.registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode | ReleaseFlagNode) => {
+			registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode | ReleaseFlagNode) => {
 				if (!node.flagKey) {
 					return;
 				}
 				flagCodeSearch(this.ldConfig, node.flagKey);
 			}),
-			vscode.commands.registerCommand('launchdarkly.toggleFlag', async (node: FlagParentNode) => {
+			registerCommand('launchdarkly.toggleFlag', async (node: FlagParentNode) => {
 				try {
 					if (!node.flagKey) {
 						logDebugMessage('Flag key not found');
@@ -254,7 +254,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					vscode.window.showErrorMessage(`Could not toggle flag: ${err.message}`);
 				}
 			}),
-			vscode.commands.registerCommand('launchdarkly.fallthroughChange', async (node: FlagNode) => {
+			registerCommand('launchdarkly.fallthroughChange', async (node: FlagNode) => {
 				try {
 					await this.flagPatch(
 						node,
@@ -265,7 +265,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					vscode.window.showErrorMessage(`Could not set Fallthrough: ${err.message}`);
 				}
 			}),
-			vscode.commands.registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
+			registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
 				try {
 					await this.flagPatch(node, `/environments/${this.ldConfig.getConfig()?.env}/offVariation`, node.contextValue);
 				} catch (err) {

@@ -13,6 +13,7 @@ import {
 } from 'vscode';
 import checkExistingCommand from '../utils/common';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
+import { registerCommand } from '../utils';
 
 const NON_COLLAPSED = TreeItemCollapsibleState.None;
 
@@ -37,7 +38,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 		if (await checkExistingCommand(compareFlagsCmd)) {
 			return;
 		}
-		commands.registerCommand(compareFlagsCmd, async () => {
+		registerCommand(compareFlagsCmd, async () => {
 			let values: QuickPickItem[] = [{ label: 'No flags found', description: '' }];
 			if (this.config.getFlagStore() !== null) {
 				const flags = await this.config.getFlagStore().allFlagsMetadata();

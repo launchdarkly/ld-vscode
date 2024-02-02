@@ -73,7 +73,7 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 		const listView = new LaunchDarklyFlagListProvider(config, codeLens);
 		window.registerTreeDataProvider('launchdarklyFlagList', listView);
 		if (!reload) {
-			listViewDisp = commands.registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument());
+			listViewDisp = registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument());
 			config.getCtx().subscriptions.push(listViewDisp);
 		}
 
@@ -119,11 +119,10 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 
 		codeLens.start();
 
-		if (!reload) {
-			const flagToggle = commands.registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
+			const flagToggle = registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
 				await showToggleMenu(config);
 			});
-			const openFlag = commands.registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
+			const openFlag = registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
 				window.activeTextEditor.revealRange(node.range),
 			);
 
@@ -139,10 +138,9 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 			);
 			await config.getCtx().globalState.update('commands', allDisposables);
 			config.getCtx().subscriptions.push(flagToggle, openFlag);
+		} catch(err) {
+			logDebugMessage(err);
 		}
-	} catch (err) {
-		console.error(err);
-	}
 }
 
 async function showToggleMenu(config: LDExtensionConfiguration) {
@@ -309,4 +307,14 @@ function createFallthroughOrOffInstruction(kind: string, variationId: string) {
 export function legacyAuth() {
 	return true;
 	//workspace.getConfiguration('launchdarkly').get('legacyAuth', false)
+}
+
+
+export function registerCommand(command: string, callback: (...args: any[]) => any) {
+	try {
+		return commands.registerCommand(command, callback);
+	} catch (err) {
+		logDebugMessage(err);
+		return Disposable.from();
+	}
 }

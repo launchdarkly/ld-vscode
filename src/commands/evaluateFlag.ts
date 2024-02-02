@@ -4,6 +4,7 @@ import os from 'os';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { LDMultiKindContext, LDSingleKindContext } from '@launchdarkly/node-server-sdk';
 import { YamlContextReader } from '../utils/contextYAML';
+import { registerCommand } from '../utils';
 
 // Not officially implemented. Leaving for future decision.
 
@@ -21,7 +22,7 @@ type flagSelection = {
 };
 
 export default function flagEvalCmd(config: LDExtensionConfiguration): Disposable {
-	const flagEvalCmd = commands.registerCommand('launchdarkly.quickEval', async () => {
+	const flagEvalCmd = registerCommand('launchdarkly.quickEval', async () => {
 		let flags;
 		try {
 			flags = await config.getFlagStore()?.allFlagsMetadata();

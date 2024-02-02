@@ -84,25 +84,28 @@ const schema = {
 								type: 'string',
 							},
 							clauses: {
-								type: 'object',
-								properties: {
-									attribute: {
-										type: 'string',
-									},
-									op: {
-										type: 'string',
-									},
-									values: {
-										type: 'array',
-									},
-									negate: {
-										type: 'boolean',
-									},
-									contextKind: {
-										type: 'string',
-									},
-									_key: {
-										type: 'string',
+								type: 'array',
+								items: {
+									type: 'object',
+									properties: {
+										attribute: {
+											type: 'string',
+										},
+										op: {
+											type: 'string',
+										},
+										values: {
+											type: 'array',
+										},
+										negate: {
+											type: 'boolean',
+										},
+										contextKind: {
+											type: 'string',
+										},
+										_key: {
+											type: 'string',
+										},
 									},
 								},
 							},

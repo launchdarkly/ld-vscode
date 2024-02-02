@@ -1,8 +1,9 @@
 import path from 'path';
-import { ExtensionContext, FileType, Uri, commands, window, workspace } from 'vscode';
+import { ExtensionContext, FileType, Uri, window, workspace } from 'vscode';
+import { registerCommand } from '../utils';
 
 export function checkCodeRefs(ctx: ExtensionContext) {
-	const disposable = commands.registerCommand('extension.checkLaunchDarkly', async () => {
+	const disposable = registerCommand('extension.checkLaunchDarkly', async () => {
 		const workspaceFolders = workspace.workspaceFolders;
 
 		if (workspaceFolders) {
