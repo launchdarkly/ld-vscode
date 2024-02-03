@@ -11,7 +11,8 @@ export class Instruction {
 	kind: string;
 	contextKind?: string;
 	values?: string[];
-	variationId: string;
+	variationId?: string;
+	clauses?: Clause[];
 }
 
 export class InstructionWithFlag {

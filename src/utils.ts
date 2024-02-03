@@ -6,6 +6,7 @@ import {
 	languages,
 	ProgressLocation,
 	QuickPickItemKind,
+	StatusBarAlignment,
 	window,
 	workspace,
 } from 'vscode';
@@ -50,6 +51,11 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 		// Disposables.from does not wait for async disposal so need to wait here.
 		await setTimeout(2200);
 	}
+
+	const statusBar = window.createStatusBarItem(StatusBarAlignment.Left, 100);
+	statusBar.text = `LaunchDarkly: ${config.getConfig().project} / ${config.getConfig().env}`;
+	statusBar.show();
+	config.getCtx().subscriptions.push(statusBar);
 
 	if (config.getConfig().enableAliases) {
 		config.setAliases(new FlagAliases(config));

@@ -5,12 +5,14 @@ import os from 'os';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { Dictionary, isArray } from 'lodash';
 import crypto from 'crypto';
-import { Clause, FeatureFlag } from '../models';
+import { Clause, FeatureFlag, InstructionPatch } from '../models';
 import { logDebugMessage, registerCommand } from '../utils';
 
 const cache = new ToggleCache();
 const revertLastCmd = {};
 const secondToLastCmd = {};
+const AddTargets = 'addTargets';
+const RemoveTargets = 'removeTargets';
 
 type RuleSelection = {
 	label: string;
@@ -142,116 +144,197 @@ function removeRuleInstruction(
 }
 
 async function updateFlag(
-	flagWindow,
-	cache,
+	flagWindow: FlagQuickPickItem,
+	cache: ToggleCache,
 	config: LDExtensionConfiguration,
-	instruction,
+	instruction: InstructionPatch,
 	origFlag?: FeatureFlag,
 ): Promise<FeatureFlag | undefined> {
-	if (typeof flagWindow !== 'undefined') {
-		let flag: FeatureFlag | undefined;
-		await window.withProgress(
-			{
-				location: ProgressLocation.Notification,
-				title: `LaunchDarkly: Updating Flag ${flagWindow.value}`,
-				cancellable: true,
-			},
-			async (progress, token) => {
-				token.onCancellationRequested(() => {
-					console.log('User canceled the long running operation');
-				});
+	if (typeof flagWindow === 'undefined') {
+		return;
+	}
 
-				progress.report({ increment: 0 });
-				progress.report({ increment: 10, message: `Updating flag` });
+	let flag: FeatureFlag | undefined;
+	await window.withProgress(
+		{
+			location: ProgressLocation.Notification,
+			title: `LaunchDarkly: Updating Flag ${flagWindow.value}`,
+			cancellable: true,
+		},
+		async (progress, token) => {
+			token.onCancellationRequested(() => {
+				console.log('User canceled the long running operation');
+			});
 
-				try {
-					flag = await config
-						.getFlagStore()
-						.executeAndUpdateFlagStore(
-							config.getApi().patchFeatureFlagSem.bind(config.getApi()),
-							config.getConfig().project,
-							flagWindow.value,
-							instruction,
-						);
-					cache.set(flagWindow.value);
-					const previousCommand = secondToLastCmd[flagWindow.value];
-					if (Object.keys(revertLastCmd)?.length > 0) {
-						Object.assign(secondToLastCmd, revertLastCmd);
-					}
-					if (instruction.instructions[0].kind === 'addTargets') {
-						revertLastCmd[flagWindow.value] = instruction;
-						revertLastCmd[flagWindow.value].instructions[0].kind = 'removeTargets';
-					} else if (instruction.instructions[0].kind === 'removeTargets') {
-						revertLastCmd[flagWindow.value] = instruction;
-						revertLastCmd[flagWindow.value].instructions[0].kind = 'addTargets';
-					} else if (instruction.instructions[0].kind === 'addRule') {
+			progress.report({ increment: 10, message: `Updating flag` });
+
+			try {
+				flag = await config
+					.getFlagStore()
+					.executeAndUpdateFlagStore(
+						config.getApi().patchFeatureFlagSem.bind(config.getApi()),
+						config.getConfig().project,
+						flagWindow.value,
+						instruction,
+					);
+				cache.set(flagWindow.value);
+				const previousCommand = secondToLastCmd[flagWindow.value];
+				if (Object.keys(revertLastCmd)?.length > 0) {
+					Object.assign(secondToLastCmd, revertLastCmd);
+				}
+				switch (instruction.instructions[0].kind) {
+					case AddTargets:
+						revertLastCmd[flagWindow.value] = {
+							...instruction,
+							instructions: [{ ...instruction.instructions[0], kind: RemoveTargets }],
+						};
+						break;
+					case RemoveTargets:
+						revertLastCmd[flagWindow.value] = {
+							...instruction,
+							instructions: [{ ...instruction.instructions[0], kind: AddTargets }],
+						};
+						break;
+					case 'addRule':
 						revertLastCmd[flagWindow.value] = removeRuleInstruction(config.getConfig().env, {
 							clauses: instruction.instructions[0].clauses,
 						});
 						secondToLastCmd[flagWindow.value] = instruction;
-					} else if (instruction.instructions[0].kind === 'removeRule') {
-						revertLastCmd[flagWindow.value] = previousCommand[flagWindow.value];
-					}
-				} catch (err) {
-					console.log(err);
-					progress.report({ increment: 100 });
-					if (err?.response?.status === 403) {
+						break;
+					case 'removeRule':
+						if (previousCommand) {
+							revertLastCmd[flagWindow.value] = previousCommand;
+						}
+						break;
+				}
+			} catch (err) {
+				console.log(err);
+				const status = err.response?.status;
+				const message = err.response?.data.message;
+				switch (status) {
+					case 403:
 						window.showErrorMessage(
 							`Unauthorized: Your key does not have permissions to update the flag: ${flagWindow.value}`,
 						);
-					} else if (
-						err?.response?.status === 400 &&
-						err.response.data.message.includes('ref') &&
-						err.response.data.message.includes('already exists')
-					) {
-						window.showInformationMessage(`Rule already exists on flag: ${flagWindow.value}`);
-					} else if (err?.response?.status === 400 && instruction.instructions[0].kind === 'addTargets') {
-						// This is a hack to get around the fact that the API does not support in place updates to targets
-						const sdkFlag = await config.getFlagStore().getFlagConfig(flagWindow.value);
-
-						const instructions = [];
-						for (const target in sdkFlag['targets']) {
-							if (sdkFlag['targets'][target].values?.includes(instruction.instructions[0].values[0])) {
-								instructions.push(
-									createSingleTargetInstruction(
-										'removeTargets',
-										sdkFlag['targets'][target].contextKind,
-										[instruction.instructions[0].values[0]],
-										origFlag.variations[sdkFlag['targets'][target].variation]._id,
-									),
+						break;
+					case 400:
+						if (message.includes('ref') && message.includes('already exists')) {
+							const removeExisting = removeRuleInstruction(config.getConfig().env, {
+								clauses: instruction.instructions[0].clauses,
+							});
+							try {
+								// The ref already exists but we don't know which variation. So we remove and then re-add the rule.
+								// TODO: optimize
+								await config.getApi().patchFeatureFlagSem(config.getConfig().project, flagWindow.value, removeExisting);
+								await config
+									.getFlagStore()
+									.executeAndUpdateFlagStore(
+										config.getApi().patchFeatureFlagSem.bind(config.getApi()),
+										config.getConfig().project,
+										flagWindow.value,
+										instruction,
+									);
+							} catch (err) {
+								window.showInformationMessage(
+									`Error removing and adding new rule for: ${flagWindow.value}\n Error: ${message}`,
 								);
-								// No need to loop over the rest of targets
-								break;
 							}
-							instructions.push(instruction.instructions[0]);
+							progress.report({ increment: 100 });
+						} else if (status === 400 && instruction.instructions[0].kind === AddTargets) {
+							// This is a hack to get around the fact that the API does not support in place updates to targets
+							const sdkFlag = await config.getFlagStore().getFlagConfig(flagWindow.value);
 
-							const newPatch = {
-								environmentKey: config.getConfig().env,
-								instructions,
-							};
-							const newFlag = await config
-								.getApi()
-								.patchFeatureFlagSem(config.getConfig().project, flagWindow.value, newPatch);
-							if (newFlag instanceof Error) {
-								window.showErrorMessage(`Could not update flag: ${flagWindow.value}\n\n${newFlag.message}`);
+							const instructions = [];
+							for (const target in sdkFlag['targets']) {
+								if (sdkFlag['targets'][target].values?.includes(instruction.instructions[0].values[0])) {
+									instructions.push(
+										createSingleTargetInstruction(
+											RemoveTargets,
+											sdkFlag['targets'][target].contextKind,
+											[instruction.instructions[0].values[0]],
+											origFlag.variations[sdkFlag['targets'][target].variation]._id,
+										),
+									);
+									// No need to loop over the rest of targets
+									break;
+								}
+								instructions.push(instruction.instructions[0]);
+
+								const newPatch = {
+									environmentKey: config.getConfig().env,
+									instructions,
+								};
+								const newFlag = await config
+									.getApi()
+									.patchFeatureFlagSem(config.getConfig().project, flagWindow.value, newPatch);
+								if (newFlag instanceof Error) {
+									window.showErrorMessage(`Could not update flag: ${flagWindow.value}\n\n${newFlag.message}`);
+								}
 							}
+						} else {
+							window.showErrorMessage(
+								`Could not update flag: ${flagWindow.value}\nIs this context targeting? Is it used by another variation?\n\n Status: ${err?.response?.status}\n\nMessage: ${err.message}`,
+							);
 						}
-					} else if (err?.response?.status === 400) {
-						window.showErrorMessage(
-							`Could not update flag: ${flagWindow.value}\nIs this context targeting? Is it used by another variation?\n\n Status: ${err?.response?.status}\n\nMessage: ${err.message}`,
-						);
-					} else {
+						break;
+					default:
 						window.showErrorMessage(`Could not update flag: ${flagWindow.value}
 					code: ${err?.response?.status}
 					message: ${err.message}`);
-					}
 				}
+				//if (err?.response?.status === 403) {
 
-				progress.report({ increment: 90, message: 'Flag Updated' });
-			},
-		);
-		return flag;
-	}
+				// } else if (
+				// 	err?.response?.status === 400 &&
+				// 	err.response.data.message.includes('ref') &&
+				// 	err.response.data.message.includes('already exists')
+				// )
+				// } else if (err?.response?.status === 400 && instruction.instructions[0].kind === AddTargets) {
+				// 	// This is a hack to get around the fact that the API does not support in place updates to targets
+				// 	const sdkFlag = await config.getFlagStore().getFlagConfig(flagWindow.value);
+
+				// 	const instructions = [];
+				// 	for (const target in sdkFlag['targets']) {
+				// 		if (sdkFlag['targets'][target].values?.includes(instruction.instructions[0].values[0])) {
+				// 			instructions.push(
+				// 				createSingleTargetInstruction(
+				// 					RemoveTargets,
+				// 					sdkFlag['targets'][target].contextKind,
+				// 					[instruction.instructions[0].values[0]],
+				// 					origFlag.variations[sdkFlag['targets'][target].variation]._id,
+				// 				),
+				// 			);
+				// 			// No need to loop over the rest of targets
+				// 			break;
+				// 		}
+				// 		instructions.push(instruction.instructions[0]);
+
+				// 		const newPatch = {
+				// 			environmentKey: config.getConfig().env,
+				// 			instructions,
+				// 		};
+				// 		const newFlag = await config
+				// 			.getApi()
+				// 			.patchFeatureFlagSem(config.getConfig().project, flagWindow.value, newPatch);
+				// 		if (newFlag instanceof Error) {
+				// 			window.showErrorMessage(`Could not update flag: ${flagWindow.value}\n\n${newFlag.message}`);
+				// 		}
+			}
+			// 	} else if (err?.response?.status === 400) {
+			// 		window.showErrorMessage(
+			// 			`Could not update flag: ${flagWindow.value}\nIs this context targeting? Is it used by another variation?\n\n Status: ${err?.response?.status}\n\nMessage: ${err.message}`,
+			// 		);
+			// 	} else {
+			// 		window.showErrorMessage(`Could not update flag: ${flagWindow.value}
+			// 		code: ${err?.response?.status}
+			// 		message: ${err.message}`);
+			// 	}
+			// }
+
+			progress.report({ increment: 90, message: 'Flag Updated' });
+		},
+	);
+	return flag;
 }
 
 function handleTargetUpdate(targetingCase: string, env: string, selectedRule: RuleSelection, varIdx: string) {
@@ -261,7 +344,7 @@ function handleTargetUpdate(targetingCase: string, env: string, selectedRule: Ru
 		case 'add': {
 			return createTargetInstruction(
 				env,
-				'addTargets',
+				AddTargets,
 				ctxKind,
 				isArray(rule.values) ? rule.values : [rule.values],
 				varIdx,
@@ -270,7 +353,7 @@ function handleTargetUpdate(targetingCase: string, env: string, selectedRule: Ru
 		case 'remove': {
 			return createTargetInstruction(
 				env,
-				'removeTargets',
+				RemoveTargets,
 				ctxKind,
 				isArray(rule.values) ? rule.values : [rule.values],
 				varIdx,
@@ -409,8 +492,9 @@ export async function targetFlag(
 		}
 		logDebugMessage(`Instruction for ${flagWindow.value}: ${JSON.stringify(instruction)}`);
 	}
-	const updatedFlag = await updateFlag(flagWindow, cache, config, instruction, flags[flagWindow.value]);
-	if (!updatedFlag?.environments[config.getConfig().env].on) {
+	await updateFlag(flagWindow, cache, config, instruction, flags[flagWindow.value]);
+	const flagStatus = await config.getFlagStore().getFlagConfig(flagWindow.value);
+	if (!flagStatus.on) {
 		window
 			.showInformationMessage(
 				`Flag: ${flagWindow.value} is not on in environment: ${config.getConfig().env}.
