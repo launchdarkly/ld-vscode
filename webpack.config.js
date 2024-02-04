@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 //@ts-check
 
+// Heavily inspired and copied from Gitlens, special thanks to @eamodio for amazing community support.
 'use strict';
 
 const path = require('path');
