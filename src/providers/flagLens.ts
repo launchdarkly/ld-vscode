@@ -214,25 +214,26 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 
 	public async resolveCodeLens(codeLens: SimpleCodeLens, token: CancellationToken): Promise<CodeLens> {
 		if (!(codeLens instanceof SimpleCodeLens)) return Promise.reject<CodeLens>(undefined);
-		const basicLens = codeLens;
-		if (token.isCancellationRequested) return basicLens;
+
+		if (token.isCancellationRequested) return codeLens;
+
 		let flags: Dictionary<FeatureFlag>;
 		const resolvedLens = this.lensCache.get(codeLens.flag);
+
 		if (resolvedLens) {
 			resolvedLens.range = codeLens.range;
 			return resolvedLens;
 		}
+
 		if (this.config.getFlagStore()) {
-			if (this.flagCache) {
-				flags = this.flagCache;
-			} else {
-				flags = await this.config.getFlagStore()?.allFlagsMetadata();
-				this.flagCache = flags;
-				setTimeout(() => {
-					this.flagCache = null;
-				}, 50000);
-			}
+			flags = this.flagCache ? this.flagCache : await this.config.getFlagStore()?.allFlagsMetadata();
+			this.flagCache = flags;
+
+			setTimeout(() => {
+				this.flagCache = null;
+			}, 50000);
 		}
+
 		// eslint-disable-next-line no-async-promise-executor
 		return new Promise(async (resolve, reject) => {
 			const flagEnv = await this.config.getFlagStore()?.getFlagConfig(codeLens.flag);
@@ -241,19 +242,24 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 			try {
 				if (flagEnv) {
 					let preReq = '';
-					if (flagEnv?.prerequisites && flagEnv.prerequisites.length > 0) {
-						preReq = flagEnv.prerequisites.length > 0 ? `\u2022 Prerequisites configured` : ``;
-					} else {
-						preReq = '';
+					if (flagEnv?.prerequisites.length > 0) {
+						preReq = `\u2022 Prerequisites configured`;
 					}
 					const variations = this.getActiveVariations(flagEnv) as Array<number>;
 					let flagVariations;
-					if (variations.length === 1) {
-						flagVariations = this.getNameorValue(flagData, 0);
-					} else if (variations.length === 2) {
-						flagVariations = `${this.getNameorValue(flagData, 0)}, ${this.getNameorValue(flagData, 1)}`;
-					} else {
-						flagVariations = `${variations.length} variations`;
+					switch (variations.length) {
+						case 1:
+							flagVariations = this.getNameorValue(flagData, variations[0]);
+							break;
+						case 2:
+							flagVariations = `${this.getNameorValue(flagData, variations[0])}, ${this.getNameorValue(
+								flagData,
+								variations[1],
+							)}`;
+							break;
+						default:
+							flagVariations = `${variations.length} variations`;
+							break;
 					}
 					let offVariation;
 					if (flagEnv.offVariation !== undefined) {
@@ -263,12 +269,11 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 					}
 					const clientSDK = flagData.clientSideAvailability.usingEnvironmentId ? '$(browser)' : '';
 					const mobileSDK = flagData.clientSideAvailability.usingMobileKey ? '$(device-mobile)' : '';
-					const clientAvailability = `${clientSDK}${clientSDK && mobileSDK ? ' ' : ''}${mobileSDK}${
-						clientSDK || mobileSDK ? ' \u2022' : ''
-					}`;
+					const clientAvailability = [clientSDK, mobileSDK].filter(Boolean).join(' ') || '';
+
 					const newLens = new CodeLens(codeLens.range);
 					newLens.command = {
-						title: `LaunchDarkly Feature Flag \u2022 ${flagEnv.key} \u2022 ${clientAvailability} Serving: ${
+						title: `$(launchdarkly-logo) ${flagEnv.key} \u2022 ${clientAvailability} Serving: ${
 							flagEnv.on ? flagVariations : offVariation
 						} ${preReq}`,
 						command: '',

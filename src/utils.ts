@@ -1,6 +1,7 @@
 import {
 	authentication,
 	commands,
+	ConfigurationChangeEvent,
 	Disposable,
 	DocumentFilter,
 	languages,
@@ -52,10 +53,30 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 		await setTimeout(2200);
 	}
 
-	const statusBar = window.createStatusBarItem(StatusBarAlignment.Left, 100);
-	statusBar.text = `LaunchDarkly: ${config.getConfig().project} / ${config.getConfig().env}`;
-	statusBar.show();
-	config.getCtx().subscriptions.push(statusBar);
+	// TODO: Handle status bar cleaner in future.
+	const currentStatus = config.getStatusBar();
+	if (currentStatus) {
+		currentStatus.dispose();
+	}
+
+	config.setStatusBar(window.createStatusBarItem(StatusBarAlignment.Left));
+	const workspaceConfig = workspace.getConfiguration('launchdarkly');
+	if (workspaceConfig.get('enableStatusBar')) {
+		config.getStatusBar().text = `$(launchdarkly-logo) ${config.getConfig().project} / ${config.getConfig().env}`;
+		config.getStatusBar().show();
+		config.getCtx().subscriptions.push(config.getStatusBar());
+	}
+
+	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
+		if (e.affectsConfiguration('launchdarkly.enableStatusBar')) {
+			const workspaceConfig = workspace.getConfiguration('launchdarkly');
+			if (workspaceConfig.get('enableStatusBar')) {
+				config.getStatusBar().show();
+			} else {
+				config.getStatusBar().hide();
+			}
+		}
+	});
 
 	if (config.getConfig().enableAliases) {
 		config.setAliases(new FlagAliases(config));
@@ -79,16 +100,17 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 		const listView = new LaunchDarklyFlagListProvider(config, codeLens);
 		window.registerTreeDataProvider('launchdarklyFlagList', listView);
 		if (!reload) {
-			listViewDisp = registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument());
+			listViewDisp = registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsInDocument());
 			config.getCtx().subscriptions.push(listViewDisp);
 		}
 
-		config.getCtx().subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsinDocument));
+		config.getCtx().subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsInDocument));
 	}
 
 	const enableReleasesView = workspace.getConfiguration('launchdarkly').get('enableReleasesView', false);
 	if (enableReleasesView) {
 		const releaseView = new LaunchDarklyReleaseProvider(config);
+		config.setReleaseView(releaseView);
 		window.registerTreeDataProvider('launchdarklyReleases', releaseView);
 	}
 

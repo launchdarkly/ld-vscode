@@ -105,14 +105,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		}
 
 		if (typeof this.flagNodes === 'undefined' || this.flagNodes?.length == 0) {
-			//const linkUrl = `${this.ldConfig.getSession().fullUri}/${this.ldConfig.getConfig().project}/${
-			//	this.ldConfig.getConfig().env
-			//}/get-started/connect-an-sdk`;
-			// const QuickStartCmd: Command = {
-			// 	title: 'Open QuickStart',
-			// 	command: 'launchdarkly.openBrowser',
-			// 	arguments: [linkUrl],
-			// };
 			return Promise.resolve([
 				new FlagNode(
 					this.ldConfig.getCtx(),

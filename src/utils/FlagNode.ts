@@ -3,7 +3,15 @@
  */
 
 import * as path from 'path';
-import { Command, ExtensionContext, MarkdownString, TreeItem, TreeItemCollapsibleState, Uri } from 'vscode';
+import {
+	Command,
+	ExtensionContext,
+	MarkdownString,
+	TreeItem,
+	TreeItemCollapsibleState,
+	TreeItemLabel,
+	Uri,
+} from 'vscode';
 import { FeatureFlag, FlagConfiguration } from '../models';
 import { generateHoverString } from './hover';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
@@ -98,6 +106,7 @@ export async function flagToValues(
 	env: FlagConfiguration = null,
 	ldConfig: LDExtensionConfiguration,
 	flagParent?: FlagParentNode,
+	label?: boolean,
 ): Promise<FlagParentNode> {
 	/**
 	 * Get Link for Open Browser and build base flag node.
@@ -123,7 +132,7 @@ export async function flagToValues(
 	} else if (flag) {
 		item = new FlagParentNode(
 			ldConfig.getCtx(),
-			flag.name ? flag.name : flag.key,
+			label ? { label: flag.name, highlights: [[0, flag.name.length]] } : flag.name ? flag.name : flag.key,
 			generateHoverString(flag, envConfig, ldConfig),
 			`${ldConfig.getSession().fullUri}/${config.project}/${config.env}/features/${flag.key}`,
 			COLLAPSED,
@@ -394,7 +403,7 @@ export class FlagParentNode extends TreeItem {
 	 */
 	constructor(
 		ctx: ExtensionContext,
-		public readonly label: string,
+		public readonly label: string | TreeItemLabel,
 		public readonly tooltip: string | MarkdownString,
 		uri: string,
 		public collapsibleState: TreeItemCollapsibleState,
@@ -413,16 +422,12 @@ export class FlagParentNode extends TreeItem {
 		this.flagVersion = flagVersion;
 		this.enabled = enabled;
 		this.contextValue = contextValue;
-		this.conditionalIcon(ctx, this.contextValue, this.enabled);
+		this.conditionalIcon(ctx, this.enabled);
 		this.aliases = aliases;
 	}
 
-	private conditionalIcon(ctx: ExtensionContext, contextValue: string, enabled: boolean) {
-		if (ctx && enabled) {
-			this.setIcon(ctx, 'toggleon');
-		} else if (ctx) {
-			this.setIcon(ctx, 'toggleoff');
-		}
+	private conditionalIcon(ctx: ExtensionContext, enabled: boolean) {
+		this.setIcon(ctx, enabled ? 'toggleon' : 'toggleoff');
 	}
 
 	private setIcon(ctx: ExtensionContext, fileName: string): { light: string | Uri; dark: string | Uri } {

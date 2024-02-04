@@ -18,6 +18,15 @@
 	],
 	"main": "./dist/extension",
 	"contributes": {
+		"icons":{
+			"launchdarkly-logo": {
+				"description": "launchdarkly-logo icon",
+				"default": {
+					"fontPath": "dist/glicons.woff2",
+					"fontCharacter": "\\f22d"
+				}
+			}
+		},
 		"walkthroughs": [
 			{
 				"id": "extsetup",
@@ -161,6 +170,11 @@
 					"type": "boolean",
 					"default": false,
 					"description": "Enable Debug Logging"
+				},
+				"launchdarkly.enableStatusBar": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Enable the LaunchDarkly status bar. This will show the current project and environment."
 				},
 				"launchdarkly.streamUri": {
 					"type": "string",
@@ -373,8 +387,8 @@
 					"when": "false"
 				},
 				{
-				"command": "launchdarkly.setMaintainer",
-				"when": "false"
+					"command": "launchdarkly.setMaintainer",
+					"when": "false"
 				}
 			],
 			"editor/context": [
@@ -536,11 +550,14 @@
 		"url": "https://github.com/launchdarkly/ld-vscode/issues"
 	},
 	"scripts": {
+		"build:icons": "yarn icons:svgo && yarn fantasticon && yarn icons:apply",
 		"vscode:prepublish": "webpack --mode production",
 		"compile": "webpack --mode none",
 		"watch": "webpack --mode none --watch",
 		"pretest": "tsc -p ./ && cp ./package.json ./out/package.json",
 		"test": "vscode-test",
+		"icons:apply": "node ./scripts/applyIconsContribution.mjs",
+		"icons:svgo": "svgo -q -f ./images/icons/ --config svgo.config.js",
 		"lint": "npx eslint . --ext .ts",
 		"lint:fix": "npx eslint . --fix --ext .ts",
 		"prettier:write": "prettier --single-quote true --print-width 120 --use-tabs true --trailing-comma all --write \"{src,test}/**/*.ts\"",
@@ -548,6 +565,7 @@
 		"prepare-beta": "node build/prepare-beta.js"
 	},
 	"devDependencies": {
+		"@twbs/fantasticon": "2.7.2",
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^18.3.0",
 		"@types/vscode": "1.82.0",
@@ -567,6 +585,7 @@
 		"prettier": "^3.1.1",
 		"pretty-error": "^2.1.1",
 		"proxyquire": "^2.1.3",
+		"schema-utils": "4.2.0",
 		"sinon": "^17.0.1",
 		"ts-loader": "^8.2.0",
 		"ts-mockito": "2.6.1",

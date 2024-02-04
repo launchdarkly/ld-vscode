@@ -10,6 +10,7 @@ export class LaunchDarklyReleaseProvider implements TreeDataProvider<TreeItem> {
 	readonly config: LDExtensionConfiguration;
 	private nodes: ReleasePhaseParentNode[] | TreeItem[] = [];
 	private updateTimer: NodeJS.Timeout | undefined;
+	releasedFlags = new Set<string>();
 	constructor(config: LDExtensionConfiguration) {
 		this.config = config;
 		this.start();
@@ -124,6 +125,7 @@ export class LaunchDarklyReleaseProvider implements TreeDataProvider<TreeItem> {
 				);
 				completedNode.children = [];
 				for (const flag of completedPhase) {
+					this.releasedFlags.add(flag.flagKey);
 					const flagData = await this.config.getApi().getFeatureFlag(this.config.getConfig().project, flag.flagKey);
 					if (flagData === undefined) {
 						continue;
@@ -144,6 +146,7 @@ export class LaunchDarklyReleaseProvider implements TreeDataProvider<TreeItem> {
 				),
 			);
 		}
+		console.log(this.releasedFlags.values());
 		return nodes;
 	}
 }

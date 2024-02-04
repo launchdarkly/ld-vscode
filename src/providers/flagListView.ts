@@ -12,6 +12,7 @@ import {
 	authentication,
 	workspace,
 	ConfigurationChangeEvent,
+	TreeItemLabel,
 } from 'vscode';
 import { Configuration } from '../configuration';
 import { flagToValues } from '../utils/FlagNode';
@@ -32,7 +33,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 	constructor(ldConfig: LDExtensionConfiguration, lens: FlagCodeLensProvider) {
 		this.ldConfig = ldConfig;
 		this.lens = lens;
-		this.setFlagsinDocument();
+		this.setFlagsInDocument();
 		this.flagReadyListener();
 		this.docListener();
 
@@ -41,7 +42,6 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 				const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
 				if (session === undefined) {
 					this.flagNodes = null;
-					//this.ldConfig.getFlagstore() = null;
 					await this.refresh();
 				}
 			}
@@ -55,22 +55,20 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 	docListener = () => {
 		workspace.onDidChangeTextDocument(async (event) => {
 			if (event?.document === window?.activeTextEditor?.document) {
-				//this.setFlagsinDocument();
 				await this.debouncedFlags();
-				//{ leading: true, trailing: true },
 			}
 		});
 	};
 
 	private debouncedFlags = debounce(
 		async () => {
-			await this.setFlagsinDocument();
+			await this.setFlagsInDocument();
 		},
 		200,
 		//{ leading: true, trailing: true },
 	);
 
-	public setFlagsinDocument = async (): Promise<void> => {
+	public setFlagsInDocument = async (): Promise<void> => {
 		this.flagNodes = [];
 		this.flagMap = new Map();
 		const editor = window.activeTextEditor;
@@ -104,10 +102,11 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		}
 		logDebugMessage(`Flags in file: ${JSON.stringify(flagsFound)}`);
 		if (flagsFound.length > 0) {
+			const releasedFlags = this.ldConfig.getReleaseView()?.releasedFlags;
 			for await (const flag of flagsFound) {
 				const codelensFlag = flag as FlagList;
 				if (codelensFlag.flag) {
-					await this.parseFlags(codelensFlag, flagMeta);
+					await this.parseFlags(codelensFlag, flagMeta, releasedFlags?.has(codelensFlag.flag));
 				}
 			}
 		}
@@ -116,8 +115,9 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		return;
 	};
 
-	parseFlags = async (codelensFlag: FlagList, flagMeta: Dictionary<FeatureFlag>) => {
+	parseFlags = async (codelensFlag: FlagList, flagMeta: Dictionary<FeatureFlag>, releaseFlag: boolean) => {
 		const testElement = this.flagMap.has(codelensFlag.flag);
+
 		if (testElement) {
 			const getElement = this.flagMap.get(codelensFlag.flag);
 			for (const range of getElement.list) {
@@ -132,16 +132,30 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 		} else {
 			let newElement;
 			if (typeof flagMeta !== 'undefined') {
-				const flagEnv = await this.ldConfig.getFlagStore().getFlagConfig(codelensFlag.flag);
-				newElement = (await flagToValues(flagMeta[codelensFlag.flag], flagEnv, this.ldConfig)) as FlagNodeList;
+				const flagSdkData = await this.ldConfig.getFlagStore().getFlagConfig(codelensFlag.flag);
+				newElement = (await flagToValues(
+					flagMeta[codelensFlag.flag],
+					flagSdkData,
+					this.ldConfig,
+					null,
+					releaseFlag,
+				)) as FlagNodeList;
 				if (newElement === undefined) {
 					return;
 				}
 				newElement.list = [codelensFlag.range];
 				this.flagNodes.push(newElement);
 			} else {
+				const highlightLabel: TreeItemLabel = {
+					label: codelensFlag.flag,
+					highlights: [
+						[0, 5],
+						[9, 12],
+					],
+				};
+				const label = releaseFlag ? highlightLabel : codelensFlag.flag;
 				newElement = new FlagItem(
-					codelensFlag.flag,
+					label,
 					TreeItemCollapsibleState.Collapsed,
 					codelensFlag.flag,
 					[codelensFlag.range],
@@ -268,7 +282,7 @@ export class FlagItem extends TreeItem {
 	contextValue?: string;
 	list?: Array<Range>;
 	constructor(
-		public readonly label: string,
+		public readonly label: string | TreeItemLabel,
 		public collapsibleState: TreeItemCollapsibleState,
 		flagKey: string,
 		list?: Array<Range>,
