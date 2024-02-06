@@ -75,10 +75,33 @@ export class ConfigurationMenu {
 		];
 
 		try {
+			const projectKey = this.config.getCtx().workspaceState.get('project');
 			this.api.getProjects().then((projects) => {
 				this.projects = projects;
 				const current = input.current as QuickPick<QuickPickItem>;
-				current.items = projects.map(this.createQuickPickItem);
+				const items = [];
+				items.push({
+					label: 'Current Project',
+					kind: QuickPickItemKind.Separator,
+				});
+				items.push(
+					projects.map(this.createQuickPickItem).filter((project) => {
+						if (project.description === projectKey) return true;
+						return false;
+					}),
+				);
+				items.push({
+					label: 'All Projects',
+					kind: QuickPickItemKind.Separator,
+				});
+				items.push(
+					projects.map(this.createQuickPickItem).filter((project) => {
+						if (project.description === projectKey) return false;
+						return true;
+					}),
+				);
+
+				current.items = items.flat();
 				input.current.busy = false;
 			});
 		} catch (err) {

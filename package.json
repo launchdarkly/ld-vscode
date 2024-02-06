@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "4.99.53",
+	"version": "4.99.54",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.82.0"
@@ -27,81 +27,6 @@
 				}
 			}
 		},
-		"walkthroughs": [
-			{
-				"id": "extsetup",
-				"title": "LaunchDarkly Extension Walkthrough",
-				"description": "A LaunchDarkly setup extension walkthrough",
-				"steps": [
-					{
-						"id": "signign",
-						"title": "Sign In to LaunchDarkly with VSCode",
-						"description": "For this you will need an API token.\n[Sign In](command:vscode-launchdarkly-authprovider.signIn)",
-						"media": {
-							"markdown": "media/signin.md"
-						},
-						"completionEvents": [
-							"onCommand:vscode-launchdarkly-authprovider.signIn"
-						]
-					},
-					{
-						"id": "configuresetting",
-						"title": "Configure Settings",
-						"description": "This step will have you setup your LaunchDarkly Project and Environment\n[Configure Settings](command:extension.configureLaunchDarkly)",
-						"media": {
-							"markdown": "media/configuresettings.md"
-						},
-						"completionEvents": [
-							"onCommand:extension.configureLaunchDarkly"
-						]
-					},
-					{
-						"id": "flagactions",
-						"title": "Flag Actions Command",
-						"description": "This step will have you run the Flag Actions command to see what is available.\n[Open Flag Actions](command:launchdarkly.quickFlag)",
-						"media": {
-							"markdown": "media/flagactions.md"
-						},
-						"completionEvents": [
-							"onCommand:launchdarkly.quickFlag"
-						]
-					},
-					{
-						"id": "learnldwindow",
-						"title": "Learn about the LaunchDarkly view",
-						"description": "Understand the information in the LaunchDarkly view. [Click to view](command:launchdarklyFeatureFlags.focus)",
-						"media": {
-							"image": "media/extension-view.png",
-							"altText": "LaunchDarkly View including, Flags in File, Quick Links, and Flag List"
-						},
-						"completionEvents": [
-							"onCommand:launchdarklyFeatureFlags.focus"
-						]
-					},
-					{
-						"id": "createflag",
-						"title": "Create a boolean flag",
-						"description": "This step will have create a boolean flag in your configured Project.\n[Create Flag](command:launchdarkly.createFlag)",
-						"media": {
-							"image": "media/create-boolean-flag.gif",
-							"altText": "Create Boolean Flag Example"
-						},
-						"completionEvents": [
-							"onCommand:launchdarkly.createFlag"
-						]
-					},
-					{
-						"id": "advancedusage",
-						"title": "Advanced Examples",
-						"description": "",
-						"media": {
-							"markdown": "media/advanced.md"
-						},
-						"completionEvents": []
-					}
-				]
-			}
-		],
 		"configuration": {
 			"type": "object",
 			"title": "LaunchDarkly",

@@ -146,7 +146,6 @@ export class LaunchDarklyReleaseProvider implements TreeDataProvider<TreeItem> {
 				),
 			);
 		}
-		console.log(this.releasedFlags.values());
 		return nodes;
 	}
 }

@@ -54,17 +54,21 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 	}
 
 	// TODO: Handle status bar cleaner in future.
-	const currentStatus = config.getStatusBar();
-	if (currentStatus) {
-		currentStatus.dispose();
-	}
+	// This check may not be needed, need to verify when extensionReload is called.
+	if (config.getConfig().project !== '' || config.getConfig().env !== '') {
+		const currentStatus = config.getStatusBar();
+		if (currentStatus) {
+			currentStatus.dispose();
+		}
 
-	config.setStatusBar(window.createStatusBarItem(StatusBarAlignment.Left));
-	const workspaceConfig = workspace.getConfiguration('launchdarkly');
-	if (workspaceConfig.get('enableStatusBar')) {
-		config.getStatusBar().text = `$(launchdarkly-logo) ${config.getConfig().project} / ${config.getConfig().env}`;
-		config.getStatusBar().show();
-		config.getCtx().subscriptions.push(config.getStatusBar());
+		config.setStatusBar(window.createStatusBarItem(StatusBarAlignment.Left));
+		config.getStatusBar().command = 'extension.configureLaunchDarkly';
+		const workspaceConfig = workspace.getConfiguration('launchdarkly');
+		if (workspaceConfig.get('enableStatusBar')) {
+			config.getStatusBar().text = `$(launchdarkly-logo) ${config.getConfig().project} / ${config.getConfig().env}`;
+			config.getStatusBar().show();
+			config.getCtx().subscriptions.push(config.getStatusBar());
+		}
 	}
 
 	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
