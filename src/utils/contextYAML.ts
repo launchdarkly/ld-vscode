@@ -19,12 +19,6 @@ export class YamlContextReader {
 		try {
 			const fileContents = fs.readFileSync(filePath, 'utf8');
 			const data = yaml.load(fileContents);
-			//const ajv = new Ajv();
-			//const validate = ajv.compile(schema);
-			//const valid = validate(data);
-			// if (!valid) {
-			// 	throw validate.errors;
-			// }
 			return data;
 		} catch (e) {
 			window.showErrorMessage(`Error reading YAML file at ${filePath}: ${JSON.stringify(e)}`);
