@@ -6,7 +6,8 @@ import { authentication } from 'vscode';
 import { FlagNode, FlagParentNode, flagToValues } from '../utils/FlagNode';
 import { generateHoverString } from '../utils/hover';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { flagCodeSearch, logDebugMessage, registerCommand } from '../utils';
+import { flagCodeSearch, registerCommand } from '../utils';
+import { logDebugMessage } from '../utils/logDebugMessage';
 import { ReleaseFlagNode } from './releaseViewProvider';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;

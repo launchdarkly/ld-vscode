@@ -6,7 +6,8 @@ import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { Dictionary, isArray } from 'lodash';
 import crypto from 'crypto';
 import { Clause, FeatureFlag, InstructionPatch } from '../models';
-import { logDebugMessage, registerCommand } from '../utils';
+import { registerCommand } from '../utils';
+import { logDebugMessage } from '../utils/logDebugMessage';
 
 const cache = new ToggleCache();
 const revertLastCmd = {};

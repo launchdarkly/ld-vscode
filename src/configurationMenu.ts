@@ -12,7 +12,8 @@ import {
 import { MultiStepInput } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
 import { Resource, Project, Environment } from './models';
-import { extensionReload, logDebugMessage } from './utils';
+import { extensionReload } from './utils';
+import { logDebugMessage } from './utils/logDebugMessage';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import { LaunchDarklyAuthenticationSession } from './providers/authProvider';
 interface CMState {

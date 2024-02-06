@@ -91,7 +91,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 
 	const codeRefsVersionDir = `${LDExtConfig.getCtx().asAbsolutePath('coderefs')}/${cr.version}`;
 	// Check to see if coderefs is already installed. Need more logic if specific config path is set.
-	if (LDExtConfig.getConfig().enableAliases) {
+	if (LDExtConfig.getConfig()?.enableAliases) {
 		access(codeRefsVersionDir, constants.F_OK, (err) => {
 			if (err) {
 				const CodeRefs = new CodeRefsDownloader(LDExtConfig.getCtx(), codeRefsVersionDir);
@@ -101,7 +101,10 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 		});
 	}
 
-	if ((ctx.secrets.get('launchdarkly_accessToken') || semver.lt(storedVersion, '4.99.10')) && session === undefined) {
+	if (
+		((await ctx.secrets.get('launchdarkly_accessToken')) || semver.lt(storedVersion, '4.99.10')) &&
+		session === undefined
+	) {
 		//if (semver.lt(storedVersion, '4.99.1')) {
 		window
 			.showInformationMessage(

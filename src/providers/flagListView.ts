@@ -21,7 +21,7 @@ import { FlagTreeInterface } from './flagsView';
 import { FlagNode } from '../utils/FlagNode';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { FeatureFlag } from '../models';
-import { logDebugMessage } from '../utils';
+import { logDebugMessage } from '../utils/logDebugMessage';
 
 export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> {
 	private ldConfig: LDExtensionConfiguration;
@@ -137,7 +137,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 					flagMeta[codelensFlag.flag],
 					flagSdkData,
 					this.ldConfig,
-					null,
+					undefined,
 					releaseFlag,
 				)) as FlagNodeList;
 				if (newElement === undefined) {

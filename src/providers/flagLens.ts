@@ -6,7 +6,7 @@ import { FlagAliases } from './codeRefs';
 import { CancellationToken, CancellationTokenSource, CodeLens, ConfigurationChangeEvent, workspace } from 'vscode';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { Dictionary } from 'lodash';
-import { logDebugMessage } from '../utils';
+import { logDebugMessage } from '../utils/logDebugMessage';
 
 // Most Lens are read only, so leaving a longer cache. There is an optimistic delete if we receive a flag update.
 const LENS_CACHE_TTL = 300000;

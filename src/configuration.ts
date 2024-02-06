@@ -6,7 +6,7 @@ import {
 	ConfigurationTarget,
 	authentication,
 } from 'vscode';
-import { logDebugMessage } from './utils';
+import { logDebugMessage } from './utils/logDebugMessage';
 
 const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
 const DEFAULT_STREAM_URI = 'https://stream.launchdarkly.com';

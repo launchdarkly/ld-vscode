@@ -26,6 +26,7 @@ import { ToggleCache } from './toggleCache';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import { LaunchDarklyReleaseProvider } from './providers/releaseViewProvider';
 import { InstructionPatch } from './models';
+import { logDebugMessage } from './utils/logDebugMessage';
 
 const cache = new ToggleCache();
 
@@ -254,13 +255,6 @@ export async function toggleFlag(config: LDExtensionConfiguration, key: string) 
 			progress.report({ increment: 90, message: 'Flag Toggled' });
 		},
 	);
-}
-
-export function logDebugMessage(message: string) {
-	const debugLogging = workspace.getConfiguration('launchdarkly').get('debugLogging', false);
-	if (debugLogging) {
-		console.log(message);
-	}
 }
 
 export function flagCodeSearch(config: LDExtensionConfiguration, key: string) {
