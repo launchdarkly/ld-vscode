@@ -2,7 +2,7 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
-## [4.99.10] - 2024-01-25
+## [5.0.0] - 2024-02-06
 
 ### Fixed
 
@@ -19,6 +19,7 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 - `LaunchDarkly: Flag Actions` command
 - Quick Targeting allows you to add/remove single context or rule from a flag.
 - Flags in File now has inline commands on entry.
+- Status bar icon that tells you current configured project and environment.
 
 ## [4.0.2] - 2023-02-15
 

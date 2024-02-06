@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: '18.19.0'
       - run: yarn
+      - run: yarn build:setup
       - run: yarn prepare-beta
         if: ${{ steps.extract_branch.outputs.branch == 'beta' }}
       - name: Run headless test
@@ -29,7 +30,7 @@ jobs:
       - run: yarn run lint
       - name: Publish to Visual Studio Marketplace
         if: ${{ steps.extract_branch.outputs.branch != 'prerelease' }}
-        uses: HaaLeo/publish-vscode-extension@v1
+        uses: HaaLeo/publish-vscode-extension@v1.5.0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com

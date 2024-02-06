@@ -26,27 +26,14 @@ jobs:
     - name: Install dependencies
       run: yarn
 
-    # - name: Setup build environment
-    #   run: |
-    #     sudo apt-get update
-    #     sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libnss3 libasound2 libgbm-dev
-    #     sudo cp test/xvfb.init /etc/init.d/xvfb
-    #     sudo chmod +x /etc/init.d/xvfb
-    #     sudo update-rc.d xvfb defaults
-    #     sudo service xvfb start
-    #     sudo service dbus restart
-    #     export $(dbus-launch)
+    - name: Setup
+      run: yarn build:setup
 
     - name: Setup xvfb
       run: xvfb-run -a yarn run vscode:prepublish 
 
     - name: Run xvfb test
       run: xvfb-run -a yarn test
-    # - name: Build
-    #   run: yarn run vscode:prepublish
-
-    # - name: Test
-    #   run: 
 
     - name: Prettier
       run: yarn run prettier:check

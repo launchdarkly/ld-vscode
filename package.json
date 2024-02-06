@@ -18,7 +18,7 @@
 	],
 	"main": "./dist/extension",
 	"contributes": {
-		"icons":{
+		"icons": {
 			"launchdarkly-logo": {
 				"description": "launchdarkly-logo icon",
 				"default": {
@@ -476,6 +476,7 @@
 	},
 	"scripts": {
 		"build:icons": "yarn icons:svgo && yarn fantasticon && yarn icons:apply",
+		"build:setup": "rm -rf ./dist && mkdir -p ./dist",
 		"vscode:prepublish": "webpack --mode production",
 		"compile": "webpack --mode none",
 		"watch": "webpack --mode none --watch",
@@ -499,6 +500,7 @@
 		"@vscode/test-cli": "^0.0.4",
 		"@vscode/test-electron": "^2.3.8",
 		"chai": "^4.3.10",
+		"clean-webpack-plugin": "4.0.0",
 		"eslint": "8.55.0",
 		"eslint-config-prettier": "9.1.0",
 		"expect": "^26.1.0",
