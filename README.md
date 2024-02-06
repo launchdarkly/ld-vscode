@@ -82,7 +82,7 @@ Flag names in the treeview can be right-clicked where you can update a flag's st
 ### Flag Lens
 The Flag Lens functionality shows insights about the usage and status of LaunchDarkly feature flags directly in the code. For a given feature flag in the codebase, the Flag Lens displays:
 
-__Flag Name__: The unique identifier for the feature flag within LaunchDarkly.
+__Flag Name__: The feature flag's name as it appears in LaunchDarkly.
 __Flag Status__: Whether the flag is currently turned on or off.
 __Variation Information__: Which variation or value of the flag is currently being served.
 
