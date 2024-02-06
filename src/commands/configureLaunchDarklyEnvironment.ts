@@ -1,23 +1,29 @@
-import { commands, Disposable, ExtensionContext, window } from 'vscode';
-import { LaunchDarklyAPI, sortNameCaseInsensitive } from '../api';
-import { Configuration } from '../configuration';
+import { commands, Disposable, window } from 'vscode';
+//import { sortNameCaseInsensitive } from '../api';
 import { extensionReload } from '../utils';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
-export default async function configureEnvironmentCmd(
-	ctx: ExtensionContext,
-	config: Configuration,
-	api: LaunchDarklyAPI,
-): Promise<Disposable> {
+export default async function configureEnvironmentCmd(config: LDExtensionConfiguration): Promise<Disposable> {
 	const configureEnvironmentCmd = commands.registerCommand(
 		'launchdarkly.configureLaunchDarklyEnvironment',
 		async () => {
 			try {
-				const project = await api.getProject(config.project);
-				const environments = project.environments.sort(sortNameCaseInsensitive);
+				//const intConfig = config.getConfig();
+				const api = config.getApi();
+				if (!config.getConfig()) {
+					return;
+				}
+				const project = await api?.getProject(config.getConfig().project);
+				if (!project) {
+					window.showErrorMessage(`[LaunchDarkly] Please Configure LaunchDarkly Extension`);
+					return;
+				}
+				//const environments = project.environments.sort(sortNameCaseInsensitive);
+				const environments = project.environments.items;
 				const newEnvironment = await window.showQuickPick(environments.map((env) => env.key));
-				if (newEnvironment !== 'undefined') {
-					await config.update('env', newEnvironment, false);
-					await extensionReload(config, ctx, true);
+				if (newEnvironment) {
+					await config.getConfig().update('env', newEnvironment, false);
+					await extensionReload(config, true);
 				}
 			} catch (err) {
 				console.log(err);
@@ -26,7 +32,7 @@ export default async function configureEnvironmentCmd(
 		},
 	);
 
-	ctx.subscriptions.push(configureEnvironmentCmd);
+	config.getCtx().subscriptions.push(configureEnvironmentCmd);
 
 	return configureEnvironmentCmd;
 }

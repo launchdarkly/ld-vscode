@@ -1,5 +1,10 @@
 # LaunchDarkly for Visual Studio Code
 
+[![Version](https://img.shields.io/visual-studio-marketplace/v/launchdarklyofficial.launchdarkly?style=for-the-badge&colorA=2c2c2c&colorB=23328c)](https://marketplace.visualstudio.com/items?itemName=launchdarklyofficial.launchdarkly)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/launchdarklyofficial.launchdarkly?style=for-the-badge&colorA=2c2c2c&colorB=23328c)](https://marketplace.visualstudio.com/items?itemName=launchdarklyofficial.launchdarkly)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/launchdarklyofficial.launchdarkly?style=for-the-badge&colorA=2c2c2c&colorB=23328c)](https://marketplace.visualstudio.com/items?itemName=launchdarklyofficial.launchdarkly)
+[![Ratings](https://img.shields.io/visual-studio-marketplace/r/launchdarklyofficial.launchdarkly?style=for-the-badge&colorA=2c2c2c&colorB=23328c)](https://marketplace.visualstudio.com/items?itemName=launchdarklyofficial.launchdarkly)
+
 The LaunchDarkly VSCode extension provides utilities that make it easy to work with feature flags using LaunchDarkly without ever leaving VSCode. See details about feature flags defined in your code, toggle them on or off, search for usage, see all possible flag variations and more.
 
 <img src="https://github.com/launchdarkly/ld-vscode/raw/master/images/screenshot.png?raw=true" alt="screenshot" width="100%">
@@ -11,8 +16,10 @@ The LaunchDarkly VSCode extension provides utilities that make it easy to work w
 - Open feature flags in LaunchDarkly (Default keybind: `ctrl+alt+g`/`⌘+alt+g`)
 - [Feature flag explorer](#feature-flag-explorer): view a list of your feature flags and their settings in the explorer view
 - [Create Boolean Flag](#create-boolean-flag)
-- [Quick Links](#quick-links) to LaunchDarkly.
+- [Flag Actions](#flag-actions-command)
+- [Quick Links](#quick-links) to LaunchDarkly
 - [Flags in File](#flags-in-file)
+- [Flag Lens](#flag-lens)
 
 Read our official documentation about this extension at <https://docs.launchdarkly.com/integrations/vscode>
 
@@ -32,6 +39,11 @@ Information required:
 * SDK Availability
 
 <img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/create-boolean-flag.gif?raw=true" width="350px" height="300px" alt="Create feature flag command">
+
+### Flag Actions Command
+Use the `LaunchDarkly: Flag Actions` command to bring up a menu of options that you can choose from to interact with your feature flags.
+
+![Flag Actions](images/flag-actions.png)
 
 ### Toggle Feature Flag
 Change the enabled state of a feature flag without moving your hands from your keyboard.
@@ -67,6 +79,14 @@ Flag names in the treeview can be right-clicked where you can update a flag's st
  
  <img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/treeview-right-click.png?raw=true" width="350px" height="100px" alt="right click menu options">
 
+### Flag Lens
+The Flag Lens functionality shows insights about the usage and status of LaunchDarkly feature flags directly in the code. For a given feature flag in the codebase, the Flag Lens displays:
+
+__Flag Name__: The feature flag's name as it appears in LaunchDarkly.
+__Flag Status__: Whether the flag is currently enabled or disabled.
+__Variation Information__: Which variation or value of the flag is currently being served.
+
+This is OFF by default. It can be enabled through Settings > LaunchDarkly Extension > Enable Flag Lens.
 
 ## Contributing
 

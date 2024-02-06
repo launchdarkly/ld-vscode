@@ -1,16 +1,18 @@
 import {
+	authentication,
 	commands,
+	ConfigurationChangeEvent,
 	Disposable,
 	DocumentFilter,
-	ExtensionContext,
 	languages,
 	ProgressLocation,
 	QuickPickItemKind,
+	StatusBarAlignment,
 	window,
+	workspace,
 } from 'vscode';
 import { LaunchDarklyAPI } from './api';
 import generalCommands from './commands/generalCommands';
-import { Configuration } from './configuration';
 import { FlagStore } from './flagStore';
 import { FlagAliases } from './providers/codeRefs';
 import LaunchDarklyCompletionItemProvider from './providers/completion';
@@ -21,101 +23,163 @@ import { LaunchDarklyHoverProvider } from './providers/hover';
 import { QuickLinksListProvider } from './providers/quickLinksView';
 import { setTimeout } from 'timers/promises';
 import { ToggleCache } from './toggleCache';
+import { LDExtensionConfiguration } from './ldExtensionConfiguration';
+import { LaunchDarklyReleaseProvider } from './providers/releaseViewProvider';
+import { InstructionPatch } from './models';
+import { logDebugMessage } from './utils/logDebugMessage';
 
 const cache = new ToggleCache();
 
-export async function extensionReload(config: Configuration, ctx: ExtensionContext, reload = false) {
-	// Read in latest version of config
-	await config.reload();
-	const newApi = new LaunchDarklyAPI(config);
-	const flagStore = new FlagStore(config, newApi);
-	await setupComponents(newApi, config, ctx, flagStore, reload);
+export async function extensionReload(config: LDExtensionConfiguration, reload = false) {
+	const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
+	if (session !== undefined) {
+		// TODO: determine if this reload call to config is needed
+		await config.getConfig().reload();
+		config.setApi(new LaunchDarklyAPI(config.getConfig(), config));
+		config.setFlagStore(new FlagStore(config));
+		await setupComponents(config, reload);
+	} else {
+		console.log('No session found, please login to LaunchDarkly.');
+	}
 }
 
-export async function setupComponents(
-	api: LaunchDarklyAPI,
-	config: Configuration,
-	ctx: ExtensionContext,
-	flagStore: FlagStore,
-	reload = false,
-) {
-	const cmds = ctx.globalState.get<Disposable>('commands');
+export async function setupComponents(config: LDExtensionConfiguration, reload = false) {
+	const cmds = config.getCtx().globalState.get<Disposable>('commands');
 	if (typeof cmds?.dispose === 'function') {
 		cmds.dispose();
 	}
 
 	if (reload) {
 		// Disposables.from does not wait for async disposal so need to wait here.
-		await setTimeout(700);
+		await setTimeout(2200);
 	}
 
-	// Add Quick Links view
-	const quickLinksView = new QuickLinksListProvider(config, flagStore);
-	window.registerTreeDataProvider('launchdarklyQuickLinks', quickLinksView);
+	// TODO: Handle status bar cleaner in future.
+	// This check may not be needed, need to verify when extensionReload is called.
+	if (config.getConfig().project !== '' || config.getConfig().env !== '') {
+		const currentStatus = config.getStatusBar();
+		if (currentStatus) {
+			currentStatus.dispose();
+		}
 
-	let aliases;
-	if (config.enableAliases) {
-		aliases = new FlagAliases(config, ctx);
-		if (aliases.codeRefsVersionCheck()) {
-			aliases.setupStatusBar();
-			await aliases.start();
+		config.setStatusBar(window.createStatusBarItem(StatusBarAlignment.Left));
+		config.getStatusBar().command = 'extension.configureLaunchDarkly';
+		const workspaceConfig = workspace.getConfiguration('launchdarkly');
+		if (workspaceConfig.get('enableStatusBar')) {
+			config.getStatusBar().text = `$(launchdarkly-logo) ${config.getConfig().project} / ${config.getConfig().env}`;
+			config.getStatusBar().show();
+			config.getCtx().subscriptions.push(config.getStatusBar());
+		}
+	}
+
+	workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
+		if (e.affectsConfiguration('launchdarkly.enableStatusBar')) {
+			const workspaceConfig = workspace.getConfiguration('launchdarkly');
+			if (workspaceConfig.get('enableStatusBar')) {
+				config.getStatusBar().show();
+			} else {
+				config.getStatusBar().hide();
+			}
+		}
+	});
+
+	if (config.getConfig().enableAliases) {
+		config.setAliases(new FlagAliases(config));
+		//aliases = new FlagAliases(config.getConfig(), ctx);
+		if (config.getAliases().codeRefsVersionCheck()) {
+			config.getAliases().setupStatusBar();
+			await config.getAliases().start();
 		} else {
 			window.showErrorMessage('ld-find-code-refs version > 2 supported.');
 		}
 	}
 
-	// Add Flag view
-	const flagView = new LaunchDarklyTreeViewProvider(api, config, flagStore, aliases);
-	window.registerTreeDataProvider('launchdarklyFeatureFlags', flagView);
+	// Add various providers
+	const quickLinksView = new QuickLinksListProvider(config);
+	const flagView = new LaunchDarklyTreeViewProvider(config);
+	const codeLens = new FlagCodeLensProvider(config);
 
-	const codeLens = new FlagCodeLensProvider(api, config, flagStore, aliases);
-	const listView = new LaunchDarklyFlagListProvider(config, codeLens, flagStore);
-	window.registerTreeDataProvider('launchdarklyFlagList', listView);
+	const enableFlagListView = workspace.getConfiguration('launchdarkly').get('enableFlagsInFile', false);
+	let listViewDisp = Disposable.from();
+	if (enableFlagListView) {
+		const listView = new LaunchDarklyFlagListProvider(config, codeLens);
+		window.registerTreeDataProvider('launchdarklyFlagList', listView);
+		if (!reload) {
+			listViewDisp = registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsInDocument());
+			config.getCtx().subscriptions.push(listViewDisp);
+		}
+
+		config.getCtx().subscriptions.push(window.onDidChangeActiveTextEditor(listView.setFlagsInDocument));
+	}
+
+	const enableReleasesView = workspace.getConfiguration('launchdarkly').get('enableReleasesView', false);
+	if (enableReleasesView) {
+		const releaseView = new LaunchDarklyReleaseProvider(config);
+		config.setReleaseView(releaseView);
+		window.registerTreeDataProvider('launchdarklyReleases', releaseView);
+	}
+
+	config.setFlagView(flagView);
+
+	//Register window providers
+	window.registerTreeDataProvider('launchdarklyQuickLinks', quickLinksView);
+	config.setFlagTreeProvider(
+		window.createTreeView('launchdarklyFeatureFlags', {
+			treeDataProvider: flagView,
+		}),
+	);
 
 	const LD_MODE: DocumentFilter = {
 		scheme: 'file',
 	};
+	const hoverProviderDisp = languages.registerHoverProvider(LD_MODE, new LaunchDarklyHoverProvider(config));
 
-	const hoverProviderDisp = languages.registerHoverProvider(
-		LD_MODE,
-		new LaunchDarklyHoverProvider(config, flagStore, aliases),
-	);
+	try {
+		const codeLensProv = languages.registerCodeLensProvider([LD_MODE], codeLens);
 
-	const listViewDisp = commands.registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsinDocument());
-	const flagToggle = commands.registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
-		await showToggleMenu(flagStore, api, config);
-	});
+		config
+			.getCtx()
+			.subscriptions.push(
+				codeLensProv,
+				languages.registerCompletionItemProvider(
+					LD_MODE,
+					new LaunchDarklyCompletionItemProvider(config.getConfig(), config.getFlagStore(), config.getAliases()),
+					"'",
+					'"',
+				),
+				hoverProviderDisp,
+			);
 
-	const openFlag = commands.registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
-		window.activeTextEditor.revealRange(node.range),
-	);
+		codeLens.start();
 
-	ctx.subscriptions.push(
-		window.onDidChangeActiveTextEditor(listView.setFlagsinDocument),
-		languages.registerCodeLensProvider('*', codeLens),
-		languages.registerCompletionItemProvider(
-			LD_MODE,
-			new LaunchDarklyCompletionItemProvider(config, flagStore, aliases),
-			"'",
-			'"',
-		),
-		hoverProviderDisp,
-		listViewDisp,
-		flagToggle,
-		openFlag,
-	);
+		const flagToggle = registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
+			await showToggleMenu(config);
+		});
+		const openFlag = registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
+			window.activeTextEditor.revealRange(node.range),
+		);
 
-	codeLens.start();
+		const disposables = await generalCommands(config);
 
-	const disposables = await generalCommands(ctx, config, api, flagStore);
-	const allDisposables = Disposable.from(disposables, hoverProviderDisp, listViewDisp, flagToggle, openFlag);
-	await ctx.globalState.update('commands', allDisposables);
+		const allDisposables = Disposable.from(
+			disposables,
+			hoverProviderDisp,
+			listViewDisp,
+			flagToggle,
+			openFlag,
+			codeLensProv,
+		);
+		await config.getCtx().globalState.update('commands', allDisposables);
+		config.getCtx().subscriptions.push(flagToggle, openFlag);
+	} catch (err) {
+		logDebugMessage(err);
+	}
 }
 
-async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config: Configuration) {
+async function showToggleMenu(config: LDExtensionConfiguration) {
 	let flags;
 	try {
-		flags = await flagStore.allFlagsMetadata();
+		flags = await config.getFlagStore().allFlagsMetadata();
 	} catch (err) {
 		window.showErrorMessage('[LaunchDarkly] Unable to retrieve flags, please check configuration.');
 		return;
@@ -154,39 +218,129 @@ async function showToggleMenu(flagStore: FlagStore, api: LaunchDarklyAPI, config
 	});
 
 	if (typeof flagWindow !== 'undefined') {
-		await window.withProgress(
-			{
-				location: ProgressLocation.Notification,
-				title: `LaunchDarkly: Toggling Flag ${flagWindow.value}`,
-				cancellable: true,
-			},
-			async (progress, token) => {
-				token.onCancellationRequested(() => {
-					console.log('User canceled the long running operation');
-				});
+		toggleFlag(config, flagWindow.value);
+	}
+}
 
-				progress.report({ increment: 0 });
+export async function toggleFlag(config: LDExtensionConfiguration, key: string) {
+	await window.withProgress(
+		{
+			location: ProgressLocation.Notification,
+			title: `LaunchDarkly: Toggling Flag ${key}`,
+			cancellable: true,
+		},
+		async (progress, token) => {
+			token.onCancellationRequested(() => {
+				console.log('User canceled the long running operation');
+			});
 
-				const enabled = await flagStore.getFlagConfig(flagWindow.value);
-				progress.report({ increment: 10, message: `Setting flag Enabled: ${!enabled.on}` });
-				cache.set(flagWindow.value);
-				try {
-					await api.patchFeatureFlagOn(config.project, flagWindow.value, !enabled.on);
-				} catch (err) {
-					progress.report({ increment: 100 });
-					if (err.response.status === 403) {
-						window.showErrorMessage(
-							`Unauthorized: Your key does not have permissions to update the flag: ${flagWindow.value}`,
-						);
-					} else {
-						window.showErrorMessage(`Could not update flag: ${flagWindow.value}
-						code: ${err.response.status}
-						message: ${err.message}`);
-					}
+			progress.report({ increment: 0 });
+
+			const enabled = await config.getFlagStore().getFlagConfig(key);
+			progress.report({ increment: 10, message: `Setting flag Enabled: ${!enabled.on}` });
+			cache.set(key);
+			try {
+				await config.getApi().patchFeatureFlagOn(config.getConfig().project, key, !enabled.on);
+			} catch (err) {
+				progress.report({ increment: 100 });
+				if (err.response.status === 403) {
+					window.showErrorMessage(`Unauthorized: Your key does not have permissions to update the flag: ${key}`);
+				} else {
+					window.showErrorMessage(`Could not update flag: ${key}
+					code: ${err.response.status}
+					message: ${err.message}`);
 				}
+			}
 
-				progress.report({ increment: 90, message: 'Flag Toggled' });
-			},
-		);
+			progress.report({ increment: 90, message: 'Flag Toggled' });
+		},
+	);
+}
+
+export function flagCodeSearch(config: LDExtensionConfiguration, key: string) {
+	let aliases;
+	let findAliases: string;
+	if (config.getAliases()) {
+		aliases = config.getAliases()?.getKeys();
+	}
+	if (aliases && aliases[key]) {
+		const tempSearch = [...aliases[key]];
+		tempSearch.push(key);
+		findAliases = tempSearch.join('|');
+	} else {
+		findAliases = key;
+	}
+	commands.executeCommand('workbench.action.findInFiles', {
+		query: findAliases,
+		triggerSearch: true,
+		matchWholeWord: true,
+		isCaseSensitive: true,
+		isRegex: true,
+	});
+}
+
+export async function flagOffFallthroughPatch(
+	config: LDExtensionConfiguration,
+	kind: string,
+	key: string,
+): Promise<void> {
+	const env = await config.getFlagStore()?.getFeatureFlag(key);
+
+	const variations = env?.flag.variations?.map((variation, idx) => {
+		return {
+			label: `${idx}. ${
+				JSON.stringify(variation.name) ? JSON.stringify(variation.name) : JSON.stringify(variation.value)
+			}`,
+			value: variation._id,
+		};
+	});
+	if (!variations) {
+		return;
+	}
+
+	const choice = await window.showQuickPick(variations);
+	if (!choice) {
+		return;
+	}
+
+	const selectedVariation = choice.value;
+	//const patch: { op: string; path: string; value?: number }[] = [];
+	// patch.push({ op: 'replace', path: path, value: parseInt(newValue) });
+	const instructionPatch: InstructionPatch = {
+		environmentKey: config.getConfig().env,
+		instructions: [createFallthroughOrOffInstruction(kind, selectedVariation)],
+	};
+
+	//patchComment.patch = patch;
+	try {
+		await config.getApi()?.patchFeatureFlagSem(config.getConfig().project, key, instructionPatch);
+	} catch (err) {
+		if (err.statusCode === 403) {
+			window.showErrorMessage('Unauthorized: Your key does not have permissions to change the flag.', err);
+		} else {
+			window.showErrorMessage(`Could not update flag: ${err.message}`);
+		}
+	}
+}
+
+function createFallthroughOrOffInstruction(kind: string, variationId: string) {
+	return {
+		kind,
+		variationId: variationId,
+	};
+}
+
+export function legacyAuth() {
+	return true;
+	//workspace.getConfiguration('launchdarkly').get('legacyAuth', false)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function registerCommand(command: string, callback: (...args: any[]) => any) {
+	try {
+		return commands.registerCommand(command, callback);
+	} catch (err) {
+		logDebugMessage(err);
+		return Disposable.from();
 	}
 }

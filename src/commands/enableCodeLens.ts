@@ -1,12 +1,13 @@
-import { commands, Disposable, ExtensionContext, workspace } from 'vscode';
-import { Configuration } from '../configuration';
+import { Disposable, workspace } from 'vscode';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
+import { registerCommand } from '../utils';
 
-export default function enableCodeLensConfig(ctx: ExtensionContext, config: Configuration): Disposable {
-	const enableCodeLens: Disposable = commands.registerCommand('launchdarkly.enableCodeLens', async () => {
-		workspace.getConfiguration('launchdarkly').update('enableCodeLens', !config.enableCodeLens);
-		config.enableCodeLens = !config.enableCodeLens;
+export default function enableCodeLensConfig(config: LDExtensionConfiguration): Disposable {
+	const enableCodeLens: Disposable = registerCommand('launchdarkly.enableCodeLens', async () => {
+		workspace.getConfiguration('launchdarkly').update('enableCodeLens', !config.getConfig().enableCodeLens);
+		config.getConfig().enableCodeLens = !config.getConfig().enableCodeLens;
 	});
-	ctx.subscriptions.push(enableCodeLens);
+	config.getCtx().subscriptions.push(enableCodeLens);
 
 	return enableCodeLens;
 }

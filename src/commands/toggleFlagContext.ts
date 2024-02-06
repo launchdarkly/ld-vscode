@@ -1,26 +1,21 @@
-import { commands, Disposable, ExtensionContext, window } from 'vscode';
-import { LaunchDarklyAPI } from '../api';
-import { Configuration } from '../configuration';
-import { FlagStore } from '../flagStore';
+import { Disposable, window } from 'vscode';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
+import { registerCommand } from '../utils';
 
-export default function toggleFlagCtxCmd(
-	ctx: ExtensionContext,
-	config: Configuration,
-	api: LaunchDarklyAPI,
-	flagStore: FlagStore,
-): Disposable {
-	const toggleFlagCtxCmd = commands.registerCommand('launchdarkly.toggleFlagContext', async () => {
+export default function toggleFlagCtxCmd(config: LDExtensionConfiguration): Disposable {
+	const toggleFlagCtxCmd = registerCommand('launchdarkly.toggleFlagContext', async (args) => {
 		try {
-			const key = ctx.workspaceState.get('LDFlagKey') as string;
+			const key = args ? args : (config.getCtx().workspaceState.get('LDFlagKey') as string);
+
 			if (key) {
-				const env = await flagStore.getFeatureFlag(key);
-				await api.patchFeatureFlagOn(config.project, key, !env.config.on);
+				const env = await config.getFlagStore().getFeatureFlag(key);
+				await config.getApi().patchFeatureFlagOn(config.getConfig().project, key, !env.config.on);
 			}
 		} catch (err) {
 			window.showErrorMessage(`Could not patch flag: ${err.message}`);
 		}
 	});
-	ctx.subscriptions.push(toggleFlagCtxCmd);
+	config.getCtx().subscriptions.push(toggleFlagCtxCmd);
 
 	return toggleFlagCtxCmd;
 }

@@ -1,16 +1,15 @@
 import { ColorThemeKind, ExtensionContext, MarkdownString, window } from 'vscode';
 import { FeatureFlag, FlagConfiguration } from '../models';
-import { Configuration } from '../configuration';
 import * as fs from 'fs';
 import * as url from 'url';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
 const FLAG_STATUS_CACHE = new Map<string, string>();
 
 export function generateHoverString(
 	flag: FeatureFlag,
 	c: FlagConfiguration,
-	config: Configuration,
-	ctx: ExtensionContext,
+	config: LDExtensionConfiguration,
 ): MarkdownString {
 	let env;
 	try {
@@ -19,9 +18,9 @@ export function generateHoverString(
 		console.error(err);
 		return;
 	}
-	const flagUri = url.resolve(config.baseUri, flag.environments[env]._site.href);
+	const flagUri = url.resolve(config.getSession().fullUri, flag.environments[env]._site.href);
 	const hoverString = new MarkdownString(
-		`![Flag status](${getFlagStatusUri(ctx, c.on)}) ${config.project} / ${env} / **[${
+		`![Flag status](${getFlagStatusUri(config.getCtx(), c.on)}) ${config.getConfig().project} / ${env} / **[${
 			flag.key
 		}](${flagUri} "Open in LaunchDarkly")** \n\n`,
 		true,
@@ -31,7 +30,12 @@ export function generateHoverString(
 	hoverString.appendText('\n');
 	hoverString.appendMarkdown(flag.description);
 	hoverString.appendText('\n');
-
+	const clientSDK = flag.clientSideAvailability.usingEnvironmentId ? '$(browser)' : '';
+	const mobileSDK = flag.clientSideAvailability.usingMobileKey ? '$(device-mobile)' : '';
+	const sdkAvailability = `Client-side SDK availability: ${clientSDK}${clientSDK && mobileSDK ? ' ' : ''}${mobileSDK}${
+		!clientSDK && !mobileSDK ? '$(server)' : ''
+	}\n\n`;
+	hoverString.appendMarkdown(sdkAvailability);
 	if (c.prerequisites && c.prerequisites.length > 0) {
 		hoverString.appendMarkdown(
 			`* Prerequisites: ${c.prerequisites

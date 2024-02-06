@@ -3,7 +3,7 @@
 // https://github.com/microsoft/vscode-extension-samples/blob/master/quickinput-sample/src/multiStepInput.ts
 // LICENSE: https://github.com/microsoft/vscode-extension-samples/blob/master/LICENSE
 
-import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, QuickInputButtons } from 'vscode';
+import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, QuickInputButtons, QuickPick } from 'vscode';
 
 class InputFlowAction {
 	static back = new InputFlowAction();
@@ -11,9 +11,9 @@ class InputFlowAction {
 	static resume = new InputFlowAction();
 }
 
-type InputStep = (input: MultiStepInput) => Thenable<InputStep | void>;
+type InputStep = (input: MultiStepInput<any>) => Thenable<InputStep | void>;
 
-interface QuickPickParameters<T extends QuickPickItem> {
+export interface QuickPickParameters<T extends QuickPickItem> {
 	title: string;
 	step: number;
 	totalSteps: number;
@@ -21,6 +21,9 @@ interface QuickPickParameters<T extends QuickPickItem> {
 	activeItem?: T;
 	placeholder: string;
 	buttons?: QuickInputButton[];
+	description?: string;
+	detail?: string;
+	busy?: boolean;
 	shouldResume: () => Thenable<boolean>;
 }
 
@@ -32,16 +35,18 @@ interface InputBoxParameters {
 	prompt: string;
 	validate: (value: string) => Promise<string | undefined>;
 	buttons?: QuickInputButton[];
+	description?: string;
+	detail?: string;
 	shouldResume: () => Thenable<boolean>;
 }
 
-export class MultiStepInput {
-	static async run<T>(start: InputStep) {
-		const input = new MultiStepInput();
+export class MultiStepInput<T extends QuickPickItem | QuickInput> {
+	static async run<T extends QuickPickItem>(start: InputStep) {
+		const input = new MultiStepInput<T>();
 		return input.stepThrough(start);
 	}
 
-	private current?: QuickInput;
+	current?: QuickInput | QuickPick<T extends QuickPickItem ? T : never>;
 	private steps: InputStep[] = [];
 
 	private async stepThrough<T>(start: InputStep) {
@@ -80,6 +85,7 @@ export class MultiStepInput {
 		activeItem,
 		placeholder,
 		buttons,
+		busy,
 		shouldResume,
 	}: P) {
 		const disposables: Disposable[] = [];
@@ -91,6 +97,10 @@ export class MultiStepInput {
 				input.totalSteps = totalSteps;
 				input.placeholder = placeholder;
 				input.items = items;
+				input.ignoreFocusOut = true;
+				input.matchOnDetail = true;
+				input.matchOnDescription = true;
+				input.busy = busy;
 				if (activeItem) {
 					input.activeItems = [activeItem];
 				}

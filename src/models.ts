@@ -1,3 +1,5 @@
+import { ClientSideAvailability } from 'launchdarkly-api-typescript';
+
 export class Resource {
 	name: string;
 	key: string;
@@ -5,10 +7,34 @@ export class Resource {
 	_version: number;
 }
 
+export class Instruction {
+	kind: string;
+	contextKind?: string;
+	values?: string[];
+	variationId?: string;
+	clauses?: Clause[];
+}
+
+export class InstructionWithFlag {
+	flagKey: string;
+	instruction: InstructionPatch;
+}
+
+export class InstructionPatch {
+	environmentKey: string;
+	instructions: Instruction[];
+}
+
 export class Project extends Resource {
 	environments: Array<Environment>;
 }
 
+export class EnvironmentAPI {
+	items: Array<Environment>;
+}
+export class ProjectAPI {
+	environments: EnvironmentAPI;
+}
 // export class Environment extends Resource {
 // 	apiKey: string;
 // 	version: number;
@@ -165,9 +191,9 @@ export class FlagConfiguration {
 	key: string;
 	variations: Array<any>;
 	offVariation: number | undefined;
-	fallthrough: any;
+	fallthrough: Fallthrough;
 	prerequisites: any;
-	targets: any;
+	targets: Array<Target>;
 	rules: Array<any>;
 	on: boolean;
 	version: number;
@@ -180,6 +206,7 @@ export class FlagWithConfiguration {
 }
 
 export class Variation {
+	_id?: string;
 	name?: string;
 	description?: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -200,6 +227,7 @@ export class CustomProperty {
 export class Target {
 	values?: Array<string>;
 	variation?: number;
+	contextKind?: string;
 }
 
 export class Rollout {
@@ -218,9 +246,12 @@ export class Clause {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	values?: Array<any>;
 	negate?: boolean;
+	contextKind?: string;
+	_key?: string;
 }
 export class Rule {
-	id?: string;
+	_id?: string;
+	description: string;
 	variation?: number;
 	trackEvents?: boolean;
 	rollout?: Rollout;
@@ -289,6 +320,11 @@ export class Role {
 	}
 }
 
+export class Team {
+	customRoleKeys: string[];
+	key: string;
+	name: string;
+}
 export class Member {
 	links?: Links;
 	id?: Id;
@@ -298,7 +334,8 @@ export class Member {
 	lastName?: string;
 	pendingInvite?: boolean;
 	isBeta?: boolean;
-	customRoles?: Array<Id>;
+	customRoles?: string[];
+	teams: Team[];
 }
 
 export class Defaults {
@@ -395,12 +432,14 @@ export class FeatureFlag {
 	 * Used by plugin to make sure number of variations has not changed
 	 */
 	variationLength?: number;
+	rules?: Rule[];
+	clientSideAvailability: ClientSideAvailability;
 }
 
 export class PatchOperation {
 	op: string;
 	path: string;
-	value: unknown;
+	value?: unknown;
 }
 export class PatchComment {
 	comment?: string;
@@ -433,4 +472,92 @@ export interface NewFlag {
 		usingMobileKey: boolean;
 	};
 	temporary: boolean;
+}
+
+export class Branch {
+	name: string;
+	headSha: string;
+	updateSequenceId: number | null;
+	syncTime: number;
+	references: ReferenceFile[];
+	commitTime: number | null;
+}
+
+export class ReferenceFile {
+	path: string;
+	hint: string;
+	hunks: Hunk[];
+}
+
+export class HunkWithFileId {
+	fileId: string;
+	path: string;
+	hunk: Hunk;
+}
+
+export class Hunk {
+	projKey: string;
+	flagKey: string;
+	startingLineNumber: number;
+	lines: string;
+	aliases: string[];
+}
+
+export class FlagLink {
+	_links: { [key: string]: { href: string; type: string } };
+	_key: string;
+	_integrationKey: string;
+	_id: string;
+	_deepLink: string;
+	_timestamp: { milliseconds: number; seconds: number; rfc3339: string; simple: string };
+	_metadata: { [key: string]: string };
+	_createdAt: number;
+	_member: { _links: { self: { href: string; type: string } }; _id: string; firstName: string; lastName: string };
+}
+
+export class ReleasePipeline {
+	name: string;
+	key: string;
+	description: string;
+	tags: string[];
+	phases: ReleasePhase[];
+}
+
+export class ReleasePhase {
+	flagKey: string;
+	name: string;
+	id: string;
+	audiences: Audience[];
+	_completedAt?: number;
+}
+
+export class Audience {
+	name: string;
+	environments: Environment[];
+}
+export interface MemberTeamSummaryRep {
+	/**
+	 * A list of keys of the custom roles this team has access to
+	 * @type {Array<string>}
+	 * @memberof MemberTeamSummaryRep
+	 */
+	customRoleKeys: Array<string>;
+	/**
+	 * The team key
+	 * @type {string}
+	 * @memberof MemberTeamSummaryRep
+	 */
+	key: string;
+	/**
+	 *
+	 * @type {{ [key: string]: Link; }}
+	 * @memberof MemberTeamSummaryRep
+	 */
+	_links?: { [key: string]: Link };
+	/**
+	 * The team name
+	 * @type {string}
+	 * @memberof MemberTeamSummaryRep
+	 */
+	name: string;
 }

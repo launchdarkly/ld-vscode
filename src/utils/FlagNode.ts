@@ -3,11 +3,18 @@
  */
 
 import * as path from 'path';
-import { Command, ExtensionContext, MarkdownString, ThemeIcon, TreeItem, TreeItemCollapsibleState } from 'vscode';
-import { Configuration } from '../configuration';
+import {
+	Command,
+	ExtensionContext,
+	MarkdownString,
+	TreeItem,
+	TreeItemCollapsibleState,
+	TreeItemLabel,
+	Uri,
+} from 'vscode';
 import { FeatureFlag, FlagConfiguration } from '../models';
-import { FlagAliases } from '../providers/codeRefs';
 import { generateHoverString } from './hover';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
 const COLLAPSED = TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = TreeItemCollapsibleState.None;
@@ -86,9 +93,8 @@ export class FlagNode extends TreeItem {
 		}
 	}
 
-	private setIcon(ctx: ExtensionContext, fileName: string): ThemeIcon {
+	private setIcon(ctx: ExtensionContext, fileName: string): { light: string | Uri; dark: string | Uri } {
 		return (this.iconPath = {
-			id: null,
 			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName + '.svg')),
 			dark: ctx.asAbsolutePath(path.join('resources', 'dark', fileName + '.svg')),
 		});
@@ -98,14 +104,18 @@ export class FlagNode extends TreeItem {
 export async function flagToValues(
 	flag: FeatureFlag,
 	env: FlagConfiguration = null,
-	config: Configuration,
-	aliases: FlagAliases,
+	ldConfig: LDExtensionConfiguration,
 	flagParent?: FlagParentNode,
+	label?: boolean,
 ): Promise<FlagParentNode> {
 	/**
 	 * Get Link for Open Browser and build base flag node.
 	 */
+	const config = ldConfig.getConfig();
 	let envConfig;
+	if (flag === undefined) {
+		return;
+	}
 	if (env !== null) {
 		envConfig = env;
 	} else {
@@ -119,12 +129,12 @@ export async function flagToValues(
 	let item;
 	if (flagParent) {
 		item = flagParent;
-	} else {
+	} else if (flag) {
 		item = new FlagParentNode(
-			global.ldContext,
-			flag.name,
-			generateHoverString(flag, envConfig, config, global.ldContext),
-			`${config.baseUri}/${config.project}/${config.env}/features/${flag.key}`,
+			ldConfig.getCtx(),
+			label ? { label: flag.name, highlights: [[0, flag.name.length]] } : flag.name ? flag.name : flag.key,
+			generateHoverString(flag, envConfig, ldConfig),
+			`${ldConfig.getSession().fullUri}/${config.project}/${config.env}/features/${flag.key}`,
 			COLLAPSED,
 			[],
 			flag.key,
@@ -147,8 +157,8 @@ export async function flagToValues(
 		const tags: Array<FlagNode> = flag.tags.map((tag) => flagFactory({ label: tag }));
 		renderedFlagFields.push(flagFactory({ label: `Tags`, children: tags, collapsed: COLLAPSED, ctxValue: 'tags' }));
 	}
-	if (aliases) {
-		const aliasKeys = aliases.getKeys();
+	if (ldConfig.getAliases()) {
+		const aliasKeys = ldConfig.getAliases().getKeys();
 		if (aliasKeys && aliasKeys[flag.key] !== undefined && aliasKeys[flag.key].length > 0) {
 			const aliases: Array<FlagNode> = aliasKeys[flag.key].map((alias) => {
 				const aliasNode = flagFactory({ label: alias, collapsed: NON_COLLAPSED, ctxValue: 'flagSearch' });
@@ -179,7 +189,7 @@ export async function flagToValues(
 		flagPrereqs.map((prereq) => {
 			prereqs.push(flagFactory({ label: `Flag: ${prereq.key}`, collapsed: NON_COLLAPSED }));
 			prereqs.push(
-				flagFactory({ label: `Variation: ${prereq.variation}`, collapsed: NON_COLLAPSED, ctx: global.ldContext }),
+				flagFactory({ label: `Variation: ${prereq.variation}`, collapsed: NON_COLLAPSED, ctx: ldConfig.getCtx() }),
 			);
 		});
 		renderedFlagFields.push(
@@ -393,7 +403,7 @@ export class FlagParentNode extends TreeItem {
 	 */
 	constructor(
 		ctx: ExtensionContext,
-		public readonly label: string,
+		public readonly label: string | TreeItemLabel,
 		public readonly tooltip: string | MarkdownString,
 		uri: string,
 		public collapsibleState: TreeItemCollapsibleState,
@@ -412,21 +422,18 @@ export class FlagParentNode extends TreeItem {
 		this.flagVersion = flagVersion;
 		this.enabled = enabled;
 		this.contextValue = contextValue;
-		this.conditionalIcon(ctx, this.contextValue, this.enabled);
+		this.conditionalIcon(ctx, this.enabled);
 		this.aliases = aliases;
 	}
 
-	private conditionalIcon(ctx: ExtensionContext, contextValue: string, enabled: boolean) {
-		if (ctx && enabled) {
-			this.setIcon(ctx, 'toggleon');
-		} else if (ctx) {
-			this.setIcon(ctx, 'toggleoff');
+	private conditionalIcon(ctx: ExtensionContext, enabled: boolean) {
+		if (ctx) {
+			this.setIcon(ctx, enabled ? 'toggleon' : 'toggleoff');
 		}
 	}
 
-	private setIcon(ctx: ExtensionContext, fileName: string): ThemeIcon {
+	private setIcon(ctx: ExtensionContext, fileName: string): { light: string | Uri; dark: string | Uri } {
 		return (this.iconPath = {
-			id: null,
 			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName + '.svg')),
 			dark: ctx.asAbsolutePath(path.join('resources', 'dark', fileName + '.svg')),
 		});

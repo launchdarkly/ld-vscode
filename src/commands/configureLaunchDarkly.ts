@@ -1,31 +1,37 @@
-import { commands, Disposable, ExtensionContext, window } from 'vscode';
-import { LaunchDarklyAPI } from '../api';
-import { Configuration } from '../configuration';
+import { Disposable, ProgressLocation, window } from 'vscode';
 import { ConfigurationMenu } from '../configurationMenu';
 import { FlagStore } from '../flagStore';
+import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
+import { registerCommand } from '../utils';
 
-export default function configureLaunchDarkly(
-	ctx: ExtensionContext,
-	config: Configuration,
-	api: LaunchDarklyAPI,
-	flagStore?: FlagStore,
-) {
-	const configureExtension: Disposable = commands.registerCommand('extension.configureLaunchDarkly', async () => {
+export default function configureLaunchDarkly(config: LDExtensionConfiguration) {
+	const configureExtension: Disposable = registerCommand('extension.configureLaunchDarkly', async () => {
 		try {
-			const configurationMenu = new ConfigurationMenu(config, api, ctx);
+			const configurationMenu = new ConfigurationMenu(config);
 			await configurationMenu.configure();
-			if (typeof flagStore === 'undefined') {
-				flagStore = new FlagStore(config, api);
+			if (config.getFlagStore() === null) {
+				config.setFlagStore(new FlagStore(config));
 			} else {
-				await flagStore.reload();
+				await config.getFlagStore().reload();
 			}
-			await ctx.globalState.update('LDConfigured', true);
-			window.showInformationMessage('[LaunchDarkly] Configured successfully');
+			await config.getCtx().globalState.update('LDConfigured', true);
+			window.withProgress(
+				{
+					location: ProgressLocation.Notification,
+					title: '[LaunchDarkly] Configured successfully',
+					cancellable: false,
+				},
+				() => {
+					return new Promise((resolve) => {
+						setTimeout(resolve, 1500);
+					});
+				},
+			);
 		} catch (err) {
 			console.error(`Failed configuring LaunchDarkly Extension(provider): ${err}`);
 			window.showErrorMessage('An unexpected error occurred, please try again later.');
 		}
 	});
 
-	ctx.subscriptions.push(configureExtension);
+	config.getCtx().subscriptions.push(configureExtension);
 }

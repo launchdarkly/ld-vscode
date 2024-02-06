@@ -2,6 +2,25 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [5.0.0] - 2024-02-06
+
+### Fixed
+
+- Numerous performance issues related to code lens.
+- Initial setup now recovers better if there's been a problem.
+
+## Changed
+- Initial setup is now split into Sign in and Configuration.
+- Updated CLI version of Code References.
+
+## Added
+- Code lens and hover now show SDK availability of a flag.
+- Sign via through AuthProvider API.
+- `LaunchDarkly: Flag Actions` command.
+- Quick Targeting allows you to add/remove single context or rule from a flag.
+- Flags in File now has inline commands on entry.
+- Status bar icon that tells you current configured project and environment.
+
 ## [4.0.2] - 2023-02-15
 
 ### Fixed
