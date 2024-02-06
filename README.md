@@ -16,6 +16,7 @@ The LaunchDarkly VSCode extension provides utilities that make it easy to work w
 - Open feature flags in LaunchDarkly (Default keybind: `ctrl+alt+g`/`⌘+alt+g`)
 - [Feature flag explorer](#feature-flag-explorer): view a list of your feature flags and their settings in the explorer view
 - [Create Boolean Flag](#create-boolean-flag)
+- [Flag Actions](#flag-actions-command)
 - [Quick Links](#quick-links) to LaunchDarkly
 - [Flags in File](#flags-in-file)
 - [Flag Lens](#flag-lens)
@@ -38,6 +39,11 @@ Information required:
 * SDK Availability
 
 <img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/create-boolean-flag.gif?raw=true" width="350px" height="300px" alt="Create feature flag command">
+
+### Flag Actions Command
+Use the `LaunchDarkly: Flag Actions` command to bring up a menu of options that you can choose from to interact with your feature flags.
+
+![Flag Actions](images/flag-actions.png)
 
 ### Toggle Feature Flag
 Change the enabled state of a feature flag without moving your hands from your keyboard.
