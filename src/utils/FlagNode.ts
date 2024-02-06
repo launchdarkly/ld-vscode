@@ -427,7 +427,9 @@ export class FlagParentNode extends TreeItem {
 	}
 
 	private conditionalIcon(ctx: ExtensionContext, enabled: boolean) {
-		this.setIcon(ctx, enabled ? 'toggleon' : 'toggleoff');
+		if (ctx) {
+			this.setIcon(ctx, enabled ? 'toggleon' : 'toggleoff');
+		}
 	}
 
 	private setIcon(ctx: ExtensionContext, fileName: string): { light: string | Uri; dark: string | Uri } {
