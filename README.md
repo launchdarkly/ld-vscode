@@ -80,7 +80,7 @@ Flag names in the treeview can be right-clicked where you can update a flag's st
  <img src="https://github.com/launchdarkly/ld-vscode/raw/beta/images/treeview-right-click.png?raw=true" width="350px" height="100px" alt="right click menu options">
 
 ### Flag Lens
-The Flag Lens functionality shows insights about the usage and status of LaunchDarkly feature flags directly in the code. For a given feature flag in the codebase, the Flags Lens displays:
+The Flag Lens functionality shows insights about the usage and status of LaunchDarkly feature flags directly in the code. For a given feature flag in the codebase, the Flag Lens displays:
 
 __Flag Name__: The unique identifier for the feature flag within LaunchDarkly.
 __Flag Status__: Whether the flag is currently turned on or off.
