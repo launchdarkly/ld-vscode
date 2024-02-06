@@ -64,16 +64,6 @@ suite('FlagCodeLensProvider', () => {
 		};
 
 		// Initialize your objects here
-		//const ldConfig = LDExtensionConfiguration.getInstance(mockExt);
-		//config = new Configuration(mockExt);
-		//flagStore = new FlagStore(ldConfig);
-
-		// Object.defineProperty(flagStore, 'flagMetadata', {
-		// 	value: {
-		// 		fake: flag,
-		// 	},
-		// 	writable: false,
-		// });
 		aliases = new FlagAliases(ldConfig);
 		provider = new FlagCodeLensProvider(ldConfig);
 	});
