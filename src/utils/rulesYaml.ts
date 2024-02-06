@@ -118,37 +118,3 @@ const schema = {
 	],
 };
 
-// const schema = {
-// 	type: 'object',
-// 	properties: {
-// 		targets: {
-// 			type: 'array',
-// 			items: {
-// 				type: 'object',
-// 				properties: {
-// 					name: {
-// 						type: 'string',
-// 					},
-// 					values: {
-// 						anyOf: [
-// 							{
-// 								type: 'string',
-// 							},
-// 							{
-// 								type: 'array',
-// 								items: {
-// 									type: 'string',
-// 								},
-// 							},
-// 						],
-// 					},
-// 					contextKind: {
-// 						type: 'string',
-// 					},
-// 				},
-// 				required: ['name', 'values'],
-// 			},
-// 		},
-// 	},
-// 	required: ['targets'],
-// };
