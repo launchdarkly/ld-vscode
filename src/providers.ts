@@ -2,8 +2,9 @@ import { commands, window, workspace } from 'vscode';
 
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
-import { extensionReload, setupComponents } from './utils';
+import { extensionReload, setupComponents } from './generalUtils';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
+import { CMD_LD_MIGRATE_CONFIGURATION } from './utils/commands';
 
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 
@@ -13,7 +14,7 @@ export async function register(config: LDExtensionConfiguration): Promise<void> 
 
 	// Handle manual changes to extension configuration
 	// workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
-	// 	if (e.affectsConfiguration('launchdarkly') && e.affectsConfiguration('launchdarkly.enableCodeLens')) {
+	// 	if (e.affectsConfiguration('launchdarkly') && e.affectsConfiguration(CMD_LD_ENABLE_LENS)) {
 	// 		await extensionReload(config, true);
 	// 	}
 	// });
@@ -33,7 +34,7 @@ export async function register(config: LDExtensionConfiguration): Promise<void> 
 	);
 
 	config.getCtx().subscriptions.push(
-		commands.registerCommand('launchdarkly.migrateConfiguration', async () => {
+		commands.registerCommand(CMD_LD_MIGRATE_CONFIGURATION, async () => {
 			try {
 				const localConfig = workspace.getConfiguration('launchdarkly');
 				await config.getCtx().workspaceState.update('project', localConfig['project']);

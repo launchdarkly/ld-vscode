@@ -1,17 +1,16 @@
 import { TreeDataProvider, TreeItem, Event, EventEmitter, TreeItemCollapsibleState, MarkdownString } from 'vscode';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { FeatureFlag, ReleasePhase, ReleasePipeline } from '../models';
+import { FeatureFlag, ILDExtensionConfiguration, ReleasePhase, ReleasePipeline } from '../models';
 import * as url from 'url';
 //import { setTimeout } from 'timers/promises';
 
 export class LaunchDarklyReleaseProvider implements TreeDataProvider<TreeItem> {
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null> = new EventEmitter<TreeItem | null>();
 	readonly onDidChangeTreeData: Event<TreeItem | null> = this._onDidChangeTreeData.event;
-	readonly config: LDExtensionConfiguration;
+	readonly config: ILDExtensionConfiguration;
 	private nodes: ReleasePhaseParentNode[] | TreeItem[] = [];
 	private updateTimer: NodeJS.Timeout | undefined;
 	releasedFlags = new Set<string>();
-	constructor(config: LDExtensionConfiguration) {
+	constructor(config: ILDExtensionConfiguration) {
 		this.config = config;
 		this.start();
 		this.periodicRefresh();
@@ -197,7 +196,7 @@ function generateReleaseTooltip(release: ReleasePipeline): MarkdownString {
 
 function generateGlobalFlagHoverString(
 	flag: FeatureFlag,
-	config: LDExtensionConfiguration,
+	config: ILDExtensionConfiguration,
 	completedDate?: number,
 ): MarkdownString {
 	let env;

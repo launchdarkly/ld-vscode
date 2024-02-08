@@ -1,20 +1,30 @@
 import * as vscode from 'vscode';
-import { FeatureFlag, FlagConfiguration, PatchComment } from '../models';
+import { FeatureFlag, FlagConfiguration, FlagTreeInterface, ILDExtensionConfiguration, PatchComment } from '../models';
 import { debounce, map } from 'lodash';
 import checkExistingCommand from '../utils/common';
 import { authentication } from 'vscode';
 import { FlagNode, FlagParentNode, flagToValues } from '../utils/FlagNode';
 import { generateHoverString } from '../utils/hover';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { flagCodeSearch, registerCommand } from '../utils';
 import { logDebugMessage } from '../utils/logDebugMessage';
 import { ReleaseFlagNode } from './releaseViewProvider';
+import {
+	CMD_LD_REFRESH_FLAG_VIEW,
+	CMD_LD_COPY_KEY,
+	CMD_LD_OPEN_BROWSER,
+	CMD_LD_REFRESH_ENTRY,
+	CMD_LD_FLAG_SEARCH,
+	CMD_LD_TOGGLE_FLAG,
+	CMD_LD_UPDATE_FALLTHROUGH,
+	CMD_LD_UPDATE_OFF,
+} from '../utils/commands';
+import { flagCodeSearch } from '../utils/flagCodeSearch';
+import { registerCommand } from '../utils/registerCommand';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
 
 export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<FlagTreeInterface | FlagTreeInterface[]> {
-	private readonly ldConfig: LDExtensionConfiguration;
+	private readonly ldConfig: ILDExtensionConfiguration;
 	public flagNodes: Array<FlagTreeInterface> | null;
 	private _onDidChangeTreeData: vscode.EventEmitter<FlagTreeInterface | null | void> =
 		new vscode.EventEmitter<FlagTreeInterface | null | void>();
@@ -22,7 +32,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	private updatingTree: vscode.EventEmitter<'started' | 'error' | 'complete'> = new vscode.EventEmitter();
 	private lastTreeEvent: string;
 
-	constructor(ldConfig: LDExtensionConfiguration) {
+	constructor(ldConfig: ILDExtensionConfiguration) {
 		this.ldConfig = ldConfig;
 		this.registerCommands();
 		this.start();
@@ -197,7 +207,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 	}
 
 	registerTreeviewRefreshCommand(): vscode.Disposable {
-		return registerCommand('launchdarkly.treeviewrefresh', (): void => {
+		return registerCommand(CMD_LD_REFRESH_FLAG_VIEW, (): void => {
 			this.reload();
 			vscode.commands.executeCommand(
 				'setContext',
@@ -209,28 +219,28 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 	async registerCommands(): Promise<void> {
 		// Check Copy Key only, if it exists the rest should also and registering commands should be skipped.
-		const copyKeyCmd = 'launchdarkly.copyKey';
+		const copyKeyCmd = CMD_LD_COPY_KEY;
 		if (await checkExistingCommand(copyKeyCmd)) {
 			return;
 		}
 		this.ldConfig.getCtx().subscriptions.push(
 			registerCommand(copyKeyCmd, (node: FlagNode) => vscode.env.clipboard.writeText(node.flagKey)),
-			registerCommand('launchdarkly.openBrowser', (node: FlagNode | string) => {
+			registerCommand(CMD_LD_OPEN_BROWSER, (node: FlagNode | string) => {
 				if (typeof node === 'string') {
 					vscode.env.openExternal(vscode.Uri.parse(node));
 				} else if (node.uri) {
 					vscode.env.openExternal(vscode.Uri.parse(node.uri));
 				}
 			}),
-			registerCommand('launchdarkly.refreshEntry', () => this.reload()),
+			registerCommand(CMD_LD_REFRESH_ENTRY, () => this.reload()),
 			this.registerTreeviewRefreshCommand(),
-			registerCommand('launchdarkly.flagMultipleSearch', (node: FlagNode | ReleaseFlagNode) => {
+			registerCommand(CMD_LD_FLAG_SEARCH, (node: FlagNode | ReleaseFlagNode) => {
 				if (!node.flagKey) {
 					return;
 				}
 				flagCodeSearch(this.ldConfig, node.flagKey);
 			}),
-			registerCommand('launchdarkly.toggleFlag', async (node: FlagParentNode) => {
+			registerCommand(CMD_LD_TOGGLE_FLAG, async (node: FlagParentNode) => {
 				try {
 					if (!node.flagKey) {
 						logDebugMessage('Flag key not found');
@@ -247,7 +257,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					vscode.window.showErrorMessage(`Could not toggle flag: ${err.message}`);
 				}
 			}),
-			registerCommand('launchdarkly.fallthroughChange', async (node: FlagNode) => {
+			registerCommand(CMD_LD_UPDATE_FALLTHROUGH, async (node: FlagNode) => {
 				try {
 					await this.flagPatch(
 						node,
@@ -258,7 +268,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 					vscode.window.showErrorMessage(`Could not set Fallthrough: ${err.message}`);
 				}
 			}),
-			registerCommand('launchdarkly.offChange', async (node: FlagNode) => {
+			registerCommand(CMD_LD_UPDATE_OFF, async (node: FlagNode) => {
 				try {
 					await this.flagPatch(node, `/environments/${this.ldConfig.getConfig()?.env}/offVariation`, node.contextValue);
 				} catch (err) {
@@ -432,11 +442,4 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 
 		return item;
 	}
-}
-
-export interface FlagTreeInterface {
-	children: unknown;
-	command?: unknown;
-	flagKey?: string;
-	flagVersion?: number;
 }

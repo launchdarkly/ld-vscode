@@ -10,12 +10,10 @@ import {
 } from 'vscode';
 
 import { MultiStepInput } from './multiStepInput';
-import { LaunchDarklyAPI } from './api';
-import { Resource, Project, Environment } from './models';
-import { extensionReload } from './utils';
+import { Resource, Project, Environment, LaunchDarklyAuthenticationSession, LaunchDarklyAPIInterface } from './models';
+import { extensionReload } from './generalUtils';
 import { logDebugMessage } from './utils/logDebugMessage';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
-import { LaunchDarklyAuthenticationSession } from './providers/authProvider';
 interface CMState {
 	baseUri: string;
 	env: string;
@@ -23,7 +21,7 @@ interface CMState {
 }
 export class ConfigurationMenu {
 	private readonly config: LDExtensionConfiguration;
-	private api: LaunchDarklyAPI;
+	private api: LaunchDarklyAPIInterface;
 	private readonly ctx: ExtensionContext;
 	private title: string;
 	private totalSteps: number;

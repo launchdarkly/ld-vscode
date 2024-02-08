@@ -1,6 +1,5 @@
 import {
 	authentication,
-	commands,
 	ConfigurationChangeEvent,
 	Disposable,
 	DocumentFilter,
@@ -23,14 +22,15 @@ import { LaunchDarklyHoverProvider } from './providers/hover';
 import { QuickLinksListProvider } from './providers/quickLinksView';
 import { setTimeout } from 'timers/promises';
 import { ToggleCache } from './toggleCache';
-import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import { LaunchDarklyReleaseProvider } from './providers/releaseViewProvider';
-import { InstructionPatch } from './models';
+import { ILDExtensionConfiguration, InstructionPatch } from './models';
 import { logDebugMessage } from './utils/logDebugMessage';
+import { CMD_LD_CONFIG, CMD_LD_OPEN_FLAG, CMD_LD_REFRESH_LENS, CMD_LD_TOGGLE_CMD_PROMPT } from './utils/commands';
+import { registerCommand } from './utils/registerCommand';
 
 const cache = new ToggleCache();
 
-export async function extensionReload(config: LDExtensionConfiguration, reload = false) {
+export async function extensionReload(config: ILDExtensionConfiguration, reload = false) {
 	const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
 	if (session !== undefined) {
 		// TODO: determine if this reload call to config is needed
@@ -43,7 +43,7 @@ export async function extensionReload(config: LDExtensionConfiguration, reload =
 	}
 }
 
-export async function setupComponents(config: LDExtensionConfiguration, reload = false) {
+export async function setupComponents(config: ILDExtensionConfiguration, reload = false) {
 	const cmds = config.getCtx().globalState.get<Disposable>('commands');
 	if (typeof cmds?.dispose === 'function') {
 		cmds.dispose();
@@ -63,7 +63,7 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 		}
 
 		config.setStatusBar(window.createStatusBarItem(StatusBarAlignment.Left));
-		config.getStatusBar().command = 'extension.configureLaunchDarkly';
+		config.getStatusBar().command = CMD_LD_CONFIG;
 		const workspaceConfig = workspace.getConfiguration('launchdarkly');
 		if (workspaceConfig.get('enableStatusBar')) {
 			config.getStatusBar().text = `$(launchdarkly-logo) ${config.getConfig().project} / ${config.getConfig().env}`;
@@ -105,7 +105,7 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 		const listView = new LaunchDarklyFlagListProvider(config, codeLens);
 		window.registerTreeDataProvider('launchdarklyFlagList', listView);
 		if (!reload) {
-			listViewDisp = registerCommand('launchdarkly.refreshFlagLens', () => listView.setFlagsInDocument());
+			listViewDisp = registerCommand(CMD_LD_REFRESH_LENS, () => listView.setFlagsInDocument());
 			config.getCtx().subscriptions.push(listViewDisp);
 		}
 
@@ -152,10 +152,10 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 
 		codeLens.start();
 
-		const flagToggle = registerCommand('launchdarkly.toggleFlagCmdPrompt', async () => {
+		const flagToggle = registerCommand(CMD_LD_TOGGLE_CMD_PROMPT, async () => {
 			await showToggleMenu(config);
 		});
-		const openFlag = registerCommand('launchdarkly.OpenFlag', (node: FlagItem) =>
+		const openFlag = registerCommand(CMD_LD_OPEN_FLAG, (node: FlagItem) =>
 			window.activeTextEditor.revealRange(node.range),
 		);
 
@@ -176,7 +176,7 @@ export async function setupComponents(config: LDExtensionConfiguration, reload =
 	}
 }
 
-async function showToggleMenu(config: LDExtensionConfiguration) {
+async function showToggleMenu(config: ILDExtensionConfiguration) {
 	let flags;
 	try {
 		flags = await config.getFlagStore().allFlagsMetadata();
@@ -222,7 +222,7 @@ async function showToggleMenu(config: LDExtensionConfiguration) {
 	}
 }
 
-export async function toggleFlag(config: LDExtensionConfiguration, key: string) {
+export async function toggleFlag(config: ILDExtensionConfiguration, key: string) {
 	await window.withProgress(
 		{
 			location: ProgressLocation.Notification,
@@ -257,30 +257,8 @@ export async function toggleFlag(config: LDExtensionConfiguration, key: string) 
 	);
 }
 
-export function flagCodeSearch(config: LDExtensionConfiguration, key: string) {
-	let aliases;
-	let findAliases: string;
-	if (config.getAliases()) {
-		aliases = config.getAliases()?.getKeys();
-	}
-	if (aliases && aliases[key]) {
-		const tempSearch = [...aliases[key]];
-		tempSearch.push(key);
-		findAliases = tempSearch.join('|');
-	} else {
-		findAliases = key;
-	}
-	commands.executeCommand('workbench.action.findInFiles', {
-		query: findAliases,
-		triggerSearch: true,
-		matchWholeWord: true,
-		isCaseSensitive: true,
-		isRegex: true,
-	});
-}
-
 export async function flagOffFallthroughPatch(
-	config: LDExtensionConfiguration,
+	config: ILDExtensionConfiguration,
 	kind: string,
 	key: string,
 ): Promise<void> {
@@ -328,19 +306,4 @@ function createFallthroughOrOffInstruction(kind: string, variationId: string) {
 		kind,
 		variationId: variationId,
 	};
-}
-
-export function legacyAuth() {
-	return true;
-	//workspace.getConfiguration('launchdarkly').get('legacyAuth', false)
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function registerCommand(command: string, callback: (...args: any[]) => any) {
-	try {
-		return commands.registerCommand(command, callback);
-	} catch (err) {
-		logDebugMessage(err);
-		return Disposable.from();
-	}
 }

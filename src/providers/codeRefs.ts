@@ -5,8 +5,8 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import csv from 'csv-parser';
 import { CodeRefs } from '../coderefs/codeRefsVersion';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { legacyAuth } from '../utils';
+import { legacyAuth } from '../utils/legacyAuth';
+import { ILDExtensionConfiguration } from '../models';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { promises: Fs } = require('fs');
 
@@ -22,14 +22,14 @@ type FlagAlias = {
 };
 
 export class FlagAliases {
-	private config: LDExtensionConfiguration;
+	private config: ILDExtensionConfiguration;
 	private ctx: ExtensionContext;
 	public readonly aliasUpdates: EventEmitter<boolean | null> = new EventEmitter();
 	map = new Map();
 	keys = new Map();
 	private statusBar: StatusBarItem;
 
-	constructor(config: LDExtensionConfiguration) {
+	constructor(config: ILDExtensionConfiguration) {
 		this.config = config;
 		// this.ctx = ctx;
 		// this.ldConfig = ldConfig;

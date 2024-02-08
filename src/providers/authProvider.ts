@@ -17,8 +17,8 @@ import {
 import { v4 as uuid } from 'uuid';
 import { PromiseAdapter, promiseFromEvent } from '../utils/common';
 import fetch from 'node-fetch';
-import { Member, Team } from '../models';
-import { legacyAuth } from '../utils';
+import { LaunchDarklyAuthenticationSession, Member, Team } from '../models';
+import { legacyAuth } from '../utils/legacyAuth';
 
 export const AUTH_TYPE = `launchdarkly`;
 const AUTH_NAME = `LaunchDarkly`;
@@ -30,14 +30,6 @@ class UriEventHandler extends EventEmitter<Uri> implements UriHandler {
 	public handleUri(uri: Uri) {
 		this.fire(uri);
 	}
-}
-
-export interface LaunchDarklyAuthenticationSession extends AuthenticationSession {
-	refreshToken: string;
-	baseUri: string;
-	fullUri: string;
-	teams: Team[];
-	apiToken?: string;
 }
 
 interface TokenInformation {

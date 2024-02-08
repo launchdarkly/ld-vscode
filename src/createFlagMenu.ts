@@ -3,8 +3,7 @@ import { ProgressLocation, QuickInput, QuickPickItem, env, tasks, window, worksp
 import { MultiStepInput, QuickPickParameters } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
 import { kebabCase } from 'lodash';
-import { FeatureFlag, NewFlag, ReleasePipeline } from './models';
-import { LDExtensionConfiguration } from './ldExtensionConfiguration';
+import { FeatureFlag, ILDExtensionConfiguration, NewFlag, ReleasePipeline } from './models';
 export interface State {
 	name: string;
 	key: string;
@@ -35,7 +34,7 @@ interface PipelineQuickPickItem extends QuickPickItem {
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 export class CreateFlagMenu {
-	private readonly config: LDExtensionConfiguration;
+	private readonly config: ILDExtensionConfiguration;
 	private api: LaunchDarklyAPI;
 	private title: string;
 	private totalSteps: number;
@@ -43,7 +42,7 @@ export class CreateFlagMenu {
 	public flag: FeatureFlag;
 	private pipelines: Array<ReleasePipeline>;
 
-	constructor(config: LDExtensionConfiguration, defaults?: flagDefaultSettings) {
+	constructor(config: ILDExtensionConfiguration, defaults?: flagDefaultSettings) {
 		this.config = config;
 		this.defaults = defaults || undefined;
 		this.title = 'Create Feature Flag';

@@ -8,11 +8,10 @@ const toMatchSnapshot = require('expect-mocha-snapshot');
 
 expect.extend({ toMatchSnapshot });
 import { generateHoverString } from '../src/utils/hover';
-import { FeatureFlag, FlagConfiguration } from '../src/models';
+import { FeatureFlag, FlagConfiguration, LaunchDarklyAuthenticationSession } from '../src/models';
 import { isPrecedingCharStringDelimiter } from '../src/providers/completion';
 import { LDExtensionConfiguration } from '../src/ldExtensionConfiguration';
 import { Configuration } from '../src/configuration';
-import { LaunchDarklyAuthenticationSession } from '../src/providers/authProvider';
 
 function resolveSrcTestPath(ctx) {
 	return Object.assign(ctx, { test: { file: ctx.test.file.replace('/out', '') } });

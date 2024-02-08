@@ -17,20 +17,19 @@ import {
 import { Configuration } from '../configuration';
 import { flagToValues } from '../utils/FlagNode';
 import { FlagCodeLensProvider, SimpleCodeLens } from './flagLens';
-import { FlagTreeInterface } from './flagsView';
 import { FlagNode } from '../utils/FlagNode';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { FeatureFlag } from '../models';
+import { FeatureFlag, FlagTreeInterface, ILDExtensionConfiguration } from '../models';
 import { logDebugMessage } from '../utils/logDebugMessage';
+import { CMD_LD_ENABLE_LENS } from '../utils/commands';
 
 export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> {
-	private ldConfig: LDExtensionConfiguration;
+	private ldConfig: ILDExtensionConfiguration;
 	private lens: FlagCodeLensProvider;
 	private flagNodes: Array<FlagTreeInterface> | null;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
 	private flagMap: Map<string, FlagList | FlagNodeList> = new Map();
-	constructor(ldConfig: LDExtensionConfiguration, lens: FlagCodeLensProvider) {
+	constructor(ldConfig: ILDExtensionConfiguration, lens: FlagCodeLensProvider) {
 		this.ldConfig = ldConfig;
 		this.lens = lens;
 		this.setFlagsInDocument();
@@ -197,7 +196,7 @@ export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> 
 				const CodeLensCmd = new TreeItem('Toggle Flag lens');
 				CodeLensCmd.command = {
 					title: 'Command',
-					command: 'launchdarkly.enableCodeLens',
+					command: CMD_LD_ENABLE_LENS,
 				};
 
 				items.push(CodeLensCmd);

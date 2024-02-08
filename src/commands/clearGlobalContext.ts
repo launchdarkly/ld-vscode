@@ -1,5 +1,5 @@
 import { commands, Disposable, window } from 'vscode';
-import { extensionReload } from '../utils';
+import { extensionReload } from '../generalUtils';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
 export default async function globalClearCmd(config: LDExtensionConfiguration) {

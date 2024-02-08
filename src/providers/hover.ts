@@ -3,12 +3,12 @@ import { kebabCase } from 'lodash';
 import { FLAG_KEY_REGEX } from '../providers';
 
 import { generateHoverString } from '../utils/hover';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
+import { ILDExtensionConfiguration } from '../models';
 
 export class LaunchDarklyHoverProvider implements HoverProvider {
-	private readonly ldConfig: LDExtensionConfiguration;
+	private readonly ldConfig: ILDExtensionConfiguration;
 
-	constructor(ldConfig: LDExtensionConfiguration) {
+	constructor(ldConfig: ILDExtensionConfiguration) {
 		this.ldConfig = ldConfig;
 	}
 

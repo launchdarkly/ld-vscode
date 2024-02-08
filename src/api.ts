@@ -5,14 +5,23 @@ const axios = require('axios').default;
 import axiosRetry from 'axios-retry';
 import retry from 'axios-retry-after';
 
-import { Configuration } from './configuration';
-import { FlagLink, InstructionPatch, NewFlag, ProjectAPI, ReleasePhase, ReleasePipeline } from './models';
+import {
+	FlagLink,
+	IConfiguration,
+	ILDExtensionConfiguration,
+	InstructionPatch,
+	LaunchDarklyAuthenticationSession,
+	NewFlag,
+	ProjectAPI,
+	ReleasePhase,
+	ReleasePipeline,
+} from './models';
 import { Resource, Project, FeatureFlag, Environment, PatchOperation, PatchComment, Metric } from './models';
 import { RepositoryRep } from 'launchdarkly-api-typescript';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
-import { LaunchDarklyAuthenticationSession } from './providers/authProvider';
 import { debuglog } from 'util';
-import { legacyAuth } from './utils';
+import { CMD_LD_CONFIG } from './utils/commands';
+import { legacyAuth } from './utils/legacyAuth';
 
 interface CreateOptionsParams {
 	method?: string;
@@ -83,10 +92,10 @@ axiosRetry(axios, { retries: 2, retryDelay: axiosRetry.exponentialDelay });
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
-	private readonly config: Configuration;
-	private readonly ldConfig: LDExtensionConfiguration;
+	private readonly config: IConfiguration;
+	private readonly ldConfig: ILDExtensionConfiguration;
 
-	constructor(config: Configuration, ldConfig: LDExtensionConfiguration) {
+	constructor(config: IConfiguration, ldConfig: ILDExtensionConfiguration) {
 		this.config = config;
 		this.ldConfig = ldConfig;
 	}
@@ -151,8 +160,7 @@ export class LaunchDarklyAPI {
 					'Configure LaunchDarkly Extension',
 				)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension')
-						commands.executeCommand('extension.configureLaunchDarkly');
+					if (selection === 'Configure LaunchDarkly Extension') commands.executeCommand(CMD_LD_CONFIG);
 				});
 		}
 	}
@@ -195,8 +203,7 @@ export class LaunchDarklyAPI {
 					'Configure LaunchDarkly Extension',
 				)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension')
-						commands.executeCommand('extension.configureLaunchDarkly');
+					if (selection === 'Configure LaunchDarkly Extension') commands.executeCommand(CMD_LD_CONFIG);
 				});
 		}
 	}
@@ -214,8 +221,7 @@ export class LaunchDarklyAPI {
 					'Configure LaunchDarkly Extension',
 				)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension')
-						commands.executeCommand('extension.configureLaunchDarkly');
+					if (selection === 'Configure LaunchDarkly Extension') commands.executeCommand(CMD_LD_CONFIG);
 				});
 		}
 	}

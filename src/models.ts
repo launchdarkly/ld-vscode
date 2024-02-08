@@ -1,4 +1,19 @@
-import { ClientSideAvailability } from 'launchdarkly-api-typescript';
+import { LDContext, LDEvaluationDetail, LDFeatureStoreKindData } from '@launchdarkly/node-server-sdk';
+import { ExecOptions } from 'child_process';
+import { ClientSideAvailability, RepositoryRep } from 'launchdarkly-api-typescript';
+import { Dictionary } from 'lodash';
+import {
+	AuthenticationSession,
+	ConfigurationChangeEvent,
+	EventEmitter,
+	ExtensionContext,
+	MarkdownString,
+	StatusBarItem,
+	TreeDataProvider,
+	TreeItem,
+	TreeView,
+	WorkspaceFolder,
+} from 'vscode';
 
 export class Resource {
 	name: string;
@@ -560,4 +575,166 @@ export interface MemberTeamSummaryRep {
 	 * @memberof MemberTeamSummaryRep
 	 */
 	name: string;
+}
+
+export interface FlagStoreInterface {
+	storeUpdates: EventEmitter<boolean | null>;
+	// We fire a storeReady event because this will always exist compared to 'ready' listener on LDClient
+	// which may be reinitialized
+	storeReady: EventEmitter<boolean | null>;
+	ready: EventEmitter<boolean | null>;
+	reload(): Promise<void>;
+	start(): Promise<void>;
+	on(event: string, cb: (keys: string) => void): void;
+	removeAllListeners(): Promise<void>;
+	stop(): Promise<void>;
+	getFeatureFlag(flag: string, fullFlag?: boolean): Promise<FlagWithConfiguration>;
+	forceFeatureFlagUpdate(flagKey: string): Promise<void>;
+	allFlags(): Promise<FlagConfiguration[] | LDFeatureStoreKindData>;
+	getFlagConfig(flag: string): Promise<FlagConfiguration>;
+	getFlagMetadata(flag: string): Promise<FeatureFlag>;
+	allFlagsMetadata(): Promise<Dictionary<FeatureFlag>>;
+	listFlags(): Promise<Array<string>>;
+	executeAndUpdateFlagStore(
+		func: (
+			projectKey: string,
+			flagKey: string,
+			value?: PatchComment | InstructionPatch,
+		) => Promise<FeatureFlag | Error>,
+		projectKey: string,
+		flagKey: string,
+		value?: PatchComment | InstructionPatch,
+	): Promise<FeatureFlag>;
+	allFlags(): Promise<FlagConfiguration[] | LDFeatureStoreKindData>;
+	variationDetail(flag: string, context: LDContext): Promise<LDEvaluationDetail>;
+	// Add other methods as needed...
+}
+
+export interface LaunchDarklyTreeViewProviderInterface
+	extends TreeDataProvider<FlagTreeInterface | FlagTreeInterface[]> {
+	flagNodes: Array<FlagTreeInterface> | null;
+	start(): void;
+	treeLoader(): void;
+	registerCommands(): void;
+	refresh(): void;
+	stop(): void;
+	// Add other methods as needed...
+}
+
+export interface FlagTreeInterface {
+	children: unknown;
+	command?: unknown;
+	flagKey?: string;
+	flagVersion?: number;
+}
+
+export interface LaunchDarklyAuthenticationSession extends AuthenticationSession {
+	refreshToken: string;
+	baseUri: string;
+	fullUri: string;
+	teams: Team[];
+	apiToken?: string;
+}
+
+export interface IFlagAliases {
+	aliasUpdates: EventEmitter<boolean | null>;
+	codeRefsVersionCheck(): Promise<boolean>;
+	setupStatusBar(): void;
+	exec(command: string, options: ExecOptions): Promise<{ stdout: string; stderr: string }>;
+	generateAndReadAliases(directory?: WorkspaceFolder): Promise<void>;
+	getListOfMapKeys(): Array<string> | undefined;
+	getMap(): Map<string, string> | undefined;
+	getKeys(): Map<string, string> | undefined;
+	start(): Promise<void>;
+}
+
+export interface ILDExtensionConfiguration {
+	getAliases(): IFlagAliases | undefined;
+	setAliases(aliases: IFlagAliases): void;
+	getApi(): LaunchDarklyAPIInterface | undefined;
+	setApi(api: LaunchDarklyAPIInterface): void;
+	getConfig(): IConfiguration | undefined;
+	setConfig(config: IConfiguration): void;
+	getCtx(): ExtensionContext;
+	setCtx(ctx: ExtensionContext): void;
+	getFlagStore(): FlagStoreInterface | undefined;
+	setFlagStore(flagStore: FlagStoreInterface): void;
+	getFlagTreeProvider(): TreeView<FlagTreeInterface> | undefined;
+	setFlagTreeProvider(flagTreeProvider: TreeView<FlagTreeInterface>): void;
+	getFlagView(): LaunchDarklyTreeViewProviderInterface | undefined;
+	setFlagView(flagView: LaunchDarklyTreeViewProviderInterface): void;
+	getReleaseView(): ILaunchDarklyReleaseProvider | undefined;
+	setReleaseView(releaseView: ILaunchDarklyReleaseProvider): void;
+	getSession(): LaunchDarklyAuthenticationSession | undefined;
+	setSession(session: LaunchDarklyAuthenticationSession): void;
+	getStatusBar(): StatusBarItem | undefined;
+	setStatusBar(statusBar: StatusBarItem): void;
+}
+
+export interface LaunchDarklyAPIInterface {
+	getProjects(url?: string): Promise<Array<Project>>;
+	getProject(projectKey: string, url?: string): Promise<ProjectAPI | undefined>;
+	getEnvironments(url: string): Promise<Array<Environment>>;
+	getEnvironment(projectKey: string, envKey: string): Promise<Environment>;
+	getMetrics(projectKey: string): Promise<Array<Metric>>;
+	getFeatureFlag(projectKey: string, flagKey: string, envKey?: string, fullFlag?: boolean): Promise<FeatureFlag>;
+	getFlagCodeRefs(projectKey: string, repo: string, flag?: string): Promise<Array<RepositoryRep>>;
+	getFlagLinks(projectKey: string, flag: string): Promise<Array<FlagLink>>;
+	getReleasePipelines(projectKey: string): Promise<Array<ReleasePipeline>>;
+	getReleases(projectKey: string, pipelineKey: string, pipelineId: string): Promise<Array<ReleasePhase>>;
+	getCompletedReleases(projectKey: string, pipelineKey: string): Promise<Array<ReleasePhase>>;
+	postFeatureFlag(projectKey: string, flag: NewFlag): Promise<FeatureFlag>;
+	getFeatureFlags(projectKey: string, envKey?: string, url?: string): Promise<Array<FeatureFlag>>;
+	patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag | Error>;
+	patchFeatureFlagOn(projectKey: string, flagKey: string, enabled: boolean): Promise<FeatureFlag | Error>;
+	patchFeatureFlagSem(projectKey: string, flagKey: string, value?: InstructionPatch): Promise<FeatureFlag | Error>;
+}
+
+export interface IConfiguration {
+	project: string;
+	env: string;
+	codeRefsPath?: string;
+	codeRefsRefreshRate: number;
+	enableAliases: boolean;
+	enableFlagExplorer: boolean;
+	refreshRate: number;
+	accessToken: string;
+	enableHover: boolean;
+	enableAutocomplete: boolean;
+	enableMetricExplorer: boolean;
+	enableCodeLens: boolean;
+	baseUri: string;
+	streamUri?: string;
+	isConfigured(): Promise<boolean>;
+	clearLocalConfig(): Promise<void>;
+	clearGlobalConfig(): Promise<void>;
+	copyWorkspaceToGlobal(): Promise<void>;
+	setGlobalDefault(): Promise<void>;
+	getState(key: string): Promise<string | unknown>;
+	reload(): Promise<void>;
+	streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean;
+	update(key: string, value: string | boolean, global: boolean): Promise<void>;
+	validate(): Promise<string>;
+	validateRefreshInterval(interval: number): boolean;
+}
+
+export interface ILaunchDarklyReleaseProvider extends TreeDataProvider<TreeItem> {
+	config: ILDExtensionConfiguration;
+	releasedFlags: Set<string>;
+	refresh(): void;
+	start(): void;
+	reload(): void;
+	periodicRefresh(): void;
+	getReleases(): Promise<IReleasePhaseParentNode[]>;
+}
+
+export interface IReleasePhaseParentNode extends TreeItem {
+	children: IReleaseFlagNode[] | undefined;
+	tooltip?: string | MarkdownString;
+}
+
+export interface IReleaseFlagNode {
+	flagKey?: string;
+	contextValue?: string;
+	tooltip?: string | MarkdownString;
 }

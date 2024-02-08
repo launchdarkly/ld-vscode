@@ -12,9 +12,8 @@ import {
 	TreeItemLabel,
 	Uri,
 } from 'vscode';
-import { FeatureFlag, FlagConfiguration } from '../models';
+import { FeatureFlag, FlagConfiguration, ILDExtensionConfiguration } from '../models';
 import { generateHoverString } from './hover';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
 const COLLAPSED = TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = TreeItemCollapsibleState.None;
@@ -104,7 +103,7 @@ export class FlagNode extends TreeItem {
 export async function flagToValues(
 	flag: FeatureFlag,
 	env: FlagConfiguration = null,
-	ldConfig: LDExtensionConfiguration,
+	ldConfig: ILDExtensionConfiguration,
 	flagParent?: FlagParentNode,
 	label?: boolean,
 ): Promise<FlagParentNode> {

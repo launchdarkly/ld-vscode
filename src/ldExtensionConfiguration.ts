@@ -1,22 +1,25 @@
 import { ExtensionContext, StatusBarItem, TreeView } from 'vscode';
-import { Configuration } from './configuration';
-import { LaunchDarklyAPI } from './api';
-import { FlagStore } from './flagStore';
-import { FlagAliases } from './providers/codeRefs';
-import { LaunchDarklyAuthenticationSession } from './providers/authProvider';
-import { FlagTreeInterface, LaunchDarklyTreeViewProvider } from './providers/flagsView';
-import { LaunchDarklyReleaseProvider } from './providers/releaseViewProvider';
+import {
+	FlagStoreInterface,
+	FlagTreeInterface,
+	IConfiguration,
+	IFlagAliases,
+	ILaunchDarklyReleaseProvider,
+	LaunchDarklyAPIInterface,
+	LaunchDarklyAuthenticationSession,
+	LaunchDarklyTreeViewProviderInterface,
+} from './models';
 
 export class LDExtensionConfiguration {
 	private static instance: LDExtensionConfiguration;
-	private config?: Configuration;
+	private config?: IConfiguration;
 	private ctx: ExtensionContext;
-	private api?: LaunchDarklyAPI;
-	private flagStore?: FlagStore;
+	private api?: LaunchDarklyAPIInterface;
+	private flagStore?: FlagStoreInterface;
 	private flagTreeView: TreeView<FlagTreeInterface>;
-	private flagView: LaunchDarklyTreeViewProvider;
-	private aliases?: FlagAliases;
-	private releaseView?: LaunchDarklyReleaseProvider;
+	private flagView: LaunchDarklyTreeViewProviderInterface;
+	private aliases?: IFlagAliases;
+	private releaseView?: ILaunchDarklyReleaseProvider;
 	private session?: LaunchDarklyAuthenticationSession;
 	private statusBar?: StatusBarItem;
 
@@ -31,27 +34,27 @@ export class LDExtensionConfiguration {
 		return LDExtensionConfiguration.instance;
 	}
 
-	getAliases(): FlagAliases | undefined {
+	getAliases(): IFlagAliases | undefined {
 		return this.aliases;
 	}
 
-	setAliases(aliases: FlagAliases): void {
+	setAliases(aliases: IFlagAliases): void {
 		this.aliases = aliases;
 	}
 
-	getApi(): LaunchDarklyAPI | undefined {
+	getApi(): LaunchDarklyAPIInterface | undefined {
 		return this.api;
 	}
 
-	setApi(api: LaunchDarklyAPI): void {
+	setApi(api: LaunchDarklyAPIInterface): void {
 		this.api = api;
 	}
 
-	getConfig(): Configuration | undefined {
+	getConfig(): IConfiguration | undefined {
 		return this.config;
 	}
 
-	setConfig(config: Configuration): void {
+	setConfig(config: IConfiguration): void {
 		this.config = config;
 	}
 
@@ -63,11 +66,11 @@ export class LDExtensionConfiguration {
 		this.ctx = ctx;
 	}
 
-	getFlagStore(): FlagStore | undefined {
+	getFlagStore(): FlagStoreInterface | undefined {
 		return this.flagStore;
 	}
 
-	setFlagStore(flagStore: FlagStore): void {
+	setFlagStore(flagStore: FlagStoreInterface): void {
 		this.flagStore = flagStore;
 	}
 
@@ -79,19 +82,19 @@ export class LDExtensionConfiguration {
 		this.flagTreeView = flagTreeProvider;
 	}
 
-	getFlagView(): LaunchDarklyTreeViewProvider | undefined {
+	getFlagView(): LaunchDarklyTreeViewProviderInterface | undefined {
 		return this.flagView;
 	}
 
-	setFlagView(flagView: LaunchDarklyTreeViewProvider): void {
+	setFlagView(flagView: LaunchDarklyTreeViewProviderInterface): void {
 		this.flagView = flagView;
 	}
 
-	getReleaseView(): LaunchDarklyReleaseProvider | undefined {
+	getReleaseView(): ILaunchDarklyReleaseProvider | undefined {
 		return this.releaseView;
 	}
 
-	setReleaseView(releaseView: LaunchDarklyReleaseProvider): void {
+	setReleaseView(releaseView: ILaunchDarklyReleaseProvider): void {
 		this.releaseView = releaseView;
 	}
 
