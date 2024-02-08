@@ -12,7 +12,7 @@ export default async function configureEnvironmentCmd(config: ILDExtensionConfig
 			}
 			const project = await api?.getProject(config.getConfig().project);
 			if (!project) {
-				window.showErrorMessage(`[LaunchDarkly] Please Configure LaunchDarkly Extension`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} Please Configure LaunchDarkly Extension`);
 				return;
 			}
 			const environments = project.environments.items;
