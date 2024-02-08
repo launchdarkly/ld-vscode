@@ -23,8 +23,7 @@ import { CONST_CONFIG_LD } from '../utils/constants';
 
 export const AUTH_TYPE = `launchdarkly`;
 const AUTH_NAME = `LaunchDarkly`;
-const LAUNCHDARKLY_OAUTH_DOMAIN = `hello-world-restless-violet-9097.dobrien-nj.workers.dev`; // Adjust if necessary
-//const LAUNCHDARKLY_OAUTH_DOMAIN = `ldprobotdevo.ngrok.io/vscode`; // Adjust if necessary
+const LAUNCHDARKLY_OAUTH_DOMAIN = ``; // Adjust if necessary
 const SESSIONS_SECRET_KEY = `${AUTH_TYPE}.sessions`;
 
 class UriEventHandler extends EventEmitter<Uri> implements UriHandler {
@@ -311,7 +310,6 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 				Authorization: apiToken,
 			},
 		});
-		//const serviceTokenError = `reflexive member id 'me' is invalid when authenticated with a service token`;
 		const res = await response;
 
 		if (res.status == 404) {
