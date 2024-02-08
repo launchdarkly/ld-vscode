@@ -2,6 +2,7 @@ import { commands, Disposable, window } from 'vscode';
 import { extensionReload } from '../generalUtils';
 import { CMD_LD_CONFIG_ENV } from '../utils/commands';
 import { ILDExtensionConfiguration } from '../models';
+import { CONST_LD_PREFIX } from '../utils/constants';
 
 export default async function configureEnvironmentCmd(config: ILDExtensionConfiguration): Promise<Disposable> {
 	const configureEnvironmentCmd = commands.registerCommand(CMD_LD_CONFIG_ENV, async () => {
@@ -23,7 +24,7 @@ export default async function configureEnvironmentCmd(config: ILDExtensionConfig
 			}
 		} catch (err) {
 			console.log(err);
-			window.showErrorMessage(`[LaunchDarkly] ${err}`);
+			window.showErrorMessage(`${CONST_LD_PREFIX} ${err}`);
 		}
 	});
 
