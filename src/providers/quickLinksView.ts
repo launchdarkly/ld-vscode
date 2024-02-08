@@ -12,17 +12,18 @@ import {
 	commands,
 } from 'vscode';
 import checkExistingCommand from '../utils/common';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { registerCommand } from '../utils';
+import { CMD_LD_CREATE_FLAG, CMD_LD_OPEN_BROWSER } from '../utils/commands';
+import { registerCommand } from '../utils/registerCommand';
+import { ILDExtensionConfiguration } from '../models';
 
 const NON_COLLAPSED = TreeItemCollapsibleState.None;
 
 export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
-	private config: LDExtensionConfiguration;
+	private config: ILDExtensionConfiguration;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
 
-	constructor(config: LDExtensionConfiguration) {
+	constructor(config: ILDExtensionConfiguration) {
 		this.config = config;
 		if (this.config.getSession() !== undefined) {
 			this.start();
@@ -59,7 +60,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 				const linkUrl = `${this.config.getSession().fullUri}/${this.config.getConfig().project}/${
 					this.config.getConfig().env
 				}/features/${quickPick.selectedItems[0].label}/compare-flag`;
-				commands.executeCommand('launchdarkly.openBrowser', linkUrl);
+				commands.executeCommand(CMD_LD_OPEN_BROWSER, linkUrl);
 				quickPick.dispose();
 			});
 			quickPick.show();
@@ -104,7 +105,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 		items.push(
 			new LinkNode(`Create Boolean Feature Flag`, NON_COLLAPSED, '', {
 				title: 'Create Boolean Feature Flag',
-				command: 'launchdarkly.createFlag',
+				command: CMD_LD_CREATE_FLAG,
 			}),
 		);
 		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/features/create`)));
@@ -146,7 +147,7 @@ export class LinkNode extends TreeItem {
 			? command
 			: {
 					title: 'Open In Browser',
-					command: 'launchdarkly.openBrowser',
+					command: CMD_LD_OPEN_BROWSER,
 					arguments: [this.uri],
 				};
 	}

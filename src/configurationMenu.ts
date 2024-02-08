@@ -10,12 +10,11 @@ import {
 } from 'vscode';
 
 import { MultiStepInput } from './multiStepInput';
-import { LaunchDarklyAPI } from './api';
-import { Resource, Project, Environment } from './models';
-import { extensionReload } from './utils';
+import { Resource, Project, Environment, ILaunchDarklyAuthenticationSession, LaunchDarklyAPIInterface } from './models';
+import { extensionReload } from './generalUtils';
 import { logDebugMessage } from './utils/logDebugMessage';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
-import { LaunchDarklyAuthenticationSession } from './providers/authProvider';
+import { CONST_LD_PREFIX } from './utils/constants';
 interface CMState {
 	baseUri: string;
 	env: string;
@@ -23,7 +22,7 @@ interface CMState {
 }
 export class ConfigurationMenu {
 	private readonly config: LDExtensionConfiguration;
-	private api: LaunchDarklyAPI;
+	private api: LaunchDarklyAPIInterface;
 	private readonly ctx: ExtensionContext;
 	private title: string;
 	private totalSteps: number;
@@ -66,7 +65,7 @@ export class ConfigurationMenu {
 				if (selection === 'Sign In') {
 					const session = (await authentication.getSession('launchdarkly', ['writer'], {
 						createIfNone: true,
-					})) as LaunchDarklyAuthenticationSession;
+					})) as ILaunchDarklyAuthenticationSession;
 					this.config.setSession(session);
 				}
 			}
@@ -173,7 +172,7 @@ export class ConfigurationMenu {
 		window.withProgress(
 			{
 				location: ProgressLocation.Notification,
-				title: '[LaunchDarkly] Updating Configuration',
+				title: `${CONST_LD_PREFIX} Updating Configuration`,
 				cancellable: false,
 			},
 			() => {

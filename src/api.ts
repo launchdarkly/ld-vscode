@@ -5,14 +5,24 @@ const axios = require('axios').default;
 import axiosRetry from 'axios-retry';
 import retry from 'axios-retry-after';
 
-import { Configuration } from './configuration';
-import { FlagLink, InstructionPatch, NewFlag, ProjectAPI, ReleasePhase, ReleasePipeline } from './models';
+import {
+	FlagLink,
+	IConfiguration,
+	ILDExtensionConfiguration,
+	InstructionPatch,
+	ILaunchDarklyAuthenticationSession,
+	NewFlag,
+	ProjectAPI,
+	ReleasePhase,
+	ReleasePipeline,
+} from './models';
 import { Resource, Project, FeatureFlag, Environment, PatchOperation, PatchComment, Metric } from './models';
 import { RepositoryRep } from 'launchdarkly-api-typescript';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
-import { LaunchDarklyAuthenticationSession } from './providers/authProvider';
 import { debuglog } from 'util';
-import { legacyAuth } from './utils';
+import { CMD_LD_CONFIG } from './utils/commands';
+import { legacyAuth } from './utils/legacyAuth';
+import { CONST_CONFIG_LD } from './utils/constants';
 
 interface CreateOptionsParams {
 	method?: string;
@@ -39,7 +49,7 @@ axios.interceptors.response.use(
 			originalRequest._retry = true;
 			const session = (await authentication.getSession('launchdarkly', ['writer'], {
 				createIfNone: false,
-			})) as LaunchDarklyAuthenticationSession;
+			})) as ILaunchDarklyAuthenticationSession;
 			config.setSession(session);
 			originalRequest.headers['Authorization'] = `Bearer ${session.accessToken}`;
 			return axios(originalRequest);
@@ -83,10 +93,10 @@ axiosRetry(axios, { retries: 2, retryDelay: axiosRetry.exponentialDelay });
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
-	private readonly config: Configuration;
-	private readonly ldConfig: LDExtensionConfiguration;
+	private readonly config: IConfiguration;
+	private readonly ldConfig: ILDExtensionConfiguration;
 
-	constructor(config: Configuration, ldConfig: LDExtensionConfiguration) {
+	constructor(config: IConfiguration, ldConfig: ILDExtensionConfiguration) {
 		this.config = config;
 		this.ldConfig = ldConfig;
 	}
@@ -146,13 +156,9 @@ export class LaunchDarklyAPI {
 			return project;
 		} catch (err) {
 			window
-				.showErrorMessage(
-					`[LaunchDarkly] Error getting Project: ${projectKey}\n${err}`,
-					'Configure LaunchDarkly Extension',
-				)
+				.showErrorMessage(`${CONST_CONFIG_LD} Error getting Project: ${projectKey}\n${err}`, CONST_CONFIG_LD)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension')
-						commands.executeCommand('extension.configureLaunchDarkly');
+					if (selection === CONST_CONFIG_LD) commands.executeCommand(CMD_LD_CONFIG);
 				});
 		}
 	}
@@ -191,12 +197,11 @@ export class LaunchDarklyAPI {
 			console.log(err);
 			window
 				.showErrorMessage(
-					`[LaunchDarkly] Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`,
-					'Configure LaunchDarkly Extension',
+					`${CONST_CONFIG_LD} Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`,
+					CONST_CONFIG_LD,
 				)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension')
-						commands.executeCommand('extension.configureLaunchDarkly');
+					if (selection === CONST_CONFIG_LD) commands.executeCommand(CMD_LD_CONFIG);
 				});
 		}
 	}
@@ -210,12 +215,11 @@ export class LaunchDarklyAPI {
 		} catch (err) {
 			window
 				.showErrorMessage(
-					`[LaunchDarkly] Error getting Metrics for Project: ${projectKey}\n${err}`,
-					'Configure LaunchDarkly Extension',
+					`${CONST_CONFIG_LD} Error getting Metrics for Project: ${projectKey}\n${err}`,
+					CONST_CONFIG_LD,
 				)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension')
-						commands.executeCommand('extension.configureLaunchDarkly');
+					if (selection === CONST_CONFIG_LD) commands.executeCommand(CMD_LD_CONFIG);
 				});
 		}
 	}

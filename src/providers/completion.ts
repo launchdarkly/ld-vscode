@@ -1,17 +1,15 @@
 import { CompletionItemProvider, TextDocument, Position, CompletionItem, CompletionItemKind, Range } from 'vscode';
-import { Configuration } from '../configuration';
-import { FlagStore } from '../flagStore';
 import { FLAG_KEY_REGEX } from '../providers';
-import { FlagAliases } from './codeRefs';
+import { IFlagStore, IConfiguration, IFlagAliases } from '../models';
 
 export const STRING_DELIMITERS = ['"', "'", '`'];
 
 export default class LaunchDarklyCompletionItemProvider implements CompletionItemProvider {
-	private readonly flagStore: FlagStore;
-	private readonly config: Configuration;
-	private readonly aliases?: FlagAliases;
+	private readonly flagStore: IFlagStore;
+	private readonly config: IConfiguration;
+	private readonly aliases?: IFlagAliases;
 
-	constructor(config: Configuration, flagStore: FlagStore, aliases?: FlagAliases) {
+	constructor(config: IConfiguration, flagStore: IFlagStore, aliases?: IFlagAliases) {
 		this.config = config;
 		this.flagStore = flagStore;
 		this.aliases = aliases;

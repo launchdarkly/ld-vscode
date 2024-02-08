@@ -6,11 +6,11 @@ import enableCodeLensConfig from './enableCodeLens';
 import configureEnvironmentCmd from './configureLaunchDarklyEnvironment';
 import selectRuleCmd from './selectRule';
 import setMaintainerCmd from './setMaintainer';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { SetGlobalCmd } from './setGlobal';
 import flagCmd from './flagActions';
+import { ILDExtensionConfiguration } from '../models';
 
-export default async function generalCommands(LDExtenConfig: LDExtensionConfiguration) {
+export default async function generalCommands(LDExtenConfig: ILDExtensionConfiguration) {
 	const createFlag = createFlagCmd(LDExtenConfig);
 	const toggleFlagCmd = toggleFlagCtxCmd(LDExtenConfig);
 	const setMaintainerCmd1 = setMaintainerCmd(LDExtenConfig);

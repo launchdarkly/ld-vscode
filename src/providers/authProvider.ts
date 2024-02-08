@@ -17,27 +17,19 @@ import {
 import { v4 as uuid } from 'uuid';
 import { PromiseAdapter, promiseFromEvent } from '../utils/common';
 import fetch from 'node-fetch';
-import { Member, Team } from '../models';
-import { legacyAuth } from '../utils';
+import { ILaunchDarklyAuthenticationSession, Member, Team } from '../models';
+import { legacyAuth } from '../utils/legacyAuth';
+import { CONST_CONFIG_LD } from '../utils/constants';
 
 export const AUTH_TYPE = `launchdarkly`;
 const AUTH_NAME = `LaunchDarkly`;
-const LAUNCHDARKLY_OAUTH_DOMAIN = `hello-world-restless-violet-9097.dobrien-nj.workers.dev`; // Adjust if necessary
-//const LAUNCHDARKLY_OAUTH_DOMAIN = `ldprobotdevo.ngrok.io/vscode`; // Adjust if necessary
+const LAUNCHDARKLY_OAUTH_DOMAIN = ``; // Adjust if necessary
 const SESSIONS_SECRET_KEY = `${AUTH_TYPE}.sessions`;
 
 class UriEventHandler extends EventEmitter<Uri> implements UriHandler {
 	public handleUri(uri: Uri) {
 		this.fire(uri);
 	}
-}
-
-export interface LaunchDarklyAuthenticationSession extends AuthenticationSession {
-	refreshToken: string;
-	baseUri: string;
-	fullUri: string;
-	teams: Team[];
-	apiToken?: string;
 }
 
 interface TokenInformation {
@@ -77,14 +69,14 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 	 * @param scopes
 	 * @returns
 	 */
-	public async getSessions(): Promise<readonly LaunchDarklyAuthenticationSession[]> {
+	public async getSessions(): Promise<readonly ILaunchDarklyAuthenticationSession[]> {
 		try {
 			const allSessions = await this.context.secrets.get(SESSIONS_SECRET_KEY);
 			if (allSessions.length === 2) {
 				return [];
 			}
 
-			const sessions = JSON.parse(allSessions) as LaunchDarklyAuthenticationSession;
+			const sessions = JSON.parse(allSessions) as ILaunchDarklyAuthenticationSession;
 			const session = sessions[0];
 			const useLegacy = legacyAuth();
 			if (session && session.refreshToken && !useLegacy) {
@@ -129,7 +121,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 				fullUri,
 			);
 
-			const session: LaunchDarklyAuthenticationSession = {
+			const session: ILaunchDarklyAuthenticationSession = {
 				id: uuid(),
 				accessToken: access_token,
 				refreshToken: refresh_token,
@@ -318,13 +310,12 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 				Authorization: apiToken,
 			},
 		});
-		//const serviceTokenError = `reflexive member id 'me' is invalid when authenticated with a service token`;
 		const res = await response;
 
 		if (res.status == 404) {
 			return { firstName: 'Service', lastName: 'Account', email: 'none', teams: [] };
 		} else if (res.status !== 200 && res.status !== 201) {
-			window.showErrorMessage(`[LaunchDarkly] Failed to get user info: ${res.status}`);
+			window.showErrorMessage(`${CONST_CONFIG_LD} Failed to get user info: ${res.status}`);
 		}
 		return (await response.json()) as Member;
 	}

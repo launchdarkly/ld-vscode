@@ -1,23 +1,26 @@
 import { ExtensionContext, StatusBarItem, TreeView } from 'vscode';
-import { Configuration } from './configuration';
-import { LaunchDarklyAPI } from './api';
-import { FlagStore } from './flagStore';
-import { FlagAliases } from './providers/codeRefs';
-import { LaunchDarklyAuthenticationSession } from './providers/authProvider';
-import { FlagTreeInterface, LaunchDarklyTreeViewProvider } from './providers/flagsView';
-import { LaunchDarklyReleaseProvider } from './providers/releaseViewProvider';
+import {
+	IFlagStore,
+	IFlagTree,
+	IConfiguration,
+	IFlagAliases,
+	ILaunchDarklyReleaseProvider,
+	LaunchDarklyAPIInterface,
+	ILaunchDarklyAuthenticationSession,
+	ILaunchDarklyTreeViewProvider,
+} from './models';
 
 export class LDExtensionConfiguration {
 	private static instance: LDExtensionConfiguration;
-	private config?: Configuration;
+	private config?: IConfiguration;
 	private ctx: ExtensionContext;
-	private api?: LaunchDarklyAPI;
-	private flagStore?: FlagStore;
-	private flagTreeView: TreeView<FlagTreeInterface>;
-	private flagView: LaunchDarklyTreeViewProvider;
-	private aliases?: FlagAliases;
-	private releaseView?: LaunchDarklyReleaseProvider;
-	private session?: LaunchDarklyAuthenticationSession;
+	private api?: LaunchDarklyAPIInterface;
+	private flagStore?: IFlagStore;
+	private flagTreeView: TreeView<IFlagTree>;
+	private flagView: ILaunchDarklyTreeViewProvider;
+	private aliases?: IFlagAliases;
+	private releaseView?: ILaunchDarklyReleaseProvider;
+	private session?: ILaunchDarklyAuthenticationSession;
 	private statusBar?: StatusBarItem;
 
 	private constructor(ctx: ExtensionContext) {
@@ -31,27 +34,27 @@ export class LDExtensionConfiguration {
 		return LDExtensionConfiguration.instance;
 	}
 
-	getAliases(): FlagAliases | undefined {
+	getAliases(): IFlagAliases | undefined {
 		return this.aliases;
 	}
 
-	setAliases(aliases: FlagAliases): void {
+	setAliases(aliases: IFlagAliases): void {
 		this.aliases = aliases;
 	}
 
-	getApi(): LaunchDarklyAPI | undefined {
+	getApi(): LaunchDarklyAPIInterface | undefined {
 		return this.api;
 	}
 
-	setApi(api: LaunchDarklyAPI): void {
+	setApi(api: LaunchDarklyAPIInterface): void {
 		this.api = api;
 	}
 
-	getConfig(): Configuration | undefined {
+	getConfig(): IConfiguration | undefined {
 		return this.config;
 	}
 
-	setConfig(config: Configuration): void {
+	setConfig(config: IConfiguration): void {
 		this.config = config;
 	}
 
@@ -63,43 +66,43 @@ export class LDExtensionConfiguration {
 		this.ctx = ctx;
 	}
 
-	getFlagStore(): FlagStore | undefined {
+	getFlagStore(): IFlagStore | undefined {
 		return this.flagStore;
 	}
 
-	setFlagStore(flagStore: FlagStore): void {
+	setFlagStore(flagStore: IFlagStore): void {
 		this.flagStore = flagStore;
 	}
 
-	getFlagTreeProvider(): TreeView<FlagTreeInterface> | undefined {
+	getFlagTreeProvider(): TreeView<IFlagTree> | undefined {
 		return this.flagTreeView;
 	}
 
-	setFlagTreeProvider(flagTreeProvider: TreeView<FlagTreeInterface>): void {
+	setFlagTreeProvider(flagTreeProvider: TreeView<IFlagTree>): void {
 		this.flagTreeView = flagTreeProvider;
 	}
 
-	getFlagView(): LaunchDarklyTreeViewProvider | undefined {
+	getFlagView(): ILaunchDarklyTreeViewProvider | undefined {
 		return this.flagView;
 	}
 
-	setFlagView(flagView: LaunchDarklyTreeViewProvider): void {
+	setFlagView(flagView: ILaunchDarklyTreeViewProvider): void {
 		this.flagView = flagView;
 	}
 
-	getReleaseView(): LaunchDarklyReleaseProvider | undefined {
+	getReleaseView(): ILaunchDarklyReleaseProvider | undefined {
 		return this.releaseView;
 	}
 
-	setReleaseView(releaseView: LaunchDarklyReleaseProvider): void {
+	setReleaseView(releaseView: ILaunchDarklyReleaseProvider): void {
 		this.releaseView = releaseView;
 	}
 
-	getSession(): LaunchDarklyAuthenticationSession | undefined {
+	getSession(): ILaunchDarklyAuthenticationSession | undefined {
 		return this.session;
 	}
 
-	setSession(session: LaunchDarklyAuthenticationSession): void {
+	setSession(session: ILaunchDarklyAuthenticationSession): void {
 		this.session = session;
 	}
 

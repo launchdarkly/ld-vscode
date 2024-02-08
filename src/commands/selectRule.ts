@@ -2,12 +2,12 @@ import { Disposable, ProgressLocation, QuickPickItem, QuickPickItemKind, window 
 import { YAMLIndividualTarget, YamlReader, YAMLRuleTarget } from '../utils/rulesYaml';
 import { ToggleCache } from '../toggleCache';
 import os from 'os';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { Dictionary, isArray } from 'lodash';
 import crypto from 'crypto';
-import { Clause, FeatureFlag, InstructionPatch } from '../models';
-import { registerCommand } from '../utils';
+import { Clause, FeatureFlag, ILDExtensionConfiguration, InstructionPatch } from '../models';
 import { logDebugMessage } from '../utils/logDebugMessage';
+import { CMD_LD_PICK_RULES } from '../utils/commands';
+import { registerCommand } from '../utils/registerCommand';
 
 const cache = new ToggleCache();
 const revertLastCmd = {};
@@ -26,8 +26,8 @@ export interface FlagQuickPickItem extends QuickPickItem {
 	value: string;
 }
 
-export default function selectRuleCmd(config: LDExtensionConfiguration): Disposable {
-	const selectRuleCmd = registerCommand('launchdarkly.quickPickRules', async () => {
+export default function selectRuleCmd(config: ILDExtensionConfiguration): Disposable {
+	const selectRuleCmd = registerCommand(CMD_LD_PICK_RULES, async () => {
 		const flags = await config.getFlagStore()?.allFlagsMetadata();
 		if (flags === undefined) {
 			// Errors would be handled in the flagStore
@@ -147,7 +147,7 @@ function removeRuleInstruction(
 async function updateFlag(
 	flagWindow: FlagQuickPickItem,
 	cache: ToggleCache,
-	config: LDExtensionConfiguration,
+	config: ILDExtensionConfiguration,
 	instruction: InstructionPatch,
 	origFlag?: FeatureFlag,
 ): Promise<FeatureFlag | undefined> {
@@ -394,7 +394,7 @@ function generateRefFromClauses(clauses) {
 export async function targetFlag(
 	flagWindow,
 	cache: ToggleCache,
-	config: LDExtensionConfiguration,
+	config: ILDExtensionConfiguration,
 	flags: Dictionary<FeatureFlag>,
 ) {
 	const addRemove: Array<FlagQuickPickItem> = [];

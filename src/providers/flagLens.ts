@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import { Configuration } from '../configuration';
-import { Fallthrough, FeatureFlag, FlagConfiguration, WeightedVariation } from '../models';
+import { Fallthrough, FeatureFlag, FlagConfiguration, ILDExtensionConfiguration, WeightedVariation } from '../models';
 import { FlagStore } from '../flagStore';
 import { FlagAliases } from './codeRefs';
 import { CancellationToken, CancellationTokenSource, CodeLens, ConfigurationChangeEvent, workspace } from 'vscode';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { Dictionary } from 'lodash';
 import { logDebugMessage } from '../utils/logDebugMessage';
+import { CMD_LD_ENABLE_LENS } from '../utils/commands';
 
 // Most Lens are read only, so leaving a longer cache. There is an optimistic delete if we receive a flag update.
 const LENS_CACHE_TTL = 300000;
@@ -16,7 +16,7 @@ const MAX_CODELENS_VALUE = 20;
  * CodelensProvider
  */
 export class FlagCodeLensProvider implements vscode.CodeLensProvider {
-	private config: LDExtensionConfiguration;
+	private config: ILDExtensionConfiguration;
 	private regex: RegExp;
 	private flagStore: FlagStore | null;
 	private aliases: FlagAliases;
@@ -26,12 +26,12 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 	private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
 	public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
-	constructor(config: LDExtensionConfiguration) {
+	constructor(config: ILDExtensionConfiguration) {
 		this.config = config;
 		this.regex = /(.+)/g;
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		vscode.workspace.onDidChangeConfiguration(async (e: ConfigurationChangeEvent) => {
-			if (e.affectsConfiguration('launchdarkly.enableCodeLens')) {
+			if (e.affectsConfiguration(CMD_LD_ENABLE_LENS)) {
 				this._onDidChangeCodeLenses.fire(undefined);
 			}
 		});

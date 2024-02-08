@@ -1,9 +1,10 @@
 import { Disposable, window } from 'vscode';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { registerCommand } from '../utils';
+import { CMD_LD_TOGGLE_CTX } from '../utils/commands';
+import { registerCommand } from '../utils/registerCommand';
+import { ILDExtensionConfiguration } from '../models';
 
-export default function toggleFlagCtxCmd(config: LDExtensionConfiguration): Disposable {
-	const toggleFlagCtxCmd = registerCommand('launchdarkly.toggleFlagContext', async (args) => {
+export default function toggleFlagCtxCmd(config: ILDExtensionConfiguration): Disposable {
+	const toggleFlagCtxCmd = registerCommand(CMD_LD_TOGGLE_CTX, async (args) => {
 		try {
 			const key = args ? args : (config.getCtx().workspaceState.get('LDFlagKey') as string);
 

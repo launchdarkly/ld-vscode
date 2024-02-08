@@ -1,13 +1,16 @@
 import { QuickPickItemKind, Disposable, commands, window } from 'vscode';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { FlagQuickPickItem, targetFlag } from './selectRule';
 import { ToggleCache } from '../toggleCache';
-import { flagCodeSearch, flagOffFallthroughPatch, registerCommand, toggleFlag } from '../utils';
+import { flagOffFallthroughPatch, toggleFlag } from '../generalUtils';
+import { CMD_LD_FLAG_ACTION, CMD_LD_OPEN_BROWSER } from '../utils/commands';
+import { flagCodeSearch } from '../utils/flagCodeSearch';
+import { registerCommand } from '../utils/registerCommand';
+import { ILDExtensionConfiguration } from '../models';
 
 const cache = new ToggleCache();
 
-export default function flagCmd(config: LDExtensionConfiguration): Disposable {
-	const flagCmd = registerCommand('launchdarkly.quickFlag', async () => {
+export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
+	const flagCmd = registerCommand(CMD_LD_FLAG_ACTION, async () => {
 		const flags = await config.getFlagStore()?.allFlagsMetadata();
 		if (flags === undefined) {
 			// Errors would be handled in the flagStore
@@ -79,7 +82,7 @@ export default function flagCmd(config: LDExtensionConfiguration): Disposable {
 				const linkUrl = `${config.getSession().fullUri}/${config.getConfig().project}/${
 					config.getConfig().env
 				}/features/${flagWindow.value}`;
-				commands.executeCommand('launchdarkly.openBrowser', linkUrl);
+				commands.executeCommand(CMD_LD_OPEN_BROWSER, linkUrl);
 				break;
 			}
 			case 'Toggle Flag':
@@ -102,7 +105,7 @@ export default function flagCmd(config: LDExtensionConfiguration): Disposable {
 	return flagCmd;
 }
 
-function revealFlag(config: LDExtensionConfiguration, key: string) {
+function revealFlag(config: ILDExtensionConfiguration, key: string) {
 	const node = config.getFlagView().flagNodes.filter((node) => node.flagKey === key)[0];
 	config.getFlagTreeProvider().reveal(node, { select: true, focus: true, expand: true });
 }

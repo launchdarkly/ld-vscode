@@ -1,14 +1,13 @@
 import { commands, Disposable, window } from 'vscode';
 import { FLAG_KEY_REGEX } from '../providers';
 import { kebabCase } from 'lodash';
-import { FlagStore } from '../flagStore';
-import { FeatureFlagConfig } from '../models';
+import { FeatureFlagConfig, IFlagStore, ILDExtensionConfiguration } from '../models';
 import * as url from 'url';
 import opn = require('opn');
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
+import { CMD_LD_OPEN } from '../utils/commands';
 
-export default function openInLdCmd(config: LDExtensionConfiguration): Disposable {
-	const openInLdCmd = commands.registerTextEditorCommand('launchdarkly.openInLaunchDarkly', async (editor) => {
+export default function openInLdCmd(config: ILDExtensionConfiguration): Disposable {
+	const openInLdCmd = commands.registerTextEditorCommand(CMD_LD_OPEN, async (editor) => {
 		const flagKey = editor.document.getText(
 			editor.document.getWordRangeAtPosition(editor.selection.anchor, FLAG_KEY_REGEX),
 		);
@@ -52,7 +51,7 @@ export default function openInLdCmd(config: LDExtensionConfiguration): Disposabl
 	return openInLdCmd;
 }
 
-const openFlagInBrowser = async (config: LDExtensionConfiguration, flagKey: string, flagStore: FlagStore) => {
+const openFlagInBrowser = async (config: ILDExtensionConfiguration, flagKey: string, flagStore: IFlagStore) => {
 	const { flag } = await flagStore.getFeatureFlag(flagKey);
 
 	// Default to first environment

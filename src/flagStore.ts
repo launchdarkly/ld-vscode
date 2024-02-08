@@ -5,8 +5,17 @@ import { LDClient } from '@launchdarkly/node-server-sdk/dist/src/api';
 import { LDOptions } from '@launchdarkly/node-server-sdk/dist/src/index';
 import { debounce, Dictionary, keyBy } from 'lodash';
 
-import { FeatureFlag, FlagConfiguration, FlagWithConfiguration, InstructionPatch, PatchComment } from './models';
-import { LDExtensionConfiguration } from './ldExtensionConfiguration';
+import {
+	FeatureFlag,
+	FlagConfiguration,
+	IFlagStore,
+	FlagWithConfiguration,
+	ILDExtensionConfiguration,
+	InstructionPatch,
+	PatchComment,
+} from './models';
+import { CMD_LD_CONFIG } from './utils/commands';
+import { CONST_CONFIG_LD, CONST_LD_PREFIX } from './utils/constants';
 
 const DATA_KIND = { namespace: 'features' };
 
@@ -14,15 +23,14 @@ type FlagUpdateCallback = (flag: string) => void;
 type LDClientResolve = (LDClient: LDClient) => void;
 type LDClientReject = () => void;
 
-export class FlagStore {
-	private readonly config: LDExtensionConfiguration;
+export class FlagStore implements IFlagStore {
+	private readonly config: ILDExtensionConfiguration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
 	private flagMetadata: Dictionary<FeatureFlag>;
 	public readonly storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
 	// We fire a storeReady event because this will always exist compared to 'ready' listener on LDClient
 	// which may be reinitialized
 	public readonly storeReady: EventEmitter<boolean | null> = new EventEmitter();
-	//private readonly api: LaunchDarklyAPI;
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
 	private ldClient: Promise<LDClient> = new Promise((resolve, reject) => {
@@ -33,9 +41,8 @@ export class FlagStore {
 	private offlineTimerSet = false;
 	public readonly ready: EventEmitter<boolean | null> = new EventEmitter();
 
-	constructor(config: LDExtensionConfiguration) {
+	constructor(config: ILDExtensionConfiguration) {
 		this.config = config;
-		//this.api = api;
 		this.store = new InMemoryFeatureStore();
 		this.reload();
 	}
@@ -53,7 +60,7 @@ export class FlagStore {
 				await this.stop();
 				await this.start();
 			} catch (err) {
-				window.showErrorMessage(`[LaunchDarkly] ${err}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} ${err}`);
 			}
 		},
 		200,
@@ -99,10 +106,9 @@ export class FlagStore {
 			this.setLDClientBackgroundCheck();
 		} catch (err) {
 			window
-				.showErrorMessage('[LaunchDarkly] Failed to setup LaunchDarkly client', 'Configure LaunchDarkly Extension')
+				.showErrorMessage(`${CONST_LD_PREFIX} Failed to setup LaunchDarkly client`, CONST_CONFIG_LD)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension')
-						commands.executeCommand('extension.configureLaunchDarkly');
+					if (selection === CONST_CONFIG_LD) commands.executeCommand(CMD_LD_CONFIG);
 				});
 			this.rejectLDClient();
 			console.error(`Failed to setup client: ${err}`);
@@ -188,7 +194,7 @@ export class FlagStore {
 					console.log(`${err}`);
 					return;
 				}
-				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} ${errMsg}`);
 			}
 		},
 		5000,
@@ -208,7 +214,7 @@ export class FlagStore {
 						'Your configured LaunchDarkly environment does not exist. Please reconfigure the extension.',
 						'Configure',
 					)
-					.then((item) => item && commands.executeCommand('extension.configureLaunchDarkly'));
+					.then((item) => item && commands.executeCommand(CMD_LD_CONFIG));
 			}
 			throw err;
 		}
@@ -344,7 +350,7 @@ export class FlagStore {
 				return this.flagMetadata;
 			} catch (err) {
 				console.log(`Failed getting Metadata: ${err}`);
-				window.showErrorMessage(`[LaunchDarkly] ${err}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} ${err}`);
 			}
 		} else {
 			return this.flagMetadata;

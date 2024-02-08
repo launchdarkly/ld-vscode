@@ -4,7 +4,7 @@ import os from 'os';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { LDMultiKindContext, LDSingleKindContext } from '@launchdarkly/node-server-sdk';
 import { YamlContextReader } from '../utils/contextYAML';
-import { registerCommand } from '../utils';
+import { registerCommand } from '../utils/registerCommand';
 
 // Not officially implemented. Leaving for future decision.
 

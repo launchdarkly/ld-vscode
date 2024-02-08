@@ -1,15 +1,14 @@
 import { ColorThemeKind, ExtensionContext, MarkdownString, window } from 'vscode';
-import { FeatureFlag, FlagConfiguration } from '../models';
+import { FeatureFlag, FlagConfiguration, ILDExtensionConfiguration } from '../models';
 import * as fs from 'fs';
 import * as url from 'url';
-import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 
 const FLAG_STATUS_CACHE = new Map<string, string>();
 
 export function generateHoverString(
 	flag: FeatureFlag,
 	c: FlagConfiguration,
-	config: LDExtensionConfiguration,
+	config: ILDExtensionConfiguration,
 ): MarkdownString {
 	let env;
 	try {

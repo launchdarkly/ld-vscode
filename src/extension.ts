@@ -8,11 +8,13 @@ import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
 import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
 import { CodeRefs as cr } from './coderefs/codeRefsVersion';
-import { LaunchDarklyAuthenticationProvider, LaunchDarklyAuthenticationSession } from './providers/authProvider';
-import { extensionReload } from './utils';
+import { LaunchDarklyAuthenticationProvider } from './providers/authProvider';
+import { extensionReload } from './generalUtils';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import * as semver from 'semver';
 import { SetWorkspaceCmd } from './commands/setWorkspaceEnabled';
+import { CMD_LD_CONFIG, CMD_LD_SIGNIN } from './utils/commands';
+import { ILaunchDarklyAuthenticationSession } from './models';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	const storedVersion = ctx.globalState.get('version', '5.0.0');
@@ -24,7 +26,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 
 	const session = (await authentication.getSession('launchdarkly', ['writer'], {
 		createIfNone: false,
-	})) as LaunchDarklyAuthenticationSession;
+	})) as ILaunchDarklyAuthenticationSession;
 	LDExtConfig.setSession(session);
 
 	const validationError = await LDExtConfig.getConfig().validate();
@@ -40,7 +42,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 					)
 					.then((item) => {
 						item === 'Configure'
-							? commands.executeCommand('extension.configureLaunchDarkly')
+							? commands.executeCommand(CMD_LD_CONFIG)
 							: LDExtConfig.getCtx().workspaceState.update('isDisabledForWorkspace', true);
 					});
 			}
@@ -53,7 +55,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 				)
 				.then((item) => {
 					item === 'Configure'
-						? commands.executeCommand('extension.configureLaunchDarkly')
+						? commands.executeCommand(CMD_LD_CONFIG)
 						: LDExtConfig.getCtx().globalState.update('legacyNotificationDismissed', true);
 				});
 			break;
@@ -62,16 +64,16 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	}
 
 	LDExtConfig.getCtx().subscriptions.push(
-		commands.registerCommand('vscode-launchdarkly-authprovider.signIn', async () => {
+		commands.registerCommand(CMD_LD_SIGNIN, async () => {
 			const session = (await authentication.getSession('launchdarkly', ['writer'], {
 				createIfNone: true,
-			})) as LaunchDarklyAuthenticationSession;
+			})) as ILaunchDarklyAuthenticationSession;
 			LDExtConfig.setSession(session);
 			if (!(await LDExtConfig.getConfig().isConfigured())) {
 				window
 					.showInformationMessage(`Click Configure below to finish setting up the LaunchDarkly extension`, `Configure`)
 					.then((item) => {
-						item === 'Configure' ? commands.executeCommand('extension.configureLaunchDarkly') : null;
+						item === 'Configure' ? commands.executeCommand(CMD_LD_CONFIG) : null;
 					});
 			} else {
 				window.showInformationMessage(`You are now signed in to LaunchDarkly & Project is configured.`);
@@ -114,7 +116,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 			.then(async (item) => {
 				switch (item) {
 					case 'Sign In':
-						commands.executeCommand('vscode-launchdarkly-authprovider.signIn');
+						commands.executeCommand(CMD_LD_SIGNIN);
 						break;
 				}
 			});

@@ -2,10 +2,11 @@ import { Disposable, ProgressLocation, window } from 'vscode';
 import { ConfigurationMenu } from '../configurationMenu';
 import { FlagStore } from '../flagStore';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
-import { registerCommand } from '../utils';
+import { CMD_LD_CONFIG } from '../utils/commands';
+import { registerCommand } from '../utils/registerCommand';
 
 export default function configureLaunchDarkly(config: LDExtensionConfiguration) {
-	const configureExtension: Disposable = registerCommand('extension.configureLaunchDarkly', async () => {
+	const configureExtension: Disposable = registerCommand(CMD_LD_CONFIG, async () => {
 		try {
 			const configurationMenu = new ConfigurationMenu(config);
 			await configurationMenu.configure();
