@@ -14,7 +14,7 @@ import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import * as semver from 'semver';
 import { SetWorkspaceCmd } from './commands/setWorkspaceEnabled';
 import { CMD_LD_CONFIG, CMD_LD_SIGNIN } from './utils/commands';
-import { LaunchDarklyAuthenticationSession } from './models';
+import { ILaunchDarklyAuthenticationSession } from './models';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	const storedVersion = ctx.globalState.get('version', '5.0.0');
@@ -26,7 +26,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 
 	const session = (await authentication.getSession('launchdarkly', ['writer'], {
 		createIfNone: false,
-	})) as LaunchDarklyAuthenticationSession;
+	})) as ILaunchDarklyAuthenticationSession;
 	LDExtConfig.setSession(session);
 
 	const validationError = await LDExtConfig.getConfig().validate();
@@ -67,7 +67,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 		commands.registerCommand(CMD_LD_SIGNIN, async () => {
 			const session = (await authentication.getSession('launchdarkly', ['writer'], {
 				createIfNone: true,
-			})) as LaunchDarklyAuthenticationSession;
+			})) as ILaunchDarklyAuthenticationSession;
 			LDExtConfig.setSession(session);
 			if (!(await LDExtConfig.getConfig().isConfigured())) {
 				window

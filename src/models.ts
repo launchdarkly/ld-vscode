@@ -577,7 +577,7 @@ export interface MemberTeamSummaryRep {
 	name: string;
 }
 
-export interface FlagStoreInterface {
+export interface IFlagStore {
 	storeUpdates: EventEmitter<boolean | null>;
 	// We fire a storeReady event because this will always exist compared to 'ready' listener on LDClient
 	// which may be reinitialized
@@ -610,9 +610,8 @@ export interface FlagStoreInterface {
 	// Add other methods as needed...
 }
 
-export interface LaunchDarklyTreeViewProviderInterface
-	extends TreeDataProvider<FlagTreeInterface | FlagTreeInterface[]> {
-	flagNodes: Array<FlagTreeInterface> | null;
+export interface ILaunchDarklyTreeViewProvider extends TreeDataProvider<IFlagTree | IFlagTree[]> {
+	flagNodes: Array<IFlagTree> | null;
 	start(): void;
 	treeLoader(): void;
 	registerCommands(): void;
@@ -621,14 +620,14 @@ export interface LaunchDarklyTreeViewProviderInterface
 	// Add other methods as needed...
 }
 
-export interface FlagTreeInterface {
+export interface IFlagTree {
 	children: unknown;
 	command?: unknown;
 	flagKey?: string;
 	flagVersion?: number;
 }
 
-export interface LaunchDarklyAuthenticationSession extends AuthenticationSession {
+export interface ILaunchDarklyAuthenticationSession extends AuthenticationSession {
 	refreshToken: string;
 	baseUri: string;
 	fullUri: string;
@@ -657,16 +656,16 @@ export interface ILDExtensionConfiguration {
 	setConfig(config: IConfiguration): void;
 	getCtx(): ExtensionContext;
 	setCtx(ctx: ExtensionContext): void;
-	getFlagStore(): FlagStoreInterface | undefined;
-	setFlagStore(flagStore: FlagStoreInterface): void;
-	getFlagTreeProvider(): TreeView<FlagTreeInterface> | undefined;
-	setFlagTreeProvider(flagTreeProvider: TreeView<FlagTreeInterface>): void;
-	getFlagView(): LaunchDarklyTreeViewProviderInterface | undefined;
-	setFlagView(flagView: LaunchDarklyTreeViewProviderInterface): void;
+	getFlagStore(): IFlagStore | undefined;
+	setFlagStore(flagStore: IFlagStore): void;
+	getFlagTreeProvider(): TreeView<IFlagTree> | undefined;
+	setFlagTreeProvider(flagTreeProvider: TreeView<IFlagTree>): void;
+	getFlagView(): ILaunchDarklyTreeViewProvider | undefined;
+	setFlagView(flagView: ILaunchDarklyTreeViewProvider): void;
 	getReleaseView(): ILaunchDarklyReleaseProvider | undefined;
 	setReleaseView(releaseView: ILaunchDarklyReleaseProvider): void;
-	getSession(): LaunchDarklyAuthenticationSession | undefined;
-	setSession(session: LaunchDarklyAuthenticationSession): void;
+	getSession(): ILaunchDarklyAuthenticationSession | undefined;
+	setSession(session: ILaunchDarklyAuthenticationSession): void;
 	getStatusBar(): StatusBarItem | undefined;
 	setStatusBar(statusBar: StatusBarItem): void;
 }

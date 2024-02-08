@@ -18,14 +18,14 @@ import { Configuration } from '../configuration';
 import { flagToValues } from '../utils/FlagNode';
 import { FlagCodeLensProvider, SimpleCodeLens } from './flagLens';
 import { FlagNode } from '../utils/FlagNode';
-import { FeatureFlag, FlagTreeInterface, ILDExtensionConfiguration } from '../models';
+import { FeatureFlag, IFlagTree, ILDExtensionConfiguration } from '../models';
 import { logDebugMessage } from '../utils/logDebugMessage';
 import { CMD_LD_ENABLE_LENS } from '../utils/commands';
 
 export class LaunchDarklyFlagListProvider implements TreeDataProvider<TreeItem> {
 	private ldConfig: ILDExtensionConfiguration;
 	private lens: FlagCodeLensProvider;
-	private flagNodes: Array<FlagTreeInterface> | null;
+	private flagNodes: Array<IFlagTree> | null;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
 	private flagMap: Map<string, FlagList | FlagNodeList> = new Map();

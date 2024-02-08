@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { FeatureFlag, FlagConfiguration, FlagTreeInterface, ILDExtensionConfiguration, PatchComment } from '../models';
+import { FeatureFlag, FlagConfiguration, IFlagTree, ILDExtensionConfiguration, PatchComment } from '../models';
 import { debounce, map } from 'lodash';
 import checkExistingCommand from '../utils/common';
 import { authentication } from 'vscode';
@@ -23,12 +23,12 @@ import { registerCommand } from '../utils/registerCommand';
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
 
-export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<FlagTreeInterface | FlagTreeInterface[]> {
+export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFlagTree | IFlagTree[]> {
 	private readonly ldConfig: ILDExtensionConfiguration;
-	public flagNodes: Array<FlagTreeInterface> | null;
-	private _onDidChangeTreeData: vscode.EventEmitter<FlagTreeInterface | null | void> =
-		new vscode.EventEmitter<FlagTreeInterface | null | void>();
-	readonly onDidChangeTreeData: vscode.Event<FlagTreeInterface | null | void> = this._onDidChangeTreeData.event;
+	public flagNodes: Array<IFlagTree> | null;
+	private _onDidChangeTreeData: vscode.EventEmitter<IFlagTree | null | void> =
+		new vscode.EventEmitter<IFlagTree | null | void>();
+	readonly onDidChangeTreeData: vscode.Event<IFlagTree | null | void> = this._onDidChangeTreeData.event;
 	private updatingTree: vscode.EventEmitter<'started' | 'error' | 'complete'> = new vscode.EventEmitter();
 	private lastTreeEvent: string;
 
@@ -97,7 +97,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		});
 	};
 
-	async getChildren(element?: FlagTreeInterface): Promise<FlagTreeInterface[] | undefined> {
+	async getChildren(element?: IFlagTree): Promise<IFlagTree[] | undefined> {
 		if (this.lastTreeEvent === 'started') {
 			return Promise.resolve([
 				new FlagNode(
@@ -305,7 +305,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<Fla
 		{ leading: false, trailing: true },
 	);
 
-	private async flagPatch(node: FlagTreeInterface, path: string, contextValue?: string): Promise<void> {
+	private async flagPatch(node: IFlagTree, path: string, contextValue?: string): Promise<void> {
 		if (!node.flagKey) {
 			return;
 		}

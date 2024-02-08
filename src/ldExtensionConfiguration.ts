@@ -1,13 +1,13 @@
 import { ExtensionContext, StatusBarItem, TreeView } from 'vscode';
 import {
-	FlagStoreInterface,
-	FlagTreeInterface,
+	IFlagStore,
+	IFlagTree,
 	IConfiguration,
 	IFlagAliases,
 	ILaunchDarklyReleaseProvider,
 	LaunchDarklyAPIInterface,
-	LaunchDarklyAuthenticationSession,
-	LaunchDarklyTreeViewProviderInterface,
+	ILaunchDarklyAuthenticationSession,
+	ILaunchDarklyTreeViewProvider,
 } from './models';
 
 export class LDExtensionConfiguration {
@@ -15,12 +15,12 @@ export class LDExtensionConfiguration {
 	private config?: IConfiguration;
 	private ctx: ExtensionContext;
 	private api?: LaunchDarklyAPIInterface;
-	private flagStore?: FlagStoreInterface;
-	private flagTreeView: TreeView<FlagTreeInterface>;
-	private flagView: LaunchDarklyTreeViewProviderInterface;
+	private flagStore?: IFlagStore;
+	private flagTreeView: TreeView<IFlagTree>;
+	private flagView: ILaunchDarklyTreeViewProvider;
 	private aliases?: IFlagAliases;
 	private releaseView?: ILaunchDarklyReleaseProvider;
-	private session?: LaunchDarklyAuthenticationSession;
+	private session?: ILaunchDarklyAuthenticationSession;
 	private statusBar?: StatusBarItem;
 
 	private constructor(ctx: ExtensionContext) {
@@ -66,27 +66,27 @@ export class LDExtensionConfiguration {
 		this.ctx = ctx;
 	}
 
-	getFlagStore(): FlagStoreInterface | undefined {
+	getFlagStore(): IFlagStore | undefined {
 		return this.flagStore;
 	}
 
-	setFlagStore(flagStore: FlagStoreInterface): void {
+	setFlagStore(flagStore: IFlagStore): void {
 		this.flagStore = flagStore;
 	}
 
-	getFlagTreeProvider(): TreeView<FlagTreeInterface> | undefined {
+	getFlagTreeProvider(): TreeView<IFlagTree> | undefined {
 		return this.flagTreeView;
 	}
 
-	setFlagTreeProvider(flagTreeProvider: TreeView<FlagTreeInterface>): void {
+	setFlagTreeProvider(flagTreeProvider: TreeView<IFlagTree>): void {
 		this.flagTreeView = flagTreeProvider;
 	}
 
-	getFlagView(): LaunchDarklyTreeViewProviderInterface | undefined {
+	getFlagView(): ILaunchDarklyTreeViewProvider | undefined {
 		return this.flagView;
 	}
 
-	setFlagView(flagView: LaunchDarklyTreeViewProviderInterface): void {
+	setFlagView(flagView: ILaunchDarklyTreeViewProvider): void {
 		this.flagView = flagView;
 	}
 
@@ -98,11 +98,11 @@ export class LDExtensionConfiguration {
 		this.releaseView = releaseView;
 	}
 
-	getSession(): LaunchDarklyAuthenticationSession | undefined {
+	getSession(): ILaunchDarklyAuthenticationSession | undefined {
 		return this.session;
 	}
 
-	setSession(session: LaunchDarklyAuthenticationSession): void {
+	setSession(session: ILaunchDarklyAuthenticationSession): void {
 		this.session = session;
 	}
 

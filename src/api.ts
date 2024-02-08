@@ -10,7 +10,7 @@ import {
 	IConfiguration,
 	ILDExtensionConfiguration,
 	InstructionPatch,
-	LaunchDarklyAuthenticationSession,
+	ILaunchDarklyAuthenticationSession,
 	NewFlag,
 	ProjectAPI,
 	ReleasePhase,
@@ -22,6 +22,7 @@ import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import { debuglog } from 'util';
 import { CMD_LD_CONFIG } from './utils/commands';
 import { legacyAuth } from './utils/legacyAuth';
+import { CONST_CONFIG_LD } from './utils/constants';
 
 interface CreateOptionsParams {
 	method?: string;
@@ -48,7 +49,7 @@ axios.interceptors.response.use(
 			originalRequest._retry = true;
 			const session = (await authentication.getSession('launchdarkly', ['writer'], {
 				createIfNone: false,
-			})) as LaunchDarklyAuthenticationSession;
+			})) as ILaunchDarklyAuthenticationSession;
 			config.setSession(session);
 			originalRequest.headers['Authorization'] = `Bearer ${session.accessToken}`;
 			return axios(originalRequest);
@@ -155,12 +156,9 @@ export class LaunchDarklyAPI {
 			return project;
 		} catch (err) {
 			window
-				.showErrorMessage(
-					`[LaunchDarkly] Error getting Project: ${projectKey}\n${err}`,
-					'Configure LaunchDarkly Extension',
-				)
+				.showErrorMessage(`${CONST_CONFIG_LD} Error getting Project: ${projectKey}\n${err}`, CONST_CONFIG_LD)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension') commands.executeCommand(CMD_LD_CONFIG);
+					if (selection === CONST_CONFIG_LD) commands.executeCommand(CMD_LD_CONFIG);
 				});
 		}
 	}
@@ -199,11 +197,11 @@ export class LaunchDarklyAPI {
 			console.log(err);
 			window
 				.showErrorMessage(
-					`[LaunchDarkly] Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`,
-					'Configure LaunchDarkly Extension',
+					`${CONST_CONFIG_LD} Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`,
+					CONST_CONFIG_LD,
 				)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension') commands.executeCommand(CMD_LD_CONFIG);
+					if (selection === CONST_CONFIG_LD) commands.executeCommand(CMD_LD_CONFIG);
 				});
 		}
 	}
@@ -217,11 +215,11 @@ export class LaunchDarklyAPI {
 		} catch (err) {
 			window
 				.showErrorMessage(
-					`[LaunchDarkly] Error getting Metrics for Project: ${projectKey}\n${err}`,
-					'Configure LaunchDarkly Extension',
+					`${CONST_CONFIG_LD} Error getting Metrics for Project: ${projectKey}\n${err}`,
+					CONST_CONFIG_LD,
 				)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension') commands.executeCommand(CMD_LD_CONFIG);
+					if (selection === CONST_CONFIG_LD) commands.executeCommand(CMD_LD_CONFIG);
 				});
 		}
 	}

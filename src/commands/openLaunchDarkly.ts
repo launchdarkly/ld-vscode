@@ -1,7 +1,7 @@
 import { commands, Disposable, window } from 'vscode';
 import { FLAG_KEY_REGEX } from '../providers';
 import { kebabCase } from 'lodash';
-import { FeatureFlagConfig, FlagStoreInterface, ILDExtensionConfiguration } from '../models';
+import { FeatureFlagConfig, IFlagStore, ILDExtensionConfiguration } from '../models';
 import * as url from 'url';
 import opn = require('opn');
 import { CMD_LD_OPEN } from '../utils/commands';
@@ -51,7 +51,7 @@ export default function openInLdCmd(config: ILDExtensionConfiguration): Disposab
 	return openInLdCmd;
 }
 
-const openFlagInBrowser = async (config: ILDExtensionConfiguration, flagKey: string, flagStore: FlagStoreInterface) => {
+const openFlagInBrowser = async (config: ILDExtensionConfiguration, flagKey: string, flagStore: IFlagStore) => {
 	const { flag } = await flagStore.getFeatureFlag(flagKey);
 
 	// Default to first environment

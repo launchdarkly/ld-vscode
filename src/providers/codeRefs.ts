@@ -7,6 +7,7 @@ import csv from 'csv-parser';
 import { CodeRefs } from '../coderefs/codeRefsVersion';
 import { legacyAuth } from '../utils/legacyAuth';
 import { ILDExtensionConfiguration } from '../models';
+import { CONST_LD_PREFIX } from '../utils/constants';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { promises: Fs } = require('fs');
 
@@ -115,7 +116,7 @@ export class FlagAliases {
 				timeout: 20 * 60000,
 			});
 			if (output.stderr) {
-				window.showErrorMessage(`[LaunchDarkly] finding Code References failed ${output.stderr}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} finding Code References failed ${output.stderr}`);
 			}
 		} catch (err) {
 			window.showErrorMessage(err.error);

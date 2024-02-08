@@ -8,13 +8,14 @@ import { debounce, Dictionary, keyBy } from 'lodash';
 import {
 	FeatureFlag,
 	FlagConfiguration,
-	FlagStoreInterface,
+	IFlagStore,
 	FlagWithConfiguration,
 	ILDExtensionConfiguration,
 	InstructionPatch,
 	PatchComment,
 } from './models';
 import { CMD_LD_CONFIG } from './utils/commands';
+import { CONST_CONFIG_LD, CONST_LD_PREFIX } from './utils/constants';
 
 const DATA_KIND = { namespace: 'features' };
 
@@ -22,7 +23,7 @@ type FlagUpdateCallback = (flag: string) => void;
 type LDClientResolve = (LDClient: LDClient) => void;
 type LDClientReject = () => void;
 
-export class FlagStore implements FlagStoreInterface {
+export class FlagStore implements IFlagStore {
 	private readonly config: ILDExtensionConfiguration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
 	private flagMetadata: Dictionary<FeatureFlag>;
@@ -59,7 +60,7 @@ export class FlagStore implements FlagStoreInterface {
 				await this.stop();
 				await this.start();
 			} catch (err) {
-				window.showErrorMessage(`[LaunchDarkly] ${err}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} ${err}`);
 			}
 		},
 		200,
@@ -105,9 +106,9 @@ export class FlagStore implements FlagStoreInterface {
 			this.setLDClientBackgroundCheck();
 		} catch (err) {
 			window
-				.showErrorMessage('[LaunchDarkly] Failed to setup LaunchDarkly client', 'Configure LaunchDarkly Extension')
+				.showErrorMessage(`${CONST_LD_PREFIX} Failed to setup LaunchDarkly client`, CONST_CONFIG_LD)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension') commands.executeCommand(CMD_LD_CONFIG);
+					if (selection === CONST_CONFIG_LD) commands.executeCommand(CMD_LD_CONFIG);
 				});
 			this.rejectLDClient();
 			console.error(`Failed to setup client: ${err}`);
@@ -193,7 +194,7 @@ export class FlagStore implements FlagStoreInterface {
 					console.log(`${err}`);
 					return;
 				}
-				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} ${errMsg}`);
 			}
 		},
 		5000,
@@ -349,7 +350,7 @@ export class FlagStore implements FlagStoreInterface {
 				return this.flagMetadata;
 			} catch (err) {
 				console.log(`Failed getting Metadata: ${err}`);
-				window.showErrorMessage(`[LaunchDarkly] ${err}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} ${err}`);
 			}
 		} else {
 			return this.flagMetadata;

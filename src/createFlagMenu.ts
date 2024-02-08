@@ -4,6 +4,7 @@ import { MultiStepInput, QuickPickParameters } from './multiStepInput';
 import { LaunchDarklyAPI } from './api';
 import { kebabCase } from 'lodash';
 import { FeatureFlag, ILDExtensionConfiguration, NewFlag, ReleasePipeline } from './models';
+import { CONST_LD_PREFIX } from './utils/constants';
 export interface State {
 	name: string;
 	key: string;
@@ -157,7 +158,7 @@ export class CreateFlagMenu {
 			window.withProgress(
 				{
 					location: ProgressLocation.Notification,
-					title: '[LaunchDarkly] Flag: ${flag.key} created and key copied to your clipboard.',
+					title: `${CONST_LD_PREFIX} Flag: ${flag.key} created and key copied to your clipboard.`,
 					cancellable: false,
 				},
 				() => {
@@ -174,7 +175,7 @@ export class CreateFlagMenu {
 				}
 			}
 		} catch (err) {
-			window.showErrorMessage(`[LaunchDarkly] Creating flag ${err}`);
+			window.showErrorMessage(`${CONST_LD_PREFIX} Creating flag ${err}`);
 		}
 	}
 
@@ -213,7 +214,7 @@ export class CreateFlagMenu {
 			window.showInformationMessage(`Flag: ${flag.key} created and key copied to your clipboard.`);
 			this.flag = flag;
 		} catch (err) {
-			window.showErrorMessage(`[LaunchDarkly] Creating flag ${err}`);
+			window.showErrorMessage(`${CONST_LD_PREFIX} Creating flag ${err}`);
 		}
 	}
 }

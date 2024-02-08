@@ -8,7 +8,7 @@ const toMatchSnapshot = require('expect-mocha-snapshot');
 
 expect.extend({ toMatchSnapshot });
 import { generateHoverString } from '../src/utils/hover';
-import { FeatureFlag, FlagConfiguration, LaunchDarklyAuthenticationSession } from '../src/models';
+import { FeatureFlag, FlagConfiguration, ILaunchDarklyAuthenticationSession } from '../src/models';
 import { isPrecedingCharStringDelimiter } from '../src/providers/completion';
 import { LDExtensionConfiguration } from '../src/ldExtensionConfiguration';
 import { Configuration } from '../src/configuration';
@@ -60,7 +60,7 @@ const flagConfig: FlagConfiguration = {
 const mockLDConfig = mock(LDExtensionConfiguration);
 const mockConfig = mock(Configuration);
 const mockCtx = mock<vscode.ExtensionContext>();
-const mockSession = mock<LaunchDarklyAuthenticationSession>();
+const mockSession = mock<ILaunchDarklyAuthenticationSession>();
 
 const ctx = instance(mockCtx);
 const config = instance(mockConfig);

@@ -27,6 +27,7 @@ import { ILDExtensionConfiguration, InstructionPatch } from './models';
 import { logDebugMessage } from './utils/logDebugMessage';
 import { CMD_LD_CONFIG, CMD_LD_OPEN_FLAG, CMD_LD_REFRESH_LENS, CMD_LD_TOGGLE_CMD_PROMPT } from './utils/commands';
 import { registerCommand } from './utils/registerCommand';
+import { CONST_CONFIG_LD } from './utils/constants';
 
 const cache = new ToggleCache();
 
@@ -85,7 +86,6 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 
 	if (config.getConfig().enableAliases) {
 		config.setAliases(new FlagAliases(config));
-		//aliases = new FlagAliases(config.getConfig(), ctx);
 		if (config.getAliases().codeRefsVersionCheck()) {
 			config.getAliases().setupStatusBar();
 			await config.getAliases().start();
@@ -181,7 +181,7 @@ async function showToggleMenu(config: ILDExtensionConfiguration) {
 	try {
 		flags = await config.getFlagStore().allFlagsMetadata();
 	} catch (err) {
-		window.showErrorMessage('[LaunchDarkly] Unable to retrieve flags, please check configuration.');
+		window.showErrorMessage(`${CONST_CONFIG_LD} Unable to retrieve flags, please check configuration.`);
 		return;
 	}
 	const items = [];
