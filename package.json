@@ -255,6 +255,10 @@
 			{
 				"command": "launchdarkly.quickFlag",
 				"title": "LaunchDarkly: Flag Actions"
+			},
+			{
+				"command": "launchdarkly.signOut",
+				"title": "LaunchDarkly: Sign Out"
 			}
 		],
 		"menus": {
@@ -526,7 +530,7 @@
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
 		"ajv": "^6.12.6",
-		"axios": "0.21.4",
+		"axios": "^1.6.0",
 		"axios-retry": "4.0.0",
 		"axios-retry-after": "2.0.0",
 		"csv-parser": "^2.3.3",
@@ -541,11 +545,11 @@
 		"request": "^2.34",
 		"rimraf": "^3.0.2",
 		"tar-fs": "^2.1.1",
-		"tree-sitter-stack-graphs": "^0.7.0",
 		"uuid": "^9.0.1"
 	},
 	"resolutions": {
 		"node.extend": "^1.1.7",
 		"lodash": "^4.17.12"
-	}
+	},
+	"packageManager": "yarn@3.4.1+sha512.a333bf9c2557d71f5ba87dd1446cde24bb9c35301ec29dd2baba577b3f9d1ab61348b66a1324de9088c40a996c5b9203794da8bf14cab9fae6a6eccc00cb8078"
 }

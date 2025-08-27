@@ -243,11 +243,11 @@ export async function toggleFlag(config: ILDExtensionConfiguration, key: string)
 				await config.getApi().patchFeatureFlagOn(config.getConfig().project, key, !enabled.on);
 			} catch (err) {
 				progress.report({ increment: 100 });
-				if (err.response.status === 403) {
+				if (err.response?.status === 403) {
 					window.showErrorMessage(`Unauthorized: Your key does not have permissions to update the flag: ${key}`);
 				} else {
 					window.showErrorMessage(`Could not update flag: ${key}
-					code: ${err.response.status}
+					code: ${err.response?.status}
 					message: ${err.message}`);
 				}
 			}

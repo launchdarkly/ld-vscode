@@ -121,6 +121,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 				fullUri,
 			);
 
+		
 			const session: ILaunchDarklyAuthenticationSession = {
 				id: uuid(),
 				accessToken: access_token,
@@ -151,6 +152,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 	 * @param sessionId
 	 */
 	public async removeSession(sessionId: string): Promise<void> {
+		console.log('REMOVING SESSION');
 		const allSessions = await this.context.secrets.get(SESSIONS_SECRET_KEY);
 		if (allSessions) {
 			const sessions = JSON.parse(allSessions) as AuthenticationSession[];
@@ -311,7 +313,6 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 			},
 		});
 		const res = await response;
-
 		if (res.status == 404) {
 			return { firstName: 'Service', lastName: 'Account', email: 'none', teams: [] };
 		} else if (res.status !== 200 && res.status !== 201) {

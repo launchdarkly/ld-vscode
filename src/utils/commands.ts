@@ -24,3 +24,4 @@ export const CMD_LD_SET_MAINTAINER = 'launchdarkly.setMaintainer';
 export const CMD_LD_SET_GLOBAL_DEFAULT = 'launchdarkly.setGlobalDefaults';
 export const CMD_LD_CLEAR_GLOBAL_CTX = 'launchdarkly.clearGlobalContext';
 export const CMD_LD_FLAG_ACTION = 'launchdarkly.quickFlag';
+export const CMD_LD_SIGNOUT = 'launchdarkly.signOut';

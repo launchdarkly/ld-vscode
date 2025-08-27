@@ -13,10 +13,11 @@ import { extensionReload } from './generalUtils';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import * as semver from 'semver';
 import { SetWorkspaceCmd } from './commands/setWorkspaceEnabled';
-import { CMD_LD_CONFIG, CMD_LD_SIGNIN } from './utils/commands';
+import { CMD_LD_CONFIG, CMD_LD_SIGNIN, CMD_LD_SIGNOUT } from './utils/commands';
 import { ILaunchDarklyAuthenticationSession } from './models';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
+	console.log('ACTIVATING EXTENSION');
 	const storedVersion = ctx.globalState.get('version', '5.0.0');
 	const LDExtConfig = LDExtensionConfiguration.getInstance(ctx);
 	LDExtConfig.setConfig(new Configuration(LDExtConfig.getCtx()));
@@ -81,6 +82,14 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 		}),
 		SetWorkspaceCmd(LDExtConfig),
 	);
+
+	LDExtConfig.getCtx().subscriptions.push(
+		commands.registerCommand(CMD_LD_SIGNOUT, async () => {
+			await authProv.removeSession(LDExtConfig.getSession()?.id);
+			window.showInformationMessage(`You are now signed out of LaunchDarkly.`);
+		}),
+	);
+
 	authentication.onDidChangeSessions(async (e) => {
 		if (e.provider.id === 'launchdarkly') {
 			await extensionReload(LDExtConfig);
@@ -88,7 +97,9 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	});
 	LDExtConfig.setApi(new LaunchDarklyAPI(LDExtConfig.getConfig(), LDExtConfig));
 	if (validationError !== 'unconfigured') {
+		console.log('*** setting flag store ***');
 		LDExtConfig.setFlagStore(new FlagStore(LDExtConfig));
+		console.log('*** flag store set successfully ***');
 	}
 
 	const codeRefsVersionDir = `${LDExtConfig.getCtx().asAbsolutePath('coderefs')}/${cr.version}`;

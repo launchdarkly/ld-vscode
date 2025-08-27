@@ -1,9 +1,10 @@
 import * as url from 'url';
 import { authentication, commands, window } from 'vscode';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const axios = require('axios').default;
-import axiosRetry from 'axios-retry';
-import retry from 'axios-retry-after';
+import axios from 'axios';
+import fetch from 'node-fetch';
+// import axiosRetry from 'axios-retry';
+// import retry from 'axios-retry-after';
 
 import {
 	FlagLink,
@@ -39,12 +40,12 @@ axios.interceptors.response.use(
 		return response;
 	},
 	async function (error) {
-		const originalRequest = error.config;
-		if (error.response.status === 404) {
+		const originalRequest = error.config
+		if (error.response?.status === 404) {
 			debuglog(error);
 			debuglog(`404 for URL: ${originalRequest.url}`);
 		}
-		if (error.response.status === 401 && !originalRequest._retry) {
+		if (error.response?.status === 401 && !originalRequest._retry) {
 			const config = LDExtensionConfiguration.getInstance();
 			originalRequest._retry = true;
 			const session = (await authentication.getSession('launchdarkly', ['writer'], {
@@ -58,38 +59,38 @@ axios.interceptors.response.use(
 	},
 );
 
-axios.interceptors.response.use(
-	null,
-	retry(axios, {
-		isRetryable(error) {
-			return (
-				error.response &&
-				error.response.status === 429 &&
-				error.response.headers['X-Ratelimit-Reset'] &&
-				error.response.headers['X-Ratelimit-Reset'] <= 60
-			);
-		},
+// axios.interceptors.response.use(
+// 	null,
+// 	retry(axios, {
+// 		isRetryable(error) {
+// 			return (
+// 				error.response &&
+// 				error.response?.status === 429 &&
+// 				error.response?.headers['X-Ratelimit-Reset'] &&
+// 				error.response?.headers['X-Ratelimit-Reset'] <= 60
+// 			);
+// 		},
 
-		// Customize the wait behavior
-		wait(error) {
-			return new Promise((resolve) => setTimeout(resolve, error.response.headers['X-Ratelimit-Reset']));
-		},
+// 		// Customize the wait behavior
+// 		wait(error) {
+// 			return new Promise((resolve) => setTimeout(resolve, error.response?.headers['X-Ratelimit-Reset']));
+// 		},
 
-		// Customize the retry request itself
-		retry(axios, error) {
-			if (!error.config) {
-				throw error;
-			}
+// 		// Customize the retry request itself
+// 		retry(axios, error) {
+// 			if (!error.config) {
+// 				throw error;
+// 			}
 
-			// Apply request customizations before retrying
-			// ...
+// 			// Apply request customizations before retrying
+// 			// ...
 
-			return axios(error.config);
-		},
-	}),
-);
+// 			return axios(error.config);
+// 		},
+// 	}),
+// );
 
-axiosRetry(axios, { retries: 2, retryDelay: axiosRetry.exponentialDelay });
+// axiosRetry(axios, { retries: 2, retryDelay: axiosRetry.exponentialDelay });
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
@@ -111,7 +112,7 @@ export class LaunchDarklyAPI {
 
 		try {
 			//data = await this.executeWithRetry(() => axios.get(options.url, { ...options }), 2);
-			data = await axios.get(options.url, { ...options });
+			data = await axios.get(options.url, options);
 		} catch (err) {
 			console.log(err);
 			return [];
@@ -143,7 +144,7 @@ export class LaunchDarklyAPI {
 			const initialUrl = `projects/${projectKey}?expand=environments`;
 			const requestUrl = url || initialUrl;
 			const options = this.createOptions(requestUrl, { method: 'GET' });
-			const data = await axios.get(options.url, { ...options });
+			const data = await axios.get(options.url, options);
 			const project = data.data;
 
 			if (project.environments._links && project.environments._links.next) {
@@ -191,8 +192,18 @@ export class LaunchDarklyAPI {
 		}
 		try {
 			const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
-			const data = await axios.get(options.url, options);
-			return data.data;
+			
+			const response = await fetch(options.url, {
+				method: 'GET',
+				headers: options.headers
+			});
+			
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+			}
+			
+			const data = await response.json();
+			return data as Environment;
 		} catch (err) {
 			console.log(err);
 			window
@@ -288,31 +299,28 @@ export class LaunchDarklyAPI {
 		}
 		const envParam = envKey ? 'env=' + envKey : '';
 		const limit = 100;
-		const initialUrl = `flags/${projectKey}/?${envParam}&summary=true&sort=name&limit=${limit}`;
+		const initialUrl = `flags/${projectKey}?${envParam}&summary=true&sort=name&limit=${limit}`;
 		const requestUrl = url || initialUrl;
 		const options = this.createOptions(requestUrl, { method: 'GET', params: envParam });
 		let data;
+		
 
 		try {
-			//data = await this.executeWithRetry(() => axios.get(options.url, { ...options }), 2);
-			data = await axios.get(options.url, { ...options });
+			data = await axios.get(options.url, { headers: {...options.headers }})
 		} catch (err) {
-			console.log(err);
+			console.log('err in getFeatureFlags---->>>', err);
 			return [];
 		}
 		const flags = data.data.items;
-		if (data.data._links && data.data._links.next) {
-			// If there is a 'next' link, fetch the next page
+		if (data?.data?._links && data?.data?._links.next) {
 			const match = '/api/v2/';
-			const nextLink = data.data._links.next.href.replace(new RegExp(match), '');
-			//await sleep(1500);
-			//const moreFlags = await this.executeWithRetry(async () => await this.getFeatureFlags(projectKey, envKey, nextLink), 2);
+			const nextLink = data?.data?._links.next.href.replace(new RegExp(match), '');
 			const moreFlags = await this.getFeatureFlags(projectKey, envKey, nextLink);
 			return flags.concat(moreFlags);
 		} else {
-			// If there is no 'next' link, all items have been fetched
 			return flags;
 		}
+		
 	}
 
 	async patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag | Error> {
@@ -322,7 +330,7 @@ export class LaunchDarklyAPI {
 				body: value,
 			});
 			const data = await axios.patch(options.url, value, options);
-			return new FeatureFlag(data);
+			return new FeatureFlag(data.data);
 		} catch (err) {
 			return Promise.reject(err);
 		}
