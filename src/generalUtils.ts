@@ -102,6 +102,9 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 	const flagView = new LaunchDarklyTreeViewProvider(config);
 	const codeLens = new FlagCodeLensProvider(config);
 
+	config.setQuickLinksProvider(quickLinksView);
+	config.setFlagView(flagView);
+
 	const enableFlagListView = workspace.getConfiguration('launchdarkly').get('enableFlagsInFile', false);
 	let listViewDisp = Disposable.from();
 	if (enableFlagListView) {
@@ -122,7 +125,10 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 		window.registerTreeDataProvider('launchdarklyReleases', releaseView);
 	}
 
-	config.setFlagView(flagView);
+	if(config.getFlagStore()) {
+		flagView.setIsLoading(true);
+	}
+
 
 	//Register window providers
 	window.registerTreeDataProvider('launchdarklyQuickLinks', quickLinksView);
@@ -339,4 +345,10 @@ export async function cleanupComponents(config: ILDExtensionConfiguration) {
 
 	// Clear API
 	config.setApi(null);
+
+	// Clean up quick links provider
+	const quickLinksProvider = config.getQuickLinksProvider();
+	if (quickLinksProvider) {
+		quickLinksProvider.refresh();
+	}
 }

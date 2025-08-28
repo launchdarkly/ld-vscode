@@ -1,6 +1,5 @@
 export const CMD_LD_CONFIG = 'extension.configureLaunchDarkly';
 export const CMD_LD_CONFIG_ENV = 'launchdarkly.configureLaunchDarklyEnvironment';
-export const CMD_LD_MIGRATE_CONFIGURATION = 'launchdarkly.migrateConfiguration';
 export const CMD_LD_OPEN = 'launchdarkly.openInLaunchDarkly';
 export const CMD_LD_OPEN_BROWSER = 'launchdarkly.openBrowser';
 export const CMD_LD_OPEN_FLAG = 'launchdarkly.OpenFlag';
@@ -19,7 +18,7 @@ export const CMD_LD_FLAG_SEARCH = 'launchdarkly.flagMultipleSearch';
 export const CMD_LD_METRIC_SEARCH = 'launchdarkly.metricMultipleSearch';
 export const CMD_LD_ENABLE_LENS = 'launchdarkly.enableCodeLens';
 export const CMD_LD_PICK_RULES = 'launchdarkly.quickPickRules';
-export const CMD_LD_SIGNIN = 'vscode-launchdarkly-authprovider.signIn';
+export const CMD_LD_SIGNIN = 'launchdarkly.signIn';
 export const CMD_LD_SET_MAINTAINER = 'launchdarkly.setMaintainer';
 export const CMD_LD_SET_GLOBAL_DEFAULT = 'launchdarkly.setGlobalDefaults';
 export const CMD_LD_CLEAR_GLOBAL_CTX = 'launchdarkly.clearGlobalContext';

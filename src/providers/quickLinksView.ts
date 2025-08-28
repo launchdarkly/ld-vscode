@@ -95,24 +95,26 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async getChildren(element?: LinkNode): Promise<LinkNode[]> {
-		if (this.config.getSession() === undefined) {
+		const session = this.config.getSession();
+		if (!session || !session.fullUri) {
 			return [];
 		}
 		const baseUrl = `${this.config.getSession().fullUri}/${this.config.getConfig().project}/${
 			this.config.getConfig().env
 		}`;
+	
 		const items = [];
 		items.push(
 			new LinkNode(`Create Boolean Feature Flag`, NON_COLLAPSED, '', {
-				title: 'Create Boolean Feature Flag',
+				title: 'Create Boolean Flag',
 				command: CMD_LD_CREATE_FLAG,
 			}),
 		);
-		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/features/create`)));
+		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/features/flags/new`)));
 		items.push(new LinkNode(`Feature Flags`, NON_COLLAPSED, addUtm(`${baseUrl}/features`)));
 		items.push(new LinkNode(`Segments`, NON_COLLAPSED, addUtm(`${baseUrl}/segments`)));
 		items.push(new LinkNode(`Contexts`, NON_COLLAPSED, addUtm(`${baseUrl}/contexts`)));
-		items.push(new LinkNode(`Live Events`, NON_COLLAPSED, addUtm(`${baseUrl}/debugger`)));
+		items.push(new LinkNode(`Live Events`, NON_COLLAPSED, addUtm(`${baseUrl}/live`)));
 		items.push(new LinkNode(`Experiments`, NON_COLLAPSED, addUtm(`${baseUrl}/experiments`)));
 		items.push(new LinkNode(`Audit Log`, NON_COLLAPSED, addUtm(`${baseUrl}/audit`)));
 		items.push(new LinkNode(`Flag Comparison`, NON_COLLAPSED, addUtm(`${baseUrl}/features/compare`)));
@@ -122,7 +124,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 				command: 'launchdarkly.openCompareFlag',
 			}),
 		);
-		items.push(new LinkNode(`Documentation`, NON_COLLAPSED, addUtm(`https://docs.launchdarkly.com`)));
+		items.push(new LinkNode(`Documentation`, NON_COLLAPSED, addUtm(`https://launchdarkly.com/docs/integrations/vscode`)));
 
 		return Promise.resolve(items);
 	}

@@ -4,7 +4,6 @@ import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
 import { extensionReload, setupComponents } from './generalUtils';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
-import { CMD_LD_MIGRATE_CONFIGURATION } from './utils/commands';
 
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
 
@@ -33,18 +32,4 @@ export async function register(config: LDExtensionConfiguration): Promise<void> 
 		workspace.getConfiguration('launchdarkly').get('enableMetricsExplorer', false),
 	);
 
-	config.getCtx().subscriptions.push(
-		commands.registerCommand(CMD_LD_MIGRATE_CONFIGURATION, async () => {
-			try {
-				const localConfig = workspace.getConfiguration('launchdarkly');
-				await config.getCtx().workspaceState.update('project', localConfig['project']);
-				await config.getCtx().workspaceState.update('env', localConfig['env']);
-				await config.getCtx().secrets.store('launchdarkly_accessToken', localConfig['accessToken']);
-				await extensionReload(config);
-				window.showInformationMessage('[LaunchDarkly] Configured successfully');
-			} catch (err) {
-				window.showErrorMessage(`[LaunchDarkly] ${err}`);
-			}
-		}),
-	);
 }

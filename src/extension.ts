@@ -27,10 +27,13 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	const session = (await authentication.getSession('launchdarkly', ['writer'], {
 		createIfNone: false,
 	})) as ILaunchDarklyAuthenticationSession;
-	LDExtConfig.setSession(session);
+
 
 	const validationError = await LDExtConfig.getConfig().validate();
 	const configuredOnce = LDExtConfig.getCtx().globalState.get('LDConfigured');
+
+	LDExtConfig.setSession(session);
+	commands.executeCommand('setContext', 'launchdarkly:isSignedIn', !!session);
 
 	switch (validationError) {
 		case 'unconfigured':
@@ -65,11 +68,18 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 
 	LDExtConfig.getCtx().subscriptions.push(
 		commands.registerCommand(CMD_LD_SIGNIN, async () => {
-			const session = (await authentication.getSession('launchdarkly', ['writer'], {
-				createIfNone: true,
-			})) as ILaunchDarklyAuthenticationSession;
+			try {
+				const session = (await authentication.getSession('launchdarkly', ['writer'], {
+					createIfNone: true,
+				})) as ILaunchDarklyAuthenticationSession;
+			
+			
+			if(!session || !session.account) return;
+				
+
 			LDExtConfig.setSession(session);
-			const res = await LDExtConfig.getConfig().reload();
+			await LDExtConfig.getConfig().reload();
+
 			if (!(await LDExtConfig.getConfig().isConfigured())) {
 				window
 					.showInformationMessage(`Click Configure below to finish setting up the LaunchDarkly extension`, `Configure`)
@@ -77,8 +87,19 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 						item === 'Configure' ? commands.executeCommand(CMD_LD_CONFIG) : null;
 					});
 			} else {
+				commands.executeCommand('setContext', 'launchdarkly:isSignedIn', true);
 				window.showInformationMessage(`You are now signed in to LaunchDarkly & Project is configured.`);
 			}
+			} catch(err) {
+				console.error('Error in sign in command:', err);
+				commands.executeCommand('setContext', 'launchdarkly:isSignedIn', false);
+        	    const selection = await window.showErrorMessage(`Sign in error: ${err.message}`, { modal: true }, 'Try Again');
+
+				if(selection === 'Try Again') {
+					commands.executeCommand(CMD_LD_SIGNIN);
+				}
+			}
+			 
 		}),
 		SetWorkspaceCmd(LDExtConfig),
 	);
@@ -94,6 +115,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 			if (confirmSignOut === 'Sign Out') {
 				await authProv.removeSession(LDExtConfig.getSession()?.id);
 				LDExtConfig.setSession(null);
+				commands.executeCommand('setContext', 'launchdarkly:isSignedIn', false);
 				window.showInformationMessage(`You are now signed out of LaunchDarkly.`);
 			}
 

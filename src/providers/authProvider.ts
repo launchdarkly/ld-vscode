@@ -147,8 +147,12 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 			return session;
 		} catch (e) {
 			await this.context.secrets.delete(SESSIONS_SECRET_KEY);
-			window.showErrorMessage(`Sign in failed: ${e}`);
-			throw e;
+			let userMessage = 'Sign in failed. Please check your credentials and try again.';
+			if (e.toString().includes('Failed to get user info')) {
+				userMessage = 'Invalid credentials. Please check your API token and try again.';
+			}
+			throw new Error(userMessage);
+			return;
 		}
 	}
 

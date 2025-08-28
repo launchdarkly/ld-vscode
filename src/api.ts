@@ -3,8 +3,8 @@ import { authentication, commands, window } from 'vscode';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import axios from 'axios';
 import fetch from 'node-fetch';
-// import axiosRetry from 'axios-retry';
-// import retry from 'axios-retry-after';
+import axiosRetry from 'axios-retry';
+import retry from 'axios-retry-after';
 
 import {
 	FlagLink,
@@ -23,7 +23,7 @@ import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import { debuglog } from 'util';
 import { CMD_LD_CONFIG } from './utils/commands';
 import { legacyAuth } from './utils/legacyAuth';
-import { CONST_CONFIG_LD } from './utils/constants';
+import { CONST_CONFIG_LD, CONST_LD_PREFIX } from './utils/constants';
 
 interface CreateOptionsParams {
 	method?: string;
@@ -59,38 +59,38 @@ axios.interceptors.response.use(
 	},
 );
 
-// axios.interceptors.response.use(
-// 	null,
-// 	retry(axios, {
-// 		isRetryable(error) {
-// 			return (
-// 				error.response &&
-// 				error.response?.status === 429 &&
-// 				error.response?.headers['X-Ratelimit-Reset'] &&
-// 				error.response?.headers['X-Ratelimit-Reset'] <= 60
-// 			);
-// 		},
+axios.interceptors.response.use(
+	null,
+	retry(axios, {
+		isRetryable(error) {
+			return (
+				error.response &&
+				error.response?.status === 429 &&
+				error.response?.headers['X-Ratelimit-Reset'] &&
+				error.response?.headers['X-Ratelimit-Reset'] <= 60
+			);
+		},
 
-// 		// Customize the wait behavior
-// 		wait(error) {
-// 			return new Promise((resolve) => setTimeout(resolve, error.response?.headers['X-Ratelimit-Reset']));
-// 		},
+		// Customize the wait behavior
+		wait(error) {
+			return new Promise((resolve) => setTimeout(resolve, error.response?.headers['X-Ratelimit-Reset']));
+		},
 
-// 		// Customize the retry request itself
-// 		retry(axios, error) {
-// 			if (!error.config) {
-// 				throw error;
-// 			}
+		// Customize the retry request itself
+		retry(axios, error) {
+			if (!error.config) {
+				throw error;
+			}
 
-// 			// Apply request customizations before retrying
-// 			// ...
+			// Apply request customizations before retrying
+			// ...
 
-// 			return axios(error.config);
-// 		},
-// 	}),
-// );
+			return axios(error.config);
+		},
+	}),
+);
 
-// axiosRetry(axios, { retries: 2, retryDelay: axiosRetry.exponentialDelay });
+axiosRetry(axios, { retries: 2, retryDelay: axiosRetry.exponentialDelay });
 
 // LaunchDarklyAPI is a wrapper around request-promise-native for requesting data from LaunchDarkly's REST API. The caller is expected to catch all exceptions.
 export class LaunchDarklyAPI {
@@ -192,23 +192,13 @@ export class LaunchDarklyAPI {
 		}
 		try {
 			const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
-
-			const response = await fetch(options.url, {
-				method: 'GET',
-				headers: options.headers,
-			});
-
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-			}
-
-			const data = await response.json();
-			return data as Environment;
+			const data = await axios.get(options.url, options);
+			return data.data;
 		} catch (err) {
 			console.log(err);
 			window
 				.showErrorMessage(
-					`${CONST_CONFIG_LD} Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`,
+					`${CONST_LD_PREFIX} Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`,
 					CONST_CONFIG_LD,
 				)
 				.then((selection) => {
