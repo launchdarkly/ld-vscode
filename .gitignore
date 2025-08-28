@@ -9,4 +9,3 @@ coderefs/
 .idea
 .yarn/
 package-lock.json
-yarn.lock
