@@ -1,8 +1,8 @@
-import { commands, window, workspace } from 'vscode';
+import { commands, workspace } from 'vscode';
 
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';
-import { extensionReload, setupComponents } from './generalUtils';
+import { setupComponents } from './generalUtils';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 
 export const FLAG_KEY_REGEX = /[A-Za-z0-9][.A-Za-z_\-0-9]*/;
