@@ -14,9 +14,6 @@ jobs:
       with:
         node-version: '18.19.0'
 
-    - name: Enable Corepack
-      run: corepack enable
-
     - name: Cache Node.js modules
       uses: actions/cache@v4
       with:
