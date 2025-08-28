@@ -40,7 +40,7 @@ axios.interceptors.response.use(
 		return response;
 	},
 	async function (error) {
-		const originalRequest = error.config
+		const originalRequest = error.config;
 		if (error.response?.status === 404) {
 			debuglog(error);
 			debuglog(`404 for URL: ${originalRequest.url}`);
@@ -192,16 +192,16 @@ export class LaunchDarklyAPI {
 		}
 		try {
 			const options = this.createOptions(`projects/${projectKey}/environments/${envKey}`);
-			
+
 			const response = await fetch(options.url, {
 				method: 'GET',
-				headers: options.headers
+				headers: options.headers,
 			});
-			
+
 			if (!response.ok) {
 				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 			}
-			
+
 			const data = await response.json();
 			return data as Environment;
 		} catch (err) {
@@ -303,10 +303,9 @@ export class LaunchDarklyAPI {
 		const requestUrl = url || initialUrl;
 		const options = this.createOptions(requestUrl, { method: 'GET', params: envParam });
 		let data;
-		
 
 		try {
-			data = await axios.get(options.url, { headers: {...options.headers }})
+			data = await axios.get(options.url, { headers: { ...options.headers } });
 		} catch (err) {
 			console.log('err in getFeatureFlags---->>>', err);
 			return [];
@@ -320,7 +319,6 @@ export class LaunchDarklyAPI {
 		} else {
 			return flags;
 		}
-		
 	}
 
 	async patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag | Error> {

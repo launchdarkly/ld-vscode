@@ -23,7 +23,7 @@ import { QuickLinksListProvider } from './providers/quickLinksView';
 import { setTimeout } from 'timers/promises';
 import { ToggleCache } from './toggleCache';
 import { LaunchDarklyReleaseProvider } from './providers/releaseViewProvider';
-import { ILDExtensionConfiguration, InstructionPatch } from './models';
+import { ILaunchDarklyAuthenticationSession, ILDExtensionConfiguration, InstructionPatch } from './models';
 import { logDebugMessage } from './utils/logDebugMessage';
 import { CMD_LD_CONFIG, CMD_LD_OPEN_FLAG, CMD_LD_REFRESH_LENS, CMD_LD_TOGGLE_CMD_PROMPT } from './utils/commands';
 import { registerCommand } from './utils/registerCommand';
@@ -34,13 +34,15 @@ const cache = new ToggleCache();
 export async function extensionReload(config: ILDExtensionConfiguration, reload = false) {
 	const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
 	if (session !== undefined) {
-		// TODO: determine if this reload call to config is needed
+		config.setSession(session as ILaunchDarklyAuthenticationSession);
 		await config.getConfig().reload();
 		config.setApi(new LaunchDarklyAPI(config.getConfig(), config));
 		config.setFlagStore(new FlagStore(config));
 		await setupComponents(config, reload);
 	} else {
 		console.log('No session found, please login to LaunchDarkly.');
+		config.setSession(null);
+		await cleanupComponents(config);
 	}
 }
 
@@ -57,7 +59,8 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 
 	// TODO: Handle status bar cleaner in future.
 	// This check may not be needed, need to verify when extensionReload is called.
-	if (config.getConfig().project !== '' || config.getConfig().env !== '') {
+	const session = config.getSession();
+	if (session && (config.getConfig().project !== '' || config.getConfig().env !== '')) {
 		const currentStatus = config.getStatusBar();
 		if (currentStatus) {
 			currentStatus.dispose();
@@ -306,4 +309,34 @@ function createFallthroughOrOffInstruction(kind: string, variationId: string) {
 		kind,
 		variationId: variationId,
 	};
+}
+
+export async function cleanupComponents(config: ILDExtensionConfiguration) {
+	// Dispose of existing commands
+	const cmds = config.getCtx().globalState.get<Disposable>('commands');
+	if (typeof cmds?.dispose === 'function') {
+		cmds.dispose();
+	}
+
+	// Hide and dispose status bar
+	const currentStatus = config.getStatusBar();
+	if (currentStatus) {
+		currentStatus.hide();
+		currentStatus.dispose();
+		config.setStatusBar(null);
+	}
+
+	// Clean up flag store
+	if (config.getFlagStore()) {
+		config.getFlagStore().stop();
+		config.setFlagStore(null);
+	}
+
+	// Clean up aliases
+	if (config.getAliases()) {
+		config.setAliases(null);
+	}
+
+	// Clear API
+	config.setApi(null);
 }

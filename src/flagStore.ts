@@ -76,8 +76,7 @@ export class FlagStore implements IFlagStore {
 			const flags = await this.config
 				.getApi()
 				.getFeatureFlags(this.config.getConfig().project, this.config.getConfig().env);
-				
-			
+
 			this.flagMetadata = keyBy(flags, 'key');
 		} catch (err) {
 			console.log(`Error getting flags ${err}`);

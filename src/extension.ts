@@ -17,7 +17,6 @@ import { CMD_LD_CONFIG, CMD_LD_SIGNIN, CMD_LD_SIGNOUT } from './utils/commands';
 import { ILaunchDarklyAuthenticationSession } from './models';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
-	console.log('ACTIVATING EXTENSION');
 	const storedVersion = ctx.globalState.get('version', '5.0.0');
 	const LDExtConfig = LDExtensionConfiguration.getInstance(ctx);
 	LDExtConfig.setConfig(new Configuration(LDExtConfig.getCtx()));
@@ -70,6 +69,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 				createIfNone: true,
 			})) as ILaunchDarklyAuthenticationSession;
 			LDExtConfig.setSession(session);
+			const res = await LDExtConfig.getConfig().reload();
 			if (!(await LDExtConfig.getConfig().isConfigured())) {
 				window
 					.showInformationMessage(`Click Configure below to finish setting up the LaunchDarkly extension`, `Configure`)
@@ -85,8 +85,19 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 
 	LDExtConfig.getCtx().subscriptions.push(
 		commands.registerCommand(CMD_LD_SIGNOUT, async () => {
-			await authProv.removeSession(LDExtConfig.getSession()?.id);
-			window.showInformationMessage(`You are now signed out of LaunchDarkly.`);
+			const confirmSignOut = await window.showWarningMessage(
+				`Are you sure you want to sign out of LaunchDarkly?`,
+				{ modal: true },
+				'Sign Out',
+			);
+
+			if (confirmSignOut === 'Sign Out') {
+				await authProv.removeSession(LDExtConfig.getSession()?.id);
+				LDExtConfig.setSession(null);
+				window.showInformationMessage(`You are now signed out of LaunchDarkly.`);
+			}
+
+			await extensionReload(LDExtConfig);
 		}),
 	);
 
@@ -97,9 +108,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	});
 	LDExtConfig.setApi(new LaunchDarklyAPI(LDExtConfig.getConfig(), LDExtConfig));
 	if (validationError !== 'unconfigured') {
-		console.log('*** setting flag store ***');
 		LDExtConfig.setFlagStore(new FlagStore(LDExtConfig));
-		console.log('*** flag store set successfully ***');
 	}
 
 	const codeRefsVersionDir = `${LDExtConfig.getCtx().asAbsolutePath('coderefs')}/${cr.version}`;
