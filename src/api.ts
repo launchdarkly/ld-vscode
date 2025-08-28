@@ -1,8 +1,6 @@
 import * as url from 'url';
 import { authentication, commands, window } from 'vscode';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 import axios from 'axios';
-import fetch from 'node-fetch';
 import axiosRetry from 'axios-retry';
 import retry from 'axios-retry-after';
 
