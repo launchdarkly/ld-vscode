@@ -116,12 +116,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			]);
 		}
 
-		if(!this.ldConfig.getSession()) {
-			return []
+		if (!this.ldConfig.getSession()) {
+			return [];
 		}
 
 		if (typeof this.flagNodes === 'undefined' || this.flagNodes?.length == 0) {
-			if(!this.isLoading && this.ldConfig.getConfig()?.isConfigured()) {
+			if (!this.isLoading && this.ldConfig.getConfig()?.isConfigured()) {
 				return Promise.resolve([
 					new FlagNode(
 						this.ldConfig.getCtx(),
@@ -135,7 +135,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 						0,
 						undefined,
 					),
-				]);	
+				]);
 			}
 		}
 
@@ -458,7 +458,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 
 	public setIsLoading(isLoading: boolean): void {
 		this.isLoading = isLoading;
-		if(isLoading) {
+		if (isLoading) {
 			this.refresh();
 		}
 	}

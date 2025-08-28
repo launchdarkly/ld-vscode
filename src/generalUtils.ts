@@ -125,10 +125,9 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 		window.registerTreeDataProvider('launchdarklyReleases', releaseView);
 	}
 
-	if(config.getFlagStore()) {
+	if (config.getFlagStore()) {
 		flagView.setIsLoading(true);
 	}
-
 
 	//Register window providers
 	window.registerTreeDataProvider('launchdarklyQuickLinks', quickLinksView);

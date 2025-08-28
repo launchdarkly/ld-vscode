@@ -31,5 +31,4 @@ export async function register(config: LDExtensionConfiguration): Promise<void> 
 		'launchdarkly:enableMetricExplorer',
 		workspace.getConfiguration('launchdarkly').get('enableMetricsExplorer', false),
 	);
-
 }

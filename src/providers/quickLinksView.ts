@@ -102,7 +102,7 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 		const baseUrl = `${this.config.getSession().fullUri}/${this.config.getConfig().project}/${
 			this.config.getConfig().env
 		}`;
-	
+
 		const items = [];
 		items.push(
 			new LinkNode(`Create Boolean Feature Flag`, NON_COLLAPSED, '', {
@@ -124,7 +124,9 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 				command: 'launchdarkly.openCompareFlag',
 			}),
 		);
-		items.push(new LinkNode(`Documentation`, NON_COLLAPSED, addUtm(`https://launchdarkly.com/docs/integrations/vscode`)));
+		items.push(
+			new LinkNode(`Documentation`, NON_COLLAPSED, addUtm(`https://launchdarkly.com/docs/integrations/vscode`)),
+		);
 
 		return Promise.resolve(items);
 	}
