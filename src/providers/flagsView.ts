@@ -442,8 +442,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			this.ldConfig.getCtx(),
 			flag.name,
 			generateHoverString(flag, envConfig, this.ldConfig),
-			`${this.ldConfig.getSession()?.fullUri}/${this.ldConfig.getConfig()?.project}/${this.ldConfig.getConfig()
-				?.env}/features/${flag.key}`,
+			`${this.ldConfig.getSession()?.fullUri}/${this.ldConfig.getConfig()?.project}/${
+				this.ldConfig.getConfig()?.env
+			}/features/${flag.key}`,
 			COLLAPSED,
 			[],
 			flag.key,
