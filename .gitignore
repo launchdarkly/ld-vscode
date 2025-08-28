@@ -7,3 +7,6 @@ dist
 coderefs/
 .vscode/settings.json
 .idea
+.yarn/
+package-lock.json
+yarn.lock
