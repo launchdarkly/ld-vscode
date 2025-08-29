@@ -551,7 +551,6 @@
 	},
 	"resolutions": {
 		"node.extend": "^1.1.7",
-		"lodash": "^4.17.12",
-		"minimatch": "^5.1.6"
+		"lodash": "^4.17.12"
 	}
 }
