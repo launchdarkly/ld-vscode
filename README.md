@@ -15,7 +15,7 @@ The LaunchDarkly VS Code extension requires authentication using a **Personal Ac
 
 #### Important Notes:
 - **Personal tokens only**: Service tokens are not supported
-- **Minimum permissions**: Your token must have `Writer` role permissions
+- **Permissions**: Your token must have permissions to perform actions available in the extension. Reader roles will be able to view flags but not perform any actions.
 - **Token scope**: The token should have access to the projects and environments you want to work with
 
 #### [Creating an Access Token](https://launchdarkly.com/docs/home/account/api-create#create-access-tokens)
@@ -29,7 +29,6 @@ The LaunchDarkly VS Code extension requires authentication using a **Personal Ac
 4. Select your LaunchDarkly instance (Commercial, Federal, or Other)
 5. Paste your Personal Access Token when prompted
 
-> **Note**: Service tokens and tokens with `Reader` permissions will not work with this extension.
 
 ## Features
 
@@ -117,7 +116,7 @@ LaunchDarkly for Visual Studio Code is an [open source project](https://github.c
 ## Development
 
 ### Prerequisites
-- Node.js (version 16 or higher)
+- Node.js (version 18 or higher)
 - [Visual Studio Code](https://code.visualstudio.com/)
 
 ### Getting Started

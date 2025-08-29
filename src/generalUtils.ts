@@ -57,8 +57,6 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 		await setTimeout(2200);
 	}
 
-	// TODO: Handle status bar cleaner in future.
-	// This check may not be needed, need to verify when extensionReload is called.
 	const session = config.getSession();
 	if (session && (config.getConfig().project !== '' || config.getConfig().env !== '')) {
 		const currentStatus = config.getStatusBar();
@@ -316,6 +314,13 @@ function createFallthroughOrOffInstruction(kind: string, variationId: string) {
 	};
 }
 
+/**
+ * Cleans up and disposes of all LaunchDarkly extension components to prevent memory leaks
+ * and reset the extension to a clean state. Eg. when user signs out and the extension is reloaded
+ *
+ * @param config - The LaunchDarkly extension configuration object containing references to all components
+ *
+ */
 export async function cleanupComponents(config: ILDExtensionConfiguration) {
 	// Dispose of existing commands
 	const cmds = config.getCtx().globalState.get<Disposable>('commands');
@@ -323,7 +328,6 @@ export async function cleanupComponents(config: ILDExtensionConfiguration) {
 		cmds.dispose();
 	}
 
-	// Hide and dispose status bar
 	const currentStatus = config.getStatusBar();
 	if (currentStatus) {
 		currentStatus.hide();
@@ -331,21 +335,17 @@ export async function cleanupComponents(config: ILDExtensionConfiguration) {
 		config.setStatusBar(null);
 	}
 
-	// Clean up flag store
 	if (config.getFlagStore()) {
 		config.getFlagStore().stop();
 		config.setFlagStore(null);
 	}
 
-	// Clean up aliases
 	if (config.getAliases()) {
 		config.setAliases(null);
 	}
 
-	// Clear API
 	config.setApi(null);
 
-	// Clean up quick links provider
 	const quickLinksProvider = config.getQuickLinksProvider();
 	if (quickLinksProvider) {
 		quickLinksProvider.refresh();
