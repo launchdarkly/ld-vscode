@@ -116,3 +116,57 @@ function getFlagStatusUri(ctx: ExtensionContext, status: boolean) {
 
 	return dataUri;
 }
+
+export function generateHoverStringCopilot(flag: FeatureFlag, config: ILDExtensionConfiguration): MarkdownString {
+	const env = config.getConfig().env;
+	const flagUri = url.resolve(config.getSession().fullUri, flag.environments[env]._site.href);
+	const hoverString = new MarkdownString(
+		`![Flag status](${getFlagStatusUri(config.getCtx(), false)}) ${config.getConfig().project} / ${env} / **[${
+			flag.key
+		}](${flagUri} "Open in LaunchDarkly")** \n\n`,
+		true,
+	);
+
+	hoverString.isTrusted = true;
+	hoverString.appendText('\n');
+	hoverString.appendMarkdown(flag.description);
+	hoverString.appendText('\n');
+	const clientSDK = flag.clientSideAvailability.usingEnvironmentId ? '$(browser)' : '';
+	const mobileSDK = flag.clientSideAvailability.usingMobileKey ? '$(device-mobile)' : '';
+	const sdkAvailability = `Client-side SDK availability: ${clientSDK}${clientSDK && mobileSDK ? ' ' : ''}${mobileSDK}${
+		!clientSDK && !mobileSDK ? '$(server)' : ''
+	}\n\n`;
+	hoverString.appendMarkdown(sdkAvailability);
+	hoverString.appendText('\n');
+
+	let varTypeIcon;
+	const varType = flag.kind === 'multivariate' ? typeof flag.variations[0].value : flag.kind;
+	switch (varType) {
+		case 'boolean':
+			varTypeIcon = '$(symbol-boolean)';
+			break;
+		case 'number':
+			varTypeIcon = '$(symbol-number)';
+			break;
+		case 'object':
+			varTypeIcon = '$(symbol-object)';
+			break;
+		case 'string':
+			varTypeIcon = '$(symbol-key)';
+			break;
+		default:
+			break;
+	}
+
+	hoverString.appendMarkdown(`**${varTypeIcon} Variations**`);
+	flag.variations.map((variation) => {
+		const varVal = `\`${truncate(JSON.stringify(variation.value), 30).trim()}\``;
+		const varName = variation.name ? ` **${variation.name}**` : '';
+		const varDescription = variation.description ? `: ${variation.description}` : '';
+		hoverString.appendText('\n');
+		hoverString.appendMarkdown(`* ${varVal}${varName}${varDescription}`);
+	});
+
+	return hoverString;
+}
+

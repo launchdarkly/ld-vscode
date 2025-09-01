@@ -313,11 +313,12 @@ export class FlagStore implements IFlagStore {
 		});
 	}
 
-	async forceFeatureFlagUpdate(flagKey: string): Promise<void> {
+	async forceFeatureFlagUpdate(flagKey: string): Promise<FeatureFlag> {
 		this.flagMetadata[flagKey] = await this.config
 			.getApi()
 			.getFeatureFlag(this.config.getConfig().project, flagKey, this.config.getConfig().env);
 		this.storeUpdates.fire(true);
+		return this.flagMetadata[flagKey];
 	}
 
 	allFlags(): Promise<FlagConfiguration[] | LDFeatureStoreKindData> {
@@ -366,10 +367,12 @@ export class FlagStore implements IFlagStore {
 			projectKey: string,
 			flagKey: string,
 			value?: PatchComment | InstructionPatch,
+			variationId?: string,
 		) => Promise<FeatureFlag | Error>,
 		projectKey: string,
 		flagKey: string,
 		value?: PatchComment | InstructionPatch,
+		variationId?: string,
 	) {
 		const result = (await func(projectKey, flagKey, value)) as FeatureFlag;
 		this.flagMetadata[result.key] = result;

@@ -1,5 +1,5 @@
 import * as url from 'url';
-import { authentication, commands, window } from 'vscode';
+import { authentication, commands, env, ExtensionMode, window, workspace } from 'vscode';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import retry from 'axios-retry-after';
@@ -14,6 +14,7 @@ import {
 	ProjectAPI,
 	ReleasePhase,
 	ReleasePipeline,
+	Shortcut,
 } from './models';
 import { Resource, Project, FeatureFlag, Environment, PatchOperation, PatchComment, Metric } from './models';
 import { RepositoryRep } from 'launchdarkly-api-typescript';
@@ -21,7 +22,9 @@ import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import { debuglog } from 'util';
 import { CMD_LD_CONFIG } from './utils/commands';
 import { legacyAuth } from './utils/legacyAuth';
+import { logDebugMessage } from './utils/logDebugMessage';
 import { CONST_CONFIG_LD, CONST_LD_PREFIX } from './utils/constants';
+import { randomUUID } from 'crypto';
 
 interface CreateOptionsParams {
 	method?: string;
@@ -232,6 +235,12 @@ export class LaunchDarklyAPI {
 		return new FeatureFlag(data.data);
 	}
 
+	async listDependentFeatureFlags(projectKey: string, flagKey: string): Promise<Array<FeatureFlag>> {
+		const options = this.createOptions(`flags/${projectKey}/${flagKey}/dependent-flags`, { beta: true });
+		const data = await axios.get(options.url, options);
+		return data.data.items;
+	}
+
 	async getFlagCodeRefs(projectKey: string, repo: string, flag?: string): Promise<Array<RepositoryRep>> {
 		const flagKey = flag ? `&flagKey=${flag}` : '';
 		const params = `?projKey=${projectKey}${flagKey}&withReferencesForDefaultBranch=1`;
@@ -322,6 +331,13 @@ export class LaunchDarklyAPI {
 		}
 	}
 
+	async getShortcuts(projectKey: string): Promise<Array<Shortcut>> {
+		const options = this.createOptions(`projects/${projectKey}/shortcuts`, { beta: true });
+		const data = await axios.get(options.url, options);
+		return data.data.items;
+	}
+
+
 	async patchFeatureFlagSem(
 		projectKey: string,
 		flagKey: string,
@@ -388,7 +404,46 @@ export class LaunchDarklyAPI {
 		}
 		return options;
 	}
+
+	async logEvent(event: string, properties: Record<string, string>): Promise<void> {
+		try {
+			const telemetryEnabled =
+				env.isTelemetryEnabled && workspace.getConfiguration('launchdarkly').get('enableTelemetry', true);
+
+			if (!telemetryEnabled || this.ldConfig.getCtx().extensionMode !== ExtensionMode.Production) {
+				return;
+			}
+
+			const propertiesWithId = { ...properties, id: randomUUID() };
+			const body = {
+				event,
+				properties: propertiesWithId,
+			};
+
+			const options = this.createOptions(`tracking`, { beta: true, body });
+			const analyticsUrl = options.url.replace('api/v2', 'internal');
+			await axios.post(analyticsUrl, body, {
+				headers: options.headers,
+			});
+		} catch (err) {
+			logDebugMessage(err);
+		}
+	}
+
+	async patchFlagVariation(
+		projectKey: string,
+		flagKey: string,
+		updatedVariation: unknown,
+		variationId: string,
+	): Promise<FeatureFlag | Error> {
+		const instructions = {
+			instructions: [{ kind: 'updateVariation', variationId: variationId, value: updatedVariation }],
+			environmentKey: this.ldConfig.getConfig().env,
+		};
+		return this.patchFeatureFlagSem(projectKey, flagKey, instructions);
+	}
 }
+
 
 export const sortNameCaseInsensitive = (a: Resource, b: Resource) => {
 	return a.name.toLowerCase().localeCompare(b.name.toLowerCase());

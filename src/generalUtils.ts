@@ -9,6 +9,10 @@ import {
 	StatusBarAlignment,
 	window,
 	workspace,
+	ViewColumn,
+	commands,
+	Uri,
+	TextEditor,
 } from 'vscode';
 import { LaunchDarklyAPI } from './api';
 import generalCommands from './commands/generalCommands';
@@ -312,6 +316,95 @@ function createFallthroughOrOffInstruction(kind: string, variationId: string) {
 		kind,
 		variationId: variationId,
 	};
+}
+
+export async function viewEditVariation(
+	config: ILDExtensionConfiguration,
+	//kind: string,
+	key: string,
+): Promise<void> {
+	const env = await config.getFlagStore()?.getFeatureFlag(key);
+
+	const variations = env?.flag.variations?.map((variation, idx) => {
+		return {
+			label: `${idx}. ${
+				JSON.stringify(variation.name) ? JSON.stringify(variation.name) : JSON.stringify(variation.value)
+			}`,
+			value: variation._id,
+			idx: idx,
+		};
+	});
+	if (!variations) {
+		return;
+	}
+
+	const choice = await window.showQuickPick(variations);
+	if (!choice) {
+		return;
+	}
+
+	const selectedVariation = choice.value;
+	const uriString = env.flag.variations[choice.idx].name ? `/${env.flag.variations[choice.idx].name}` : ``;
+	const uri = Uri.parse(`launchdarkly:///${key}/${selectedVariation}${uriString}`);
+
+	let document;
+	try {
+		document = await workspace.openTextDocument(uri);
+	} catch (e) {
+		console.log(e);
+	}
+	if (typeof env.flag.variations[0].value === 'object') {
+		languages.setTextDocumentLanguage(document, 'json');
+	}
+
+	window.showTextDocument(document);
+}
+
+export async function diffVariations(config: ILDExtensionConfiguration, key: string): Promise<void> {
+	const env = await config.getFlagStore()?.getFeatureFlag(key);
+
+	const variations = env?.flag.variations?.map((variation, idx) => {
+		return {
+			label: `${idx}. ${
+				JSON.stringify(variation.name) ? JSON.stringify(variation.name) : JSON.stringify(variation.value)
+			}`,
+			value: variation._id,
+			idx: idx,
+		};
+	});
+	if (!variations) {
+		return;
+	}
+
+	const choice = await window.showQuickPick(variations, {
+		canPickMany: true,
+	});
+	if (!choice) {
+		return;
+	}
+	if (choice.length !== 2) {
+		window.showErrorMessage('Please select two variations to compare.');
+	}
+
+	const leftUri = getSelectedVariationAndUri(choice, 0, key, env);
+	const rightUri = getSelectedVariationAndUri(choice, 1, key, env);
+
+	await commands.executeCommand('vscode.diff', leftUri, rightUri, `Diff: ${key}`, { viewColumn: ViewColumn.Active });
+	if (typeof env.flag.variations[0].value === 'object') {
+		const diffEditor = window.visibleTextEditors.filter((editor: TextEditor) => {
+			return editor.document.fileName.includes(key);
+		});
+		diffEditor.map(async (editor: TextEditor) => {
+			await languages.setTextDocumentLanguage(editor.document, 'json');
+		});
+	}
+}
+
+function getSelectedVariationAndUri(choice, idx, key, env) {
+	const selectedVariation = choice[idx].value;
+	const uriString = env.flag.variations[choice[idx].idx].name ? `/${env.flag.variations[choice[idx].idx].name}` : ``;
+	const uri = Uri.parse(`launchdarkly:///${key}/${selectedVariation}${uriString}`);
+	return uri;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { ExtensionContext, StatusBarItem, TreeView } from 'vscode';
+import { DebuggerHandler } from './utils/debugger';
 import { QuickLinksListProvider } from './providers/quickLinksView';
 import {
 	IFlagStore,
@@ -9,6 +10,7 @@ import {
 	LaunchDarklyAPIInterface,
 	ILaunchDarklyAuthenticationSession,
 	ILaunchDarklyTreeViewProvider,
+	Environment,
 } from './models';
 
 export class LDExtensionConfiguration {
@@ -24,7 +26,8 @@ export class LDExtensionConfiguration {
 	private session?: ILaunchDarklyAuthenticationSession;
 	private statusBar?: StatusBarItem;
 	private quickLinksProvider?: QuickLinksListProvider;
-
+	private debugHandler?: DebuggerHandler;
+	private environment?: Environment;
 	private constructor(ctx: ExtensionContext) {
 		this.ctx = ctx;
 	}
@@ -122,5 +125,21 @@ export class LDExtensionConfiguration {
 
 	setQuickLinksProvider(quickLinksProvider: QuickLinksListProvider): void {
 		this.quickLinksProvider = quickLinksProvider;
+	}
+
+	getDebugHandler(): DebuggerHandler | undefined {
+		return this.debugHandler;
+	}
+	
+	setDebugHandler(debugHandler: DebuggerHandler): void {
+		this.debugHandler = debugHandler;
+	}
+
+	getEnvironment(): Environment | undefined {
+		return this.environment;
+	}
+
+	setEnvironment(environment: Environment): void {
+		this.environment = environment;
 	}
 }

@@ -25,3 +25,4 @@ export const CMD_LD_CLEAR_GLOBAL_CTX = 'launchdarkly.clearGlobalContext';
 export const CMD_LD_FLAG_ACTION = 'launchdarkly.quickFlag';
 export const CMD_LD_SIGNOUT = 'launchdarkly.signOut';
 export const CMD_LD_MIGRATE_CONFIGURATION = 'launchdarkly.migrateConfiguration';
+export const CMD_LD_SHORTCUTS = 'launchdarkly.showShortcuts';

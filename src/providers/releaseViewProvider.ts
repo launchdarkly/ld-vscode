@@ -10,6 +10,8 @@ export class LaunchDarklyReleaseProvider implements TreeDataProvider<TreeItem> {
 	private nodes: ReleasePhaseParentNode[] | TreeItem[] = [];
 	private updateTimer: NodeJS.Timeout | undefined;
 	releasedFlags = new Set<string>();
+	flagStatus = {};
+	releaseData = {};
 	constructor(config: ILDExtensionConfiguration) {
 		this.config = config;
 		this.start();
@@ -275,3 +277,5 @@ function generatePhaseTooltip(phase: ReleasePhase): MarkdownString {
 function truncate(str: string, n: number): string {
 	return str.length > n ? str.substr(0, n - 1) + '\u2026' : str;
 }
+
+

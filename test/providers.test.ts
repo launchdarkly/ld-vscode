@@ -27,6 +27,16 @@ const flag = new FeatureFlag({
 			_site: {
 				href: 'https://example.com',
 			},
+			_summary: {		
+				variations: {
+					'0': {
+						rules: 1,
+						nullRules: 0,
+						targets: 0,
+						contextTargets: 0,
+					},
+				},
+			},
 		},
 	},
 	kind: 'boolean',

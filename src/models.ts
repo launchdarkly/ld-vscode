@@ -3,6 +3,7 @@ import { ExecOptions } from 'child_process';
 import { ClientSideAvailability, RepositoryRep } from 'launchdarkly-api-typescript';
 import { Dictionary } from 'lodash';
 import { QuickLinksListProvider } from './providers/quickLinksView';
+import { DebuggerHandler } from './utils/debugger';
 import {
 	AuthenticationSession,
 	ConfigurationChangeEvent,
@@ -15,6 +16,15 @@ import {
 	TreeView,
 	WorkspaceFolder,
 } from 'vscode';
+import { YAMLIndividualTarget, YAMLRuleTarget } from './utils/rulesYaml';
+
+export interface StaleConfig {
+	days: number;
+	skipReleasePipelinesCheck?: boolean;
+	skipCriticalEnvironmentsCheck?: boolean;
+	skipFlagTemporary?: boolean;
+	checkRulesInCriticalEnvs?: boolean; 
+}
 
 export class Resource {
 	name: string;
@@ -304,6 +314,21 @@ export class FeatureFlagConfig {
 	 */
 	trackEventsFallthrough?: boolean;
 	_site: Link;
+	_summary: Summary;
+}
+
+interface Summary {
+	variations: {
+		[key: string]: {
+			rules: number;
+			nullRules: number;
+			targets: number;
+			contextTargets: number;
+			isOff?: boolean;
+			isFallthrough?: boolean;
+			rollout?: number;
+		};
+	};
 }
 
 export class Link {
@@ -590,7 +615,7 @@ export interface IFlagStore {
 	removeAllListeners(): Promise<void>;
 	stop(): Promise<void>;
 	getFeatureFlag(flag: string, fullFlag?: boolean): Promise<FlagWithConfiguration>;
-	forceFeatureFlagUpdate(flagKey: string): Promise<void>;
+	forceFeatureFlagUpdate(flagKey: string): Promise<FeatureFlag>;
 	allFlags(): Promise<FlagConfiguration[] | LDFeatureStoreKindData>;
 	getFlagConfig(flag: string): Promise<FlagConfiguration>;
 	getFlagMetadata(flag: string): Promise<FeatureFlag>;
@@ -601,10 +626,12 @@ export interface IFlagStore {
 			projectKey: string,
 			flagKey: string,
 			value?: PatchComment | InstructionPatch,
+			variationId?: string,
 		) => Promise<FeatureFlag | Error>,
 		projectKey: string,
 		flagKey: string,
-		value?: PatchComment | InstructionPatch,
+		value?: PatchComment | InstructionPatch,	
+		variationId?: string,
 	): Promise<FeatureFlag>;
 	allFlags(): Promise<FlagConfiguration[] | LDFeatureStoreKindData>;
 	variationDetail(flag: string, context: LDContext): Promise<LDEvaluationDetail>;
@@ -671,6 +698,10 @@ export interface ILDExtensionConfiguration {
 	setStatusBar(statusBar: StatusBarItem): void;
 	getQuickLinksProvider(): QuickLinksListProvider | undefined;
 	setQuickLinksProvider(quickLinksProvider: QuickLinksListProvider): void;
+	getDebugHandler(): DebuggerHandler | undefined;
+	setDebugHandler(debugHandler: DebuggerHandler): void;
+	getEnvironment(): Environment | undefined;
+	setEnvironment(environment: Environment): void;
 }
 
 export interface LaunchDarklyAPIInterface {
@@ -685,11 +716,15 @@ export interface LaunchDarklyAPIInterface {
 	getReleasePipelines(projectKey: string): Promise<Array<ReleasePipeline>>;
 	getReleases(projectKey: string, pipelineKey: string, pipelineId: string): Promise<Array<ReleasePhase>>;
 	getCompletedReleases(projectKey: string, pipelineKey: string): Promise<Array<ReleasePhase>>;
+	listDependentFeatureFlags(projectKey: string, flagKey: string): Promise<Array<FeatureFlag>>;
+	patchFlagVariation(projectKey: string, flagKey: string, updatedVariation: unknown, variationID: string): Promise<FeatureFlag | Error>;
+	logEvent(event: string, properties: Record<string, string>): Promise<void>;
 	postFeatureFlag(projectKey: string, flag: NewFlag): Promise<FeatureFlag>;
 	getFeatureFlags(projectKey: string, envKey?: string, url?: string): Promise<Array<FeatureFlag>>;
 	patchFeatureFlag(projectKey: string, flagKey: string, value?: PatchComment): Promise<FeatureFlag | Error>;
 	patchFeatureFlagOn(projectKey: string, flagKey: string, enabled: boolean): Promise<FeatureFlag | Error>;
 	patchFeatureFlagSem(projectKey: string, flagKey: string, value?: InstructionPatch): Promise<FeatureFlag | Error>;
+	getShortcuts(projectKey: string): Promise<Array<Shortcut>>;
 }
 
 export interface IConfiguration {
@@ -718,11 +753,14 @@ export interface IConfiguration {
 	update(key: string, value: string | boolean, global: boolean): Promise<void>;
 	validate(): Promise<string>;
 	validateRefreshInterval(interval: number): boolean;
+	getStaleConfig(): Promise<StaleConfig>;
+	getEnvs(): string[];
 }
 
 export interface ILaunchDarklyReleaseProvider extends TreeDataProvider<TreeItem> {
 	config: ILDExtensionConfiguration;
 	releasedFlags: Set<string>;
+	flagStatus: object;
 	refresh(): void;
 	start(): void;
 	reload(): void;
@@ -740,3 +778,33 @@ export interface IReleaseFlagNode {
 	contextValue?: string;
 	tooltip?: string | MarkdownString;
 }
+
+export type filters = {
+	filter: Record<string, string | object>;
+};
+
+type ShortcutContextRep = {
+	projectKey: string;
+	environmentKeys: string[];
+	selectedEnvironmentKey: string;
+};
+
+export type Shortcut = {
+	name: string;
+	key: string;
+	icon: string;
+	type: string;
+	entityKey?: string;
+	context: ShortcutContextRep;
+	filters?: {
+		filter: filters;
+		sort?: string;
+	};
+};
+
+export type RuleSelection = {
+	label: string;
+	description?: string;
+	value: YAMLIndividualTarget | YAMLRuleTarget;
+	type?: 'rule' | 'target';
+};

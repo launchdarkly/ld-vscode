@@ -1,5 +1,7 @@
 import { commands } from 'vscode';
 import { Disposable, Event, EventEmitter } from 'vscode';
+import { startOfDay, subWeeks, subMonths, subYears, closestTo } from 'date-fns';
+import { filters } from '../models';
 
 export interface PromiseAdapter<T, U> {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,4 +62,70 @@ export function promiseFromEvent<T, U>(
 		),
 		cancel,
 	};
+}
+
+export function filtersObjToQueryString(obj: filters, prefix: string = ''): string {
+	const params = new URLSearchParams();
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	function addParams(obj: any, prefix: string) {
+		for (const key in obj) {
+			// eslint-disable-next-line no-prototype-builtins
+			if (obj.hasOwnProperty(key)) {
+				const value = obj[key];
+				const paramKey = prefix ? `${prefix}[${key}]` : key;
+				switch (key) {
+					case 'codeReferences': {
+						const refCount = value['min'] ? value['min'] : value['max'];
+						if (refCount > 0) {
+							params.append(paramKey, 'true');
+						} else {
+							params.append(paramKey, 'false');
+						}
+						break;
+					}
+					case 'contextKindsEvaluated':
+						if (value.length > 0) {
+							value.map((context: string) => params.append('contextKindsEvaluated', context));
+						}
+						break;
+					case 'creationDate': {
+						const parsedDate = creationDateToReferenceDate(new Date(value['before']).getTime(), Date.now());
+						params.append('created', parsedDate);
+						break;
+					}
+					case 'tags':
+						if (value.length > 0) {
+							value.map((tag: string) => params.append('tag', tag));
+						}
+						break;
+					default:
+						params.append(paramKey, value);
+						break;
+				}
+			}
+		}
+	}
+
+	addParams(obj, prefix);
+	return params.toString();
+}
+
+export function creationDateToReferenceDate(timestamp: number, referenceTimestamp: number) {
+	const referenceDate = startOfDay(referenceTimestamp);
+	const optionsToDate: Record<string, number> = {
+		'1-week-ago': subWeeks(referenceDate, 1).getTime(),
+		'1-month-ago': subMonths(referenceDate, 1).getTime(),
+		'2-months-ago': subMonths(referenceDate, 2).getTime(),
+		'3-months-ago': subMonths(referenceDate, 3).getTime(),
+		'6-months-ago': subMonths(referenceDate, 6).getTime(),
+		'1-year-ago': subYears(referenceDate, 1).getTime(),
+	};
+
+	const closestDateToEvalDate = closestTo(timestamp, Object.values(optionsToDate))?.getTime();
+	return typedObjectKeys(optionsToDate).find((key) => optionsToDate[key] === closestDateToEvalDate);
+}
+
+function typedObjectKeys<Key extends string>(record: Record<Key, unknown>): Key[] {
+	return Object.keys(record) as Key[];
 }

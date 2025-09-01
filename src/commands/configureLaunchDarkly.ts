@@ -11,7 +11,7 @@ export default function configureLaunchDarkly(config: LDExtensionConfiguration) 
 			const configurationMenu = new ConfigurationMenu(config);
 			await configurationMenu.configure();
 			if (config.getFlagStore() === null) {
-				config.setFlagStore(new FlagStore(config));
+				config.setFlagStore(new FlagStore(config as any)); // fix this
 			} else {
 				await config.getFlagStore().reload();
 			}
