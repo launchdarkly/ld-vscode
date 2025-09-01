@@ -2,6 +2,25 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [5.1.0] - 2025-09-01
+ 
+### Fixed
+
+- Bug with token validation
+- Updated broken quick link urls 
+- Upgraded failing dependencies 
+
+### Changed
+
+- Login flow
+- Better handling of invalid sessions 
+
+### Added 
+
+- Ability to sign out of session
+- Custom error handling for failed authentication 
+- Developement instructions into README
+
 ## [5.0.0] - 2024-02-06
 
 ### Fixed
