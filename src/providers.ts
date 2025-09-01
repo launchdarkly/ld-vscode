@@ -1,4 +1,4 @@
-import { commands, window, workspace } from 'vscode';
+import { commands, workspace, window } from 'vscode';
 
 import globalClearCmd from './commands/clearGlobalContext';
 import configureLaunchDarkly from './commands/configureLaunchDarkly';

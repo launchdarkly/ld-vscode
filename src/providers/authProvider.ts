@@ -72,13 +72,18 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 	public async getSessions(): Promise<readonly ILaunchDarklyAuthenticationSession[]> {
 		try {
 			const allSessions = await this.context.secrets.get(SESSIONS_SECRET_KEY);
-			if (allSessions.length === 2) {
+			if (!allSessions || allSessions.length === 0) {
 				return [];
 			}
 
 			const sessions = JSON.parse(allSessions) as ILaunchDarklyAuthenticationSession;
+			if (!sessions) {
+				return [];
+			}
+
 			const session = sessions[0];
 			const useLegacy = legacyAuth();
+
 			if (session && session.refreshToken && !useLegacy) {
 				const refreshToken = session.refreshToken;
 				const { access_token } = await this.getAccessToken(refreshToken);
@@ -88,14 +93,14 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 					return [updatedSession];
 				} else {
 					this.removeSession(session.id);
+					return [];
 				}
-			} else {
+			} else if (session) {
 				return [session];
 			}
 		} catch (e) {
-			// Nothing to do
-			console.log(e);
-			console.log('Error in session');
+			console.log('Error in session', e);
+			await this.context.secrets.delete(SESSIONS_SECRET_KEY);
 			return [];
 		}
 
@@ -141,8 +146,13 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 
 			return session;
 		} catch (e) {
-			window.showErrorMessage(`Sign in failed: ${e}`);
-			throw e;
+			await this.context.secrets.delete(SESSIONS_SECRET_KEY);
+			let userMessage = 'Sign in failed. Please check your credentials and try again.';
+			if (e.toString().includes('Failed to get user info')) {
+				userMessage = 'Invalid credentials. Please check your API token and try again.';
+			}
+			throw new Error(userMessage);
+			return;
 		}
 	}
 
@@ -311,11 +321,11 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 			},
 		});
 		const res = await response;
-
 		if (res.status == 404) {
 			return { firstName: 'Service', lastName: 'Account', email: 'none', teams: [] };
 		} else if (res.status !== 200 && res.status !== 201) {
 			window.showErrorMessage(`${CONST_CONFIG_LD} Failed to get user info: ${res.status}`);
+			throw new Error(`Failed to get user info: ${res.status}`);
 		}
 		return (await response.json()) as Member;
 	}

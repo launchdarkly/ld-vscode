@@ -296,7 +296,7 @@ export class FlagStore implements IFlagStore {
 					return;
 				}
 
-				if (!flag.environments || (!flag.environments[this.config.getConfig().env] && fullFlag)) {
+				if (!flag || !flag.environments || (!flag.environments[this.config.getConfig().env] && fullFlag)) {
 					try {
 						flag = await this.config
 							.getApi()

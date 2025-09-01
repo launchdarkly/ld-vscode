@@ -13,7 +13,7 @@ import { extensionReload } from './generalUtils';
 import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import * as semver from 'semver';
 import { SetWorkspaceCmd } from './commands/setWorkspaceEnabled';
-import { CMD_LD_CONFIG, CMD_LD_SIGNIN } from './utils/commands';
+import { CMD_LD_CONFIG, CMD_LD_SIGNIN, CMD_LD_SIGNOUT } from './utils/commands';
 import { ILaunchDarklyAuthenticationSession } from './models';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
@@ -27,10 +27,12 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	const session = (await authentication.getSession('launchdarkly', ['writer'], {
 		createIfNone: false,
 	})) as ILaunchDarklyAuthenticationSession;
-	LDExtConfig.setSession(session);
 
 	const validationError = await LDExtConfig.getConfig().validate();
 	const configuredOnce = LDExtConfig.getCtx().globalState.get('LDConfigured');
+
+	LDExtConfig.setSession(session);
+	commands.executeCommand('setContext', 'launchdarkly:isSignedIn', !!session);
 
 	switch (validationError) {
 		case 'unconfigured':
@@ -65,22 +67,61 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 
 	LDExtConfig.getCtx().subscriptions.push(
 		commands.registerCommand(CMD_LD_SIGNIN, async () => {
-			const session = (await authentication.getSession('launchdarkly', ['writer'], {
-				createIfNone: true,
-			})) as ILaunchDarklyAuthenticationSession;
-			LDExtConfig.setSession(session);
-			if (!(await LDExtConfig.getConfig().isConfigured())) {
-				window
-					.showInformationMessage(`Click Configure below to finish setting up the LaunchDarkly extension`, `Configure`)
-					.then((item) => {
-						item === 'Configure' ? commands.executeCommand(CMD_LD_CONFIG) : null;
-					});
-			} else {
-				window.showInformationMessage(`You are now signed in to LaunchDarkly & Project is configured.`);
+			try {
+				const session = (await authentication.getSession('launchdarkly', ['writer'], {
+					createIfNone: true,
+				})) as ILaunchDarklyAuthenticationSession;
+
+				if (!session || !session.account) return;
+
+				LDExtConfig.setSession(session);
+				await LDExtConfig.getConfig().reload();
+
+				if (!(await LDExtConfig.getConfig().isConfigured())) {
+					window
+						.showInformationMessage(
+							`Click Configure below to finish setting up the LaunchDarkly extension`,
+							`Configure`,
+						)
+						.then((item) => {
+							item === 'Configure' ? commands.executeCommand(CMD_LD_CONFIG) : null;
+						});
+				} else {
+					commands.executeCommand('setContext', 'launchdarkly:isSignedIn', true);
+					window.showInformationMessage(`You are now signed in to LaunchDarkly & Project is configured.`);
+				}
+			} catch (err) {
+				console.error('Error in sign in command:', err);
+				commands.executeCommand('setContext', 'launchdarkly:isSignedIn', false);
+				const selection = await window.showErrorMessage(`Sign in error: ${err.message}`, { modal: true }, 'Try Again');
+
+				if (selection === 'Try Again') {
+					commands.executeCommand(CMD_LD_SIGNIN);
+				}
 			}
 		}),
 		SetWorkspaceCmd(LDExtConfig),
 	);
+
+	LDExtConfig.getCtx().subscriptions.push(
+		commands.registerCommand(CMD_LD_SIGNOUT, async () => {
+			const confirmSignOut = await window.showWarningMessage(
+				`Are you sure you want to sign out of LaunchDarkly?`,
+				{ modal: true },
+				'Sign Out',
+			);
+
+			if (confirmSignOut === 'Sign Out') {
+				await authProv.removeSession(LDExtConfig.getSession()?.id);
+				LDExtConfig.setSession(null);
+				commands.executeCommand('setContext', 'launchdarkly:isSignedIn', false);
+				window.showInformationMessage(`You are now signed out of LaunchDarkly.`);
+			}
+
+			await extensionReload(LDExtConfig);
+		}),
+	);
+
 	authentication.onDidChangeSessions(async (e) => {
 		if (e.provider.id === 'launchdarkly') {
 			await extensionReload(LDExtConfig);
