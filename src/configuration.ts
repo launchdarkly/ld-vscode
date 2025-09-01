@@ -7,7 +7,11 @@ import {
 	authentication,
 } from 'vscode';
 import { logDebugMessage } from './utils/logDebugMessage';
+import { YamlReader } from './utils/yamlReader';
+import path from 'path';
 
+import * as vscode from 'vscode';
+import { StaleConfig } from './models';
 const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
 const DEFAULT_STREAM_URI = 'https://stream.launchdarkly.com';
 const ACCESS_TOKEN = 'launchdarkly_accessToken';
@@ -24,6 +28,7 @@ type refreshRateConfig = {
 };
 export class Configuration {
 	private readonly ctx: ExtensionContext;
+
 	project = '';
 	env = '';
 	accessToken = '';
@@ -36,6 +41,7 @@ export class Configuration {
 	enableFlagExplorer = true;
 	enableMetricExplorer = false;
 	enableCodeLens = false;
+	enableStaleFlagCheck = false;
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
 
@@ -62,7 +68,6 @@ export class Configuration {
 			await this.ctx.globalState.update('accessToken', null);
 			await this.ctx.workspaceState.update('accessToken', null);
 		}
-		//const accessToken = await this.ctx.secrets.get(ACCESS_TOKEN);
 		let env = await this.getState('env');
 		if (typeof env === 'undefined') {
 			env = '';
@@ -114,29 +119,11 @@ export class Configuration {
 		return false;
 	}
 
-	// public streamingConfigStartCheck(): boolean {
-	// 	const streamingConfigOptions = ['baseUri', 'streamUri'];
-	// 	const currProj = this.ctx.workspaceState.get('project');
-	// 	const currEnv = this.ctx.workspaceState.get('env');
-	// 	if (
-	// 		!streamingConfigOptions.every((o) => !!this[o]) &&
-	// 		typeof currProj === 'undefined' &&
-	// 		typeof currEnv === 'undefined'
-	// 		//global.ldSession !== undefined
-	// 	) {
-	// 		logDebugMessage(`Streaming config start check failed. Project: ${currProj} Environment: ${currEnv}`);
-	// 		console.warn('LaunchDarkly extension is not configured. Language support is unavailable.');
-	// 		return false;
-	// 	}
-	// 	return true;
-	// }
-
 	async validate(): Promise<string> {
 		const version = this.ctx.extension.packageJSON.version;
 		const ctx = this.ctx;
 		const storedVersion = ctx.globalState.get('version');
 		// Moving this update under the get version and awaiting it.
-		//await ctx.globalState.update('version', undefined);
 		const isDisabledForWorkspace = ctx.workspaceState.get('isDisabledForWorkspace');
 
 		if (version !== storedVersion) {
@@ -163,15 +150,14 @@ export class Configuration {
 	async isConfigured(): Promise<boolean> {
 		let proj, env: string | undefined;
 		const globalAutoload = workspace.getConfiguration('launchdarkly').get('globalDefault', 'off') as GlobalDefault;
-
 		switch (globalAutoload) {
 			// `isDisabledWorkspace` is already checked for true before this function is called.
 			case GlobalDefault.NoGlobalAutoload:
-				if (this.ctx.workspaceState.get('isDisabledForWorkspace') !== undefined) {
+				if (this.ctx.workspaceState.get('isDisabledForWorkspace') === false) {
 					proj = await this.ctx.globalState.get('project');
 					env = await this.ctx.globalState.get('env');
 				}
-				logDebugMessage(`Global Autoload values, Project: ${proj} Environment: ${env}`);
+				logDebugMessage(`Global NoAutoload values, Project: ${proj} Environment: ${env}`);
 				break;
 			case GlobalDefault.GlobalAutoload:
 				proj = await this.ctx.globalState.get('project');
@@ -198,13 +184,22 @@ export class Configuration {
 		return check;
 	}
 
-	// async localIsConfigured(): Promise<boolean> {
-	// 	const config = workspace.getConfiguration('launchdarkly');
-	// 	return (
-	// 		//!!(await this.ctx.secrets.get(ACCESS_TOKEN)) ||
-	// 		!!config.inspect('project').workspaceValue || !!config.inspect('env').workspaceValue
-	// 	);
-	// }
+	async getStaleConfig() {
+		let config;
+		const defaultConfig: StaleConfig = {
+			checkRulesInCriticalEnvs: true,
+			days: 21,
+			skipCriticalEnvironmentsCheck: false,
+			skipReleasePipelinesCheck: true,
+		};
+		const workspaceRoot = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : null;
+
+		if (workspaceRoot) {
+			config = YamlReader.read(path.join(workspaceRoot, '.launchdarkly', 'staleConfig.yaml'), null, false);
+		}
+
+		return { ...defaultConfig, ...config };
+	}
 
 	async clearLocalConfig(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
@@ -218,8 +213,6 @@ export class Configuration {
 		const config = workspace.getConfiguration('launchdarkly');
 		await config.update('project', undefined, ConfigurationTarget.Global);
 		await config.update('env', undefined, ConfigurationTarget.Global);
-		await this.ctx.secrets.delete(ACCESS_TOKEN);
-		await this.reload();
 	}
 
 	async copyWorkspaceToGlobal(): Promise<void> {
@@ -238,47 +231,57 @@ export class Configuration {
 		}
 	}
 
+	getEnvs() {
+		const criticalEnvs = this.ctx.workspaceState.get('criticalEnvs') as Array<string>;
+		const returnEnvs = [this.env];
+		if (criticalEnvs) {
+			returnEnvs.push(...criticalEnvs);
+		}
+		return returnEnvs;
+	}
+
 	async getState(key: string): Promise<string | unknown> {
 		const globalAutoload = workspace.getConfiguration('launchdarkly').get('globalDefault') as GlobalDefault;
 		let currValue: string | undefined;
-		switch (globalAutoload) {
-			case GlobalDefault.NoGlobalAutoload:
-				currValue = await this.ctx.globalState.get(key);
-				break;
-			case GlobalDefault.GlobalAutoload:
-				currValue = await this.ctx.globalState.get(key);
-				break;
-			case GlobalDefault.Off:
-				currValue = await this.ctx.workspaceState.get(key);
-				break;
+		if (globalAutoload == GlobalDefault.NoGlobalAutoload || globalAutoload == GlobalDefault.GlobalAutoload) {
+			currValue = await this.ctx.globalState.get(key);
 		}
-		//const currValue = await this.ctx.workspaceState.get(key);
-		if (typeof currValue === 'undefined') {
-			const workDir = workspace.workspaceFolders[0];
-			if (typeof workDir !== 'undefined') {
-				const config = workspace.getConfiguration('launchdarkly', workspace.workspaceFolders[0]);
-				const configValue = await config.get(key);
-				if (configValue !== '' || configValue !== undefined) {
-					// Updating Workspace from old config values, these could be workspace or global.
-					await this.ctx.workspaceState.update(key, configValue);
-					await config.update(key, undefined);
-					return configValue;
-				}
-			}
-			const globalConfig = workspace.getConfiguration('launchdarkly');
-			const globalConfigValue = await globalConfig.get(key);
-			if (globalConfigValue !== '' || globalConfigValue !== undefined) {
-				// Updating Workspace from old config values, these could be workspace or global.
-				await this.ctx.workspaceState.update(key, globalConfigValue);
-				await globalConfig.update(key, undefined);
-				return globalConfigValue;
-			}
-		} else {
+
+		currValue = await this.ctx.workspaceState.get(key);
+
+		if (typeof currValue !== 'undefined') {
 			return currValue;
+		}
+		const workDir = workspace.workspaceFolders?.[0];
+		if (typeof workDir === 'undefined') {
+			return;
+		} else {
+			const config = workspace.getConfiguration('launchdarkly', workspace.workspaceFolders[0]);
+			const configValue = await config.get(key);
+			if (configValue !== '' && configValue !== undefined) {
+				// Updating Workspace from old config values, these could be workspace or global.
+				await this.ctx.workspaceState.update(key, configValue);
+				await config.update(key, undefined);
+				return configValue;
+			}
+		}
+		const globalConfig = workspace.getConfiguration('launchdarkly');
+		const globalConfigValue = await globalConfig.get(key);
+		if (globalConfigValue !== '' && globalConfigValue !== undefined) {
+			// Updating Workspace from old config values, these could be workspace or global.
+			await this.ctx.workspaceState.update(key, globalConfigValue);
+			await globalConfig.update(key, undefined);
+			return globalConfigValue;
 		}
 	}
 
 	validateRefreshInterval(interval: number): boolean {
 		return 0 <= interval && interval <= 1440;
 	}
+}
+
+export async function clearGlobalConfig() {
+	const config = workspace.getConfiguration('launchdarkly');
+	await config.update('project', undefined, ConfigurationTarget.Global);
+	await config.update('env', undefined, ConfigurationTarget.Global);
 }

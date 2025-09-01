@@ -5,6 +5,7 @@ import { LaunchDarklyAPI } from './api';
 import { kebabCase } from 'lodash';
 import { FeatureFlag, ILDExtensionConfiguration, NewFlag, ReleasePipeline } from './models';
 import { CONST_LD_PREFIX } from './utils/constants';
+import { logDebugMessage } from './utils/logDebugMessage';
 export interface State {
 	name: string;
 	key: string;
@@ -53,7 +54,12 @@ export class CreateFlagMenu {
 
 	async collectInputs() {
 		const state = {} as Partial<State>;
-		this.pipelines = await this.config.getApi().getReleasePipelines(this.config.getConfig().project);
+		try {
+			this.pipelines = await this.config.getApi().getReleasePipelines(this.config.getConfig().project);
+		} catch (err) {
+			this.pipelines = [];
+			logDebugMessage(`Failed to retrieve Release Pipelines`);
+		}
 		await MultiStepInput.run((input) => this.setFlagName(input, state));
 		return this.flag;
 	}
@@ -90,7 +96,7 @@ export class CreateFlagMenu {
 		});
 		state.key = key;
 		if (this.defaults?.flagDescription) {
-			return (input: MultiStepInput<QuickInput>) => this.setFlagDescription(input, state);
+			state.description = this.defaults.flagDescription;
 		}
 		return (input: MultiStepInput<QuickInput>) => this.setAvailability(input, state);
 	}
