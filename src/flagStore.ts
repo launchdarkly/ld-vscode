@@ -286,6 +286,7 @@ export class FlagStore implements IFlagStore {
 
 	async getFeatureFlag(key: string, fullFlag?: boolean): Promise<FlagWithConfiguration | null> {
 		if (this.flagMetadata === undefined) {
+			
 			await this.debounceUpdate();
 		}
 		let flag = this.flagMetadata[key];

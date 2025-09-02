@@ -100,7 +100,6 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 			return [];
 		}
 		const baseUrl = `${this.config.getSession().fullUri}/projects/${this.config.getConfig().project}`;
-		console.log('Quick Links Base URL: ', baseUrl);
 
 		const items = [];
 		items.push(
