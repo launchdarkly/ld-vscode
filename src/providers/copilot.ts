@@ -46,6 +46,7 @@ export class CopilotProvider {
 	}
 
 	private getModel = async () => {
+		console.log('***Getting Model***');
 		const models = await vscode.lm.selectChatModels({ vendor: 'copilot', family: LANGUAGE_MODEL_ID });
 		const gpt4Model = models.find((model) => model.family === LANGUAGE_MODEL_ID);
 		return gpt4Model;
@@ -57,6 +58,7 @@ export class CopilotProvider {
 		stream: ChatResponseStream,
 		token: CancellationToken,
 	): Promise<LDChatAgentResult> => {
+		console.log('***Copilot Provider Handler***'); 
 		if (request.command === LDCONST_CMD_SUGGESTF) {
 			this.config.getApi().logEvent('VSCode Copilot Chat', { command: LDCONST_CMD_SUGGESTF });
 			if (request.prompt.length === 0) {

@@ -13,6 +13,8 @@ import {
 	commands,
 	Uri,
 	TextEditor,
+	chat,
+	ChatResultFeedback
 } from 'vscode';
 import { LaunchDarklyAPI } from './api';
 import generalCommands from './commands/generalCommands';
@@ -24,6 +26,7 @@ import { FlagItem, LaunchDarklyFlagListProvider } from './providers/flagListView
 import { LaunchDarklyTreeViewProvider } from './providers/flagsView';
 import { LaunchDarklyHoverProvider } from './providers/hover';
 import { QuickLinksListProvider } from './providers/quickLinksView';
+import { CopilotProvider } from './providers/copilot';
 import { setTimeout } from 'timers/promises';
 import { ToggleCache } from './toggleCache';
 import { LaunchDarklyReleaseProvider } from './providers/releaseViewProvider';
@@ -32,6 +35,7 @@ import { logDebugMessage } from './utils/logDebugMessage';
 import { CMD_LD_CONFIG, CMD_LD_OPEN_FLAG, CMD_LD_REFRESH_LENS, CMD_LD_TOGGLE_CMD_PROMPT } from './utils/commands';
 import { registerCommand } from './utils/registerCommand';
 import { CONST_CONFIG_LD } from './utils/constants';
+import { checkCopilotInstalled } from './utils/checkCopilotInstalled'; 
 
 const cache = new ToggleCache();
 
@@ -60,6 +64,10 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 		// Disposables.from does not wait for async disposal so need to wait here.
 		await setTimeout(2200);
 	}
+
+	if (checkCopilotInstalled()) {
+    setupAgent(new CopilotProvider(config), config);
+}
 
 	const session = config.getSession();
 	if (session && (config.getConfig().project !== '' || config.getConfig().env !== '')) {
@@ -405,6 +413,19 @@ function getSelectedVariationAndUri(choice, idx, key, env) {
 	const uriString = env.flag.variations[choice[idx].idx].name ? `/${env.flag.variations[choice[idx].idx].name}` : ``;
 	const uri = Uri.parse(`launchdarkly:///${key}/${selectedVariation}${uriString}`);
 	return uri;
+}
+
+function setupAgent(copilot: CopilotProvider, config: ILDExtensionConfiguration) {
+	const agent = chat.createChatParticipant('launchdarklyofficial.launchdarkly', copilot.handler);
+	config.getCtx().subscriptions.push(
+		agent.onDidReceiveFeedback((feedback: ChatResultFeedback) => {
+			// Log chat result feedback to be able to compute the success matric of the participant
+			// unhelpful / totalRequests is a good success metric
+			config.getApi().logEvent('VSCode Chat Feedback', {
+				kind: feedback.kind.toString(),
+			});
+		}),
+	);
 }
 
 /**

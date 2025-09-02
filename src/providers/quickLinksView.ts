@@ -99,9 +99,8 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 		if (!session || !session.fullUri) {
 			return [];
 		}
-		const baseUrl = `${this.config.getSession().fullUri}/${this.config.getConfig().project}/${
-			this.config.getConfig().env
-		}`;
+		const baseUrl = `${this.config.getSession().fullUri}/projects/${this.config.getConfig().project}`;
+		console.log('Quick Links Base URL: ', baseUrl);
 
 		const items = [];
 		items.push(
@@ -110,20 +109,14 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 				command: CMD_LD_CREATE_FLAG,
 			}),
 		);
-		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/features/flags/new`)));
-		items.push(new LinkNode(`Feature Flags`, NON_COLLAPSED, addUtm(`${baseUrl}/features`)));
+		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/flags/new`)));
+		items.push(new LinkNode(`Feature Flags`, NON_COLLAPSED, addUtm(`${baseUrl}/flags`)));
 		items.push(new LinkNode(`Segments`, NON_COLLAPSED, addUtm(`${baseUrl}/segments`)));
 		items.push(new LinkNode(`Contexts`, NON_COLLAPSED, addUtm(`${baseUrl}/contexts`)));
 		items.push(new LinkNode(`Live Events`, NON_COLLAPSED, addUtm(`${baseUrl}/live`)));
 		items.push(new LinkNode(`Experiments`, NON_COLLAPSED, addUtm(`${baseUrl}/experiments`)));
 		items.push(new LinkNode(`Audit Log`, NON_COLLAPSED, addUtm(`${baseUrl}/audit`)));
-		items.push(new LinkNode(`Flag Comparison`, NON_COLLAPSED, addUtm(`${baseUrl}/features/compare`)));
-		items.push(
-			new LinkNode(`Flag Environment Overview`, NON_COLLAPSED, '', {
-				title: 'Open In Browser',
-				command: 'launchdarkly.openCompareFlag',
-			}),
-		);
+		items.push(new LinkNode(`Flag Comparison`, NON_COLLAPSED, addUtm(`${baseUrl}/compare`)));
 		items.push(
 			new LinkNode(`Documentation`, NON_COLLAPSED, addUtm(`https://launchdarkly.com/docs/integrations/vscode`)),
 		);
