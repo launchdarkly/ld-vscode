@@ -2,6 +2,11 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+
+## [6.1.0] - 2025-12-05
+- Bumping major and minor version to address rogue published version that is not captured in our package.json
+
+
 ## [5.1.0] - 2025-09-01
  
 ### Fixed
