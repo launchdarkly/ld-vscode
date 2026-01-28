@@ -197,7 +197,12 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 				const stateId = uuid();
 				this._pendingStates.push(stateId);
 				const scopeString = scopes.join(' ');
-				const instances: QuickPickItem[] = [{ label: 'Commercial' }, { label: 'Federal' }, { label: 'EU' }, { label: 'Other' }];
+				const instances: QuickPickItem[] = [
+					{ label: 'Commercial' },
+					{ label: 'Federal' },
+					{ label: 'EU' },
+					{ label: 'Other' },
+				];
 				const pickInstance = await window.showQuickPick(instances, {
 					title: 'LaunchDarkly Instance',
 					placeHolder: 'Select LaunchDarkly Instance',
