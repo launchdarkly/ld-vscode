@@ -26,7 +26,7 @@ The LaunchDarkly VS Code extension requires authentication using a **Personal Ac
 1. Open VS Code with the LaunchDarkly extension installed
 2. Use the Command Palette (`Cmd/Ctrl + Shift + P`)
 3. Run `LaunchDarkly: Sign In`
-4. Select your LaunchDarkly instance (Commercial, Federal, or Other)
+4. Select your LaunchDarkly instance (Commercial, Federal, EU, or Other)
 5. Paste your Personal Access Token when prompted
 
 
