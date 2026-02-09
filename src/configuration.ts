@@ -10,6 +10,7 @@ import { logDebugMessage } from './utils/logDebugMessage';
 
 const DEFAULT_BASE_URI = 'https://app.launchdarkly.com';
 const DEFAULT_STREAM_URI = 'https://stream.launchdarkly.com';
+const DEFAULT_DEV_SERVER_URI = 'http://localhost:8765';
 const ACCESS_TOKEN = 'launchdarkly_accessToken';
 
 enum GlobalDefault {
@@ -38,6 +39,8 @@ export class Configuration {
 	enableCodeLens = false;
 	baseUri = DEFAULT_BASE_URI;
 	streamUri = DEFAULT_STREAM_URI;
+	devServerUri = DEFAULT_DEV_SERVER_URI;
+	devServerEnabled = false;
 
 	constructor(ctx: ExtensionContext) {
 		this.ctx = ctx;
@@ -46,7 +49,7 @@ export class Configuration {
 	async reload(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
 		for (const option in this) {
-			if (option === 'ctx' || option === 'project' || option === 'env' || option === 'accessToken') {
+			if (option === 'ctx' || option === 'project' || option === 'env' || option === 'accessToken' || option === 'devServerEnabled') {
 				continue;
 			}
 			this[option] = config.get(option);
@@ -280,5 +283,17 @@ export class Configuration {
 
 	validateRefreshInterval(interval: number): boolean {
 		return 0 <= interval && interval <= 1440;
+	}
+
+	setDevServerEnabled(enabled: boolean): void {
+		this.devServerEnabled = enabled;
+	}
+
+	isDevServerEnabled(): boolean {
+		return this.devServerEnabled;
+	}
+
+	getDevServerUri(): string {
+		return this.devServerUri || DEFAULT_DEV_SERVER_URI;
 	}
 }

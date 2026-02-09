@@ -707,6 +707,8 @@ export interface IConfiguration {
 	enableCodeLens: boolean;
 	baseUri: string;
 	streamUri?: string;
+	devServerUri: string;
+	devServerEnabled: boolean;
 	isConfigured(): Promise<boolean>;
 	clearLocalConfig(): Promise<void>;
 	clearGlobalConfig(): Promise<void>;
@@ -718,6 +720,9 @@ export interface IConfiguration {
 	update(key: string, value: string | boolean, global: boolean): Promise<void>;
 	validate(): Promise<string>;
 	validateRefreshInterval(interval: number): boolean;
+	setDevServerEnabled(enabled: boolean): void;
+	isDevServerEnabled(): boolean;
+	getDevServerUri(): string;
 }
 
 export interface ILaunchDarklyReleaseProvider extends TreeDataProvider<TreeItem> {

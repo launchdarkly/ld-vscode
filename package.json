@@ -105,6 +105,11 @@
 					"type": "string",
 					"default": "https://stream.launchdarkly.com",
 					"markdownDescription": "LaunchDarkly stream URI. Change only if you are using the Relay Proxy. [More information](https://docs.launchdarkly.com/home/advanced/relay-proxy/using)"
+				},
+				"launchdarkly.devServerUri": {
+					"type": "string",
+					"default": "http://localhost:8765",
+					"markdownDescription": "URI for the LaunchDarkly CLI dev-server. Used for local development and testing. [More information](https://launchdarkly.com/docs/guides/flags/ldcli-dev-server-reference)"
 				}
 			}
 		},
@@ -256,6 +261,14 @@
 			{
 				"command": "launchdarkly.signOut",
 				"title": "LaunchDarkly: Sign Out"
+			},
+			{
+				"command": "launchdarkly.connectDevServer",
+				"title": "LaunchDarkly: Connect to Dev Server"
+			},
+			{
+				"command": "launchdarkly.disconnectDevServer",
+				"title": "LaunchDarkly: Disconnect from Dev Server"
 			}
 		],
 		"menus": {

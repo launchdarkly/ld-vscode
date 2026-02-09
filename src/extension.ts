@@ -15,6 +15,8 @@ import * as semver from 'semver';
 import { SetWorkspaceCmd } from './commands/setWorkspaceEnabled';
 import { CMD_LD_CONFIG, CMD_LD_SIGNIN, CMD_LD_SIGNOUT } from './utils/commands';
 import { ILaunchDarklyAuthenticationSession } from './models';
+import { connectDevServerCommand, disconnectDevServerCommand } from './commands/connectDevServer';
+import { createDevServerStatusBar, updateDevServerStatusBar } from './devServerStatusBar';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	const storedVersion = ctx.globalState.get('version', '5.0.0');
@@ -127,6 +129,18 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 			await extensionReload(LDExtConfig);
 		}
 	});
+
+	// Register dev-server commands
+	LDExtConfig.getCtx().subscriptions.push(
+		connectDevServerCommand(LDExtConfig),
+		disconnectDevServerCommand(LDExtConfig),
+	);
+
+	// Create dev-server status bar item
+	const devServerStatusBar = createDevServerStatusBar();
+	LDExtConfig.getCtx().subscriptions.push(devServerStatusBar);
+	updateDevServerStatusBar(LDExtConfig);
+
 	LDExtConfig.setApi(new LaunchDarklyAPI(LDExtConfig.getConfig(), LDExtConfig));
 	if (validationError !== 'unconfigured') {
 		LDExtConfig.setFlagStore(new FlagStore(LDExtConfig));
