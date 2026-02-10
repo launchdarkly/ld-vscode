@@ -1,12 +1,12 @@
 import { EventEmitter } from 'vscode';
 import { ILDExtensionConfiguration } from '../models';
-import { DevServerApi, DevServerFlag, DevServerOverrideInfo, DevServerProject } from '../devServerApi';
+import { DevServerApi, DevServerFlag, DevServerOverrideInfo, DevServerProject, EnhancedFlag } from '../devServerApi';
 
 /**
  * Cached flag info combining flag state and override status
  */
 export interface CachedFlagInfo {
-	flag: DevServerFlag;
+	flag: EnhancedFlag;
 	isOverridden: boolean;
 	override?: DevServerOverrideInfo;
 }
@@ -81,8 +81,12 @@ export class DevServerProvider {
 
 		for (const [flagKey, flag] of Object.entries(project.flagsState)) {
 			const override = overrides[flagKey];
+			const variations = project.availableVariations[flagKey];
 			this.cachedFlags.set(flagKey, {
-				flag,
+				flag: {
+					...flag,
+					variations,
+				},
 				isOverridden: override !== undefined,
 				override,
 			});
@@ -134,10 +138,15 @@ export class DevServerProvider {
 	}
 
 	/**
-	 * Get the value of a specific flag
+	 * Get the value of a specific flag (returns override value if overridden)
 	 */
 	getFlagValue(flagKey: string): unknown | undefined {
-		return this.cachedFlags.get(flagKey)?.flag.value;
+		const flagInfo = this.cachedFlags.get(flagKey);
+		if (!flagInfo) {
+			return undefined;
+		}
+		// Return override value if it exists, otherwise return the flag's base value
+		return flagInfo.override?.value ?? flagInfo.flag.value;
 	}
 
 	/**

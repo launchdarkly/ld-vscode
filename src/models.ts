@@ -654,6 +654,19 @@ export interface IDevServerProvider {
 	refresh(): Promise<boolean>;
 	clearCache(): void;
 	getFlagsRecord(): Record<string, { key: string; value: unknown }> | null;
+	getFlag(flagKey: string): { 
+		flag: { 
+			key: string; 
+			value: string | number | boolean | object; 
+			version: number; 
+			variation: number; 
+			trackEvents: boolean; 
+			trackReason: boolean;
+			variations: { id: string; name: string; description: string; value: string | number | boolean | object }[];
+		}; 
+		isOverridden: boolean;
+		override?: { value: unknown; version: number; variation?: number };
+	} | undefined;
 	getFlagValue(flagKey: string): unknown | undefined;
 	isOverridden(flagKey: string): boolean;
 	getOverriddenFlags(): string[];

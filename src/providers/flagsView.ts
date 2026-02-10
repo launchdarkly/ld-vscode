@@ -16,9 +16,13 @@ import {
 	CMD_LD_TOGGLE_FLAG,
 	CMD_LD_UPDATE_FALLTHROUGH,
 	CMD_LD_UPDATE_OFF,
+	CMD_LD_SET_DEV_SERVER_OVERRIDE,
+	CMD_LD_EDIT_DEV_SERVER_OVERRIDE,
+	CMD_LD_REMOVE_DEV_SERVER_OVERRIDE,
 } from '../utils/commands';
 import { flagCodeSearch } from '../utils/flagCodeSearch';
 import { registerCommand } from '../utils/registerCommand';
+import { showSmartOverrideInput } from '../utils/smartOverrideInput';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -294,6 +298,15 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 					vscode.window.showErrorMessage(`Could not set Off Variation: ${err.message}`);
 				}
 			}),
+			registerCommand(CMD_LD_SET_DEV_SERVER_OVERRIDE, async (node: FlagParentNode) => {
+				await this.setDevServerOverride(node);
+			}),
+			registerCommand(CMD_LD_EDIT_DEV_SERVER_OVERRIDE, async (node: FlagParentNode) => {
+				await this.setDevServerOverride(node, true);
+			}),
+			registerCommand(CMD_LD_REMOVE_DEV_SERVER_OVERRIDE, async (node: FlagParentNode) => {
+				await this.removeDevServerOverride(node);
+			}),
 		);
 	}
 
@@ -485,6 +498,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			}
 		}
 
+		// Set contextValue based on override status
+		const contextValue = this.ldConfig.getConfig().isDevServerEnabled() && isOverridden 
+			? 'flagParentItemOverridden' 
+			: 'flagParentItem';
+
 		const item = new FlagParentNode(
 			this.ldConfig.getCtx(),
 			label,
@@ -498,7 +516,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			flag._version,
 			enabled,
 			[],
-			'flagParentItem',
+			contextValue,
 		);
 
 		return item;
@@ -513,5 +531,94 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 
 	public isCurrentlyLoading(): boolean {
 		return this.isLoading;
+	}
+
+	/**
+	 * Set a dev-server override for a flag
+	 */
+	private async setDevServerOverride(node: FlagParentNode, isEdit: boolean = false): Promise<void> {
+		if (!node.flagKey) {
+			vscode.window.showErrorMessage('Flag key not found');
+			return;
+		}
+
+		const devServerProvider = this.ldConfig.getDevServerProvider();
+		if (!devServerProvider || !this.ldConfig.getConfig().isDevServerEnabled()) {
+			vscode.window.showErrorMessage('Not connected to dev-server');
+			return;
+		}
+
+		// Get flag info with variations
+		const flagInfo = devServerProvider.getFlag(node.flagKey);
+		if (!flagInfo) {
+			vscode.window.showErrorMessage('Flag not found in dev-server');
+			return;
+		}
+
+		// Get current value if editing (use override value if it exists, otherwise base value)
+		const currentValue = isEdit 
+			? (flagInfo.override?.value ?? flagInfo.flag.value) as string | number | boolean | object | undefined
+			: undefined;
+
+		// Show smart input based on flag type
+		const value = await showSmartOverrideInput(flagInfo.flag, currentValue, isEdit);
+
+		if (value === undefined) {
+			return;
+		}
+
+		try {
+			const success = await devServerProvider.setOverride(node.flagKey, value);
+			
+			if (success) {
+				vscode.window.showInformationMessage(
+					`${isEdit ? 'Updated' : 'Set'} dev-server override for flag "${node.flagKey}"`
+				);
+				await this.reload();
+			} else {
+				vscode.window.showErrorMessage(`Failed to ${isEdit ? 'update' : 'set'} override`);
+			}
+		} catch (err) {
+			vscode.window.showErrorMessage(`Failed to ${isEdit ? 'update' : 'set'} override: ${err.message}`);
+		}
+	}
+
+	/**
+	 * Remove a dev-server override for a flag
+	 */
+	private async removeDevServerOverride(node: FlagParentNode): Promise<void> {
+		if (!node.flagKey) {
+			vscode.window.showErrorMessage('Flag key not found');
+			return;
+		}
+
+		const devServerProvider = this.ldConfig.getDevServerProvider();
+		if (!devServerProvider || !this.ldConfig.getConfig().isDevServerEnabled()) {
+			vscode.window.showErrorMessage('Not connected to dev-server');
+			return;
+		}
+
+		const confirm = await vscode.window.showWarningMessage(
+			`Remove dev-server override for flag "${node.flagKey}"?`,
+			{ modal: true },
+			'Remove',
+		);
+
+		if (confirm !== 'Remove') {
+			return;
+		}
+
+		try {
+			const success = await devServerProvider.removeOverride(node.flagKey);
+			
+			if (success) {
+				vscode.window.showInformationMessage(`Removed dev-server override for flag "${node.flagKey}"`);
+				await this.reload();
+			} else {
+				vscode.window.showErrorMessage('Failed to remove override');
+			}
+		} catch (err) {
+			vscode.window.showErrorMessage(`Failed to remove override: ${err.message}`);
+		}
 	}
 }

@@ -1,13 +1,31 @@
 import axios from 'axios';
 import { ILDExtensionConfiguration } from './models';
 
-export interface DevServerFlag {
+export interface FlagVariation {
+	id: string;
+	description: string;
+	name: string;
+	value:  string | number | boolean | object;
+}
+
+export interface EnhancedFlag {
 	key: string;
-	value: unknown;
+	value: string | number | boolean | object;
 	version: number;
 	variation: number;
 	trackEvents: boolean;
 	trackReason: boolean;
+	variations: FlagVariation[];
+}
+
+export interface DevServerFlag {
+	key: string;
+	value: string | number | boolean | object;
+	version: number;
+	variation: number;
+	trackEvents: boolean;
+	trackReason: boolean;
+	variations: FlagVariation[];
 }
 
 export interface DevServerOverrideInfo {
@@ -18,6 +36,7 @@ export interface DevServerOverrideInfo {
 export interface DevServerProject {
 	key: string;
 	sourceEnvironmentKey: string;
+	availableVariations: Record<string, FlagVariation[]>;
 	context: Record<string, unknown>;
 	flagsState: Record<string, DevServerFlag>;
 	overrides?: Record<string, DevServerOverrideInfo>;
@@ -62,7 +81,7 @@ export class DevServerApi {
 	async getProject(): Promise<DevServerProject | null> {
 		try {
 			const response = await axios.get<DevServerProject>(
-				`${this.getBaseUrl()}/dev/projects/${this.getProjectKey()}?expand=overrides`,
+				`${this.getBaseUrl()}/dev/projects/${this.getProjectKey()}?expand=overrides&expand=availableVariations`,
 				{ timeout: 5000 },
 			);
 			return response.data;
@@ -73,9 +92,25 @@ export class DevServerApi {
 	}
 
 	/**
-	 * Get all flags and their current values from the dev-server
+	 * Get all flags and their current values from the dev-server as an array
 	 */
-	async getAllFlags(): Promise<Record<string, DevServerFlag> | null> {
+	async getAllFlags(): Promise<EnhancedFlag[]> {
+		const project = await this.getProject();
+		if (!project?.flagsState) {
+			return null;
+		}
+
+		const flags: DevServerFlag[] = Object.values(project.flagsState);
+		return flags.map(flag => ({
+			...flag,
+			variations: project.availableVariations[flag.key] ?? [],
+		}));
+	}
+
+	/**
+	 * Get all flags as a record (for backward compatibility)
+	 */
+	async getAllFlagsRecord(): Promise<Record<string, DevServerFlag> | null> {
 		const project = await this.getProject();
 		return project?.flagsState ?? null;
 	}
@@ -83,9 +118,9 @@ export class DevServerApi {
 	/**
 	 * Get a specific flag's current value from the dev-server
 	 */
-	async getFlagValue(flagKey: string): Promise<DevServerFlag | null> {
+	async getFlagValue(flagKey: string): Promise<EnhancedFlag | null> {
 		const flags = await this.getAllFlags();
-		return flags?.[flagKey] ?? null;
+		return flags?.find(flag => flag.key === flagKey) ?? null;
 	}
 
 	/**
