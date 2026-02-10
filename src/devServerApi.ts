@@ -10,10 +10,9 @@ export interface DevServerFlag {
 	trackReason: boolean;
 }
 
-export interface DevServerOverride {
-	flagKey: string;
+export interface DevServerOverrideInfo {
 	value: unknown;
-	isOverridden: boolean;
+	version: number;
 }
 
 export interface DevServerProject {
@@ -21,6 +20,7 @@ export interface DevServerProject {
 	sourceEnvironmentKey: string;
 	context: Record<string, unknown>;
 	flagsState: Record<string, DevServerFlag>;
+	overrides?: Record<string, DevServerOverrideInfo>;
 	lastSyncTime: string;
 }
 
@@ -62,7 +62,7 @@ export class DevServerApi {
 	async getProject(): Promise<DevServerProject | null> {
 		try {
 			const response = await axios.get<DevServerProject>(
-				`${this.getBaseUrl()}/dev/projects/${this.getProjectKey()}`,
+				`${this.getBaseUrl()}/dev/projects/${this.getProjectKey()}?expand=overrides`,
 				{ timeout: 5000 },
 			);
 			return response.data;
@@ -86,26 +86,6 @@ export class DevServerApi {
 	async getFlagValue(flagKey: string): Promise<DevServerFlag | null> {
 		const flags = await this.getAllFlags();
 		return flags?.[flagKey] ?? null;
-	}
-
-	/**
-	 * Get all flag overrides
-	 */
-	async getOverrides(): Promise<Record<string, unknown> | null> {
-		try {
-			const response = await axios.get<Record<string, unknown>>(
-				`${this.getBaseUrl()}/dev/projects/${this.getProjectKey()}/overrides`,
-				{ timeout: 5000 },
-			);
-			return response.data;
-		} catch (err) {
-			// 404 means no overrides exist, which is fine
-			if (axios.isAxiosError(err) && err.response?.status === 404) {
-				return {};
-			}
-			console.error(`Failed to get dev-server overrides: ${err}`);
-			return null;
-		}
 	}
 
 	/**

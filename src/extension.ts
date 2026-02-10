@@ -17,6 +17,7 @@ import { CMD_LD_CONFIG, CMD_LD_SIGNIN, CMD_LD_SIGNOUT } from './utils/commands';
 import { ILaunchDarklyAuthenticationSession } from './models';
 import { connectDevServerCommand, disconnectDevServerCommand } from './commands/connectDevServer';
 import { createDevServerStatusBar, updateDevServerStatusBar } from './devServerStatusBar';
+import { DevServerProvider } from './providers/devServerProvider';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	const storedVersion = ctx.globalState.get('version', '5.0.0');
@@ -142,6 +143,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	updateDevServerStatusBar(LDExtConfig);
 
 	LDExtConfig.setApi(new LaunchDarklyAPI(LDExtConfig.getConfig(), LDExtConfig));
+	LDExtConfig.setDevServerProvider(new DevServerProvider(LDExtConfig));
 	if (validationError !== 'unconfigured') {
 		LDExtConfig.setFlagStore(new FlagStore(LDExtConfig));
 	}

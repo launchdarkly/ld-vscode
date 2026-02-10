@@ -1,6 +1,7 @@
 import { ExtensionContext, StatusBarItem, TreeView } from 'vscode';
 import { QuickLinksListProvider } from './providers/quickLinksView';
 import {
+	IDevServerProvider,
 	IFlagStore,
 	IFlagTree,
 	IConfiguration,
@@ -16,6 +17,7 @@ export class LDExtensionConfiguration {
 	private config?: IConfiguration;
 	private ctx: ExtensionContext;
 	private api?: LaunchDarklyAPIInterface;
+	private devServerProvider?: IDevServerProvider;
 	private flagStore?: IFlagStore;
 	private flagTreeView: TreeView<IFlagTree>;
 	private flagView: ILaunchDarklyTreeViewProvider;
@@ -66,6 +68,14 @@ export class LDExtensionConfiguration {
 
 	setCtx(ctx: ExtensionContext): void {
 		this.ctx = ctx;
+	}
+
+	getDevServerProvider(): IDevServerProvider | undefined {
+		return this.devServerProvider;
+	}
+
+	setDevServerProvider(provider: IDevServerProvider): void {
+		this.devServerProvider = provider;
 	}
 
 	getFlagStore(): IFlagStore | undefined {

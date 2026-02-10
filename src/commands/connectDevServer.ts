@@ -87,6 +87,9 @@ export function disconnectDevServerCommand(config: LDExtensionConfiguration): Di
 			// Disable dev-server mode
 			config.getConfig().setDevServerEnabled(false);
 
+			// Clear the dev-server provider cache
+			config.getDevServerProvider()?.clearCache();
+
 			// Reload the flag store to reconnect to LaunchDarkly
 			if (config.getFlagStore()) {
 				await window.withProgress(

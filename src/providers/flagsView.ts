@@ -19,7 +19,6 @@ import {
 } from '../utils/commands';
 import { flagCodeSearch } from '../utils/flagCodeSearch';
 import { registerCommand } from '../utils/registerCommand';
-import { DevServerApi, DevServerFlag } from '../devServerApi';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -33,12 +32,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 	private updatingTree: vscode.EventEmitter<'started' | 'error' | 'complete'> = new vscode.EventEmitter();
 	private lastTreeEvent: string;
 	private isLoading: boolean = false;
-	private devServerApi: DevServerApi;
-	private devServerFlags: Record<string, DevServerFlag> | null = null;
 
 	constructor(ldConfig: ILDExtensionConfiguration) {
 		this.ldConfig = ldConfig;
-		this.devServerApi = new DevServerApi(ldConfig);
 		this.registerCommands();
 		this.start();
 		this.treeLoader();
@@ -178,11 +174,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 		this.flagNodes = [];
 
 		try {
-			// Fetch dev-server flags if connected
-			if (this.ldConfig.getConfig().isDevServerEnabled()) {
-				this.devServerFlags = await this.devServerApi.getAllFlags();
-			} else {
-				this.devServerFlags = null;
+			// Refresh dev-server provider cache if connected
+			const devServerProvider = this.ldConfig.getDevServerProvider();
+			if (this.ldConfig.getConfig().isDevServerEnabled() && devServerProvider) {
+				await devServerProvider.refresh();
 			}
 
 			const nodes: FlagParentNode[] = [];
@@ -450,23 +445,29 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 		}
 
 		// Default values
-		const label = flag.name;
+		let label = flag.name;
 		let enabled = envConfig.on;
 		let devServerValue: unknown = undefined;
+		let isOverridden = false;
 
-			// Override with dev-server values when connected
-		if (this.ldConfig.getConfig().isDevServerEnabled() && this.devServerFlags) {
-			const devFlag = this.devServerFlags[flag.key];
-			if (devFlag) {
-				devServerValue = devFlag.value;
-
+		// Override with dev-server values when connected
+		const devServerProvider = this.ldConfig.getDevServerProvider();
+		if (this.ldConfig.getConfig().isDevServerEnabled() && devServerProvider) {
+			devServerValue = devServerProvider.getFlagValue(flag.key);
+			if (devServerValue !== undefined) {
 				// Use dev-server value for toggle indicator
-				if (typeof devFlag.value === 'boolean') {
-					enabled = devFlag.value;
+				if (typeof devServerValue === 'boolean') {
+					enabled = devServerValue;
 				} else {
 					// For non-boolean, use truthy check
-					enabled = Boolean(devFlag.value);
+					enabled = Boolean(devServerValue);
 				}
+			}
+
+			// Check if this flag is overridden
+			isOverridden = devServerProvider.isOverridden(flag.key);
+			if (isOverridden) {
+				label += ` (overridden)`;
 			}
 		}
 
@@ -474,7 +475,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 		const baseTooltip = generateHoverString(flag, envConfig, this.ldConfig);
 		let tooltip: string | vscode.MarkdownString = baseTooltip;
 		if (this.ldConfig.getConfig().isDevServerEnabled() && devServerValue !== undefined) {
-			const devServerInfo = `\n\n---\n**Dev Server Value:** \`${JSON.stringify(devServerValue)}\``;
+			const overrideNote = isOverridden ? ' **(overridden)**' : '';
+			const devServerInfo = `\n\n---\n**Dev Server Value:** \`${JSON.stringify(devServerValue)}\`${overrideNote}`;
 			if (typeof baseTooltip === 'string') {
 				tooltip = baseTooltip + devServerInfo;
 			} else {

@@ -648,6 +648,19 @@ export interface IFlagAliases {
 	start(): Promise<void>;
 }
 
+export interface IDevServerProvider {
+	isConnected(): boolean;
+	refresh(): Promise<boolean>;
+	clearCache(): void;
+	getFlagsRecord(): Record<string, { key: string; value: unknown }> | null;
+	getFlagValue(flagKey: string): unknown | undefined;
+	isOverridden(flagKey: string): boolean;
+	getOverriddenFlags(): string[];
+	setOverride(flagKey: string, value: unknown): Promise<boolean>;
+	removeOverride(flagKey: string): Promise<boolean>;
+	syncProject(): Promise<boolean>;
+}
+
 export interface ILDExtensionConfiguration {
 	getAliases(): IFlagAliases | undefined;
 	setAliases(aliases: IFlagAliases): void;
@@ -657,6 +670,8 @@ export interface ILDExtensionConfiguration {
 	setConfig(config: IConfiguration): void;
 	getCtx(): ExtensionContext;
 	setCtx(ctx: ExtensionContext): void;
+	getDevServerProvider(): IDevServerProvider | undefined;
+	setDevServerProvider(provider: IDevServerProvider): void;
 	getFlagStore(): IFlagStore | undefined;
 	setFlagStore(flagStore: IFlagStore): void;
 	getFlagTreeProvider(): TreeView<IFlagTree> | undefined;
