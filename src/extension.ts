@@ -184,6 +184,83 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	} catch (err) {
 		console.log(err);
 	}
+
+	// Attempt to auto-reconnect to dev-server if it was previously connected
+	await attemptDevServerReconnect(LDExtConfig);
+}
+
+/**
+ * Attempt to reconnect to dev-server if it was previously connected
+ */
+async function attemptDevServerReconnect(config: LDExtensionConfiguration): Promise<void> {
+	// Check if dev-server was previously enabled
+	if (!config.getConfig().isDevServerEnabled()) {
+		return;
+	}
+
+	const devServerUri = config.getConfig().getDevServerUri();
+
+	try {
+		// Check if dev-server is available
+		const devServerProvider = config.getDevServerProvider();
+		const isAvailable = await devServerProvider?.getApi().isAvailable();
+
+		if (isAvailable) {
+			// Successfully connected, reload flag store
+			if (config.getFlagStore()) {
+				await config.getFlagStore().reload();
+			}
+			// Refresh dev-server data
+			await devServerProvider?.refresh();
+			// Update status bar
+			updateDevServerStatusBar(config);
+			console.log(`Successfully reconnected to dev-server at ${devServerUri}`);
+		} else {
+			// Dev-server is not available
+			await handleDevServerConnectionFailure(config, devServerUri);
+		}
+	} catch (err) {
+		console.error(`Error attempting to reconnect to dev-server: ${err}`);
+		await handleDevServerConnectionFailure(config, devServerUri);
+	}
+}
+
+/**
+ * Handle dev-server connection failure
+ */
+async function handleDevServerConnectionFailure(
+	config: LDExtensionConfiguration,
+	devServerUri: string,
+): Promise<void> {
+	const selection = await window.showWarningMessage(
+		`Could not connect to dev-server at ${devServerUri}. Is the dev-server running?`,
+		'Retry',
+		'Disconnect',
+		'Dismiss',
+	);
+
+	switch (selection) {
+		case 'Retry':
+			// Retry the connection
+			await attemptDevServerReconnect(config);
+			break;
+		case 'Disconnect':
+			// Disconnect from dev-server
+			config.getConfig().setDevServerEnabled(false);
+			config.getDevServerProvider()?.clearCache();
+			if (config.getFlagStore()) {
+				await config.getFlagStore().reload();
+			}
+			updateDevServerStatusBar(config);
+			window.showInformationMessage('Disconnected from dev-server.');
+			break;
+		case 'Dismiss':
+		default:
+			// Keep the connection state but don't show error again
+			// The status bar will still show connected state
+			console.log('User dismissed dev-server reconnection prompt');
+			break;
+	}
 }
 
 export async function deactivate(): Promise<void> {

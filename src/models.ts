@@ -649,6 +649,7 @@ export interface IFlagAliases {
 }
 
 export interface IDevServerProvider {
+	getApi(): { isAvailable(): Promise<boolean> };
 	isConnected(): boolean;
 	refresh(): Promise<boolean>;
 	clearCache(): void;

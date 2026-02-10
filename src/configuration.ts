@@ -77,6 +77,10 @@ export class Configuration {
 
 		this.env = env as string;
 		this.project = project as string;
+
+		// Load dev-server connection state from workspace state
+		const devServerEnabled = await this.ctx.workspaceState.get('devServerEnabled', false);
+		this.devServerEnabled = devServerEnabled as boolean;
 	}
 
 	async update(key: string, value: string | boolean, global: boolean): Promise<void> {
@@ -287,6 +291,8 @@ export class Configuration {
 
 	setDevServerEnabled(enabled: boolean): void {
 		this.devServerEnabled = enabled;
+		// Persist the state to workspace
+		this.ctx.workspaceState.update('devServerEnabled', enabled);
 	}
 
 	isDevServerEnabled(): boolean {

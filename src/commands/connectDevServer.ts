@@ -44,8 +44,27 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 				finalUri = inputUri;
 			}
 
-			// Enable dev-server mode
+			// Update URI but don't enable yet
 			config.getConfig().devServerUri = finalUri;
+
+			// Test connection before enabling
+			const devServerProvider = config.getDevServerProvider();
+			const isAvailable = await devServerProvider?.getApi().isAvailable();
+
+			if (!isAvailable) {
+				const retry = await window.showErrorMessage(
+					`Could not connect to dev-server at ${finalUri}. Is the dev-server running?`,
+					'Retry',
+					'Cancel',
+				);
+				if (retry === 'Retry') {
+					// Retry by recursively calling the command
+					await commands.executeCommand(CMD_LD_CONNECT_DEV_SERVER);
+				}
+				return;
+			}
+
+			// Enable dev-server mode after successful connection test
 			config.getConfig().setDevServerEnabled(true);
 
 			// Reload the flag store to reconnect with dev-server
@@ -61,6 +80,9 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 					},
 				);
 			}
+
+			// Refresh dev-server data
+			await devServerProvider?.refresh();
 
 			// Update status bar to show dev-server connection
 			updateDevServerStatusBar(config);
