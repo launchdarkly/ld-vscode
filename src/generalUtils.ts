@@ -28,6 +28,7 @@ import { logDebugMessage } from './utils/logDebugMessage';
 import { CMD_LD_CONFIG, CMD_LD_OPEN_FLAG, CMD_LD_REFRESH_LENS, CMD_LD_TOGGLE_CMD_PROMPT } from './utils/commands';
 import { registerCommand } from './utils/registerCommand';
 import { CONST_CONFIG_LD } from './utils/constants';
+import { updateDevServerStatusBar } from './devServerStatusBar';
 
 const cache = new ToggleCache();
 
@@ -39,6 +40,12 @@ export async function extensionReload(config: ILDExtensionConfiguration, reload 
 		config.setApi(new LaunchDarklyAPI(config.getConfig(), config));
 		config.setFlagStore(new FlagStore(config));
 		await setupComponents(config, reload);
+		
+		// Refresh dev-server state if connected
+		if (config.getConfig().isDevServerEnabled()) {
+			await config.getDevServerProvider()?.refresh();
+			updateDevServerStatusBar(config);
+		}
 	} else {
 		console.log('No session found, please login to LaunchDarkly.');
 		config.setSession(null);

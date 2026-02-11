@@ -241,41 +241,70 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 
 			try {
 				if (flagEnv) {
+					// Check if dev-server mode is enabled
+					const isDevServerMode = this.config.getConfig().isDevServerEnabled();
+					const devServerProvider = this.config.getDevServerProvider();
+					
+					// Get dev-server specific info if connected
+					let devServerValue: unknown | undefined;
+					let isOverridden = false;
+					if (isDevServerMode && devServerProvider) {
+						const flagInfo = devServerProvider.getFlag(codeLens.flag);
+						if (flagInfo) {
+							devServerValue = flagInfo.override?.value ?? flagInfo.flag.value;
+							isOverridden = flagInfo.isOverridden;
+						}
+					}
+
 					let preReq = '';
 					if (flagEnv?.prerequisites.length > 0) {
 						preReq = `\u2022 Prerequisites configured`;
 					}
-					const variations = this.getActiveVariations(flagEnv) as Array<number>;
-					let flagVariations;
-					switch (variations.length) {
-						case 1:
-							flagVariations = this.getNameorValue(flagData, variations[0]);
-							break;
-						case 2:
-							flagVariations = `${this.getNameorValue(flagData, variations[0])}, ${this.getNameorValue(
-								flagData,
-								variations[1],
-							)}`;
-							break;
-						default:
-							flagVariations = `${variations.length} variations`;
-							break;
-					}
-					let offVariation;
-					if (flagEnv.offVariation !== undefined) {
-						offVariation = `${JSON.stringify(this.getNameorValue(flagData, flagEnv.offVariation))} - off variation`;
+					
+					// Construct the display value
+					let displayValue: string;
+					if (isDevServerMode && devServerValue !== undefined) {
+						// Show dev-server value
+						const valueStr = typeof devServerValue === 'object' 
+							? JSON.stringify(devServerValue) 
+							: String(devServerValue);
+						displayValue = isOverridden 
+							? `${valueStr} (dev-server override)` 
+							: `${valueStr} (dev-server)`;
 					} else {
-						offVariation = '**Code Fallthrough(No off variation set)**';
+						// Show cloud values
+						const variations = this.getActiveVariations(flagEnv) as Array<number>;
+						let flagVariations;
+						switch (variations.length) {
+							case 1:
+								flagVariations = this.getNameorValue(flagData, variations[0]);
+								break;
+							case 2:
+								flagVariations = `${this.getNameorValue(flagData, variations[0])}, ${this.getNameorValue(
+									flagData,
+									variations[1],
+								)}`;
+								break;
+							default:
+								flagVariations = `${variations.length} variations`;
+								break;
+						}
+						let offVariation;
+						if (flagEnv.offVariation !== undefined) {
+							offVariation = `${JSON.stringify(this.getNameorValue(flagData, flagEnv.offVariation))} - off variation`;
+						} else {
+							offVariation = '**Code Fallthrough(No off variation set)**';
+						}
+						displayValue = flagEnv.on ? flagVariations : offVariation;
 					}
+
 					const clientSDK = flagData.clientSideAvailability.usingEnvironmentId ? '$(browser)' : '';
 					const mobileSDK = flagData.clientSideAvailability.usingMobileKey ? '$(device-mobile)' : '';
 					const clientAvailability = [clientSDK, mobileSDK].filter(Boolean).join(' ') || '';
 
 					const newLens = new CodeLens(codeLens.range);
 					newLens.command = {
-						title: `$(launchdarkly-logo) ${flagEnv.key} \u2022 ${clientAvailability} Serving: ${
-							flagEnv.on ? flagVariations : offVariation
-						} ${preReq}`,
+						title: `$(launchdarkly-logo) ${flagEnv.key} \u2022 ${clientAvailability} Serving: ${displayValue} ${preReq}`,
 						command: '',
 					};
 					this.lensCache.set(flagEnv.key, newLens);

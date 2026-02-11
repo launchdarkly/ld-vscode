@@ -46,6 +46,11 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 
 			// Update URI but don't enable yet
 			config.getConfig().devServerUri = finalUri;
+			
+			// Persist the URI to configuration if it's different from default
+			if (finalUri !== 'http://localhost:8765') {
+				await config.getConfig().update('devServerUri', finalUri, false);
+			}
 
 			// Test connection before enabling
 			const devServerProvider = config.getDevServerProvider();

@@ -1,5 +1,5 @@
 import { StatusBarAlignment, StatusBarItem, ThemeColor, window } from 'vscode';
-import { LDExtensionConfiguration } from './ldExtensionConfiguration';
+import { ILDExtensionConfiguration } from './models';
 import { CMD_LD_DISCONNECT_DEV_SERVER } from './utils/commands';
 
 let devServerStatusBarItem: StatusBarItem | undefined;
@@ -12,7 +12,7 @@ export function createDevServerStatusBar(): StatusBarItem {
 	return devServerStatusBarItem;
 }
 
-export function updateDevServerStatusBar(config: LDExtensionConfiguration): void {
+export function updateDevServerStatusBar(config: ILDExtensionConfiguration): void {
 	if (!devServerStatusBarItem) {
 		return;
 	}
