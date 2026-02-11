@@ -17,7 +17,6 @@ import {
 	CMD_LD_UPDATE_FALLTHROUGH,
 	CMD_LD_UPDATE_OFF,
 	CMD_LD_SET_DEV_SERVER_OVERRIDE,
-	CMD_LD_EDIT_DEV_SERVER_OVERRIDE,
 	CMD_LD_REMOVE_DEV_SERVER_OVERRIDE,
 } from '../utils/commands';
 import { flagCodeSearch } from '../utils/flagCodeSearch';
@@ -301,9 +300,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			registerCommand(CMD_LD_SET_DEV_SERVER_OVERRIDE, async (node: FlagParentNode) => {
 				await this.setDevServerOverride(node);
 			}),
-			registerCommand(CMD_LD_EDIT_DEV_SERVER_OVERRIDE, async (node: FlagParentNode) => {
-				await this.setDevServerOverride(node, true);
-			}),
 			registerCommand(CMD_LD_REMOVE_DEV_SERVER_OVERRIDE, async (node: FlagParentNode) => {
 				await this.removeDevServerOverride(node);
 			}),
@@ -534,9 +530,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 	}
 
 	/**
-	 * Set a dev-server override for a flag
+	 * Set or update a dev-server override for a flag
 	 */
-	private async setDevServerOverride(node: FlagParentNode, isEdit: boolean = false): Promise<void> {
+	private async setDevServerOverride(node: FlagParentNode): Promise<void> {
 		if (!node.flagKey) {
 			vscode.window.showErrorMessage('Flag key not found');
 			return;
@@ -555,13 +551,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			return;
 		}
 
-		// Get current value if editing (use override value if it exists, otherwise base value)
-		const currentValue = isEdit 
-			? (flagInfo.override?.value ?? flagInfo.flag.value) as string | number | boolean | object | undefined
-			: undefined;
+		// Always show current value (override if it exists, otherwise base value)
+		const currentValue = (flagInfo.override?.value ?? flagInfo.flag.value) as string | number | boolean | object | undefined;
+		const isEditing = flagInfo.isOverridden;
 
 		// Show smart input based on flag type
-		const value = await showSmartOverrideInput(flagInfo.flag, currentValue, isEdit);
+		const value = await showSmartOverrideInput(flagInfo.flag, currentValue, isEditing);
 
 		if (value === undefined) {
 			return;
@@ -572,14 +567,14 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			
 			if (success) {
 				vscode.window.showInformationMessage(
-					`${isEdit ? 'Updated' : 'Set'} dev-server override for flag "${node.flagKey}"`
+					`${isEditing ? 'Updated' : 'Set'} dev-server override for flag "${node.flagKey}"`
 				);
 				await this.reload();
 			} else {
-				vscode.window.showErrorMessage(`Failed to ${isEdit ? 'update' : 'set'} override`);
+				vscode.window.showErrorMessage(`Failed to ${isEditing ? 'update' : 'set'} override`);
 			}
 		} catch (err) {
-			vscode.window.showErrorMessage(`Failed to ${isEdit ? 'update' : 'set'} override: ${err.message}`);
+			vscode.window.showErrorMessage(`Failed to ${isEditing ? 'update' : 'set'} override: ${err.message}`);
 		}
 	}
 

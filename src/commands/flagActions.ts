@@ -73,18 +73,17 @@ export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
 			{ label: 'Update off variation', detail: 'Change off variation for selected flag' },
 		];
 
-		// Add dev-server commands if connected
-		if (isDevServerConnected) {
+	// Add dev-server commands if connected
+	if (isDevServerConnected) {
+		userCommands.push(
+			{ label: 'Set Dev Server Override', detail: 'Set or update an override value for this flag in the dev-server' }
+		);
+		if (isOverridden) {
 			userCommands.push(
-				{ label: 'Set Dev Server Override', detail: 'Set an override value for this flag in the dev-server' }
+				{ label: 'Remove Dev Server Override', detail: 'Remove the override for this flag' }
 			);
-			if (isOverridden) {
-				userCommands.push(
-					{ label: 'Edit Dev Server Override', detail: 'Edit the override value for this flag' },
-					{ label: 'Remove Dev Server Override', detail: 'Remove the override for this flag' }
-				);
-			}
 		}
+	}
 
 		const selectedCommand = await window.showQuickPick(userCommands, {
 			title: 'Select Command for flag',
@@ -118,15 +117,12 @@ export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
 			case 'Update off variation':
 				flagOffFallthroughPatch(config, 'updateOffVariation', flagWindow.value);
 				break;
-			case 'Set Dev Server Override':
-				await setDevServerOverride(config, flagWindow.value);
-				break;
-			case 'Edit Dev Server Override':
-				await setDevServerOverride(config, flagWindow.value, true);
-				break;
-			case 'Remove Dev Server Override':
-				await removeDevServerOverride(config, flagWindow.value);
-				break;
+		case 'Set Dev Server Override':
+			await setDevServerOverride(config, flagWindow.value);
+			break;
+		case 'Remove Dev Server Override':
+			await removeDevServerOverride(config, flagWindow.value);
+			break;
 		}
 
 		return;
@@ -140,7 +136,7 @@ function revealFlag(config: ILDExtensionConfiguration, key: string) {
 	config.getFlagTreeProvider().reveal(node, { select: true, focus: true, expand: true });
 }
 
-async function setDevServerOverride(config: ILDExtensionConfiguration, flagKey: string, isEdit: boolean = false): Promise<void> {
+async function setDevServerOverride(config: ILDExtensionConfiguration, flagKey: string): Promise<void> {
 	const devServerProvider = config.getDevServerProvider();
 	if (!devServerProvider || !config.getConfig().isDevServerEnabled()) {
 		window.showErrorMessage('Not connected to dev-server');
@@ -154,13 +150,12 @@ async function setDevServerOverride(config: ILDExtensionConfiguration, flagKey: 
 		return;
 	}
 
-	// Get current value if editing (use override value if it exists, otherwise base value)
-	const currentValue = isEdit 
-		? (flagInfo.override?.value ?? flagInfo.flag.value) as string | number | boolean | object | undefined
-		: undefined;
+	// Always show current value (override if it exists, otherwise base value)
+	const currentValue = (flagInfo.override?.value ?? flagInfo.flag.value) as string | number | boolean | object | undefined;
+	const isEditing = flagInfo.isOverridden;
 
 	// Show smart input based on flag type
-	const value = await showSmartOverrideInput(flagInfo.flag, currentValue, isEdit);
+	const value = await showSmartOverrideInput(flagInfo.flag, currentValue, isEditing);
 
 	if (value === undefined) {
 		return;
@@ -171,14 +166,14 @@ async function setDevServerOverride(config: ILDExtensionConfiguration, flagKey: 
 		
 		if (success) {
 			window.showInformationMessage(
-				`${isEdit ? 'Updated' : 'Set'} dev-server override for flag "${flagKey}"`
+				`${isEditing ? 'Updated' : 'Set'} dev-server override for flag "${flagKey}"`
 			);
 			await commands.executeCommand('launchdarkly.refreshEntry');
 		} else {
-			window.showErrorMessage(`Failed to ${isEdit ? 'update' : 'set'} override`);
+			window.showErrorMessage(`Failed to ${isEditing ? 'update' : 'set'} override`);
 		}
 	} catch (err) {
-		window.showErrorMessage(`Failed to ${isEdit ? 'update' : 'set'} override: ${err.message}`);
+		window.showErrorMessage(`Failed to ${isEditing ? 'update' : 'set'} override: ${err.message}`);
 	}
 }
 

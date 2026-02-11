@@ -267,24 +267,19 @@
 				"title": "LaunchDarkly: Connect to Dev Server"
 			},
 			{
-				"command": "launchdarkly.disconnectDevServer",
-				"title": "LaunchDarkly: Disconnect from Dev Server"
-			},
-			{
-				"command": "launchdarkly.setDevServerOverride",
-				"title": "LaunchDarkly: Set Dev Server Override",
-				"icon": "$(edit)"
-			},
-			{
-				"command": "launchdarkly.editDevServerOverride",
-				"title": "LaunchDarkly: Edit Dev Server Override",
-				"icon": "$(edit)"
-			},
-			{
-				"command": "launchdarkly.removeDevServerOverride",
-				"title": "LaunchDarkly: Remove Dev Server Override",
-				"icon": "$(close)"
-			}
+			"command": "launchdarkly.disconnectDevServer",
+			"title": "LaunchDarkly: Disconnect from Dev Server"
+		},
+		{
+			"command": "launchdarkly.setDevServerOverride",
+			"title": "LaunchDarkly: Set Dev Server Override",
+			"icon": "$(edit)"
+		},
+		{
+			"command": "launchdarkly.removeDevServerOverride",
+			"title": "LaunchDarkly: Remove Dev Server Override",
+			"icon": "$(close)"
+		}
 		],
 		"menus": {
 			"commandPalette": [
@@ -436,20 +431,15 @@
 					"group": "inline"
 				},
 				{
-					"command": "launchdarkly.setDevServerOverride",
-					"when": "view == launchdarklyFeatureFlags && (viewItem == flagParentItem || viewItem == flagParentItemOverridden)",
-					"group": "devserver@1"
-				},
-				{
-					"command": "launchdarkly.editDevServerOverride",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItemOverridden",
-					"group": "devserver@2"
-				},
-				{
-					"command": "launchdarkly.removeDevServerOverride",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItemOverridden",
-					"group": "devserver@3"
-				}
+				"command": "launchdarkly.setDevServerOverride",
+				"when": "view == launchdarklyFeatureFlags && (viewItem == flagParentItem || viewItem == flagParentItemOverridden)",
+				"group": "devserver@1"
+			},
+			{
+				"command": "launchdarkly.removeDevServerOverride",
+				"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItemOverridden",
+				"group": "devserver@2"
+			}
 			]
 		},
 		"keybindings": [

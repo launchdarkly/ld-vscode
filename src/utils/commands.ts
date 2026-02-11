@@ -28,5 +28,4 @@ export const CMD_LD_MIGRATE_CONFIGURATION = 'launchdarkly.migrateConfiguration';
 export const CMD_LD_CONNECT_DEV_SERVER = 'launchdarkly.connectDevServer';
 export const CMD_LD_DISCONNECT_DEV_SERVER = 'launchdarkly.disconnectDevServer';
 export const CMD_LD_SET_DEV_SERVER_OVERRIDE = 'launchdarkly.setDevServerOverride';
-export const CMD_LD_EDIT_DEV_SERVER_OVERRIDE = 'launchdarkly.editDevServerOverride';
 export const CMD_LD_REMOVE_DEV_SERVER_OVERRIDE = 'launchdarkly.removeDevServerOverride';
