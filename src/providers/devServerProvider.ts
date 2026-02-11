@@ -1,6 +1,6 @@
 import { EventEmitter } from 'vscode';
 import { ILDExtensionConfiguration } from '../models';
-import { DevServerApi, DevServerFlag, DevServerOverrideInfo, DevServerProject, EnhancedFlag } from '../devServerApi';
+import { DevServerApi, DevServerOverrideInfo, DevServerProject, EnhancedFlag } from '../devServerApi';
 
 /**
  * Cached flag info combining flag state and override status
@@ -144,11 +144,11 @@ export class DevServerProvider {
 	/**
 	 * Get all flags as a record (for compatibility)
 	 */
-	getFlagsRecord(): Record<string, DevServerFlag> | null {
+	getFlagsRecord(): Record<string, EnhancedFlag> | null {
 		if (this.cachedFlags.size === 0) {
 			return null;
 		}
-		const record: Record<string, DevServerFlag> = {};
+		const record: Record<string, EnhancedFlag> = {};
 		for (const [key, info] of this.cachedFlags) {
 			record[key] = info.flag;
 		}

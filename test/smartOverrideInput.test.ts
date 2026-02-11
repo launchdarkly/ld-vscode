@@ -2,7 +2,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { showSmartOverrideInput } from '../src/utils/smartOverrideInput';
-import { DevServerFlag } from '../src/devServerApi';
+import { EnhancedFlag } from '../src/devServerApi';
 
 // Mock vscode.window functions
 let mockQuickPickResult: any = undefined;
@@ -45,42 +45,36 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('shows QuickPick when flag has 2 variations', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: true,
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
-		variations: [
-			{ id: '1', name: 'True', description: 'On', value: true },
-			{ id: '2', name: 'False', description: 'Off', value: false },
-		],
-	};
+			variations: [
+				{ id: '1', name: 'True', description: 'On', value: true },
+				{ id: '2', name: 'False', description: 'Off', value: false },
+			],
+		};
 
-	mockQuickPickResult = { value: false };
+		mockQuickPickResult = { value: false };
 
-	const result = await showSmartOverrideInput(flag, true, false);
+		const result = await showSmartOverrideInput(flag, true, false);
 
-	assert.strictEqual(result, false);
-	assert.strictEqual(mockQuickPickCalls.length, 1);
-	assert.strictEqual(mockInputBoxCalls.length, 0);
-	
-	// Verify QuickPick items include only boolean variations (no custom value option)
-	const items = mockQuickPickCalls[0].items;
-	assert.strictEqual(items.length, 2); // Only 2 boolean variations, no "Enter custom value"
-	assert.strictEqual(items[0].label, 'True');
-	assert.strictEqual(items[1].label, 'False');
-});
+		assert.strictEqual(result, false);
+		assert.strictEqual(mockQuickPickCalls.length, 1);
+		assert.strictEqual(mockInputBoxCalls.length, 0);
+		
+		// Verify QuickPick items include only boolean variations (no custom value option)
+		const items = mockQuickPickCalls[0].items;
+		assert.strictEqual(items.length, 2); // Only 2 boolean variations, no "Enter custom value"
+		assert.strictEqual(items[0].label, 'True');
+		assert.strictEqual(items[1].label, 'False');
+	});
 
 	test('shows QuickPick when flag has multiple string variations', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: 'option1',
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [
 				{ id: '1', name: 'Option 1', description: 'First option', value: 'option1' },
 				{ id: '2', name: 'Option 2', description: 'Second option', value: 'option2' },
@@ -101,13 +95,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('marks current value correctly in QuickPick', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: 'current-value',
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [
 				{ id: '1', name: 'Option A', description: 'First', value: 'value-a' },
 				{ id: '2', name: 'Option B', description: 'Second', value: 'current-value' },
@@ -128,13 +119,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('marks current boolean value correctly in QuickPick', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: false,
 			version: 1,
-			variation: 1,
-			trackEvents: false,
-			trackReason: false,
 			variations: [
 				{ id: '1', name: 'True', description: 'On', value: true },
 				{ id: '2', name: 'False', description: 'Off', value: false },
@@ -159,13 +147,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('does not allow custom value entry for boolean flags', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: true,
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [
 				{ id: '1', name: 'True', description: 'On', value: true },
 				{ id: '2', name: 'False', description: 'Off', value: false },
@@ -187,13 +172,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('falls back to JSON input when no variations available', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: { complex: 'object' },
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [],
 		};
 
@@ -207,13 +189,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('falls back to JSON input when variations is undefined', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: 'test',
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: undefined,
 		};
 
@@ -226,13 +205,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('allows custom value entry from QuickPick', async () => {
-		const flag: DevServerFlag = {
+			const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: 'option1',
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [
 				{ id: '1', name: 'Option 1', description: 'First option', value: 'option1' },
 				{ id: '2', name: 'Option 2', description: 'Second option', value: 'option2' },
@@ -251,13 +227,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('returns undefined when user cancels QuickPick', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: true,
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [
 				{ id: '1', name: 'True', description: 'On', value: true },
 				{ id: '2', name: 'False', description: 'Off', value: false },
@@ -272,13 +245,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('returns undefined when user cancels InputBox', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: 'test',
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [],
 		};
 
@@ -290,13 +260,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('handles complex JSON objects in variations', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: { setting: 'default' },
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [
 				{ id: '1', name: 'Config A', description: 'First config', value: { setting: 'a', enabled: true } },
 				{ id: '2', name: 'Config B', description: 'Second config', value: { setting: 'b', enabled: false } },
@@ -312,13 +279,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('uses variation name as label when available', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: 'v1',
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [
 				{ id: '1', name: 'Variation One', description: 'First variation', value: 'v1' },
 				{ id: '2', name: 'Variation Two', description: 'Second variation', value: 'v2' },
@@ -336,13 +300,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('shows variation description in QuickPick', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: 'v1',
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [
 				{ id: '1', name: 'Option A', description: 'This is the first option', value: 'v1' },
 				{ id: '2', name: 'Option B', description: 'This is the second option', value: 'v2' },
@@ -362,13 +323,10 @@ suite('SmartOverrideInput tests', () => {
 	});
 
 	test('validates JSON input correctly', async () => {
-		const flag: DevServerFlag = {
+		const flag: EnhancedFlag = {
 			key: 'test-flag',
 			value: 'test',
 			version: 1,
-			variation: 0,
-			trackEvents: false,
-			trackReason: false,
 			variations: [],
 		};
 

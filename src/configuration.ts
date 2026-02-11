@@ -105,7 +105,7 @@ export class Configuration {
 		this[key] = value;
 	}
 
-	public 	streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
+	public streamingConfigReloadCheck(e: ConfigurationChangeEvent): boolean {
 		const streamingConfigOptions = ['baseUri', 'streamUri', 'devServerUri'];
 		const currProj = this.ctx.workspaceState.get('project');
 		const currEnv = this.ctx.workspaceState.get('env');

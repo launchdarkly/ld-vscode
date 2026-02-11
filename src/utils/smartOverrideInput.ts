@@ -1,5 +1,5 @@
 import { QuickPickItem, window } from 'vscode';
-import { DevServerFlag, FlagVariation } from '../devServerApi';
+import { EnhancedFlag, FlagVariation } from '../devServerApi';
 
 interface OverrideQuickPickItem extends QuickPickItem {
 	value: unknown;
@@ -9,7 +9,7 @@ interface OverrideQuickPickItem extends QuickPickItem {
  * Show a smart input based on flag type with available variations
  */
 export async function showSmartOverrideInput(
-	flag: DevServerFlag,
+	flag: EnhancedFlag,
 	currentValue?: string | number | boolean | object,
 	isEdit: boolean = false
 ): Promise<unknown | undefined> {

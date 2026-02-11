@@ -6,7 +6,7 @@ import { CMD_LD_FLAG_ACTION, CMD_LD_OPEN_BROWSER } from '../utils/commands';
 import { flagCodeSearch } from '../utils/flagCodeSearch';
 import { registerCommand } from '../utils/registerCommand';
 import { ILDExtensionConfiguration } from '../models';
-import { showSmartOverrideInput } from '../utils/smartOverrideInput';
+import { removeDevServerOverride, setDevServerOverride } from './devServerOverrides';
 
 const cache = new ToggleCache();
 
@@ -73,17 +73,17 @@ export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
 			{ label: 'Update off variation', detail: 'Change off variation for selected flag' },
 		];
 
-	// Add dev-server commands if connected
-	if (isDevServerConnected) {
-		userCommands.push(
-			{ label: 'Set Dev Server Override', detail: 'Set or update an override value for this flag in the dev-server' }
-		);
-		if (isOverridden) {
+		// Add dev-server commands if connected
+		if (isDevServerConnected) {
 			userCommands.push(
-				{ label: 'Remove Dev Server Override', detail: 'Remove the override for this flag' }
+				{ label: 'Set Dev Server Override', detail: 'Set or update an override value for this flag in the dev-server' }
 			);
+			if (isOverridden) {
+				userCommands.push(
+					{ label: 'Remove Dev Server Override', detail: 'Remove the override for this flag' }
+				);
+			}
 		}
-	}
 
 		const selectedCommand = await window.showQuickPick(userCommands, {
 			title: 'Select Command for flag',
@@ -117,13 +117,13 @@ export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
 			case 'Update off variation':
 				flagOffFallthroughPatch(config, 'updateOffVariation', flagWindow.value);
 				break;
-		case 'Set Dev Server Override':
-			await setDevServerOverride(config, flagWindow.value);
-			break;
-		case 'Remove Dev Server Override':
-			await removeDevServerOverride(config, flagWindow.value);
-			break;
-		}
+			case 'Set Dev Server Override':
+				await setDevServerOverride(config, flagWindow.value);
+				break;
+			case 'Remove Dev Server Override':
+				await removeDevServerOverride(config, flagWindow.value);
+				break;
+			}
 
 		return;
 	});
@@ -134,76 +134,4 @@ export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
 function revealFlag(config: ILDExtensionConfiguration, key: string) {
 	const node = config.getFlagView().flagNodes.filter((node) => node.flagKey === key)[0];
 	config.getFlagTreeProvider().reveal(node, { select: true, focus: true, expand: true });
-}
-
-async function setDevServerOverride(config: ILDExtensionConfiguration, flagKey: string): Promise<void> {
-	const devServerProvider = config.getDevServerProvider();
-	if (!devServerProvider || !config.getConfig().isDevServerEnabled()) {
-		window.showErrorMessage('Not connected to dev-server');
-		return;
-	}
-
-	// Get flag info with variations
-	const flagInfo = devServerProvider.getFlag(flagKey);
-	if (!flagInfo) {
-		window.showErrorMessage('Flag not found in dev-server');
-		return;
-	}
-
-	// Always show current value (override if it exists, otherwise base value)
-	const currentValue = (flagInfo.override?.value ?? flagInfo.flag.value) as string | number | boolean | object | undefined;
-	const isEditing = flagInfo.isOverridden;
-
-	// Show smart input based on flag type
-	const value = await showSmartOverrideInput(flagInfo.flag, currentValue, isEditing);
-
-	if (value === undefined) {
-		return;
-	}
-
-	try {
-		const success = await devServerProvider.setOverride(flagKey, value);
-		
-		if (success) {
-			window.showInformationMessage(
-				`${isEditing ? 'Updated' : 'Set'} dev-server override for flag "${flagKey}"`
-			);
-			await commands.executeCommand('launchdarkly.refreshEntry');
-		} else {
-			window.showErrorMessage(`Failed to ${isEditing ? 'update' : 'set'} override`);
-		}
-	} catch (err) {
-		window.showErrorMessage(`Failed to ${isEditing ? 'update' : 'set'} override: ${err.message}`);
-	}
-}
-
-async function removeDevServerOverride(config: ILDExtensionConfiguration, flagKey: string): Promise<void> {
-	const devServerProvider = config.getDevServerProvider();
-	if (!devServerProvider || !config.getConfig().isDevServerEnabled()) {
-		window.showErrorMessage('Not connected to dev-server');
-		return;
-	}
-
-	const confirm = await window.showWarningMessage(
-		`Remove dev-server override for flag "${flagKey}"?`,
-		{ modal: true },
-		'Remove',
-	);
-
-	if (confirm !== 'Remove') {
-		return;
-	}
-
-	try {
-		const success = await devServerProvider.removeOverride(flagKey);
-		
-		if (success) {
-			window.showInformationMessage(`Removed dev-server override for flag "${flagKey}"`);
-			await commands.executeCommand('launchdarkly.refreshEntry');
-		} else {
-			window.showErrorMessage('Failed to remove override');
-		}
-	} catch (err) {
-		window.showErrorMessage(`Failed to remove override: ${err.message}`);
-	}
 }

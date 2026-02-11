@@ -272,7 +272,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 							? `${valueStr} (dev-server override)` 
 							: `${valueStr} (dev-server)`;
 					} else {
-						// Show cloud values
+						// Show upstream LaunchDarkly values
 						const variations = this.getActiveVariations(flagEnv) as Array<number>;
 						let flagVariations;
 						switch (variations.length) {

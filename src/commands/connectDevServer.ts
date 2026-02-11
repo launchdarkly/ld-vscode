@@ -4,6 +4,8 @@ import { CMD_LD_CONNECT_DEV_SERVER, CMD_LD_DISCONNECT_DEV_SERVER, CMD_LD_REFRESH
 import { registerCommand } from '../utils/registerCommand';
 import { updateDevServerStatusBar } from '../devServerStatusBar';
 
+const DEFAULT_DEV_SERVER_URI = 'http://localhost:8765';
+
 export function connectDevServerCommand(config: LDExtensionConfiguration): Disposable {
 	return registerCommand(CMD_LD_CONNECT_DEV_SERVER, async () => {
 		try {
@@ -27,7 +29,7 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 				const inputUri = await window.showInputBox({
 					prompt: 'Enter the dev-server URI',
 					value: devServerUri,
-					placeHolder: 'http://localhost:8765',
+					placeHolder: DEFAULT_DEV_SERVER_URI,
 					validateInput: (value) => {
 						try {
 							new URL(value);
@@ -48,7 +50,7 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 			config.getConfig().devServerUri = finalUri;
 			
 			// Persist the URI to configuration if it's different from default
-			if (finalUri !== 'http://localhost:8765') {
+			if (finalUri !== DEFAULT_DEV_SERVER_URI) {
 				await config.getConfig().update('devServerUri', finalUri, false);
 			}
 
@@ -63,13 +65,11 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 					'Cancel',
 				);
 				if (retry === 'Retry') {
-					// Retry by recursively calling the command
-					await commands.executeCommand(CMD_LD_CONNECT_DEV_SERVER);
+					commands.executeCommand(CMD_LD_CONNECT_DEV_SERVER);
 				}
 				return;
 			}
-
-			// Enable dev-server mode after successful connection test
+			
 			config.getConfig().setDevServerEnabled(true);
 
 			// Reload the flag store to reconnect with dev-server
@@ -111,11 +111,8 @@ export function disconnectDevServerCommand(config: LDExtensionConfiguration): Di
 				return;
 			}
 
-		// Disable dev-server mode
-		config.getConfig().setDevServerEnabled(false);
-
-		// Clear the dev-server provider cache
-		config.getDevServerProvider()?.clearCache();
+			config.getConfig().setDevServerEnabled(false);
+			config.getDevServerProvider()?.clearCache();
 
 			// Reload the flag store to reconnect to LaunchDarkly
 			if (config.getFlagStore()) {

@@ -113,7 +113,7 @@ suite('provider utils tests', function () {
 			value: true,
 			isOverridden: true,
 		});
-		// Dev-server says true even though cloud says off
+		// Dev-server says true even though upstream LaunchDarkly says off
 		assert.ok(result.value.includes('Dev Server Value'));
 		assert.ok(result.value.includes('true'));
 		assert.ok(result.value.includes('**(overridden)**'));

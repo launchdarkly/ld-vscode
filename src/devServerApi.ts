@@ -8,13 +8,7 @@ export interface FlagVariation {
 	value:  string | number | boolean | object;
 }
 
-export interface EnhancedFlag {
-	key: string;
-	value: string | number | boolean | object;
-	version: number;
-	variation: number;
-	trackEvents: boolean;
-	trackReason: boolean;
+export interface EnhancedFlag extends DevServerFlag { 
 	variations: FlagVariation[];
 }
 
@@ -22,10 +16,6 @@ export interface DevServerFlag {
 	key: string;
 	value: string | number | boolean | object;
 	version: number;
-	variation: number;
-	trackEvents: boolean;
-	trackReason: boolean;
-	variations: FlagVariation[];
 }
 
 export interface DevServerOverrideInfo {

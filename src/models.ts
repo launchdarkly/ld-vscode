@@ -658,10 +658,7 @@ export interface IDevServerProvider {
 		flag: { 
 			key: string; 
 			value: string | number | boolean | object; 
-			version: number; 
-			variation: number; 
-			trackEvents: boolean; 
-			trackReason: boolean;
+			version: number;
 			variations: { id: string; name: string; description: string; value: string | number | boolean | object }[];
 		}; 
 		isOverridden: boolean;
