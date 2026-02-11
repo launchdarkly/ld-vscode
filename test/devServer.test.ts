@@ -634,6 +634,110 @@ suite('DevServerProvider tests', () => {
 		assert.ok(lastRefresh instanceof Date);
 	});
 
+	test('onDidRefresh does not fire when data has not changed', async () => {
+		const mockProject: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: true, version: 1, variation: 0, trackEvents: false, trackReason: false, variations: [] },
+			},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+
+		axiosStub = sinon.stub(axios, 'get').resolves({ data: mockProject });
+
+		// First refresh — should fire
+		let fireCount = 0;
+		devServerProvider.onDidRefresh.event(() => { fireCount++; });
+		await devServerProvider.refresh();
+		assert.strictEqual(fireCount, 1, 'Should fire on first refresh');
+
+		// Second refresh with same data — should NOT fire
+		await devServerProvider.refresh();
+		assert.strictEqual(fireCount, 1, 'Should not fire again when data is unchanged');
+	});
+
+	test('onDidRefresh fires when data changes between refreshes', async () => {
+		const projectV1: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: true, version: 1, variation: 0, trackEvents: false, trackReason: false, variations: [] },
+			},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+		const projectV2: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: false, version: 2, variation: 1, trackEvents: false, trackReason: false, variations: [] },
+			},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+
+		axiosStub = sinon.stub(axios, 'get');
+		axiosStub.onFirstCall().resolves({ data: projectV1 });
+		axiosStub.onSecondCall().resolves({ data: projectV2 });
+
+		let fireCount = 0;
+		devServerProvider.onDidRefresh.event(() => { fireCount++; });
+
+		await devServerProvider.refresh();
+		assert.strictEqual(fireCount, 1);
+
+		await devServerProvider.refresh();
+		assert.strictEqual(fireCount, 2, 'Should fire again when data changes');
+	});
+
+	test('onDidRefresh fires when override changes between refreshes', async () => {
+		const projectNoOverride: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: true, version: 1, variation: 0, trackEvents: false, trackReason: false, variations: [] },
+			},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+		const projectWithOverride: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: true, version: 1, variation: 0, trackEvents: false, trackReason: false, variations: [] },
+			},
+			overrides: {
+				'flag1': { value: false, version: 2 },
+			},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+
+		axiosStub = sinon.stub(axios, 'get');
+		axiosStub.onFirstCall().resolves({ data: projectNoOverride });
+		axiosStub.onSecondCall().resolves({ data: projectWithOverride });
+
+		let fireCount = 0;
+		devServerProvider.onDidRefresh.event(() => { fireCount++; });
+
+		await devServerProvider.refresh();
+		assert.strictEqual(fireCount, 1);
+
+		await devServerProvider.refresh();
+		assert.strictEqual(fireCount, 2, 'Should fire when override is added');
+	});
+
 	test('clearCache clears all cached data', async () => {
 		const mockProject: DevServerProject = {
 			key: 'test-project',

@@ -395,6 +395,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 		// Setup listener for flag changes
 		this.ldConfig.getFlagStore()?.on('update', async (keys: string) => {
 			try {
+				// When dev-server is connected, refresh provider cache so override
+				// metadata stays in sync with the streaming flag values.
+				if (this.ldConfig.getConfig().isDevServerEnabled()) {
+					await this.ldConfig.getDevServerProvider()?.refresh();
+				}
+
 				const flagKeys = Object.values(keys);
 				flagKeys.map((key) => {
 					logDebugMessage(`Flag update detected for ${key}`);

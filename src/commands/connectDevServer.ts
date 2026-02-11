@@ -86,16 +86,16 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 				);
 			}
 
-			// Refresh dev-server data
-			await devServerProvider?.refresh();
+		// Refresh dev-server data
+		await devServerProvider?.refresh();
 
-			// Update status bar to show dev-server connection
-			updateDevServerStatusBar(config);
+		// Update status bar to show dev-server connection
+		updateDevServerStatusBar(config);
 
-			// Refresh the flags view to load dev-server values
-			await commands.executeCommand(CMD_LD_REFRESH_ENTRY);
+		// Refresh the flags view to load dev-server values
+		await commands.executeCommand(CMD_LD_REFRESH_ENTRY);
 
-			window.showInformationMessage(`Connected to LaunchDarkly dev-server at ${finalUri}`);
+		window.showInformationMessage(`Connected to LaunchDarkly dev-server at ${finalUri}`);
 		} catch (err) {
 			console.error(`Failed to connect to dev-server: ${err}`);
 			window.showErrorMessage(`Failed to connect to dev-server: ${err.message}`);
@@ -111,11 +111,11 @@ export function disconnectDevServerCommand(config: LDExtensionConfiguration): Di
 				return;
 			}
 
-			// Disable dev-server mode
-			config.getConfig().setDevServerEnabled(false);
+		// Disable dev-server mode
+		config.getConfig().setDevServerEnabled(false);
 
-			// Clear the dev-server provider cache
-			config.getDevServerProvider()?.clearCache();
+		// Clear the dev-server provider cache
+		config.getDevServerProvider()?.clearCache();
 
 			// Reload the flag store to reconnect to LaunchDarkly
 			if (config.getFlagStore()) {

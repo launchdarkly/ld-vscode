@@ -20,6 +20,7 @@ export class DevServerProvider {
 	private cachedProject: DevServerProject | null = null;
 	private cachedFlags: Map<string, CachedFlagInfo> = new Map();
 	private lastRefresh: Date | null = null;
+	private lastSnapshot: string | null = null;
 
 	// Event emitters for state changes
 	public readonly onDidRefresh: EventEmitter<void> = new EventEmitter<void>();
@@ -46,7 +47,8 @@ export class DevServerProvider {
 	}
 
 	/**
-	 * Refresh the cached data from the dev-server
+	 * Refresh the cached data from the dev-server.
+	 * Only fires onDidRefresh if data has actually changed.
 	 */
 	async refresh(): Promise<boolean> {
 		if (!this.isConnected()) {
@@ -60,15 +62,37 @@ export class DevServerProvider {
 				return false;
 			}
 
+			// Snapshot the new state to detect changes
+			const newSnapshot = this.computeSnapshot(project);
+			const hasChanged = newSnapshot !== this.lastSnapshot;
+
 			this.cachedProject = project;
 			this.buildFlagCache(project);
 			this.lastRefresh = new Date();
-			this.onDidRefresh.fire();
+			this.lastSnapshot = newSnapshot;
+
+			// Only notify listeners if data actually changed
+			if (hasChanged) {
+				this.onDidRefresh.fire();
+			}
 			return true;
 		} catch (err) {
 			console.error(`Failed to refresh dev-server data: ${err}`);
 			return false;
 		}
+	}
+
+	/**
+	 * Compute a lightweight snapshot string for change detection.
+	 * Includes flag values and overrides — the parts that matter for the UI.
+	 */
+	private computeSnapshot(project: DevServerProject): string {
+		const flagParts: string[] = [];
+		for (const [key, flag] of Object.entries(project.flagsState)) {
+			const override = project.overrides?.[key];
+			flagParts.push(`${key}:${JSON.stringify(flag.value)}:v${flag.version}:${override ? JSON.stringify(override.value) : '_'}`);
+		}
+		return flagParts.sort().join('|');
 	}
 
 	/**
@@ -100,6 +124,7 @@ export class DevServerProvider {
 		this.cachedProject = null;
 		this.cachedFlags.clear();
 		this.lastRefresh = null;
+		this.lastSnapshot = null;
 	}
 
 	/**
