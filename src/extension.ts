@@ -246,7 +246,7 @@ async function handleDevServerConnectionFailure(
 			break;
 		case 'Disconnect':
 			// Disconnect from dev-server
-			config.getConfig().setDevServerEnabled(false);
+			await config.getConfig().setDevServerEnabled(false);
 			config.getDevServerProvider()?.clearCache();
 			if (config.getFlagStore()) {
 				await config.getFlagStore().reload();
@@ -257,8 +257,11 @@ async function handleDevServerConnectionFailure(
 		case 'Dismiss':
 		default:
 			// Disable dev-server mode so the UI doesn't show a false "connected" state
-			config.getConfig().setDevServerEnabled(false);
+			await config.getConfig().setDevServerEnabled(false);
 			config.getDevServerProvider()?.clearCache();
+			if (config.getFlagStore()) {
+				await config.getFlagStore().reload();
+			}
 			updateDevServerStatusBar(config);
 			console.log('User dismissed dev-server reconnection prompt — dev-server disabled');
 			break;

@@ -120,12 +120,22 @@ suite('DevServerApi tests', () => {
 		assert.ok(result?.some(f => f.key === 'flag2'));
 	});
 
-	test('getAllFlags returns null when project is null', async () => {
+	test('getAllFlags returns empty array when project is null', async () => {
 		axiosStub = sinon.stub(axios, 'get').rejects(new Error('Error'));
 		
 		const result = await devServerApi.getAllFlags();
 		
-		assert.strictEqual(result, null);
+		assert.ok(Array.isArray(result), 'Result should be an array');
+		assert.strictEqual(result.length, 0, 'Result should be empty');
+	});
+
+	test('getAllFlags returns empty array when flagsState is missing', async () => {
+		axiosStub = sinon.stub(axios, 'get').resolves({ data: {} });
+		
+		const result = await devServerApi.getAllFlags();
+		
+		assert.ok(Array.isArray(result), 'Result should be an array');
+		assert.strictEqual(result.length, 0, 'Result should be empty');
 	});
 
 	test('getFlagValue returns specific flag by key', async () => {
@@ -718,5 +728,65 @@ suite('DevServerProvider tests', () => {
 		
 		assert.strictEqual(devServerProvider.getFlag('flag1'), undefined);
 		assert.strictEqual(devServerProvider.getLastRefreshTime(), null);
+	});
+
+	test('clearCache resets snapshot so next refresh fires onDidRefresh', async () => {
+		const mockProject: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: true, version: 1 },
+			},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+
+		axiosStub = sinon.stub(axios, 'get').resolves({ data: mockProject });
+
+		let fireCount = 0;
+		devServerProvider.onDidRefresh.event(() => { fireCount++; });
+
+		// First refresh fires
+		await devServerProvider.refresh();
+		assert.strictEqual(fireCount, 1);
+
+		// Second refresh with same data does NOT fire
+		await devServerProvider.refresh();
+		assert.strictEqual(fireCount, 1);
+
+		// Clear cache resets snapshot
+		devServerProvider.clearCache();
+
+		// Third refresh with same data DOES fire (snapshot was reset)
+		await devServerProvider.refresh();
+		assert.strictEqual(fireCount, 2, 'Should fire after clearCache even with same data');
+	});
+
+	test('refresh returns false and clears cache when disconnected', async () => {
+		const mockProject: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: true, version: 1 },
+			},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+
+		// First, populate cache while connected
+		axiosStub = sinon.stub(axios, 'get').resolves({ data: mockProject });
+		await devServerProvider.refresh();
+		assert.ok(devServerProvider.getFlag('flag1'), 'Flag should be cached');
+
+		// Now simulate disconnection
+		when(mockConfiguration.isDevServerEnabled()).thenReturn(false);
+
+		const result = await devServerProvider.refresh();
+		assert.strictEqual(result, false, 'Should return false when disconnected');
+		assert.strictEqual(devServerProvider.getFlag('flag1'), undefined, 'Cache should be cleared');
 	});
 });

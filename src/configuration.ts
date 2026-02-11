@@ -289,10 +289,10 @@ export class Configuration {
 		return 0 <= interval && interval <= 1440;
 	}
 
-	setDevServerEnabled(enabled: boolean): void {
+	async setDevServerEnabled(enabled: boolean): Promise<void> {
 		this.devServerEnabled = enabled;
 		// Persist the state to workspace
-		this.ctx.workspaceState.update('devServerEnabled', enabled);
+		await this.ctx.workspaceState.update('devServerEnabled', enabled);
 	}
 
 	isDevServerEnabled(): boolean {

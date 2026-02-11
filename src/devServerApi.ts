@@ -87,7 +87,7 @@ export class DevServerApi {
 	async getAllFlags(): Promise<EnhancedFlag[]> {
 		const project = await this.getProject();
 		if (!project?.flagsState) {
-			return null;
+			return [];
 		}
 
 		const flags: DevServerFlag[] = Object.values(project.flagsState);

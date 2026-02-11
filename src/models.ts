@@ -756,7 +756,7 @@ export interface IConfiguration {
 	update(key: string, value: string | boolean, global: boolean): Promise<void>;
 	validate(): Promise<string>;
 	validateRefreshInterval(interval: number): boolean;
-	setDevServerEnabled(enabled: boolean): void;
+	setDevServerEnabled(enabled: boolean): Promise<void>;
 	isDevServerEnabled(): boolean;
 	getDevServerUri(): string;
 }

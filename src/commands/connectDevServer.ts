@@ -46,13 +46,8 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 				finalUri = inputUri;
 			}
 
-			// Update URI but don't enable yet
-			config.getConfig().devServerUri = finalUri;
-			
-			// Persist the URI to configuration if it's different from default
-			if (finalUri !== DEFAULT_DEV_SERVER_URI) {
-				await config.getConfig().update('devServerUri', finalUri, false);
-			}
+			// Update the dev-server URI in the configuration, but don't enable yet until we verify the connection.
+			await config.getConfig().update('devServerUri', finalUri, false);
 
 			// Test connection before enabling
 			const devServerProvider = config.getDevServerProvider();
@@ -69,8 +64,8 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 				}
 				return;
 			}
-			
-			config.getConfig().setDevServerEnabled(true);
+
+			await config.getConfig().setDevServerEnabled(true);
 
 			// Reload the flag store to reconnect with dev-server
 			if (config.getFlagStore()) {
@@ -111,7 +106,7 @@ export function disconnectDevServerCommand(config: LDExtensionConfiguration): Di
 				return;
 			}
 
-			config.getConfig().setDevServerEnabled(false);
+			await config.getConfig().setDevServerEnabled(false);
 			config.getDevServerProvider()?.clearCache();
 
 			// Reload the flag store to reconnect to LaunchDarkly

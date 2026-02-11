@@ -409,7 +409,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 						?.getFeatureFlag(key)
 						.then((updatedFlag) => {
 							const updatedIdx = this.flagNodes.findIndex((v) => v.flagKey === key);
-							flagToValues(updatedFlag.flag, updatedFlag.config, this.ldConfig).then((newFlagValue) => {
+							this.flagToParent(updatedFlag.flag, updatedFlag.config).then((newFlagValue) => {
 								this.flagNodes[updatedIdx] = newFlagValue;
 							});
 						});

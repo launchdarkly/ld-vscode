@@ -28,7 +28,7 @@ import { logDebugMessage } from './utils/logDebugMessage';
 import { CMD_LD_CONFIG, CMD_LD_OPEN_FLAG, CMD_LD_REFRESH_LENS, CMD_LD_TOGGLE_CMD_PROMPT } from './utils/commands';
 import { registerCommand } from './utils/registerCommand';
 import { CONST_CONFIG_LD } from './utils/constants';
-import { updateDevServerStatusBar } from './devServerStatusBar';
+import { getDevServerStatusBarItem, updateDevServerStatusBar } from './devServerStatusBar';
 
 const cache = new ToggleCache();
 
@@ -352,6 +352,12 @@ export async function cleanupComponents(config: ILDExtensionConfiguration) {
 	}
 
 	config.setApi(null);
+
+	// Hide and clean up the dev-server status bar
+	const devServerStatusBar = getDevServerStatusBarItem();
+	if (devServerStatusBar) {
+		devServerStatusBar.hide();
+	}
 
 	const quickLinksProvider = config.getQuickLinksProvider();
 	if (quickLinksProvider) {
