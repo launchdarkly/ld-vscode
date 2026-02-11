@@ -37,7 +37,17 @@ async function showVariationPicker(
 	currentValue?: unknown
 ): Promise<unknown | undefined> {
 	const items: OverrideQuickPickItem[] = variations.map((variation) => {
-		const isCurrentValue = JSON.stringify(variation.value) === JSON.stringify(currentValue);
+		// Deep equality check for current value
+		let isCurrentValue = false;
+		if (currentValue !== undefined) {
+			if (typeof variation.value === 'object' && typeof currentValue === 'object') {
+				isCurrentValue = JSON.stringify(variation.value) === JSON.stringify(currentValue);
+			} else {
+				// For primitives, use strict equality
+				isCurrentValue = variation.value === currentValue;
+			}
+		}
+		
 		const valueDisplay = typeof variation.value === 'object' 
 			? JSON.stringify(variation.value)
 			: String(variation.value);
@@ -50,16 +60,23 @@ async function showVariationPicker(
 		};
 	});
 
-	// Add option to enter custom value
-	items.push({
-		label: '$(edit) Enter custom value...',
-		description: 'Type a custom value',
-		value: '__custom__',
-	});
+	// Only add custom value option for non-boolean flags
+	const isBooleanFlag = variations.length === 2 && 
+		variations.every(v => typeof v.value === 'boolean');
+	
+	if (!isBooleanFlag) {
+		items.push({
+			label: '$(edit) Enter custom value...',
+			description: 'Type a custom value',
+			value: '__custom__',
+		});
+	}
 
 	const selected = await window.showQuickPick(items, {
 		title: 'Select override value',
-		placeHolder: 'Choose from available variations or enter custom value',
+		placeHolder: isBooleanFlag 
+			? 'Choose true or false'
+			: 'Choose from available variations or enter custom value',
 	});
 
 	if (!selected) {

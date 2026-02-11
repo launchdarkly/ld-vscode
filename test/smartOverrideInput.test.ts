@@ -52,26 +52,26 @@ suite('SmartOverrideInput tests', () => {
 			variation: 0,
 			trackEvents: false,
 			trackReason: false,
-			variations: [
-				{ id: '1', name: 'True', description: 'On', value: true },
-				{ id: '2', name: 'False', description: 'Off', value: false },
-			],
-		};
+		variations: [
+			{ id: '1', name: 'True', description: 'On', value: true },
+			{ id: '2', name: 'False', description: 'Off', value: false },
+		],
+	};
 
-		mockQuickPickResult = { value: false };
+	mockQuickPickResult = { value: false };
 
-		const result = await showSmartOverrideInput(flag, true, false);
+	const result = await showSmartOverrideInput(flag, true, false);
 
-		assert.strictEqual(result, false);
-		assert.strictEqual(mockQuickPickCalls.length, 1);
-		assert.strictEqual(mockInputBoxCalls.length, 0);
-		
-		// Verify QuickPick items include both variations
-		const items = mockQuickPickCalls[0].items;
-		assert.strictEqual(items.length, 3); // 2 variations + "Enter custom value"
-		assert.strictEqual(items[0].label, 'True');
-		assert.strictEqual(items[1].label, 'False');
-	});
+	assert.strictEqual(result, false);
+	assert.strictEqual(mockQuickPickCalls.length, 1);
+	assert.strictEqual(mockInputBoxCalls.length, 0);
+	
+	// Verify QuickPick items include only boolean variations (no custom value option)
+	const items = mockQuickPickCalls[0].items;
+	assert.strictEqual(items.length, 2); // Only 2 boolean variations, no "Enter custom value"
+	assert.strictEqual(items[0].label, 'True');
+	assert.strictEqual(items[1].label, 'False');
+});
 
 	test('shows QuickPick when flag has multiple string variations', async () => {
 		const flag: DevServerFlag = {
@@ -125,6 +125,65 @@ suite('SmartOverrideInput tests', () => {
 		const currentItem = items.find((item: any) => item.value === 'current-value');
 		assert.ok(currentItem);
 		assert.ok(currentItem.description?.includes('(current)'));
+	});
+
+	test('marks current boolean value correctly in QuickPick', async () => {
+		const flag: DevServerFlag = {
+			key: 'test-flag',
+			value: false,
+			version: 1,
+			variation: 1,
+			trackEvents: false,
+			trackReason: false,
+			variations: [
+				{ id: '1', name: 'True', description: 'On', value: true },
+				{ id: '2', name: 'False', description: 'Off', value: false },
+			],
+		};
+
+		mockQuickPickResult = { value: true };
+
+		await showSmartOverrideInput(flag, false, true);
+
+		const items = mockQuickPickCalls[0].items;
+		
+		// Find the current value item (false)
+		const currentItem = items.find((item: any) => item.value === false);
+		assert.ok(currentItem);
+		assert.ok(currentItem.description?.includes('(current)'), 'False should be marked as current');
+		
+		// Verify true is NOT marked as current
+		const otherItem = items.find((item: any) => item.value === true);
+		assert.ok(otherItem);
+		assert.ok(!otherItem.description?.includes('(current)'), 'True should NOT be marked as current');
+	});
+
+	test('does not allow custom value entry for boolean flags', async () => {
+		const flag: DevServerFlag = {
+			key: 'test-flag',
+			value: true,
+			version: 1,
+			variation: 0,
+			trackEvents: false,
+			trackReason: false,
+			variations: [
+				{ id: '1', name: 'True', description: 'On', value: true },
+				{ id: '2', name: 'False', description: 'Off', value: false },
+			],
+		};
+
+		mockQuickPickResult = { value: false };
+
+		const result = await showSmartOverrideInput(flag, true, false);
+
+		assert.strictEqual(result, false);
+		
+		const items = mockQuickPickCalls[0].items;
+		
+		// Verify NO "Enter custom value" option for boolean flags
+		assert.strictEqual(items.length, 2);
+		const hasCustomOption = items.some((item: any) => item.value === '__custom__');
+		assert.strictEqual(hasCustomOption, false, 'Boolean flags should not have custom value option');
 	});
 
 	test('falls back to JSON input when no variations available', async () => {
