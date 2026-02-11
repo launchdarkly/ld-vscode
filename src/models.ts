@@ -673,6 +673,16 @@ export interface IDevServerProvider {
 	setOverride(flagKey: string, value: unknown): Promise<boolean>;
 	removeOverride(flagKey: string): Promise<boolean>;
 	syncProject(): Promise<boolean>;
+
+	// Events
+	onDidRefresh: EventEmitter<void>;
+	onDidConnect: EventEmitter<void>;
+	onDidDisconnect: EventEmitter<void>;
+
+	// Additional accessors
+	getProject(): unknown | null;
+	getAllFlags(): Map<string, unknown>;
+	getLastRefreshTime(): Date | null;
 }
 
 export interface ILDExtensionConfiguration {

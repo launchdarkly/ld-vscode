@@ -518,6 +518,122 @@ suite('DevServerProvider tests', () => {
 		putStub.restore();
 	});
 
+	test('onDidRefresh fires after successful refresh', async () => {
+		const mockProject: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: true, version: 1, variation: 0, trackEvents: false, trackReason: false, variations: [] },
+			},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+
+		axiosStub = sinon.stub(axios, 'get').resolves({ data: mockProject });
+
+		let refreshFired = false;
+		devServerProvider.onDidRefresh.event(() => {
+			refreshFired = true;
+		});
+
+		await devServerProvider.refresh();
+
+		assert.strictEqual(refreshFired, true, 'onDidRefresh should fire after successful refresh');
+	});
+
+	test('onDidRefresh does not fire on failed refresh', async () => {
+		axiosStub = sinon.stub(axios, 'get').rejects(new Error('Connection refused'));
+
+		let refreshFired = false;
+		devServerProvider.onDidRefresh.event(() => {
+			refreshFired = true;
+		});
+
+		await devServerProvider.refresh();
+
+		assert.strictEqual(refreshFired, false, 'onDidRefresh should not fire on failed refresh');
+	});
+
+	test('onDidRefresh does not fire when disconnected', async () => {
+		when(mockConfiguration.isDevServerEnabled()).thenReturn(false);
+
+		let refreshFired = false;
+		devServerProvider.onDidRefresh.event(() => {
+			refreshFired = true;
+		});
+
+		await devServerProvider.refresh();
+
+		assert.strictEqual(refreshFired, false, 'onDidRefresh should not fire when disconnected');
+	});
+
+	test('getProject returns cached project data', async () => {
+		const mockProject: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: true, version: 1, variation: 0, trackEvents: false, trackReason: false, variations: [] },
+			},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+
+		axiosStub = sinon.stub(axios, 'get').resolves({ data: mockProject });
+		await devServerProvider.refresh();
+
+		const project = devServerProvider.getProject();
+		assert.ok(project);
+		assert.strictEqual(project.key, 'test-project');
+	});
+
+	test('getAllFlags returns map of cached flags', async () => {
+		const mockProject: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {
+				'flag1': { key: 'flag1', value: true, version: 1, variation: 0, trackEvents: false, trackReason: false, variations: [] },
+				'flag2': { key: 'flag2', value: 'hello', version: 1, variation: 0, trackEvents: false, trackReason: false, variations: [] },
+			},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+
+		axiosStub = sinon.stub(axios, 'get').resolves({ data: mockProject });
+		await devServerProvider.refresh();
+
+		const allFlags = devServerProvider.getAllFlags();
+		assert.strictEqual(allFlags.size, 2);
+		assert.ok(allFlags.has('flag1'));
+		assert.ok(allFlags.has('flag2'));
+	});
+
+	test('getLastRefreshTime returns time after refresh', async () => {
+		const mockProject: DevServerProject = {
+			key: 'test-project',
+			sourceEnvironmentKey: 'production',
+			context: {},
+			flagsState: {},
+			overrides: {},
+			availableVariations: {},
+			lastSyncTime: '2024-01-01T00:00:00Z',
+		};
+
+		axiosStub = sinon.stub(axios, 'get').resolves({ data: mockProject });
+
+		assert.strictEqual(devServerProvider.getLastRefreshTime(), null);
+		
+		await devServerProvider.refresh();
+		
+		const lastRefresh = devServerProvider.getLastRefreshTime();
+		assert.ok(lastRefresh instanceof Date);
+	});
+
 	test('clearCache clears all cached data', async () => {
 		const mockProject: DevServerProject = {
 			key: 'test-project',

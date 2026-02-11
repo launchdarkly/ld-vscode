@@ -256,9 +256,11 @@ async function handleDevServerConnectionFailure(
 			break;
 		case 'Dismiss':
 		default:
-			// Keep the connection state but don't show error again
-			// The status bar will still show connected state
-			console.log('User dismissed dev-server reconnection prompt');
+			// Disable dev-server mode so the UI doesn't show a false "connected" state
+			config.getConfig().setDevServerEnabled(false);
+			config.getDevServerProvider()?.clearCache();
+			updateDevServerStatusBar(config);
+			console.log('User dismissed dev-server reconnection prompt — dev-server disabled');
 			break;
 	}
 }

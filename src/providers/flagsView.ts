@@ -51,6 +51,19 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 				}
 			}
 		});
+
+		// Listen for dev-server data changes and refresh the tree
+		this.subscribeToDevServerRefresh();
+	}
+
+	private subscribeToDevServerRefresh(): void {
+		const devServerProvider = this.ldConfig.getDevServerProvider();
+		if (devServerProvider?.onDidRefresh) {
+			devServerProvider.onDidRefresh.event(async () => {
+				logDebugMessage('Dev-server data refreshed, reloading flags view');
+				await this.debouncedReload();
+			});
+		}
 	}
 
 	refresh(): void {
@@ -177,12 +190,6 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 		this.flagNodes = [];
 
 		try {
-			// Refresh dev-server provider cache if connected
-			const devServerProvider = this.ldConfig.getDevServerProvider();
-			if (this.ldConfig.getConfig().isDevServerEnabled() && devServerProvider) {
-				await devServerProvider.refresh();
-			}
-
 			const nodes: FlagParentNode[] = [];
 			if (this.ldConfig.getFlagStore()) {
 				const flags = await this.ldConfig.getFlagStore()?.allFlagsMetadata();
@@ -481,18 +488,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 		}
 
 		// Build tooltip with dev-server info if connected
-		const baseTooltip = generateHoverString(flag, envConfig, this.ldConfig);
-		let tooltip: string | vscode.MarkdownString = baseTooltip;
-		if (this.ldConfig.getConfig().isDevServerEnabled() && devServerValue !== undefined) {
-			const overrideNote = isOverridden ? ' **(overridden)**' : '';
-			const devServerInfo = `\n\n---\n**Dev Server Value:** \`${JSON.stringify(devServerValue)}\`${overrideNote}`;
-			if (typeof baseTooltip === 'string') {
-				tooltip = baseTooltip + devServerInfo;
-			} else {
-				baseTooltip.appendMarkdown(devServerInfo);
-				tooltip = baseTooltip;
-			}
-		}
+		const devServerHoverInfo = (this.ldConfig.getConfig().isDevServerEnabled() && devServerValue !== undefined)
+			? { value: devServerValue, isOverridden }
+			: undefined;
+		const tooltip = generateHoverString(flag, envConfig, this.ldConfig, devServerHoverInfo);
 
 		// Set contextValue based on override status
 		const contextValue = this.ldConfig.getConfig().isDevServerEnabled() && isOverridden 
