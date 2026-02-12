@@ -75,13 +75,12 @@ export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
 
 		// Add dev-server commands if connected
 		if (isDevServerConnected) {
-			userCommands.push(
-				{ label: 'Set Dev Server Override', detail: 'Set or update an override value for this flag in the dev-server' }
-			);
+			userCommands.push({
+				label: 'Set Dev Server Override',
+				detail: 'Set or update an override value for this flag in the dev-server',
+			});
 			if (isOverridden) {
-				userCommands.push(
-					{ label: 'Remove Dev Server Override', detail: 'Remove the override for this flag' }
-				);
+				userCommands.push({ label: 'Remove Dev Server Override', detail: 'Remove the override for this flag' });
 			}
 		}
 
@@ -123,7 +122,7 @@ export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
 			case 'Remove Dev Server Override':
 				await removeDevServerOverride(config, flagWindow.value);
 				break;
-			}
+		}
 
 		return;
 	});

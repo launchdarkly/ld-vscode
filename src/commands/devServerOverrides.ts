@@ -1,6 +1,6 @@
-import { ILDExtensionConfiguration } from "../models";
-import { commands, window } from "vscode";
-import { showSmartOverrideInput } from "../utils/smartOverrideInput";
+import { ILDExtensionConfiguration } from '../models';
+import { commands, window } from 'vscode';
+import { showSmartOverrideInput } from '../utils/smartOverrideInput';
 
 export async function setDevServerOverride(config: ILDExtensionConfiguration, flagKey: string): Promise<void> {
 	const devServerProvider = config.getDevServerProvider();
@@ -17,7 +17,12 @@ export async function setDevServerOverride(config: ILDExtensionConfiguration, fl
 	}
 
 	// Always show current value (override if it exists, otherwise base value)
-	const currentValue = (flagInfo.override?.value ?? flagInfo.flag.value) as string | number | boolean | object | undefined;
+	const currentValue = (flagInfo.override?.value ?? flagInfo.flag.value) as
+		| string
+		| number
+		| boolean
+		| object
+		| undefined;
 	const isEditing = flagInfo.isOverridden;
 
 	// Show smart input based on flag type
@@ -29,11 +34,9 @@ export async function setDevServerOverride(config: ILDExtensionConfiguration, fl
 
 	try {
 		const success = await devServerProvider.setOverride(flagKey, value);
-		
+
 		if (success) {
-			window.showInformationMessage(
-				`${isEditing ? 'Updated' : 'Set'} dev-server override for flag "${flagKey}"`
-			);
+			window.showInformationMessage(`${isEditing ? 'Updated' : 'Set'} dev-server override for flag "${flagKey}"`);
 			await commands.executeCommand('launchdarkly.refreshEntry');
 		} else {
 			window.showErrorMessage(`Failed to ${isEditing ? 'update' : 'set'} override`);
@@ -62,7 +65,7 @@ export async function removeDevServerOverride(config: ILDExtensionConfiguration,
 
 	try {
 		const success = await devServerProvider.removeOverride(flagKey);
-		
+
 		if (success) {
 			window.showInformationMessage(`Removed dev-server override for flag "${flagKey}"`);
 			await commands.executeCommand('launchdarkly.refreshEntry');

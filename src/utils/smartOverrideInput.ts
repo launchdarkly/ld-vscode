@@ -11,7 +11,7 @@ interface OverrideQuickPickItem extends QuickPickItem {
 export async function showSmartOverrideInput(
 	flag: EnhancedFlag,
 	currentValue?: string | number | boolean | object,
-	isEdit: boolean = false
+	isEdit: boolean = false,
 ): Promise<unknown | undefined> {
 	const variations = flag.variations;
 
@@ -32,10 +32,7 @@ export async function showSmartOverrideInput(
 /**
  * Show a variation picker for any flag type
  */
-async function showVariationPicker(
-	variations: FlagVariation[],
-	currentValue?: unknown
-): Promise<unknown | undefined> {
+async function showVariationPicker(variations: FlagVariation[], currentValue?: unknown): Promise<unknown | undefined> {
 	const items: OverrideQuickPickItem[] = variations.map((variation) => {
 		// Deep equality check for current value
 		let isCurrentValue = false;
@@ -47,11 +44,10 @@ async function showVariationPicker(
 				isCurrentValue = variation.value === currentValue;
 			}
 		}
-		
-		const valueDisplay = typeof variation.value === 'object' 
-			? JSON.stringify(variation.value)
-			: String(variation.value);
-		
+
+		const valueDisplay =
+			typeof variation.value === 'object' ? JSON.stringify(variation.value) : String(variation.value);
+
 		return {
 			label: variation.name || valueDisplay,
 			description: isCurrentValue ? '(current)' : variation.description || valueDisplay,
@@ -61,9 +57,8 @@ async function showVariationPicker(
 	});
 
 	// Only add custom value option for non-boolean flags
-	const isBooleanFlag = variations.length === 2 && 
-		variations.every(v => typeof v.value === 'boolean');
-	
+	const isBooleanFlag = variations.length === 2 && variations.every((v) => typeof v.value === 'boolean');
+
 	if (!isBooleanFlag) {
 		items.push({
 			label: '$(edit) Enter custom value...',
@@ -74,9 +69,7 @@ async function showVariationPicker(
 
 	const selected = await window.showQuickPick(items, {
 		title: 'Select override value',
-		placeHolder: isBooleanFlag 
-			? 'Choose true or false'
-			: 'Choose from available variations or enter custom value',
+		placeHolder: isBooleanFlag ? 'Choose true or false' : 'Choose from available variations or enter custom value',
 	});
 
 	if (!selected) {

@@ -509,15 +509,15 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 		}
 
 		// Build tooltip with dev-server info if connected
-		const devServerHoverInfo = (this.ldConfig.getConfig().isDevServerEnabled() && devServerValue !== undefined)
-			? { value: devServerValue, isOverridden }
-			: undefined;
+		const devServerHoverInfo =
+			this.ldConfig.getConfig().isDevServerEnabled() && devServerValue !== undefined
+				? { value: devServerValue, isOverridden }
+				: undefined;
 		const tooltip = generateHoverString(flag, envConfig, this.ldConfig, devServerHoverInfo);
 
 		// Set contextValue based on override status
-		const contextValue = this.ldConfig.getConfig().isDevServerEnabled() && isOverridden 
-			? 'flagParentItemOverridden' 
-			: 'flagParentItem';
+		const contextValue =
+			this.ldConfig.getConfig().isDevServerEnabled() && isOverridden ? 'flagParentItemOverridden' : 'flagParentItem';
 
 		const item = new FlagParentNode(
 			this.ldConfig.getCtx(),
@@ -572,7 +572,12 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 		}
 
 		// Always show current value (override if it exists, otherwise base value)
-		const currentValue = (flagInfo.override?.value ?? flagInfo.flag.value) as string | number | boolean | object | undefined;
+		const currentValue = (flagInfo.override?.value ?? flagInfo.flag.value) as
+			| string
+			| number
+			| boolean
+			| object
+			| undefined;
 		const isEditing = flagInfo.isOverridden;
 
 		// Show smart input based on flag type
@@ -584,10 +589,10 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 
 		try {
 			const success = await devServerProvider.setOverride(node.flagKey, value);
-			
+
 			if (success) {
 				vscode.window.showInformationMessage(
-					`${isEditing ? 'Updated' : 'Set'} dev-server override for flag "${node.flagKey}"`
+					`${isEditing ? 'Updated' : 'Set'} dev-server override for flag "${node.flagKey}"`,
 				);
 				await this.reload();
 			} else {
@@ -625,7 +630,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 
 		try {
 			const success = await devServerProvider.removeOverride(node.flagKey);
-			
+
 			if (success) {
 				vscode.window.showInformationMessage(`Removed dev-server override for flag "${node.flagKey}"`);
 				await this.reload();

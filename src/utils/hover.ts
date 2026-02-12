@@ -27,18 +27,12 @@ export function generateHoverString(
 	// Determine toggle state: use dev-server value when available
 	let toggleState = c.on;
 	if (devServerInfo !== undefined) {
-		toggleState = typeof devServerInfo.value === 'boolean'
-			? devServerInfo.value
-			: Boolean(devServerInfo.value);
+		toggleState = typeof devServerInfo.value === 'boolean' ? devServerInfo.value : Boolean(devServerInfo.value);
 	}
 
 	const session = config.getSession();
-	const flagUri = session
-		? url.resolve(session.fullUri, flag.environments[env]._site.href)
-		: '';
-	const flagLink = flagUri
-		? `**[${flag.key}](${flagUri} "Open in LaunchDarkly")**`
-		: `**${flag.key}**`;
+	const flagUri = session ? url.resolve(session.fullUri, flag.environments[env]._site.href) : '';
+	const flagLink = flagUri ? `**[${flag.key}](${flagUri} "Open in LaunchDarkly")**` : `**${flag.key}**`;
 	const hoverString = new MarkdownString(
 		`![Flag status](${getFlagStatusUri(config.getCtx(), toggleState)}) ${config.getConfig().project} / ${env} / ${flagLink} \n\n`,
 		true,
@@ -117,9 +111,8 @@ export function generateHoverString(
 	// Add dev-server section if connected
 	if (devServerInfo !== undefined) {
 		hoverString.appendText('\n');
-		const valueStr = typeof devServerInfo.value === 'object'
-			? JSON.stringify(devServerInfo.value)
-			: String(devServerInfo.value);
+		const valueStr =
+			typeof devServerInfo.value === 'object' ? JSON.stringify(devServerInfo.value) : String(devServerInfo.value);
 		const overrideNote = devServerInfo.isOverridden ? ' **(overridden)**' : '';
 		hoverString.appendMarkdown(`\n\n---\n**Dev Server Value:** \`${valueStr}\`${overrideNote}`);
 	}

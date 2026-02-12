@@ -5,10 +5,10 @@ export interface FlagVariation {
 	id: string;
 	description: string;
 	name: string;
-	value:  string | number | boolean | object;
+	value: string | number | boolean | object;
 }
 
-export interface EnhancedFlag extends DevServerFlag { 
+export interface EnhancedFlag extends DevServerFlag {
 	variations: FlagVariation[];
 }
 
@@ -91,7 +91,7 @@ export class DevServerApi {
 		}
 
 		const flags: DevServerFlag[] = Object.values(project.flagsState);
-		return flags.map(flag => ({
+		return flags.map((flag) => ({
 			...flag,
 			variations: project.availableVariations[flag.key] ?? [],
 		}));
@@ -110,7 +110,7 @@ export class DevServerApi {
 	 */
 	async getFlagValue(flagKey: string): Promise<EnhancedFlag | null> {
 		const flags = await this.getAllFlags();
-		return flags?.find(flag => flag.key === flagKey) ?? null;
+		return flags?.find((flag) => flag.key === flagKey) ?? null;
 	}
 
 	/**
@@ -138,10 +138,9 @@ export class DevServerApi {
 	 */
 	async removeOverride(flagKey: string): Promise<boolean> {
 		try {
-			await axios.delete(
-				`${this.getBaseUrl()}/dev/projects/${this.getProjectKey()}/overrides/${flagKey}`,
-				{ timeout: 5000 },
-			);
+			await axios.delete(`${this.getBaseUrl()}/dev/projects/${this.getProjectKey()}/overrides/${flagKey}`, {
+				timeout: 5000,
+			});
 			return true;
 		} catch (err) {
 			console.error(`Failed to remove dev-server override: ${err}`);

@@ -228,10 +228,7 @@ async function attemptDevServerReconnect(config: LDExtensionConfiguration): Prom
 /**
  * Handle dev-server connection failure
  */
-async function handleDevServerConnectionFailure(
-	config: LDExtensionConfiguration,
-	devServerUri: string,
-): Promise<void> {
+async function handleDevServerConnectionFailure(config: LDExtensionConfiguration, devServerUri: string): Promise<void> {
 	const selection = await window.showWarningMessage(
 		`Could not connect to dev-server at ${devServerUri}. Is the dev-server running?`,
 		'Retry',

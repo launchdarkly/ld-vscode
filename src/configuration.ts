@@ -49,7 +49,13 @@ export class Configuration {
 	async reload(): Promise<void> {
 		const config = workspace.getConfiguration('launchdarkly');
 		for (const option in this) {
-			if (option === 'ctx' || option === 'project' || option === 'env' || option === 'accessToken' || option === 'devServerEnabled') {
+			if (
+				option === 'ctx' ||
+				option === 'project' ||
+				option === 'env' ||
+				option === 'accessToken' ||
+				option === 'devServerEnabled'
+			) {
 				continue;
 			}
 			this[option] = config.get(option);

@@ -244,7 +244,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 					// Check if dev-server mode is enabled
 					const isDevServerMode = this.config.getConfig().isDevServerEnabled();
 					const devServerProvider = this.config.getDevServerProvider();
-					
+
 					// Get dev-server specific info if connected
 					let devServerValue: unknown | undefined;
 					let isOverridden = false;
@@ -260,17 +260,14 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 					if (flagEnv?.prerequisites.length > 0) {
 						preReq = `\u2022 Prerequisites configured`;
 					}
-					
+
 					// Construct the display value
 					let displayValue: string;
 					if (isDevServerMode && devServerValue !== undefined) {
 						// Show dev-server value
-						const valueStr = typeof devServerValue === 'object' 
-							? JSON.stringify(devServerValue) 
-							: String(devServerValue);
-						displayValue = isOverridden 
-							? `${valueStr} (dev-server override)` 
-							: `${valueStr} (dev-server)`;
+						const valueStr =
+							typeof devServerValue === 'object' ? JSON.stringify(devServerValue) : String(devServerValue);
+						displayValue = isOverridden ? `${valueStr} (dev-server override)` : `${valueStr} (dev-server)`;
 					} else if (flagData) {
 						// Show upstream LaunchDarkly values
 						const variations = this.getActiveVariations(flagEnv) as Array<number>;

@@ -90,7 +90,9 @@ export class DevServerProvider {
 		const flagParts: string[] = [];
 		for (const [key, flag] of Object.entries(project.flagsState)) {
 			const override = project.overrides?.[key];
-			flagParts.push(`${key}:${JSON.stringify(flag.value)}:v${flag.version}:${override ? JSON.stringify(override.value) : '_'}`);
+			flagParts.push(
+				`${key}:${JSON.stringify(flag.value)}:v${flag.version}:${override ? JSON.stringify(override.value) : '_'}`,
+			);
 		}
 		return flagParts.sort().join('|');
 	}
