@@ -271,7 +271,7 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 						displayValue = isOverridden 
 							? `${valueStr} (dev-server override)` 
 							: `${valueStr} (dev-server)`;
-					} else {
+					} else if (flagData) {
 						// Show upstream LaunchDarkly values
 						const variations = this.getActiveVariations(flagEnv) as Array<number>;
 						let flagVariations;
@@ -296,10 +296,12 @@ export class FlagCodeLensProvider implements vscode.CodeLensProvider {
 							offVariation = '**Code Fallthrough(No off variation set)**';
 						}
 						displayValue = flagEnv.on ? flagVariations : offVariation;
+					} else {
+						displayValue = 'unknown';
 					}
 
-					const clientSDK = flagData.clientSideAvailability.usingEnvironmentId ? '$(browser)' : '';
-					const mobileSDK = flagData.clientSideAvailability.usingMobileKey ? '$(device-mobile)' : '';
+					const clientSDK = flagData?.clientSideAvailability?.usingEnvironmentId ? '$(browser)' : '';
+					const mobileSDK = flagData?.clientSideAvailability?.usingMobileKey ? '$(device-mobile)' : '';
 					const clientAvailability = [clientSDK, mobileSDK].filter(Boolean).join(' ') || '';
 
 					const newLens = new CodeLens(codeLens.range);

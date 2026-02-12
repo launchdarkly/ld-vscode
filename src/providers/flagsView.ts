@@ -35,6 +35,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 	private updatingTree: vscode.EventEmitter<'started' | 'error' | 'complete'> = new vscode.EventEmitter();
 	private lastTreeEvent: string;
 	private isLoading: boolean = false;
+	private devServerRefreshSubscription: vscode.Disposable | undefined;
 
 	constructor(ldConfig: ILDExtensionConfiguration) {
 		this.ldConfig = ldConfig;
@@ -57,9 +58,13 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 	}
 
 	private subscribeToDevServerRefresh(): void {
+		// Dispose any previous subscription to prevent listener accumulation
+		this.devServerRefreshSubscription?.dispose();
+		this.devServerRefreshSubscription = undefined;
+
 		const devServerProvider = this.ldConfig.getDevServerProvider();
 		if (devServerProvider?.onDidRefresh) {
-			devServerProvider.onDidRefresh.event(async () => {
+			this.devServerRefreshSubscription = devServerProvider.onDidRefresh.event(async () => {
 				logDebugMessage('Dev-server data refreshed, reloading flags view');
 				await this.debouncedReload();
 			});
@@ -322,6 +327,8 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 
 	async stop(): Promise<void> {
 		this.flagNodes = [];
+		this.devServerRefreshSubscription?.dispose();
+		this.devServerRefreshSubscription = undefined;
 	}
 
 	private readonly debouncedReload = debounce(
@@ -408,9 +415,17 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 						.getFlagStore()
 						?.getFeatureFlag(key)
 						.then((updatedFlag) => {
+							if (!updatedFlag || !this.flagNodes) {
+								return;
+							}
 							const updatedIdx = this.flagNodes.findIndex((v) => v.flagKey === key);
+							if (updatedIdx < 0) {
+								return;
+							}
 							this.flagToParent(updatedFlag.flag, updatedFlag.config).then((newFlagValue) => {
-								this.flagNodes[updatedIdx] = newFlagValue;
+								if (this.flagNodes && updatedIdx < this.flagNodes.length) {
+									this.flagNodes[updatedIdx] = newFlagValue;
+								}
 							});
 						});
 				});
