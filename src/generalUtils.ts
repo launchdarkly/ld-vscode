@@ -342,6 +342,11 @@ export async function cleanupComponents(config: ILDExtensionConfiguration) {
 		config.setStatusBar(null);
 	}
 
+	// Stop the flags view to dispose dev-server subscriptions
+	if (config.getFlagView()) {
+		config.getFlagView().stop();
+	}
+
 	if (config.getFlagStore()) {
 		config.getFlagStore().stop();
 		config.setFlagStore(null);
