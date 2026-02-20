@@ -524,7 +524,7 @@
 		"ts-mockito": "2.6.1",
 		"typescript": "^5.3.3",
 		"vscode-test": "^1.6.1",
-		"webpack": "^5.35.1",
+		"webpack": "^5.104.1",
 		"webpack-cli": "^4.6.0"
 	},
 	"dependencies": {
@@ -539,7 +539,7 @@
 		"form-data": "^4.0.0",
 		"gunzip-maybe": "^1.4.2",
 		"launchdarkly-api-typescript": "6.0.0",
-		"lodash": "^4.17.21",
+		"lodash": "^4.17.23",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
 		"node-fetch": "^3.3.2",
