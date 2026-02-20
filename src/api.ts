@@ -1,7 +1,6 @@
 import * as url from 'url';
 import { authentication, commands, window } from 'vscode';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const axios = require('axios').default;
+import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import retry from 'axios-retry-after';
 
@@ -22,7 +21,7 @@ import { LDExtensionConfiguration } from './ldExtensionConfiguration';
 import { debuglog } from 'util';
 import { CMD_LD_CONFIG } from './utils/commands';
 import { legacyAuth } from './utils/legacyAuth';
-import { CONST_CONFIG_LD } from './utils/constants';
+import { CONST_CONFIG_LD, CONST_LD_PREFIX } from './utils/constants';
 
 interface CreateOptionsParams {
 	method?: string;
@@ -40,11 +39,11 @@ axios.interceptors.response.use(
 	},
 	async function (error) {
 		const originalRequest = error.config;
-		if (error.response.status === 404) {
+		if (error.response?.status === 404) {
 			debuglog(error);
 			debuglog(`404 for URL: ${originalRequest.url}`);
 		}
-		if (error.response.status === 401 && !originalRequest._retry) {
+		if (error.response?.status === 401 && !originalRequest._retry) {
 			const config = LDExtensionConfiguration.getInstance();
 			originalRequest._retry = true;
 			const session = (await authentication.getSession('launchdarkly', ['writer'], {
@@ -64,15 +63,15 @@ axios.interceptors.response.use(
 		isRetryable(error) {
 			return (
 				error.response &&
-				error.response.status === 429 &&
-				error.response.headers['X-Ratelimit-Reset'] &&
-				error.response.headers['X-Ratelimit-Reset'] <= 60
+				error.response?.status === 429 &&
+				error.response?.headers['X-Ratelimit-Reset'] &&
+				error.response?.headers['X-Ratelimit-Reset'] <= 60
 			);
 		},
 
 		// Customize the wait behavior
 		wait(error) {
-			return new Promise((resolve) => setTimeout(resolve, error.response.headers['X-Ratelimit-Reset']));
+			return new Promise((resolve) => setTimeout(resolve, error.response?.headers['X-Ratelimit-Reset']));
 		},
 
 		// Customize the retry request itself
@@ -111,7 +110,7 @@ export class LaunchDarklyAPI {
 
 		try {
 			//data = await this.executeWithRetry(() => axios.get(options.url, { ...options }), 2);
-			data = await axios.get(options.url, { ...options });
+			data = await axios.get(options.url, options);
 		} catch (err) {
 			console.log(err);
 			return [];
@@ -143,7 +142,7 @@ export class LaunchDarklyAPI {
 			const initialUrl = `projects/${projectKey}?expand=environments`;
 			const requestUrl = url || initialUrl;
 			const options = this.createOptions(requestUrl, { method: 'GET' });
-			const data = await axios.get(options.url, { ...options });
+			const data = await axios.get(options.url, options);
 			const project = data.data;
 
 			if (project.environments._links && project.environments._links.next) {
@@ -197,7 +196,7 @@ export class LaunchDarklyAPI {
 			console.log(err);
 			window
 				.showErrorMessage(
-					`${CONST_CONFIG_LD} Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`,
+					`${CONST_LD_PREFIX} Error getting Project: ${projectKey} Environment: ${envKey}\n${err}`,
 					CONST_CONFIG_LD,
 				)
 				.then((selection) => {
@@ -288,29 +287,24 @@ export class LaunchDarklyAPI {
 		}
 		const envParam = envKey ? 'env=' + envKey : '';
 		const limit = 100;
-		const initialUrl = `flags/${projectKey}/?${envParam}&summary=true&sort=name&limit=${limit}`;
+		const initialUrl = `flags/${projectKey}?${envParam}&summary=true&sort=name&limit=${limit}`;
 		const requestUrl = url || initialUrl;
 		const options = this.createOptions(requestUrl, { method: 'GET', params: envParam });
 		let data;
 
 		try {
-			//data = await this.executeWithRetry(() => axios.get(options.url, { ...options }), 2);
-			data = await axios.get(options.url, { ...options });
+			data = await axios.get(options.url, { headers: { ...options.headers } });
 		} catch (err) {
-			console.log(err);
+			console.log('err in getFeatureFlags---->>>', err);
 			return [];
 		}
 		const flags = data.data.items;
-		if (data.data._links && data.data._links.next) {
-			// If there is a 'next' link, fetch the next page
+		if (data?.data?._links && data?.data?._links.next) {
 			const match = '/api/v2/';
-			const nextLink = data.data._links.next.href.replace(new RegExp(match), '');
-			//await sleep(1500);
-			//const moreFlags = await this.executeWithRetry(async () => await this.getFeatureFlags(projectKey, envKey, nextLink), 2);
+			const nextLink = data?.data?._links.next.href.replace(new RegExp(match), '');
 			const moreFlags = await this.getFeatureFlags(projectKey, envKey, nextLink);
 			return flags.concat(moreFlags);
 		} else {
-			// If there is no 'next' link, all items have been fetched
 			return flags;
 		}
 	}
@@ -322,7 +316,7 @@ export class LaunchDarklyAPI {
 				body: value,
 			});
 			const data = await axios.patch(options.url, value, options);
-			return new FeatureFlag(data);
+			return new FeatureFlag(data.data);
 		} catch (err) {
 			return Promise.reject(err);
 		}

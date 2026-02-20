@@ -108,8 +108,9 @@ export async function flagEval(config: LDExtensionConfiguration, key) {
 						`Flag Details:\n${JSON.stringify(flagValue.value)}\n
 						Reason:\n${JSON.stringify(flagValue.reason.kind)}\n
 						Rule:\n${JSON.stringify(rule.description ? rule.description : rule._id)}
-						[Open in Browser](${config.getSession()?.fullUri}/${config.getConfig()?.project}/${config.getConfig()
-							?.env}/features/${key}/targeting#${rule._id})`,
+						[Open in Browser](${config.getSession()?.fullUri}/${config.getConfig()?.project}/${
+							config.getConfig()?.env
+						}/features/${key}/targeting#${rule._id})`,
 						{ modal: true },
 						{ title: 'Open in Browser', command: 'launchdarkly.openRule', arguments: [key, rule._id] },
 					);
