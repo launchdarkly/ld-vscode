@@ -4,8 +4,9 @@ import { LaunchDarklyAPI } from '../api';
 import { Configuration } from '../configuration';
 import * as path from 'path';
 import * as url from 'url';
-import { MarkdownString } from 'vscode';
+import { MarkdownString, Uri } from 'vscode';
 import checkExistingCommand from '../utils/common';
+import { CMD_LD_METRIC_SEARCH } from '../utils/commands';
 
 const COLLAPSED = vscode.TreeItemCollapsibleState.Collapsed;
 const NON_COLLAPSED = vscode.TreeItemCollapsibleState.None;
@@ -66,7 +67,7 @@ export class LaunchDarklyMetricsTreeViewProvider implements vscode.TreeDataProvi
 	}
 
 	async registerCommands(): Promise<void> {
-		const metricSearchCmd = 'launchdarkly.metricMultipleSearch';
+		const metricSearchCmd = CMD_LD_METRIC_SEARCH;
 		if (await checkExistingCommand(metricSearchCmd)) {
 			return;
 		}
@@ -180,12 +181,11 @@ export class MetricValue extends vscode.TreeItem {
 		}
 	}
 
-	private setIcon(ctx: vscode.ExtensionContext, fileName: string): vscode.ThemeIcon {
+	private setIcon(ctx: vscode.ExtensionContext, fileName: string): { light: string | Uri; dark: string | Uri } {
 		if (fileName === '') {
 			return;
 		}
 		return (this.iconPath = {
-			id: null,
 			light: ctx.asAbsolutePath(path.join('resources', 'light', fileName + '.svg')),
 			dark: ctx.asAbsolutePath(path.join('resources', 'dark', fileName + '.svg')),
 		});

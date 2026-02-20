@@ -1,0 +1,42 @@
+import { LDExtensionConfiguration } from './src/configuration.ts'; // Adjust the import path as needed
+import { LaunchDarklyAPI, FlagStore, FlagAliases, LaunchDarklyAuthenticationSession } from './src/models'; // Adjust the import path as needed
+
+export class MockLDExtensionConfiguration extends LDExtensionConfiguration {
+    private mockApi: LaunchDarklyAPI;
+    private mockFlagStore: FlagStore;
+    private mockAliases: FlagAliases;
+    private mockSession: LaunchDarklyAuthenticationSession;
+
+    constructor() {
+        super();
+        // Initialize your mock objects here
+    }
+
+    public getApi(): LaunchDarklyAPI | null {
+        return this.mockApi;
+    }
+
+    public setFlagStore(flagStore: FlagStore): void {
+        this.mockFlagStore = flagStore;
+    }
+
+    public getFlagStore(): FlagStore | null {
+        return this.mockFlagStore;
+    }
+
+    public setAliases(aliases: FlagAliases): void {
+        this.mockAliases = aliases;
+    }
+
+    public getAliases(): FlagAliases | null {
+        return this.mockAliases;
+    }
+
+    public setSession(session: LaunchDarklyAuthenticationSession): void {
+        this.mockSession = session;
+    }
+
+    public getSession(): LaunchDarklyAuthenticationSession | null {
+        return this.mockSession;
+    }
+}

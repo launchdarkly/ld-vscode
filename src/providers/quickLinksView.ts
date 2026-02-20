@@ -11,22 +11,23 @@ import {
 	window,
 	commands,
 } from 'vscode';
-import { Configuration } from '../configuration';
-import { FlagStore } from '../flagStore';
 import checkExistingCommand from '../utils/common';
+import { CMD_LD_CREATE_FLAG, CMD_LD_OPEN_BROWSER } from '../utils/commands';
+import { registerCommand } from '../utils/registerCommand';
+import { ILDExtensionConfiguration } from '../models';
 
 const NON_COLLAPSED = TreeItemCollapsibleState.None;
 
 export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
-	private config: Configuration;
+	private config: ILDExtensionConfiguration;
 	private _onDidChangeTreeData: EventEmitter<TreeItem | null | void> = new EventEmitter<TreeItem | null | void>();
 	readonly onDidChangeTreeData: Event<TreeItem | null | void> = this._onDidChangeTreeData.event;
-	private flagStore?: FlagStore;
 
-	constructor(config: Configuration, flagStore?: FlagStore) {
+	constructor(config: ILDExtensionConfiguration) {
 		this.config = config;
-		this.flagStore = flagStore;
-		this.start();
+		if (this.config.getSession() !== undefined) {
+			this.start();
+		}
 	}
 
 	refresh(): void {
@@ -38,10 +39,10 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 		if (await checkExistingCommand(compareFlagsCmd)) {
 			return;
 		}
-		commands.registerCommand(compareFlagsCmd, async () => {
+		registerCommand(compareFlagsCmd, async () => {
 			let values: QuickPickItem[] = [{ label: 'No flags found', description: '' }];
-			if (typeof this.flagStore !== 'undefined') {
-				const flags = await this.flagStore.allFlagsMetadata();
+			if (this.config.getFlagStore() !== null) {
+				const flags = await this.config.getFlagStore().allFlagsMetadata();
 				const flagKeys = Object.keys(flags);
 				if (flagKeys?.length > 0) {
 					const options = [];
@@ -56,15 +57,17 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 			quickPick.title = 'Select Flag for Overview';
 			quickPick.placeholder = 'placeholder';
 			quickPick.onDidAccept(() => {
-				const linkUrl = `${this.config.baseUri}/${this.config.project}/${this.config.env}/features/${quickPick.selectedItems[0].label}/compare-flag`;
-				commands.executeCommand('launchdarkly.openBrowser', linkUrl);
+				const linkUrl = `${this.config.getSession().fullUri}/${this.config.getConfig().project}/${
+					this.config.getConfig().env
+				}/features/${quickPick.selectedItems[0].label}/compare-flag`;
+				commands.executeCommand(CMD_LD_OPEN_BROWSER, linkUrl);
 				quickPick.dispose();
 			});
 			quickPick.show();
 		});
 	}
 	async reload(e?: ConfigurationChangeEvent | undefined): Promise<void> {
-		if (e && this.config.streamingConfigReloadCheck(e)) {
+		if (e && this.config.getConfig().streamingConfigReloadCheck(e)) {
 			return;
 		}
 		await this.debouncedReload();
@@ -92,19 +95,26 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	async getChildren(element?: LinkNode): Promise<LinkNode[]> {
-		const baseUrl = `${this.config.baseUri}/${this.config.project}/${this.config.env}`;
+		const session = this.config.getSession();
+		if (!session || !session.fullUri) {
+			return [];
+		}
+		const baseUrl = `${this.config.getSession().fullUri}/${this.config.getConfig().project}/${
+			this.config.getConfig().env
+		}`;
+
 		const items = [];
 		items.push(
 			new LinkNode(`Create Boolean Feature Flag`, NON_COLLAPSED, '', {
-				title: 'Create Boolean Feature Flag',
-				command: 'launchdarkly.createFlag',
+				title: 'Create Boolean Flag',
+				command: CMD_LD_CREATE_FLAG,
 			}),
 		);
-		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/features/new`)));
+		items.push(new LinkNode(`Create Non-boolean Feature Flag`, NON_COLLAPSED, addUtm(`${baseUrl}/features/flags/new`)));
 		items.push(new LinkNode(`Feature Flags`, NON_COLLAPSED, addUtm(`${baseUrl}/features`)));
 		items.push(new LinkNode(`Segments`, NON_COLLAPSED, addUtm(`${baseUrl}/segments`)));
-		items.push(new LinkNode(`Users`, NON_COLLAPSED, addUtm(`${baseUrl}/users`)));
-		items.push(new LinkNode(`Debugger`, NON_COLLAPSED, addUtm(`${baseUrl}/debugger`)));
+		items.push(new LinkNode(`Contexts`, NON_COLLAPSED, addUtm(`${baseUrl}/contexts`)));
+		items.push(new LinkNode(`Live Events`, NON_COLLAPSED, addUtm(`${baseUrl}/live`)));
 		items.push(new LinkNode(`Experiments`, NON_COLLAPSED, addUtm(`${baseUrl}/experiments`)));
 		items.push(new LinkNode(`Audit Log`, NON_COLLAPSED, addUtm(`${baseUrl}/audit`)));
 		items.push(new LinkNode(`Flag Comparison`, NON_COLLAPSED, addUtm(`${baseUrl}/features/compare`)));
@@ -114,7 +124,9 @@ export class QuickLinksListProvider implements TreeDataProvider<TreeItem> {
 				command: 'launchdarkly.openCompareFlag',
 			}),
 		);
-		items.push(new LinkNode(`Documentation`, NON_COLLAPSED, addUtm(`https://docs.launchdarkly.com`)));
+		items.push(
+			new LinkNode(`Documentation`, NON_COLLAPSED, addUtm(`https://launchdarkly.com/docs/integrations/vscode`)),
+		);
 
 		return Promise.resolve(items);
 	}
@@ -139,8 +151,8 @@ export class LinkNode extends TreeItem {
 			? command
 			: {
 					title: 'Open In Browser',
-					command: 'launchdarkly.openBrowser',
+					command: CMD_LD_OPEN_BROWSER,
 					arguments: [this.uri],
-			  };
+				};
 	}
 }
