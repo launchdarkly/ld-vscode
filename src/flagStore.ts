@@ -1,46 +1,54 @@
 import { ConfigurationChangeEvent, commands, EventEmitter, window } from 'vscode';
-import InMemoryFeatureStore = require('launchdarkly-node-server-sdk/feature_store');
-import LaunchDarkly = require('launchdarkly-node-server-sdk');
-
+import InMemoryFeatureStore from '@launchdarkly/js-server-sdk-common/dist/store/InMemoryFeatureStore';
+import LaunchDarkly, { LDFeatureStoreKindData, basicLogger, init } from '@launchdarkly/node-server-sdk';
+import { LDClient } from '@launchdarkly/node-server-sdk/dist/src/api';
+import { LDOptions } from '@launchdarkly/node-server-sdk/dist/src/index';
 import { debounce, Dictionary, keyBy } from 'lodash';
 
-import { FeatureFlag, FlagConfiguration, FlagWithConfiguration } from './models';
-import { Configuration } from './configuration';
-import { LaunchDarklyAPI } from './api';
+import {
+	FeatureFlag,
+	FlagConfiguration,
+	IFlagStore,
+	FlagWithConfiguration,
+	ILDExtensionConfiguration,
+	InstructionPatch,
+	PatchComment,
+} from './models';
+import { CMD_LD_CONFIG } from './utils/commands';
+import { CONST_CONFIG_LD, CONST_LD_PREFIX } from './utils/constants';
 
 const DATA_KIND = { namespace: 'features' };
 
 type FlagUpdateCallback = (flag: string) => void;
-type LDClientResolve = (LDClient: LaunchDarkly.LDClient) => void;
+type LDClientResolve = (LDClient: LDClient) => void;
 type LDClientReject = () => void;
 
-export class FlagStore {
-	private readonly config: Configuration;
+export class FlagStore implements IFlagStore {
+	private readonly config: ILDExtensionConfiguration;
 	private readonly store: LaunchDarkly.LDFeatureStore;
 	private flagMetadata: Dictionary<FeatureFlag>;
 	public readonly storeUpdates: EventEmitter<boolean | null> = new EventEmitter();
 	// We fire a storeReady event because this will always exist compared to 'ready' listener on LDClient
 	// which may be reinitialized
 	public readonly storeReady: EventEmitter<boolean | null> = new EventEmitter();
-	private readonly api: LaunchDarklyAPI;
 	private resolveLDClient: LDClientResolve;
 	private rejectLDClient: LDClientReject;
-	private ldClient: Promise<LaunchDarkly.LDClient> = new Promise((resolve, reject) => {
+	private ldClient: Promise<LDClient> = new Promise((resolve, reject) => {
 		this.resolveLDClient = resolve;
 		this.rejectLDClient = reject;
 	});
 	private offlineTimer: NodeJS.Timer;
 	private offlineTimerSet = false;
+	public readonly ready: EventEmitter<boolean | null> = new EventEmitter();
 
-	constructor(config: Configuration, api: LaunchDarklyAPI) {
+	constructor(config: ILDExtensionConfiguration) {
 		this.config = config;
-		this.api = api;
-		this.store = InMemoryFeatureStore();
+		this.store = new InMemoryFeatureStore();
 		this.reload();
 	}
 
 	async reload(e?: ConfigurationChangeEvent): Promise<void> {
-		if (e && this.config.streamingConfigReloadCheck(e)) {
+		if (e && this.config.getConfig().streamingConfigReloadCheck(e)) {
 			return;
 		}
 		await this.debouncedReload();
@@ -52,7 +60,7 @@ export class FlagStore {
 				await this.stop();
 				await this.start();
 			} catch (err) {
-				window.showErrorMessage(`[LaunchDarkly] ${err}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} ${err}`);
 			}
 		},
 		200,
@@ -60,12 +68,15 @@ export class FlagStore {
 	);
 
 	async start(): Promise<void> {
-		if (!this.config.streamingConfigStartCheck()) {
+		if (!(await this.config.getConfig().isConfigured())) {
 			return;
 		}
 
 		try {
-			const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+			const flags = await this.config
+				.getApi()
+				.getFeatureFlags(this.config.getConfig().project, this.config.getConfig().env);
+
 			this.flagMetadata = keyBy(flags, 'key');
 		} catch (err) {
 			console.log(`Error getting flags ${err}`);
@@ -75,16 +86,18 @@ export class FlagStore {
 			if (sdkKey === '' || !sdkKey.startsWith('sdk-')) {
 				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
 			}
-			const ldConfig = this.ldConfig();
-			const ldClient = await LaunchDarkly.init(sdkKey, ldConfig).waitForInitialization();
+			const intldConfig = this.ldConfig();
+			const ldClient = (await init(sdkKey, intldConfig).waitForInitialization()) as LDClient; // Typescript was picking up the LDClient from JSCommon
 			this.resolveLDClient(ldClient);
 			this.storeReady.fire(true);
-			if (this.config.refreshRate) {
-				if (this.config.validateRefreshInterval(this.config.refreshRate)) {
-					this.startGlobalFlagUpdateTask(this.config.refreshRate);
+			if (this.config.getConfig().refreshRate) {
+				if (this.config.getConfig().validateRefreshInterval(this.config.getConfig().refreshRate)) {
+					this.startGlobalFlagUpdateTask(this.config.getConfig().refreshRate);
 				} else {
 					window.showErrorMessage(
-						`Invalid Refresh time (in Minutes): '${this.config.refreshRate}'. 0 is off, up to 1440 for one day.`,
+						`Invalid Refresh time (in Minutes): '${
+							this.config.getConfig().refreshRate
+						}'. 0 is off, up to 1440 for one day.`,
 					);
 				}
 			}
@@ -93,14 +106,14 @@ export class FlagStore {
 			this.setLDClientBackgroundCheck();
 		} catch (err) {
 			window
-				.showErrorMessage('[LaunchDarkly] Failed to setup LaunchDarkly client', 'Configure LaunchDarkly Extension')
+				.showErrorMessage(`${CONST_LD_PREFIX} Failed to setup LaunchDarkly client`, CONST_CONFIG_LD)
 				.then((selection) => {
-					if (selection === 'Configure LaunchDarkly Extension')
-						commands.executeCommand('extension.configureLaunchDarkly');
+					if (selection === CONST_CONFIG_LD) commands.executeCommand(CMD_LD_CONFIG);
 				});
 			this.rejectLDClient();
 			console.error(`Failed to setup client: ${err}`);
 		}
+		this.ready.fire(true);
 	}
 
 	private setFlagListeners() {
@@ -112,7 +125,9 @@ export class FlagStore {
 						return;
 					}
 					if (this.flagMetadata[key]?.variations.length !== res.variations.length) {
-						this.flagMetadata[key] = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
+						this.flagMetadata[key] = await this.config
+							.getApi()
+							.getFeatureFlag(this.config.getConfig().project, key, this.config.getConfig().env);
 						this.storeUpdates.fire(true);
 					}
 				});
@@ -133,7 +148,7 @@ export class FlagStore {
 					this.offlineTimerSet = false;
 				}
 				if (typeof this.offlineTimer !== 'undefined') {
-					clearTimeout(this.offlineTimer);
+					clearTimeout(this.offlineTimer as NodeJS.Timeout);
 					delete this.offlineTimer;
 					this.offlineTimerSet = false;
 				}
@@ -159,7 +174,9 @@ export class FlagStore {
 	private readonly debounceUpdate = debounce(
 		async () => {
 			try {
-				const flags = await this.api.getFeatureFlags(this.config.project, this.config.env);
+				const flags = await this.config
+					.getApi()
+					.getFeatureFlags(this.config.getConfig().project, this.config.getConfig().env);
 				this.flagMetadata = keyBy(flags, 'key');
 				this.storeUpdates.fire(true);
 			} catch (err) {
@@ -177,7 +194,7 @@ export class FlagStore {
 					console.log(`${err}`);
 					return;
 				}
-				window.showErrorMessage(`[LaunchDarkly] ${errMsg}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} ${errMsg}`);
 			}
 		},
 		5000,
@@ -186,7 +203,9 @@ export class FlagStore {
 
 	private async getLatestSDKKey(): Promise<string> {
 		try {
-			const env = await this.api.getEnvironment(this.config.project, this.config.env);
+			const env = await this.config
+				.getApi()
+				.getEnvironment(this.config.getConfig().project, this.config.getConfig().env);
 			return env.apiKey;
 		} catch (err) {
 			if (err.statusCode === 404) {
@@ -195,26 +214,35 @@ export class FlagStore {
 						'Your configured LaunchDarkly environment does not exist. Please reconfigure the extension.',
 						'Configure',
 					)
-					.then((item) => item && commands.executeCommand('extension.configureLaunchDarkly'));
+					.then((item) => item && commands.executeCommand(CMD_LD_CONFIG));
 			}
 			throw err;
 		}
 	}
 
-	private ldConfig(): Record<string, number | string | boolean | LaunchDarkly.LDFeatureStore | LaunchDarkly.LDLogger> {
+	private ldConfig(): LDOptions {
 		// Cannot replace in the config, so updating at call site.
-		const streamUri = this.config.baseUri.replace('app', 'stream');
-		return {
+		const streamUri = this.config.getSession().fullUri.replace('app', 'stream');
+		const logger: LaunchDarkly.LDLogger = basicLogger({
+			level: 'error',
+		});
+		const options: LDOptions = {
 			timeout: 5,
-			baseUri: this.config.baseUri,
+			baseUri: this.config.getSession().fullUri,
 			streamUri: streamUri,
 			sendEvents: false,
 			featureStore: this.store,
 			streamInitialReconnectDelay: Math.floor(Math.random() * 5) + 1,
-			logger: LaunchDarkly.basicLogger({ level: 'warn' }),
+			logger: logger,
 		};
+		return options;
 	}
 
+	async variationDetail(flag: string, context: LaunchDarkly.LDContext): Promise<LaunchDarkly.LDEvaluationDetail> {
+		const ldClient = await this.ldClient;
+		const details = await ldClient.variationDetail(flag, context, false);
+		return details;
+	}
 	async updateFlags(): Promise<void> {
 		await this.debounceUpdate();
 	}
@@ -246,6 +274,7 @@ export class FlagStore {
 			const ldClient = await this.ldClient;
 			ldClient.close();
 			delete this.ldClient;
+			this.removeAllListeners();
 		} catch {
 			// ldClient was rejected, nothing to do
 		}
@@ -255,11 +284,10 @@ export class FlagStore {
 		});
 	}
 
-	async getFeatureFlag(key: string): Promise<FlagWithConfiguration | null> {
+	async getFeatureFlag(key: string, fullFlag?: boolean): Promise<FlagWithConfiguration | null> {
 		if (this.flagMetadata === undefined) {
 			await this.debounceUpdate();
 		}
-
 		let flag = this.flagMetadata[key];
 		return new Promise((resolve, reject) => {
 			this.store.get(DATA_KIND, key, async (res: FlagConfiguration) => {
@@ -268,9 +296,11 @@ export class FlagStore {
 					return;
 				}
 
-				if (!flag) {
+				if (!flag || !flag.environments || (!flag.environments[this.config.getConfig().env] && fullFlag)) {
 					try {
-						flag = await this.api.getFeatureFlag(this.config.project, key, this.config.env);
+						flag = await this.config
+							.getApi()
+							.getFeatureFlag(this.config.getConfig().project, key, this.config.getConfig().env, true);
 						this.flagMetadata[key] = flag;
 					} catch (e) {
 						console.error(`Could not retrieve feature flag metadata for ${key}: ${e}`);
@@ -284,11 +314,13 @@ export class FlagStore {
 	}
 
 	async forceFeatureFlagUpdate(flagKey: string): Promise<void> {
-		this.flagMetadata[flagKey] = await this.api.getFeatureFlag(this.config.project, flagKey, this.config.env);
+		this.flagMetadata[flagKey] = await this.config
+			.getApi()
+			.getFeatureFlag(this.config.getConfig().project, flagKey, this.config.getConfig().env);
 		this.storeUpdates.fire(true);
 	}
 
-	allFlags(): Promise<FlagConfiguration[]> {
+	allFlags(): Promise<FlagConfiguration[] | LDFeatureStoreKindData> {
 		return new Promise((resolve) => {
 			this.store.all(DATA_KIND, resolve);
 		});
@@ -304,7 +336,7 @@ export class FlagStore {
 
 	async getFlagMetadata(flag: string): Promise<FeatureFlag> {
 		await this.ldClient;
-		if (this.flagMetadata === undefined && this.config.isConfigured()) {
+		if (this.flagMetadata === undefined && this.config.getConfig().isConfigured()) {
 			await this.allFlagsMetadata();
 		}
 		return await this.flagMetadata[flag];
@@ -312,13 +344,13 @@ export class FlagStore {
 
 	async allFlagsMetadata(): Promise<Dictionary<FeatureFlag>> {
 		await this.ldClient; // Just waiting for initialization to complete, don't actually need the client
-		if (this.flagMetadata === undefined && this.config.isConfigured()) {
+		if (this.flagMetadata === undefined && this.config.getConfig().isConfigured()) {
 			try {
 				await this.debounceUpdate();
 				return this.flagMetadata;
 			} catch (err) {
 				console.log(`Failed getting Metadata: ${err}`);
-				window.showErrorMessage(`[LaunchDarkly] ${err}`);
+				window.showErrorMessage(`${CONST_LD_PREFIX} ${err}`);
 			}
 		} else {
 			return this.flagMetadata;
@@ -327,5 +359,21 @@ export class FlagStore {
 
 	async listFlags(): Promise<Array<string>> {
 		return await Object.keys(await this.allFlagsMetadata());
+	}
+
+	async executeAndUpdateFlagStore(
+		func: (
+			projectKey: string,
+			flagKey: string,
+			value?: PatchComment | InstructionPatch,
+		) => Promise<FeatureFlag | Error>,
+		projectKey: string,
+		flagKey: string,
+		value?: PatchComment | InstructionPatch,
+	) {
+		const result = (await func(projectKey, flagKey, value)) as FeatureFlag;
+		this.flagMetadata[result.key] = result;
+		this.storeUpdates.fire(true);
+		return result;
 	}
 }

@@ -1,6 +1,6 @@
 'use strict';
 
-import { commands, window, ExtensionContext } from 'vscode';
+import { commands, window, ExtensionContext, authentication } from 'vscode';
 import { access, constants } from 'fs';
 import { FlagStore } from './flagStore';
 import { Configuration } from './configuration';
@@ -8,16 +8,32 @@ import { register as registerProviders } from './providers';
 import { LaunchDarklyAPI } from './api';
 import { CodeRefsDownloader } from './coderefs/codeRefsDownloader';
 import { CodeRefs as cr } from './coderefs/codeRefsVersion';
-
-let config: Configuration;
-let flagStore: FlagStore;
+import { LaunchDarklyAuthenticationProvider } from './providers/authProvider';
+import { extensionReload } from './generalUtils';
+import { LDExtensionConfiguration } from './ldExtensionConfiguration';
+import * as semver from 'semver';
+import { SetWorkspaceCmd } from './commands/setWorkspaceEnabled';
+import { CMD_LD_CONFIG, CMD_LD_SIGNIN, CMD_LD_SIGNOUT } from './utils/commands';
+import { ILaunchDarklyAuthenticationSession } from './models';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
-	global.ldContext = ctx;
-	config = new Configuration(ctx);
-	await config.reload();
-	const validationError = await config.validate();
-	const configuredOnce = ctx.globalState.get('LDConfigured');
+	const storedVersion = ctx.globalState.get('version', '5.0.0');
+	const LDExtConfig = LDExtensionConfiguration.getInstance(ctx);
+	LDExtConfig.setConfig(new Configuration(LDExtConfig.getCtx()));
+	await LDExtConfig.getConfig().reload();
+	const authProv = new LaunchDarklyAuthenticationProvider(LDExtConfig.getCtx());
+	LDExtConfig.getCtx().subscriptions.push(authProv);
+
+	const session = (await authentication.getSession('launchdarkly', ['writer'], {
+		createIfNone: false,
+	})) as ILaunchDarklyAuthenticationSession;
+
+	const validationError = await LDExtConfig.getConfig().validate();
+	const configuredOnce = LDExtConfig.getCtx().globalState.get('LDConfigured');
+
+	LDExtConfig.setSession(session);
+	commands.executeCommand('setContext', 'launchdarkly:isSignedIn', !!session);
+
 	switch (validationError) {
 		case 'unconfigured':
 			if (window.activeTextEditor !== undefined && configuredOnce !== true) {
@@ -28,8 +44,8 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 					)
 					.then((item) => {
 						item === 'Configure'
-							? commands.executeCommand('extension.configureLaunchDarkly')
-							: ctx.workspaceState.update('isDisabledForWorkspace', true);
+							? commands.executeCommand(CMD_LD_CONFIG)
+							: LDExtConfig.getCtx().workspaceState.update('isDisabledForWorkspace', true);
 					});
 			}
 			break;
@@ -41,37 +57,119 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 				)
 				.then((item) => {
 					item === 'Configure'
-						? commands.executeCommand('extension.configureLaunchDarkly')
-						: ctx.globalState.update('legacyNotificationDismissed', true);
+						? commands.executeCommand(CMD_LD_CONFIG)
+						: LDExtConfig.getCtx().globalState.update('legacyNotificationDismissed', true);
 				});
+			break;
+		default:
 			break;
 	}
 
-	const api = new LaunchDarklyAPI(config);
-	let flagStore: FlagStore;
+	LDExtConfig.getCtx().subscriptions.push(
+		commands.registerCommand(CMD_LD_SIGNIN, async () => {
+			try {
+				const session = (await authentication.getSession('launchdarkly', ['writer'], {
+					createIfNone: true,
+				})) as ILaunchDarklyAuthenticationSession;
+
+				if (!session || !session.account) return;
+
+				LDExtConfig.setSession(session);
+				await LDExtConfig.getConfig().reload();
+
+				if (!(await LDExtConfig.getConfig().isConfigured())) {
+					window
+						.showInformationMessage(
+							`Click Configure below to finish setting up the LaunchDarkly extension`,
+							`Configure`,
+						)
+						.then((item) => {
+							item === 'Configure' ? commands.executeCommand(CMD_LD_CONFIG) : null;
+						});
+				} else {
+					commands.executeCommand('setContext', 'launchdarkly:isSignedIn', true);
+					window.showInformationMessage(`You are now signed in to LaunchDarkly & Project is configured.`);
+				}
+			} catch (err) {
+				console.error('Error in sign in command:', err);
+				commands.executeCommand('setContext', 'launchdarkly:isSignedIn', false);
+				const selection = await window.showErrorMessage(`Sign in error: ${err.message}`, { modal: true }, 'Try Again');
+
+				if (selection === 'Try Again') {
+					commands.executeCommand(CMD_LD_SIGNIN);
+				}
+			}
+		}),
+		SetWorkspaceCmd(LDExtConfig),
+	);
+
+	LDExtConfig.getCtx().subscriptions.push(
+		commands.registerCommand(CMD_LD_SIGNOUT, async () => {
+			const confirmSignOut = await window.showWarningMessage(
+				`Are you sure you want to sign out of LaunchDarkly?`,
+				{ modal: true },
+				'Sign Out',
+			);
+
+			if (confirmSignOut === 'Sign Out') {
+				await authProv.removeSession(LDExtConfig.getSession()?.id);
+				LDExtConfig.setSession(null);
+				commands.executeCommand('setContext', 'launchdarkly:isSignedIn', false);
+				window.showInformationMessage(`You are now signed out of LaunchDarkly.`);
+			}
+
+			await extensionReload(LDExtConfig);
+		}),
+	);
+
+	authentication.onDidChangeSessions(async (e) => {
+		if (e.provider.id === 'launchdarkly') {
+			await extensionReload(LDExtConfig);
+		}
+	});
+	LDExtConfig.setApi(new LaunchDarklyAPI(LDExtConfig.getConfig(), LDExtConfig));
 	if (validationError !== 'unconfigured') {
-		flagStore = new FlagStore(config, api);
+		LDExtConfig.setFlagStore(new FlagStore(LDExtConfig));
 	}
 
-	const codeRefsVersionDir = `${ctx.asAbsolutePath('coderefs')}/${cr.version}`;
+	const codeRefsVersionDir = `${LDExtConfig.getCtx().asAbsolutePath('coderefs')}/${cr.version}`;
 	// Check to see if coderefs is already installed. Need more logic if specific config path is set.
-	if (config.enableAliases) {
+	if (LDExtConfig.getConfig()?.enableAliases) {
 		access(codeRefsVersionDir, constants.F_OK, (err) => {
 			if (err) {
-				const CodeRefs = new CodeRefsDownloader(ctx, codeRefsVersionDir);
+				const CodeRefs = new CodeRefsDownloader(LDExtConfig.getCtx(), codeRefsVersionDir);
 				CodeRefs.download();
 				return;
 			}
 		});
 	}
 
+	if (
+		((await ctx.secrets.get('launchdarkly_accessToken')) || semver.lt(storedVersion, '4.99.10')) &&
+		session === undefined
+	) {
+		//if (semver.lt(storedVersion, '4.99.1')) {
+		window
+			.showInformationMessage(
+				`LaunchDarkly: Please [Sign In](command:vscode-launchdarkly-authprovider.signIn) as part your extension update.`,
+				`Sign In`,
+			)
+			.then(async (item) => {
+				switch (item) {
+					case 'Sign In':
+						commands.executeCommand(CMD_LD_SIGNIN);
+						break;
+				}
+			});
+	}
+
 	try {
-		await registerProviders(ctx, config, flagStore, api);
+		await registerProviders(LDExtConfig);
 	} catch (err) {
 		console.log(err);
 	}
 }
 
 export async function deactivate(): Promise<void> {
-	flagStore && flagStore.stop();
+	global.ldContext.flagStore && global.ldContext.flagStore.stop();
 }
