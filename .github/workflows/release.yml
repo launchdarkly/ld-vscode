@@ -3,6 +3,12 @@ name: CI
 on:
   push:
     branches: [ main, beta, prerelease ]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'webpack.config.js'
+      - 'tsconfig.json'
+      - 'yarn.lock'
   workflow_dispatch:
 
 jobs:
@@ -11,10 +17,29 @@ jobs:
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
+        with:
+          fetch-depth: 2  # Need previous commit to compare versions
+
       - name: Extract branch name
         shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
         id: extract_branch
+
+      - name: Check if version changed
+        id: version_check
+        run: |
+          OLD_VERSION=$(git show HEAD~1:package.json 2>/dev/null | jq -r '.version' || echo "0.0.0")
+          NEW_VERSION=$(jq -r '.version' package.json)
+          echo "old_version=$OLD_VERSION"
+          echo "new_version=$NEW_VERSION"
+          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "Version changed from $OLD_VERSION to $NEW_VERSION"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Version unchanged ($NEW_VERSION)"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # 4.4.0
         with:
           node-version: '22.13.0'
@@ -26,21 +51,24 @@ jobs:
       - run: yarn run prettier:check
       - run: yarn run lint
       - name: Publish to Visual Studio Marketplace
-        if: ${{ steps.extract_branch.outputs.branch != 'prerelease' }}
+        if: ${{ (steps.version_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.extract_branch.outputs.branch != 'prerelease' }}
         uses: HaaLeo/publish-vscode-extension@v1.5.0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
           yarn: true
+
       - name: Publish to Visual Studio Marketplace for pre-release
-        if: ${{ steps.extract_branch.outputs.branch == 'prerelease' }}
+        if: ${{ (steps.version_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.extract_branch.outputs.branch == 'prerelease' }}
         uses: HaaLeo/publish-vscode-extension@v1.5.0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
           yarn: true
           preRelease: true
+
       - name: Publish to Open VSX Registry
+        if: ${{ steps.version_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' }}
         uses: HaaLeo/publish-vscode-extension@v0
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
