@@ -1,0 +1,2 @@
+**API Token**
+Please read [Give your API Access Token the Required Permissions](https://docs.launchdarkly.com/integrations/vscode#give-your-api-access-token-the-required-permissions) to learn about scoping your token.

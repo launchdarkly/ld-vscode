@@ -1,15 +1,16 @@
-import { commands, Disposable, ExtensionContext } from 'vscode';
-import { LaunchDarklyAPI } from '../api';
-import { Configuration } from '../configuration';
+import { Disposable } from 'vscode';
 import { CreateFlagMenu } from '../createFlagMenu';
+import { CMD_LD_CREATE_FLAG } from '../utils/commands';
+import { registerCommand } from '../utils/registerCommand';
+import { ILDExtensionConfiguration } from '../models';
 
-export default function createFlagCmd(ctx: ExtensionContext, config: Configuration, api: LaunchDarklyAPI): Disposable {
-	const createFlagCmd = commands.registerCommand('launchdarkly.createFlag', async () => {
-		const configurationMenu = new CreateFlagMenu(config, api);
+export default function createFlagCmd(config: ILDExtensionConfiguration): Disposable {
+	const createFlagCmd = registerCommand(CMD_LD_CREATE_FLAG, async () => {
+		const configurationMenu = new CreateFlagMenu(config);
 		await configurationMenu.collectInputs();
 	});
 
-	ctx.subscriptions.push(createFlagCmd);
+	config.getCtx().subscriptions.push(createFlagCmd);
 
 	return createFlagCmd;
 }

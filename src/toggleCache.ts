@@ -13,7 +13,6 @@ export class ToggleCache {
 			if (this._entries.size <= this._maxSize) {
 				break;
 			}
-			console.log(key);
 			this._map.delete(key);
 			this._entries.delete(key);
 		}

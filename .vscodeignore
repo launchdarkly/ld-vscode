@@ -8,3 +8,8 @@ webpack.config.js
 **/*.ts
 *.vsix
 CHANGELOG.md
+.vscode-test/
+coderefs/
+.github
+.circleci
+.nyc_output
