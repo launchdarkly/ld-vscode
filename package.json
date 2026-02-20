@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "5.0.0",
+	"version": "6.2.0",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.82.0"
@@ -233,11 +233,8 @@
 				"title": "LaunchDarkly: Quick Targeting"
 			},
 			{
-				"command": "vscode-launchdarkly-authprovider.signIn",
-				"title": "Sign in",
-				"category": "LaunchDarkly",
-				"icon": "$(sign-in)",
-				"when": false
+				"command": "launchdarkly.signIn",
+				"title": "LaunchDarkly: Sign in"
 			},
 			{
 				"command": "launchdarkly.setMaintainer",
@@ -255,6 +252,10 @@
 			{
 				"command": "launchdarkly.quickFlag",
 				"title": "LaunchDarkly: Flag Actions"
+			},
+			{
+				"command": "launchdarkly.signOut",
+				"title": "LaunchDarkly: Sign Out"
 			}
 		],
 		"menus": {
@@ -344,6 +345,11 @@
 					"command": "launchdarkly.configureLaunchDarklyEnvironment",
 					"when": "view == launchdarklyFeatureFlags",
 					"group": "navigation"
+				},
+				{
+					"command": "launchdarkly.signOut",
+					"when": "view == launchdarklyFeatureFlags && launchdarkly:isSignedIn",
+					"group": "inline"
 				}
 			],
 			"view/item/context": [
@@ -461,7 +467,7 @@
 			},
 			{
 				"view": "launchdarklyFeatureFlags",
-				"contents": "In order to manage LaunchDarkly feature flags, you will need to configure this extension first.\n[Configure](command:extension.configureLaunchDarkly)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension. \nIf you had a previous version installed you may need to \n[Migrate Configuration](command:launchdarkly.migrateConfiguration)\n Previous versions allowed for global configuration, the current version is configured per workspace.",
+				"contents": "In order to manage LaunchDarkly feature flags, you will need to sign in.\n Once signed in you can configure your project and environment. \n [Sign in](command:launchdarkly.signIn)\n[Read our docs](https://docs.launchdarkly.com/integrations/vscode) to learn more about how to use the LaunchDarkly extension.",
 				"when": "config.launchdarkly.globalDefault == 'off'"
 			}
 		]
@@ -518,7 +524,7 @@
 		"ts-mockito": "2.6.1",
 		"typescript": "^5.3.3",
 		"vscode-test": "^1.6.1",
-		"webpack": "^5.35.1",
+		"webpack": "^5.104.1",
 		"webpack-cli": "^4.6.0"
 	},
 	"dependencies": {
@@ -526,14 +532,14 @@
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
 		"ajv": "^6.12.6",
-		"axios": "0.21.4",
+		"axios": "^1.12.0",
 		"axios-retry": "4.0.0",
 		"axios-retry-after": "2.0.0",
 		"csv-parser": "^2.3.3",
 		"form-data": "^4.0.4",
 		"gunzip-maybe": "^1.4.2",
 		"launchdarkly-api-typescript": "6.0.0",
-		"lodash": "^4.17.21",
+		"lodash": "^4.17.23",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",
 		"node-fetch": "^3.3.2",
@@ -541,7 +547,6 @@
 		"request": "^2.34",
 		"rimraf": "^3.0.2",
 		"tar-fs": "^2.1.1",
-		"tree-sitter-stack-graphs": "^0.7.0",
 		"uuid": "^9.0.1"
 	},
 	"resolutions": {

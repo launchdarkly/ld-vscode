@@ -9,6 +9,27 @@ The LaunchDarkly VSCode extension provides utilities that make it easy to work w
 
 <img src="https://github.com/launchdarkly/ld-vscode/raw/master/images/screenshot.png?raw=true" alt="screenshot" width="100%">
 
+## Authentication
+
+The LaunchDarkly VS Code extension requires authentication using a **Personal Access Token** with **Writer** permissions or higher.
+
+#### Important Notes:
+- **Personal tokens only**: Service tokens are not supported
+- **Permissions**: Your token must have permissions to perform actions available in the extension. Reader roles will be able to view flags but not perform any actions.
+- **Token scope**: The token should have access to the projects and environments you want to work with
+
+#### [Creating an Access Token](https://launchdarkly.com/docs/home/account/api-create#create-access-tokens)
+
+
+#### Sign in:
+
+1. Open VS Code with the LaunchDarkly extension installed
+2. Use the Command Palette (`Cmd/Ctrl + Shift + P`)
+3. Run `LaunchDarkly: Sign In`
+4. Select your LaunchDarkly instance (Commercial, Federal, EU, or Other)
+5. Paste your Personal Access Token when prompted
+
+
 ## Features
 
 - Feature flag details tooltip on hover
@@ -91,3 +112,41 @@ This is OFF by default. It can be enabled through Settings > LaunchDarkly Extens
 ## Contributing
 
 LaunchDarkly for Visual Studio Code is an [open source project](https://github.com/launchdarkly/ld-vscode). If you experience any issues, please [log an issue on our issue tracker](https://github.com/launchdarkly/ld-vscode/issues). If you'd like to contribute, we're happily taking pull requests.
+
+## Development
+
+### Prerequisites
+- Node.js (version 18 or higher)
+- [Visual Studio Code](https://code.visualstudio.com/)
+
+### Getting Started
+
+**Install dependencies**
+   ```bash
+   npm install
+   ```
+
+**Build the extension**
+   ```bash
+   npm run compile
+   ```
+
+**Start debugging**
+   - Press `F5` or go to `Run > Start Debugging`
+   - This will open a new VS Code window with the extension loaded in development mode
+   - The extension will be available as "LaunchDarkly" in the new window
+
+### Development Workflow
+
+- **Watch mode**: Run `npm run watch` to automatically recompile on file changes
+- **Testing**: Run `npm test` to execute the test suite
+- **Linting**: Run `npm run lint` to check code style
+
+### Debugging
+
+- Set breakpoints in the TypeScript source files
+- Use the Debug Console in the host VS Code window to inspect variables
+- Check the Developer Tools (`Help > Toggle Developer Tools`) in the extension development host for console output
+
+
+

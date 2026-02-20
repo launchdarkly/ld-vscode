@@ -23,7 +23,7 @@ import { QuickLinksListProvider } from './providers/quickLinksView';
 import { setTimeout } from 'timers/promises';
 import { ToggleCache } from './toggleCache';
 import { LaunchDarklyReleaseProvider } from './providers/releaseViewProvider';
-import { ILDExtensionConfiguration, InstructionPatch } from './models';
+import { ILaunchDarklyAuthenticationSession, ILDExtensionConfiguration, InstructionPatch } from './models';
 import { logDebugMessage } from './utils/logDebugMessage';
 import { CMD_LD_CONFIG, CMD_LD_OPEN_FLAG, CMD_LD_REFRESH_LENS, CMD_LD_TOGGLE_CMD_PROMPT } from './utils/commands';
 import { registerCommand } from './utils/registerCommand';
@@ -34,13 +34,15 @@ const cache = new ToggleCache();
 export async function extensionReload(config: ILDExtensionConfiguration, reload = false) {
 	const session = await authentication.getSession('launchdarkly', ['writer'], { createIfNone: false });
 	if (session !== undefined) {
-		// TODO: determine if this reload call to config is needed
+		config.setSession(session as ILaunchDarklyAuthenticationSession);
 		await config.getConfig().reload();
 		config.setApi(new LaunchDarklyAPI(config.getConfig(), config));
 		config.setFlagStore(new FlagStore(config));
 		await setupComponents(config, reload);
 	} else {
 		console.log('No session found, please login to LaunchDarkly.');
+		config.setSession(null);
+		await cleanupComponents(config);
 	}
 }
 
@@ -55,9 +57,8 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 		await setTimeout(2200);
 	}
 
-	// TODO: Handle status bar cleaner in future.
-	// This check may not be needed, need to verify when extensionReload is called.
-	if (config.getConfig().project !== '' || config.getConfig().env !== '') {
+	const session = config.getSession();
+	if (session && (config.getConfig().project !== '' || config.getConfig().env !== '')) {
 		const currentStatus = config.getStatusBar();
 		if (currentStatus) {
 			currentStatus.dispose();
@@ -99,6 +100,9 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 	const flagView = new LaunchDarklyTreeViewProvider(config);
 	const codeLens = new FlagCodeLensProvider(config);
 
+	config.setQuickLinksProvider(quickLinksView);
+	config.setFlagView(flagView);
+
 	const enableFlagListView = workspace.getConfiguration('launchdarkly').get('enableFlagsInFile', false);
 	let listViewDisp = Disposable.from();
 	if (enableFlagListView) {
@@ -119,7 +123,9 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 		window.registerTreeDataProvider('launchdarklyReleases', releaseView);
 	}
 
-	config.setFlagView(flagView);
+	if (config.getFlagStore()) {
+		flagView.setIsLoading(true);
+	}
 
 	//Register window providers
 	window.registerTreeDataProvider('launchdarklyQuickLinks', quickLinksView);
@@ -243,11 +249,11 @@ export async function toggleFlag(config: ILDExtensionConfiguration, key: string)
 				await config.getApi().patchFeatureFlagOn(config.getConfig().project, key, !enabled.on);
 			} catch (err) {
 				progress.report({ increment: 100 });
-				if (err.response.status === 403) {
+				if (err.response?.status === 403) {
 					window.showErrorMessage(`Unauthorized: Your key does not have permissions to update the flag: ${key}`);
 				} else {
 					window.showErrorMessage(`Could not update flag: ${key}
-					code: ${err.response.status}
+					code: ${err.response?.status}
 					message: ${err.message}`);
 				}
 			}
@@ -306,4 +312,42 @@ function createFallthroughOrOffInstruction(kind: string, variationId: string) {
 		kind,
 		variationId: variationId,
 	};
+}
+
+/**
+ * Cleans up and disposes of all LaunchDarkly extension components to prevent memory leaks
+ * and reset the extension to a clean state. Eg. when user signs out and the extension is reloaded
+ *
+ * @param config - The LaunchDarkly extension configuration object containing references to all components
+ *
+ */
+export async function cleanupComponents(config: ILDExtensionConfiguration) {
+	// Dispose of existing commands
+	const cmds = config.getCtx().globalState.get<Disposable>('commands');
+	if (typeof cmds?.dispose === 'function') {
+		cmds.dispose();
+	}
+
+	const currentStatus = config.getStatusBar();
+	if (currentStatus) {
+		currentStatus.hide();
+		currentStatus.dispose();
+		config.setStatusBar(null);
+	}
+
+	if (config.getFlagStore()) {
+		config.getFlagStore().stop();
+		config.setFlagStore(null);
+	}
+
+	if (config.getAliases()) {
+		config.setAliases(null);
+	}
+
+	config.setApi(null);
+
+	const quickLinksProvider = config.getQuickLinksProvider();
+	if (quickLinksProvider) {
+		quickLinksProvider.refresh();
+	}
 }

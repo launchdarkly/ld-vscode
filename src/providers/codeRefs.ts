@@ -58,9 +58,9 @@ export class FlagAliases {
 		return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
 			exec(command, options, (error, stdout, stderr) => {
 				if (error) {
-					reject({ error, stdout, stderr });
+					reject({ error, stdout: stdout.toString(), stderr: stderr.toString() });
 				}
-				resolve({ stdout, stderr });
+				resolve({ stdout: stdout.toString(), stderr: stderr.toString() });
 			});
 		});
 	}

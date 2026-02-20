@@ -31,6 +31,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 	readonly onDidChangeTreeData: vscode.Event<IFlagTree | null | void> = this._onDidChangeTreeData.event;
 	private updatingTree: vscode.EventEmitter<'started' | 'error' | 'complete'> = new vscode.EventEmitter();
 	private lastTreeEvent: string;
+	private isLoading: boolean = false;
 
 	constructor(ldConfig: ILDExtensionConfiguration) {
 		this.ldConfig = ldConfig;
@@ -98,7 +99,7 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 	};
 
 	async getChildren(element?: IFlagTree): Promise<IFlagTree[] | undefined> {
-		if (this.lastTreeEvent === 'started') {
+		if (this.lastTreeEvent === 'started' || this.isLoading) {
 			return Promise.resolve([
 				new FlagNode(
 					this.ldConfig.getCtx(),
@@ -115,21 +116,27 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			]);
 		}
 
+		if (!this.ldConfig.getSession()) {
+			return [];
+		}
+
 		if (typeof this.flagNodes === 'undefined' || this.flagNodes?.length == 0) {
-			return Promise.resolve([
-				new FlagNode(
-					this.ldConfig.getCtx(),
-					'No Flags Found. Extension may need to be reconfigured.',
-					NON_COLLAPSED,
-					[],
-					'',
-					'',
-					'',
-					'',
-					0,
-					undefined,
-				),
-			]);
+			if (!this.isLoading && this.ldConfig.getConfig()?.isConfigured()) {
+				return Promise.resolve([
+					new FlagNode(
+						this.ldConfig.getCtx(),
+						'No Flags Found. Extension may need to be reconfigured.',
+						NON_COLLAPSED,
+						[],
+						'',
+						'',
+						'',
+						'',
+						0,
+						undefined,
+					),
+				]);
+			}
 		}
 
 		if (this.ldConfig.getConfig()?.isConfigured()) {
@@ -163,13 +170,15 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 	}
 
 	async getFlags(): Promise<void> {
-		// Clear existing flags
+		this.setIsLoading(true);
 		this.flagNodes = [];
+
 		try {
 			const nodes: FlagParentNode[] = [];
 			if (this.ldConfig.getFlagStore()) {
 				const flags = await this.ldConfig.getFlagStore()?.allFlagsMetadata();
 				if (!flags) {
+					this.setIsLoading(false);
 					return;
 				}
 				const checkFlags = Object.keys(flags)?.length;
@@ -198,7 +207,11 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			const message = `Error retrieving Flags: ${err}`;
 			this.updatingTree.fire('error');
 			this.flagNodes = [new FlagParentNode(this.ldConfig.getCtx(), message, message, null, NON_COLLAPSED)];
+		} finally {
+			this.setIsLoading(false);
+			this.refresh();
 		}
+
 		if (this.ldConfig.getConfig()?.isConfigured() && !this.flagNodes) {
 			this.flagNodes = [
 				new FlagParentNode(this.ldConfig.getCtx(), 'No Flags Found.', 'No Flags Found', null, NON_COLLAPSED),
@@ -429,8 +442,9 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 			this.ldConfig.getCtx(),
 			flag.name,
 			generateHoverString(flag, envConfig, this.ldConfig),
-			`${this.ldConfig.getSession()?.fullUri}/${this.ldConfig.getConfig()?.project}/${this.ldConfig.getConfig()
-				?.env}/features/${flag.key}`,
+			`${this.ldConfig.getSession()?.fullUri}/${this.ldConfig.getConfig()?.project}/${
+				this.ldConfig.getConfig()?.env
+			}/features/${flag.key}`,
 			COLLAPSED,
 			[],
 			flag.key,
@@ -441,5 +455,16 @@ export class LaunchDarklyTreeViewProvider implements vscode.TreeDataProvider<IFl
 		);
 
 		return item;
+	}
+
+	public setIsLoading(isLoading: boolean): void {
+		this.isLoading = isLoading;
+		if (isLoading) {
+			this.refresh();
+		}
+	}
+
+	public isCurrentlyLoading(): boolean {
+		return this.isLoading;
 	}
 }

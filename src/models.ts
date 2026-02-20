@@ -2,6 +2,7 @@ import { LDContext, LDEvaluationDetail, LDFeatureStoreKindData } from '@launchda
 import { ExecOptions } from 'child_process';
 import { ClientSideAvailability, RepositoryRep } from 'launchdarkly-api-typescript';
 import { Dictionary } from 'lodash';
+import { QuickLinksListProvider } from './providers/quickLinksView';
 import {
 	AuthenticationSession,
 	ConfigurationChangeEvent,
@@ -668,6 +669,8 @@ export interface ILDExtensionConfiguration {
 	setSession(session: ILaunchDarklyAuthenticationSession): void;
 	getStatusBar(): StatusBarItem | undefined;
 	setStatusBar(statusBar: StatusBarItem): void;
+	getQuickLinksProvider(): QuickLinksListProvider | undefined;
+	setQuickLinksProvider(quickLinksProvider: QuickLinksListProvider): void;
 }
 
 export interface LaunchDarklyAPIInterface {

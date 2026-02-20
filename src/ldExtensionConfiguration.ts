@@ -1,4 +1,5 @@
 import { ExtensionContext, StatusBarItem, TreeView } from 'vscode';
+import { QuickLinksListProvider } from './providers/quickLinksView';
 import {
 	IFlagStore,
 	IFlagTree,
@@ -22,6 +23,7 @@ export class LDExtensionConfiguration {
 	private releaseView?: ILaunchDarklyReleaseProvider;
 	private session?: ILaunchDarklyAuthenticationSession;
 	private statusBar?: StatusBarItem;
+	private quickLinksProvider?: QuickLinksListProvider;
 
 	private constructor(ctx: ExtensionContext) {
 		this.ctx = ctx;
@@ -112,5 +114,13 @@ export class LDExtensionConfiguration {
 
 	setStatusBar(statusBar: StatusBarItem): void {
 		this.statusBar = statusBar;
+	}
+
+	getQuickLinksProvider(): QuickLinksListProvider | undefined {
+		return this.quickLinksProvider;
+	}
+
+	setQuickLinksProvider(quickLinksProvider: QuickLinksListProvider): void {
+		this.quickLinksProvider = quickLinksProvider;
 	}
 }
