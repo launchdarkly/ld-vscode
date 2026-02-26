@@ -22,7 +22,7 @@ class AnalyticsClient implements Disposable {
 		console.log('LD_ANALYTICS_BASE_URL', BASE_URL);
 		console.log('LD_ANALYTICS_STREAM_URL', STREAM_URL);
 		console.log('LD_ANALYTICS_EVENTS_URL', EVENTS_URL);
-		
+
 		if (!CLIENT_SIDE_ID || !BASE_URL || !STREAM_URL || !EVENTS_URL || !env.isTelemetryEnabled) {
 			return;
 		}
