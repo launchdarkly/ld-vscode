@@ -1,6 +1,7 @@
 import { ILDExtensionConfiguration } from '../models';
 import { commands, window } from 'vscode';
 import { showSmartOverrideInput } from '../utils/smartOverrideInput';
+import { analytics } from '../analytics';
 
 export async function setDevServerOverride(config: ILDExtensionConfiguration, flagKey: string): Promise<void> {
 	const devServerProvider = config.getDevServerProvider();
@@ -36,6 +37,7 @@ export async function setDevServerOverride(config: ILDExtensionConfiguration, fl
 		const success = await devServerProvider.setOverride(flagKey, value);
 
 		if (success) {
+			analytics.track('dev-server-override-set', { flagKey, isEditing });
 			window.showInformationMessage(`${isEditing ? 'Updated' : 'Set'} dev-server override for flag "${flagKey}"`);
 			await commands.executeCommand('launchdarkly.refreshEntry');
 		} else {
@@ -67,6 +69,7 @@ export async function removeDevServerOverride(config: ILDExtensionConfiguration,
 		const success = await devServerProvider.removeOverride(flagKey);
 
 		if (success) {
+			analytics.track('dev-server-override-removed', { flagKey });
 			window.showInformationMessage(`Removed dev-server override for flag "${flagKey}"`);
 			await commands.executeCommand('launchdarkly.refreshEntry');
 		} else {

@@ -7,6 +7,7 @@ import { flagCodeSearch } from '../utils/flagCodeSearch';
 import { registerCommand } from '../utils/registerCommand';
 import { ILDExtensionConfiguration } from '../models';
 import { removeDevServerOverride, setDevServerOverride } from './devServerOverrides';
+import { analytics } from '../analytics';
 
 const cache = new ToggleCache();
 
@@ -104,12 +105,14 @@ export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
 				commands.executeCommand(CMD_LD_OPEN_BROWSER, linkUrl);
 				break;
 			}
-			case 'Toggle Flag':
-				await toggleFlag(config, flagWindow.value);
-				break;
-			case 'Search Flag':
-				flagCodeSearch(config, flagWindow.value);
-				break;
+		case 'Toggle Flag':
+			analytics.track('flag-toggled', { flagKey: flagWindow.value });
+			await toggleFlag(config, flagWindow.value);
+			break;
+		case 'Search Flag':
+			analytics.track('flag-search-used', { flagKey: flagWindow.value });
+			flagCodeSearch(config, flagWindow.value);
+			break;
 			case 'Update fallthrough variation':
 				flagOffFallthroughPatch(config, 'updateFallthroughVariationOrRollout', flagWindow.value);
 				break;

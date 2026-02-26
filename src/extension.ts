@@ -18,6 +18,7 @@ import { ILaunchDarklyAuthenticationSession } from './models';
 import { connectDevServerCommand, disconnectDevServerCommand } from './commands/connectDevServer';
 import { createDevServerStatusBar, updateDevServerStatusBar } from './devServerStatusBar';
 import { DevServerProvider } from './providers/devServerProvider';
+import { analytics } from './analytics';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	const storedVersion = ctx.globalState.get('version', '5.0.0');
@@ -79,6 +80,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 
 				LDExtConfig.setSession(session);
 				await LDExtConfig.getConfig().reload();
+				analytics.track('user-signed-in');
 
 				if (!(await LDExtConfig.getConfig().isConfigured())) {
 					window
@@ -115,6 +117,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 			);
 
 			if (confirmSignOut === 'Sign Out') {
+				analytics.track('user-signed-out');
 				await authProv.removeSession(LDExtConfig.getSession()?.id);
 				LDExtConfig.setSession(null);
 				commands.executeCommand('setContext', 'launchdarkly:isSignedIn', false);
@@ -184,6 +187,13 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	} catch (err) {
 		console.log(err);
 	}
+
+	// Initialize analytics (non-blocking — failures are silently ignored)
+	const extensionVersion = ctx.extension?.packageJSON?.version ?? 'unknown';
+	ctx.subscriptions.push(analytics);
+	analytics.initialize(extensionVersion).then(() => {
+		analytics.track('extension-activated');
+	});
 
 	// Attempt to auto-reconnect to dev-server if it was previously connected
 	await attemptDevServerReconnect(LDExtConfig);
@@ -266,5 +276,6 @@ async function handleDevServerConnectionFailure(config: LDExtensionConfiguration
 }
 
 export async function deactivate(): Promise<void> {
+	await analytics.dispose();
 	global.ldContext.flagStore && global.ldContext.flagStore.stop();
 }

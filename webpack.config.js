@@ -5,6 +5,7 @@
 // Heavily inspired and copied from Gitlens, special thanks to @eamodio for amazing community support.
 'use strict';
 
+require('dotenv').config();
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { DefinePlugin } = require('webpack');
@@ -13,7 +14,13 @@ const { validate } = require('schema-utils');
 
 function getExtensionConfig(mode) {
 	const plugins = [
-		new DefinePlugin({ 'global.GENTLY': false }),
+		new DefinePlugin({
+			'global.GENTLY': false,
+			'process.env.LD_ANALYTICS_CLIENT_ID': JSON.stringify(process.env.LD_ANALYTICS_CLIENT_ID || ''),
+			'process.env.LD_ANALYTICS_BASE_URL': JSON.stringify(process.env.LD_ANALYTICS_BASE_URL || ''),
+			'process.env.LD_ANALYTICS_STREAM_URL': JSON.stringify(process.env.LD_ANALYTICS_STREAM_URL || ''),
+			'process.env.LD_ANALYTICS_EVENTS_URL': JSON.stringify(process.env.LD_ANALYTICS_EVENTS_URL || ''),
+		}),
 		new FantasticonPlugin({
 			configPath: '.fantasticonrc.js',
 			onBefore:
