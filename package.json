@@ -558,7 +558,7 @@
 		"ts-mockito": "2.6.1",
 		"typescript": "^5.3.3",
 		"vscode-test": "^1.6.1",
-		"webpack": "^5.35.1",
+		"webpack": "^5.104.1",
 		"webpack-cli": "^4.6.0"
 	},
 	"dependencies": {
@@ -570,7 +570,7 @@
 		"axios-retry": "4.0.0",
 		"axios-retry-after": "2.0.0",
 		"csv-parser": "^2.3.3",
-		"form-data": "^4.0.0",
+		"form-data": "^4.0.4",
 		"gunzip-maybe": "^1.4.2",
 		"launchdarkly-api-typescript": "6.0.0",
 		"launchdarkly-node-client-sdk": "^3.3.1",
@@ -581,7 +581,7 @@
 		"opn": "5.3.0",
 		"request": "^2.34",
 		"rimraf": "^3.0.2",
-		"tar-fs": "2.1.4",
+		"tar-fs": "^2.1.4",
 		"uuid": "^9.0.1"
 	},
 	"resolutions": {
