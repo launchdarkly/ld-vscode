@@ -3,6 +3,7 @@ import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { CMD_LD_CONNECT_DEV_SERVER, CMD_LD_DISCONNECT_DEV_SERVER, CMD_LD_REFRESH_ENTRY } from '../utils/commands';
 import { registerCommand } from '../utils/registerCommand';
 import { updateDevServerStatusBar } from '../devServerStatusBar';
+import { analytics } from '../analytics';
 
 const DEFAULT_DEV_SERVER_URI = 'http://localhost:8765';
 
@@ -90,6 +91,7 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 			// Refresh the flags view to load dev-server values
 			await commands.executeCommand(CMD_LD_REFRESH_ENTRY);
 
+			analytics.track('dev-server-connected', { uri: finalUri });
 			window.showInformationMessage(`Connected to LaunchDarkly dev-server at ${finalUri}`);
 		} catch (err) {
 			console.error(`Failed to connect to dev-server: ${err}`);
@@ -129,6 +131,7 @@ export function disconnectDevServerCommand(config: LDExtensionConfiguration): Di
 			// Refresh the flags view to show LaunchDarkly values
 			await commands.executeCommand(CMD_LD_REFRESH_ENTRY);
 
+			analytics.track('dev-server-disconnected');
 			window.showInformationMessage('Disconnected from dev-server. Flag values now come from LaunchDarkly.');
 		} catch (err) {
 			console.error(`Failed to disconnect from dev-server: ${err}`);

@@ -4,6 +4,7 @@ import { FLAG_KEY_REGEX } from '../providers';
 
 import { DevServerHoverInfo, generateHoverString } from '../utils/hover';
 import { ILDExtensionConfiguration } from '../models';
+import { analytics } from '../analytics';
 
 export class LaunchDarklyHoverProvider implements HoverProvider {
 	private readonly ldConfig: ILDExtensionConfiguration;
@@ -56,6 +57,7 @@ export class LaunchDarklyHoverProvider implements HoverProvider {
 					}
 
 					const hover = generateHoverString(data.flag, data.config, this.ldConfig, devServerInfo);
+					analytics.track('hover-triggered', { flagKey: data.flag.key });
 					return new Hover(hover);
 				}
 			} catch (e) {

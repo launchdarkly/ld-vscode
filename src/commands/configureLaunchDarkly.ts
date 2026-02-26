@@ -4,6 +4,7 @@ import { FlagStore } from '../flagStore';
 import { LDExtensionConfiguration } from '../ldExtensionConfiguration';
 import { CMD_LD_CONFIG } from '../utils/commands';
 import { registerCommand } from '../utils/registerCommand';
+import { analytics } from '../analytics';
 
 export default function configureLaunchDarkly(config: LDExtensionConfiguration) {
 	const configureExtension: Disposable = registerCommand(CMD_LD_CONFIG, async () => {
@@ -16,6 +17,7 @@ export default function configureLaunchDarkly(config: LDExtensionConfiguration) 
 				await config.getFlagStore().reload();
 			}
 			await config.getCtx().globalState.update('LDConfigured', true);
+			analytics.track('environment-configured');
 			window.withProgress(
 				{
 					location: ProgressLocation.Notification,
