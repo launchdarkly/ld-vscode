@@ -91,6 +91,7 @@ export function connectDevServerCommand(config: LDExtensionConfiguration): Dispo
 			// Refresh the flags view to load dev-server values
 			await commands.executeCommand(CMD_LD_REFRESH_ENTRY);
 
+			commands.executeCommand('setContext', 'launchdarkly:devServerConnected', true);
 			analytics.track('dev-server-connected', { uri: finalUri });
 			window.showInformationMessage(`Connected to LaunchDarkly dev-server at ${finalUri}`);
 		} catch (err) {
@@ -131,6 +132,7 @@ export function disconnectDevServerCommand(config: LDExtensionConfiguration): Di
 			// Refresh the flags view to show LaunchDarkly values
 			await commands.executeCommand(CMD_LD_REFRESH_ENTRY);
 
+			commands.executeCommand('setContext', 'launchdarkly:devServerConnected', false);
 			analytics.track('dev-server-disconnected');
 			window.showInformationMessage('Disconnected from dev-server. Flag values now come from LaunchDarkly.');
 		} catch (err) {

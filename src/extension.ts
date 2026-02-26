@@ -222,8 +222,9 @@ async function attemptDevServerReconnect(config: LDExtensionConfiguration): Prom
 			}
 			// Refresh dev-server data
 			await devServerProvider?.refresh();
-			// Update status bar
+			// Update status bar and context
 			updateDevServerStatusBar(config);
+			commands.executeCommand('setContext', 'launchdarkly:devServerConnected', true);
 			console.log(`Successfully reconnected to dev-server at ${devServerUri}`);
 		} else {
 			// Dev-server is not available
@@ -259,6 +260,7 @@ async function handleDevServerConnectionFailure(config: LDExtensionConfiguration
 				await config.getFlagStore().reload();
 			}
 			updateDevServerStatusBar(config);
+			commands.executeCommand('setContext', 'launchdarkly:devServerConnected', false);
 			window.showInformationMessage('Disconnected from dev-server.');
 			break;
 		case 'Dismiss':
@@ -270,6 +272,7 @@ async function handleDevServerConnectionFailure(config: LDExtensionConfiguration
 				await config.getFlagStore().reload();
 			}
 			updateDevServerStatusBar(config);
+			commands.executeCommand('setContext', 'launchdarkly:devServerConnected', false);
 			console.log('User dismissed dev-server reconnection prompt — dev-server disabled');
 			break;
 	}

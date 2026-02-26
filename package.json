@@ -335,11 +335,19 @@
 					"command": "launchdarkly.enableCodeLens",
 					"when": "false"
 				},
-				{
-					"command": "launchdarkly.setMaintainer",
-					"when": "false"
-				}
-			],
+			{
+				"command": "launchdarkly.setMaintainer",
+				"when": "false"
+			},
+			{
+				"command": "launchdarkly.setDevServerOverride",
+				"when": "launchdarkly:devServerConnected"
+			},
+			{
+				"command": "launchdarkly.removeDevServerOverride",
+				"when": "launchdarkly:devServerConnected"
+			}
+		],
 			"editor/context": [
 				{
 					"command": "launchdarkly.openInLaunchDarkly",
@@ -431,14 +439,14 @@
 					"group": "inline"
 				},
 				{
-					"command": "launchdarkly.setDevServerOverride",
-					"when": "view == launchdarklyFeatureFlags && (viewItem == flagParentItem || viewItem == flagParentItemOverridden)",
-					"group": "devserver@1"
+				"command": "launchdarkly.setDevServerOverride",
+				"when": "view == launchdarklyFeatureFlags && launchdarkly:devServerConnected && (viewItem == flagParentItem || viewItem == flagParentItemOverridden)",
+				"group": "devserver@1"
 				},
 				{
-					"command": "launchdarkly.removeDevServerOverride",
-					"when": "view == launchdarklyFeatureFlags && viewItem == flagParentItemOverridden",
-					"group": "devserver@2"
+				"command": "launchdarkly.removeDevServerOverride",
+				"when": "view == launchdarklyFeatureFlags && launchdarkly:devServerConnected && viewItem == flagParentItemOverridden",
+				"group": "devserver@2"
 				}
 			]
 		},
