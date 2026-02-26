@@ -1,29 +1,42 @@
 import * as LDClient from 'launchdarkly-node-client-sdk';
 import { Disposable, env } from 'vscode';
 
-const CLIENT_SIDE_ID = process.env.LD_ANALYTICS_CLIENT_ID;
-const BASE_URL = process.env.LD_ANALYTICS_BASE_URL;
-const STREAM_URL = process.env.LD_ANALYTICS_STREAM_URL;
-const EVENTS_URL = process.env.LD_ANALYTICS_EVENTS_URL;
+export interface AnalyticsConfig {
+	clientSideId: string;
+	baseUrl: string;
+	streamUrl: string;
+	eventsUrl: string;
+}
+
+function getConfigFromEnv(): AnalyticsConfig | null {
+	const clientSideId = process.env.LD_ANALYTICS_CLIENT_ID;
+	const baseUrl = process.env.LD_ANALYTICS_BASE_URL;
+	const streamUrl = process.env.LD_ANALYTICS_STREAM_URL;
+	const eventsUrl = process.env.LD_ANALYTICS_EVENTS_URL;
+
+	if (!clientSideId || !baseUrl || !streamUrl || !eventsUrl) {
+		return null;
+	}
+	return { clientSideId, baseUrl, streamUrl, eventsUrl };
+}
 
 /**
  * Internal analytics client using the LaunchDarkly Node Client SDK.
  * Uses a client-side ID (safe to embed — not a secret) to send
  * usage telemetry events. Respects VS Code telemetry settings.
  */
-class AnalyticsClient implements Disposable {
+export class AnalyticsClient implements Disposable {
 	private client: LDClient.LDClient | null = null;
 	private enabled = false;
 	private initPromise: Promise<void> | null = null;
+	private config: AnalyticsConfig | null;
+
+	constructor(config?: AnalyticsConfig | null) {
+		this.config = config ?? getConfigFromEnv();
+	}
 
 	async initialize(extensionVersion: string): Promise<void> {
-		console.log('env.isTelemetryEnabled', env.isTelemetryEnabled);
-		console.log('LD_ANALYTICS_CLIENT_ID', CLIENT_SIDE_ID);
-		console.log('LD_ANALYTICS_BASE_URL', BASE_URL);
-		console.log('LD_ANALYTICS_STREAM_URL', STREAM_URL);
-		console.log('LD_ANALYTICS_EVENTS_URL', EVENTS_URL);
-
-		if (!CLIENT_SIDE_ID || !BASE_URL || !STREAM_URL || !EVENTS_URL || !env.isTelemetryEnabled) {
+		if (!this.config || !env.isTelemetryEnabled) {
 			return;
 		}
 
@@ -44,10 +57,10 @@ class AnalyticsClient implements Disposable {
 				extensionVersion,
 			};
 
-			this.client = LDClient.initialize(CLIENT_SIDE_ID, context, {
-				baseUrl: BASE_URL,
-				streamUrl: STREAM_URL,
-				eventsUrl: EVENTS_URL,
+			this.client = LDClient.initialize(this.config.clientSideId, context, {
+				baseUrl: this.config.baseUrl,
+				streamUrl: this.config.streamUrl,
+				eventsUrl: this.config.eventsUrl,
 			});
 			await this.client.waitForInitialization();
 			this.enabled = true;
