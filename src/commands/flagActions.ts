@@ -92,10 +92,10 @@ export default function flagCmd(config: ILDExtensionConfiguration): Disposable {
 			ignoreFocusOut: true,
 		});
 		switch (selectedCommand?.label) {
-		case 'Quick Targeting':
-			analytics.track('quick-targeting-used', { flagKey: flagWindow.value });
-			await targetFlag(flagWindow, cache, config, flags);
-			break;
+			case 'Quick Targeting':
+				analytics.track('quick-targeting-used', { flagKey: flagWindow.value });
+				await targetFlag(flagWindow, cache, config, flags);
+				break;
 			case 'Reveal in Sidebar':
 				revealFlag(config, flagWindow.value);
 				break;
