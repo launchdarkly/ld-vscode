@@ -112,7 +112,7 @@ This is OFF by default. It can be enabled through Settings > LaunchDarkly Extens
 
 ### Dev Server Integration
 
-The extension integrates with the [LaunchDarkly CLI dev-server](https://launchdarkly.com/docs/guides/flags/ldcli-dev-server-reference) for local development and testing. When connected, the extension operates in a hybrid mode: it continues using your LaunchDarkly account for API calls and flag metadata while fetching flag values and streaming updates from the local dev-server.
+The extension allows for integrating with the [LaunchDarkly CLI dev-server](https://launchdarkly.com/docs/guides/flags/ldcli-dev-server-reference) for local development and testing. When connected, the extension operates in a hybrid mode: it continues using your LaunchDarkly account for API calls and flag metadata while fetching flag values and streaming updates from the local dev-server.
 
 #### Prerequisites
 
@@ -134,7 +134,7 @@ The status bar will display a dev-server indicator when connected. If the dev-se
 
 #### Features when connected
 
-- **Live flag values**: The Feature Flag Explorer shows flag values from the dev-server instead of LaunchDarkly cloud, updated in real-time via streaming.
+- **Local flag values**: The Feature Flag Explorer shows flag values from the dev-server instead of LaunchDarkly cloud, updated in real-time via streaming.
 - **Override management**: Set or remove flag value overrides directly from the extension. Right-click any flag in the explorer and select "Set Dev Server Override" to choose from available variations or enter a custom value. Overridden flags are marked with a visual indicator.
 - **Hover and Code Lens**: Hover tooltips and Flag Lens annotations reflect dev-server values and indicate when a flag is overridden.
 - **Automatic reconnection**: If the extension was previously connected to the dev-server, it will attempt to reconnect on startup.
