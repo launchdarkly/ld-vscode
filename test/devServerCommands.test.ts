@@ -31,10 +31,7 @@ suite('DevServer override command guards', () => {
 		await setDevServerOverride(instance(mockConfig), 'test-flag');
 
 		assert.ok(showErrorStub.calledOnce, 'showErrorMessage should be called');
-		assert.ok(
-			showErrorStub.calledWith('Not connected to dev-server'),
-			'Should show "Not connected" message',
-		);
+		assert.ok(showErrorStub.calledWith('Not connected to dev-server'), 'Should show "Not connected" message');
 	});
 
 	test('setDevServerOverride shows error when provider exists but disabled', async () => {
@@ -86,18 +83,14 @@ suite('DevServer context key in package.json when clauses', () => {
 	let packageJson: any;
 
 	setup(async () => {
-		const pkgUri = vscode.Uri.file(
-			require('path').resolve(__dirname, '..', 'package.json'),
-		);
+		const pkgUri = vscode.Uri.file(require('path').resolve(__dirname, '..', 'package.json'));
 		const doc = await vscode.workspace.openTextDocument(pkgUri);
 		packageJson = JSON.parse(doc.getText());
 	});
 
 	test('setDevServerOverride menu entry requires devServerConnected context', () => {
 		const viewItemContextMenus = packageJson.contributes.menus['view/item/context'];
-		const setOverrideEntry = viewItemContextMenus.find(
-			(m: any) => m.command === 'launchdarkly.setDevServerOverride',
-		);
+		const setOverrideEntry = viewItemContextMenus.find((m: any) => m.command === 'launchdarkly.setDevServerOverride');
 
 		assert.ok(setOverrideEntry, 'setDevServerOverride should exist in view/item/context');
 		assert.ok(
@@ -121,9 +114,7 @@ suite('DevServer context key in package.json when clauses', () => {
 
 	test('setDevServerOverride is hidden from command palette when disconnected', () => {
 		const paletteEntries = packageJson.contributes.menus.commandPalette;
-		const setOverrideEntry = paletteEntries.find(
-			(m: any) => m.command === 'launchdarkly.setDevServerOverride',
-		);
+		const setOverrideEntry = paletteEntries.find((m: any) => m.command === 'launchdarkly.setDevServerOverride');
 
 		assert.ok(setOverrideEntry, 'setDevServerOverride should have a commandPalette entry');
 		assert.ok(
@@ -134,9 +125,7 @@ suite('DevServer context key in package.json when clauses', () => {
 
 	test('removeDevServerOverride is hidden from command palette when disconnected', () => {
 		const paletteEntries = packageJson.contributes.menus.commandPalette;
-		const removeOverrideEntry = paletteEntries.find(
-			(m: any) => m.command === 'launchdarkly.removeDevServerOverride',
-		);
+		const removeOverrideEntry = paletteEntries.find((m: any) => m.command === 'launchdarkly.removeDevServerOverride');
 
 		assert.ok(removeOverrideEntry, 'removeDevServerOverride should have a commandPalette entry');
 		assert.ok(
