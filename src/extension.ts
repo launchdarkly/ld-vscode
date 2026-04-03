@@ -15,6 +15,10 @@ import * as semver from 'semver';
 import { SetWorkspaceCmd } from './commands/setWorkspaceEnabled';
 import { CMD_LD_CONFIG, CMD_LD_SIGNIN, CMD_LD_SIGNOUT } from './utils/commands';
 import { ILaunchDarklyAuthenticationSession } from './models';
+import { connectDevServerCommand, disconnectDevServerCommand } from './commands/connectDevServer';
+import { createDevServerStatusBar, updateDevServerStatusBar } from './devServerStatusBar';
+import { DevServerProvider } from './providers/devServerProvider';
+import { analytics } from './analytics';
 
 export async function activate(ctx: ExtensionContext): Promise<void> {
 	const storedVersion = ctx.globalState.get('version', '5.0.0');
@@ -76,6 +80,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 
 				LDExtConfig.setSession(session);
 				await LDExtConfig.getConfig().reload();
+				analytics.track('user-signed-in');
 
 				if (!(await LDExtConfig.getConfig().isConfigured())) {
 					window
@@ -112,6 +117,7 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 			);
 
 			if (confirmSignOut === 'Sign Out') {
+				analytics.track('user-signed-out');
 				await authProv.removeSession(LDExtConfig.getSession()?.id);
 				LDExtConfig.setSession(null);
 				commands.executeCommand('setContext', 'launchdarkly:isSignedIn', false);
@@ -127,7 +133,20 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 			await extensionReload(LDExtConfig);
 		}
 	});
+
+	// Register dev-server commands
+	LDExtConfig.getCtx().subscriptions.push(
+		connectDevServerCommand(LDExtConfig),
+		disconnectDevServerCommand(LDExtConfig),
+	);
+
+	// Create dev-server status bar item
+	const devServerStatusBar = createDevServerStatusBar();
+	LDExtConfig.getCtx().subscriptions.push(devServerStatusBar);
+	updateDevServerStatusBar(LDExtConfig);
+
 	LDExtConfig.setApi(new LaunchDarklyAPI(LDExtConfig.getConfig(), LDExtConfig));
+	LDExtConfig.setDevServerProvider(new DevServerProvider(LDExtConfig));
 	if (validationError !== 'unconfigured') {
 		LDExtConfig.setFlagStore(new FlagStore(LDExtConfig));
 	}
@@ -168,8 +187,98 @@ export async function activate(ctx: ExtensionContext): Promise<void> {
 	} catch (err) {
 		console.log(err);
 	}
+
+	// Initialize analytics (non-blocking — failures are silently ignored)
+	const extensionVersion = ctx.extension?.packageJSON?.version ?? 'unknown';
+	ctx.subscriptions.push(analytics);
+	analytics.initialize(extensionVersion).then(() => {
+		analytics.track('extension-activated');
+	});
+
+	// Attempt to auto-reconnect to dev-server if it was previously connected
+	await attemptDevServerReconnect(LDExtConfig);
+}
+
+/**
+ * Attempt to reconnect to dev-server if it was previously connected
+ */
+async function attemptDevServerReconnect(config: LDExtensionConfiguration): Promise<void> {
+	// Check if dev-server was previously enabled
+	if (!config.getConfig().isDevServerEnabled()) {
+		return;
+	}
+
+	const devServerUri = config.getConfig().getDevServerUri();
+
+	try {
+		// Check if dev-server is available
+		const devServerProvider = config.getDevServerProvider();
+		const isAvailable = await devServerProvider?.getApi().isAvailable();
+
+		if (isAvailable) {
+			// Successfully connected, reload flag store
+			if (config.getFlagStore()) {
+				await config.getFlagStore().reload();
+			}
+			// Refresh dev-server data
+			await devServerProvider?.refresh();
+			// Update status bar and context
+			updateDevServerStatusBar(config);
+			commands.executeCommand('setContext', 'launchdarkly:devServerConnected', true);
+			console.log(`Successfully reconnected to dev-server at ${devServerUri}`);
+		} else {
+			// Dev-server is not available
+			await handleDevServerConnectionFailure(config, devServerUri);
+		}
+	} catch (err) {
+		console.error(`Error attempting to reconnect to dev-server: ${err}`);
+		await handleDevServerConnectionFailure(config, devServerUri);
+	}
+}
+
+/**
+ * Handle dev-server connection failure
+ */
+async function handleDevServerConnectionFailure(config: LDExtensionConfiguration, devServerUri: string): Promise<void> {
+	const selection = await window.showWarningMessage(
+		`Could not connect to dev-server at ${devServerUri}. Is the dev-server running?`,
+		'Retry',
+		'Disconnect',
+		'Dismiss',
+	);
+
+	switch (selection) {
+		case 'Retry':
+			// Retry the connection
+			await attemptDevServerReconnect(config);
+			break;
+		case 'Disconnect':
+			// Disconnect from dev-server
+			await config.getConfig().setDevServerEnabled(false);
+			config.getDevServerProvider()?.clearCache();
+			if (config.getFlagStore()) {
+				await config.getFlagStore().reload();
+			}
+			updateDevServerStatusBar(config);
+			commands.executeCommand('setContext', 'launchdarkly:devServerConnected', false);
+			window.showInformationMessage('Disconnected from dev-server.');
+			break;
+		case 'Dismiss':
+		default:
+			// Disable dev-server mode so the UI doesn't show a false "connected" state
+			await config.getConfig().setDevServerEnabled(false);
+			config.getDevServerProvider()?.clearCache();
+			if (config.getFlagStore()) {
+				await config.getFlagStore().reload();
+			}
+			updateDevServerStatusBar(config);
+			commands.executeCommand('setContext', 'launchdarkly:devServerConnected', false);
+			console.log('User dismissed dev-server reconnection prompt — dev-server disabled');
+			break;
+	}
 }
 
 export async function deactivate(): Promise<void> {
+	await analytics.dispose();
 	global.ldContext.flagStore && global.ldContext.flagStore.stop();
 }

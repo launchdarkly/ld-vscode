@@ -648,6 +648,42 @@ export interface IFlagAliases {
 	start(): Promise<void>;
 }
 
+export interface IDevServerProvider {
+	getApi(): { isAvailable(): Promise<boolean> };
+	isConnected(): boolean;
+	refresh(): Promise<boolean>;
+	clearCache(): void;
+	getFlagsRecord(): Record<string, { key: string; value: unknown }> | null;
+	getFlag(flagKey: string):
+		| {
+				flag: {
+					key: string;
+					value: string | number | boolean | object;
+					version: number;
+					variations: { id: string; name: string; description: string; value: string | number | boolean | object }[];
+				};
+				isOverridden: boolean;
+				override?: { value: unknown; version: number; variation?: number };
+		  }
+		| undefined;
+	getFlagValue(flagKey: string): unknown | undefined;
+	isOverridden(flagKey: string): boolean;
+	getOverriddenFlags(): string[];
+	setOverride(flagKey: string, value: unknown): Promise<boolean>;
+	removeOverride(flagKey: string): Promise<boolean>;
+	syncProject(): Promise<boolean>;
+
+	// Events
+	onDidRefresh: EventEmitter<void>;
+	onDidConnect: EventEmitter<void>;
+	onDidDisconnect: EventEmitter<void>;
+
+	// Additional accessors
+	getProject(): unknown | null;
+	getAllFlags(): Map<string, unknown>;
+	getLastRefreshTime(): Date | null;
+}
+
 export interface ILDExtensionConfiguration {
 	getAliases(): IFlagAliases | undefined;
 	setAliases(aliases: IFlagAliases): void;
@@ -657,6 +693,8 @@ export interface ILDExtensionConfiguration {
 	setConfig(config: IConfiguration): void;
 	getCtx(): ExtensionContext;
 	setCtx(ctx: ExtensionContext): void;
+	getDevServerProvider(): IDevServerProvider | undefined;
+	setDevServerProvider(provider: IDevServerProvider): void;
 	getFlagStore(): IFlagStore | undefined;
 	setFlagStore(flagStore: IFlagStore): void;
 	getFlagTreeProvider(): TreeView<IFlagTree> | undefined;
@@ -707,6 +745,8 @@ export interface IConfiguration {
 	enableCodeLens: boolean;
 	baseUri: string;
 	streamUri?: string;
+	devServerUri: string;
+	devServerEnabled: boolean;
 	isConfigured(): Promise<boolean>;
 	clearLocalConfig(): Promise<void>;
 	clearGlobalConfig(): Promise<void>;
@@ -718,6 +758,9 @@ export interface IConfiguration {
 	update(key: string, value: string | boolean, global: boolean): Promise<void>;
 	validate(): Promise<string>;
 	validateRefreshInterval(interval: number): boolean;
+	setDevServerEnabled(enabled: boolean): Promise<void>;
+	isDevServerEnabled(): boolean;
+	getDevServerUri(): string;
 }
 
 export interface ILaunchDarklyReleaseProvider extends TreeDataProvider<TreeItem> {

@@ -41,6 +41,7 @@ The LaunchDarkly VS Code extension requires authentication using a **Personal Ac
 - [Quick Links](#quick-links) to LaunchDarkly
 - [Flags in File](#flags-in-file)
 - [Flag Lens](#flag-lens)
+- [Dev Server Integration](#dev-server-integration): connect to a local dev-server for local development and testing with local flag values and overrides
 
 Read our official documentation about this extension at <https://docs.launchdarkly.com/integrations/vscode>
 
@@ -108,6 +109,48 @@ __Flag Status__: Whether the flag is currently enabled or disabled.
 __Variation Information__: Which variation or value of the flag is currently being served.
 
 This is OFF by default. It can be enabled through Settings > LaunchDarkly Extension > Enable Flag Lens.
+
+### Dev Server Integration
+
+The extension allows for integrating with the [LaunchDarkly CLI dev-server](https://launchdarkly.com/docs/guides/flags/ldcli-dev-server-reference) for local development and testing. When connected, the extension operates in a hybrid mode: it continues using your LaunchDarkly account for API calls and flag metadata while fetching flag values and streaming updates from the local dev-server.
+
+#### Prerequisites
+
+Install the [LaunchDarkly CLI](https://launchdarkly.com/docs/home/getting-started/setting-up/quickstart#install-the-launchdarkly-cli) and start the dev-server:
+
+```bash
+ldcli dev-server
+```
+
+By default, the dev-server runs at `http://localhost:8765`. You can configure a custom URI in Settings > LaunchDarkly Extension > Dev Server URI.
+
+#### Connecting
+
+1. Open the Command Palette (`Cmd/Ctrl + Shift + P`)
+2. Run `LaunchDarkly: Connect to Dev Server`
+3. Confirm the URI or choose "Change URI" to enter a custom one
+
+The status bar will display a dev-server indicator when connected. If the dev-server becomes unavailable, the extension will prompt you to retry, disconnect, or dismiss.
+
+#### Features when connected
+
+- **Local flag values**: The Feature Flag Explorer shows flag values from the dev-server instead of LaunchDarkly cloud, updated in real-time via streaming.
+- **Override management**: Set or remove flag value overrides directly from the extension. Right-click any flag in the explorer and select "Set Dev Server Override" to choose from available variations or enter a custom value. Overridden flags are marked with a visual indicator.
+- **Hover and Code Lens**: Hover tooltips and Flag Lens annotations reflect dev-server values and indicate when a flag is overridden.
+- **Automatic reconnection**: If the extension was previously connected to the dev-server, it will attempt to reconnect on startup.
+
+#### Commands
+
+| Command | Description |
+|---------|-------------|
+| `LaunchDarkly: Connect to Dev Server` | Connect to a running dev-server instance |
+| `LaunchDarkly: Disconnect from Dev Server` | Disconnect and return to LaunchDarkly cloud values |
+| `LaunchDarkly: Set Dev Server Override` | Set a local override value for a flag (available when connected) |
+| `LaunchDarkly: Remove Dev Server Override` | Remove an existing override for a flag (available when connected) |
+
+#### Disconnecting
+
+Run `LaunchDarkly: Disconnect from Dev Server` from the Command Palette. Flag values will revert to those served by LaunchDarkly.
 
 ## Contributing
 

@@ -30,7 +30,12 @@ jobs:
       run: yarn build:setup
 
     - name: Setup xvfb
-      run: xvfb-run -a yarn run vscode:prepublish 
+      run: xvfb-run -a yarn run vscode:prepublish
+      env:
+        LD_ANALYTICS_CLIENT_ID: ${{ secrets.LD_ANALYTICS_CLIENT_ID }}
+        LD_ANALYTICS_BASE_URL: ${{ secrets.LD_ANALYTICS_BASE_URL }}
+        LD_ANALYTICS_STREAM_URL: ${{ secrets.LD_ANALYTICS_STREAM_URL }}
+        LD_ANALYTICS_EVENTS_URL: ${{ secrets.LD_ANALYTICS_EVENTS_URL }}
 
     - name: Run xvfb test
       run: xvfb-run -a yarn test

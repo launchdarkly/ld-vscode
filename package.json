@@ -105,6 +105,11 @@
 					"type": "string",
 					"default": "https://stream.launchdarkly.com",
 					"markdownDescription": "LaunchDarkly stream URI. Change only if you are using the Relay Proxy. [More information](https://docs.launchdarkly.com/home/advanced/relay-proxy/using)"
+				},
+				"launchdarkly.devServerUri": {
+					"type": "string",
+					"default": "http://localhost:8765",
+					"markdownDescription": "URI for the LaunchDarkly CLI dev-server. Used for local development and testing. [More information](https://launchdarkly.com/docs/guides/flags/ldcli-dev-server-reference)"
 				}
 			}
 		},
@@ -256,6 +261,24 @@
 			{
 				"command": "launchdarkly.signOut",
 				"title": "LaunchDarkly: Sign Out"
+			},
+			{
+				"command": "launchdarkly.connectDevServer",
+				"title": "LaunchDarkly: Connect to Dev Server"
+			},
+			{
+				"command": "launchdarkly.disconnectDevServer",
+				"title": "LaunchDarkly: Disconnect from Dev Server"
+			},
+			{
+				"command": "launchdarkly.setDevServerOverride",
+				"title": "LaunchDarkly: Set Dev Server Override",
+				"icon": "$(edit)"
+			},
+			{
+				"command": "launchdarkly.removeDevServerOverride",
+				"title": "LaunchDarkly: Remove Dev Server Override",
+				"icon": "$(close)"
 			}
 		],
 		"menus": {
@@ -312,11 +335,19 @@
 					"command": "launchdarkly.enableCodeLens",
 					"when": "false"
 				},
-				{
-					"command": "launchdarkly.setMaintainer",
-					"when": "false"
-				}
-			],
+			{
+				"command": "launchdarkly.setMaintainer",
+				"when": "false"
+			},
+			{
+				"command": "launchdarkly.setDevServerOverride",
+				"when": "launchdarkly:devServerConnected"
+			},
+			{
+				"command": "launchdarkly.removeDevServerOverride",
+				"when": "launchdarkly:devServerConnected"
+			}
+		],
 			"editor/context": [
 				{
 					"command": "launchdarkly.openInLaunchDarkly",
@@ -406,6 +437,16 @@
 					"command": "launchdarkly.openBrowser",
 					"when": "view == launchdarklyFeatureFlags && viewItem == flagViewBrowser",
 					"group": "inline"
+				},
+				{
+				"command": "launchdarkly.setDevServerOverride",
+				"when": "view == launchdarklyFeatureFlags && launchdarkly:devServerConnected && (viewItem == flagParentItem || viewItem == flagParentItemOverridden)",
+				"group": "devserver@1"
+				},
+				{
+				"command": "launchdarkly.removeDevServerOverride",
+				"when": "view == launchdarklyFeatureFlags && launchdarkly:devServerConnected && viewItem == flagParentItemOverridden",
+				"group": "devserver@2"
 				}
 			]
 		},
@@ -507,6 +548,7 @@
 		"@vscode/test-electron": "^2.3.8",
 		"chai": "^4.3.10",
 		"clean-webpack-plugin": "4.0.0",
+		"dotenv": "^17.3.1",
 		"eslint": "8.55.0",
 		"eslint-config-prettier": "9.1.0",
 		"expect": "^26.1.0",
@@ -532,13 +574,14 @@
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
 		"ajv": "^6.12.6",
-		"axios": "^1.12.0",
+		"axios": "1.13.5",
 		"axios-retry": "4.0.0",
 		"axios-retry-after": "2.0.0",
 		"csv-parser": "^2.3.3",
 		"form-data": "^4.0.4",
 		"gunzip-maybe": "^1.4.2",
 		"launchdarkly-api-typescript": "6.0.0",
+		"launchdarkly-node-client-sdk": "^3.3.1",
 		"lodash": "^4.17.23",
 		"lodash.debounce": "4.0.8",
 		"lodash.kebabcase": "4.1.1",

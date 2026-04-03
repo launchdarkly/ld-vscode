@@ -82,6 +82,43 @@ suite('provider utils tests', function () {
 		expect(generateHoverString(flag, flagConfig, ldConfig).value).toMatchSnapshot(resolveSrcTestPath(this));
 	});
 
+	test('generateHoverString with dev-server info', function () {
+		const result = generateHoverString(flag, flagConfig, ldConfig, {
+			value: false,
+			isOverridden: false,
+		});
+		assert.ok(result.value.includes('Dev Server Value'));
+		assert.ok(result.value.includes('false'));
+		assert.ok(!result.value.includes('(overridden)'));
+	});
+
+	test('generateHoverString with dev-server override', function () {
+		const result = generateHoverString(flag, flagConfig, ldConfig, {
+			value: 'custom-value',
+			isOverridden: true,
+		});
+		assert.ok(result.value.includes('Dev Server Value'));
+		assert.ok(result.value.includes('custom-value'));
+		assert.ok(result.value.includes('**(overridden)**'));
+	});
+
+	test('generateHoverString without dev-server info does not show dev server section', function () {
+		const result = generateHoverString(flag, flagConfig, ldConfig);
+		assert.ok(!result.value.includes('Dev Server Value'));
+	});
+
+	test('generateHoverString with dev-server boolean false shows value correctly', function () {
+		const offConfig = { ...flagConfig, on: false };
+		const result = generateHoverString(flag, offConfig, ldConfig, {
+			value: true,
+			isOverridden: true,
+		});
+		// Dev-server says true even though upstream LaunchDarkly says off
+		assert.ok(result.value.includes('Dev Server Value'));
+		assert.ok(result.value.includes('true'));
+		assert.ok(result.value.includes('**(overridden)**'));
+	});
+
 	test('isPrecedingCharStringDelimeter', async () => {
 		// TODO: generate the test data in this file
 		const uri = vscode.Uri.file(path.join(testPath, 'test.txt'));

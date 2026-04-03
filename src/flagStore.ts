@@ -82,12 +82,24 @@ export class FlagStore implements IFlagStore {
 			console.log(`Error getting flags ${err}`);
 		}
 		try {
-			const sdkKey = await this.getLatestSDKKey();
-			if (sdkKey === '' || !sdkKey.startsWith('sdk-')) {
-				throw new Error('SDK Key was empty was empty. Please reconfigure the plugin.');
+			let clientKey: string;
+
+			// Use project key for dev-server, SDK key for LaunchDarkly
+			if (this.config.getConfig().isDevServerEnabled()) {
+				clientKey = this.config.getConfig().project;
+				if (!clientKey) {
+					throw new Error('Project key is required to connect to dev-server. Please configure the extension.');
+				}
+			} else {
+				const sdkKey = await this.getLatestSDKKey();
+				if (sdkKey === '' || !sdkKey.startsWith('sdk-')) {
+					throw new Error('SDK Key was empty. Please reconfigure the plugin.');
+				}
+				clientKey = sdkKey;
 			}
+
 			const intldConfig = this.ldConfig();
-			const ldClient = (await init(sdkKey, intldConfig).waitForInitialization()) as LDClient; // Typescript was picking up the LDClient from JSCommon
+			const ldClient = (await init(clientKey, intldConfig).waitForInitialization()) as LDClient; // Typescript was picking up the LDClient from JSCommon
 			this.resolveLDClient(ldClient);
 			this.storeReady.fire(true);
 			if (this.config.getConfig().refreshRate) {
@@ -221,14 +233,27 @@ export class FlagStore implements IFlagStore {
 	}
 
 	private ldConfig(): LDOptions {
-		// Cannot replace in the config, so updating at call site.
-		const streamUri = this.config.getSession().fullUri.replace('app', 'stream');
 		const logger: LaunchDarkly.LDLogger = basicLogger({
 			level: 'error',
 		});
+
+		let baseUri: string;
+		let streamUri: string;
+
+		// Check if dev-server mode is enabled
+		if (this.config.getConfig().isDevServerEnabled()) {
+			const devServerUri = this.config.getConfig().getDevServerUri();
+			baseUri = devServerUri;
+			streamUri = devServerUri;
+		} else {
+			// Cannot replace in the config, so updating at call site.
+			baseUri = this.config.getSession().fullUri;
+			streamUri = baseUri.replace('app', 'stream');
+		}
+
 		const options: LDOptions = {
 			timeout: 5,
-			baseUri: this.config.getSession().fullUri,
+			baseUri: baseUri,
 			streamUri: streamUri,
 			sendEvents: false,
 			featureStore: this.store,

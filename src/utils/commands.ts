@@ -25,3 +25,7 @@ export const CMD_LD_CLEAR_GLOBAL_CTX = 'launchdarkly.clearGlobalContext';
 export const CMD_LD_FLAG_ACTION = 'launchdarkly.quickFlag';
 export const CMD_LD_SIGNOUT = 'launchdarkly.signOut';
 export const CMD_LD_MIGRATE_CONFIGURATION = 'launchdarkly.migrateConfiguration';
+export const CMD_LD_CONNECT_DEV_SERVER = 'launchdarkly.connectDevServer';
+export const CMD_LD_DISCONNECT_DEV_SERVER = 'launchdarkly.disconnectDevServer';
+export const CMD_LD_SET_DEV_SERVER_OVERRIDE = 'launchdarkly.setDevServerOverride';
+export const CMD_LD_REMOVE_DEV_SERVER_OVERRIDE = 'launchdarkly.removeDevServerOverride';
