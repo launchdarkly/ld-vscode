@@ -547,7 +547,7 @@
 		"request": "^2.34",
 		"rimraf": "^3.0.2",
 		"tar-fs": "^2.1.4",
-		"uuid": "^9.0.1"
+		"uuid": "^14.0.0"
 	},
 	"resolutions": {
 		"node.extend": "^1.1.7",
