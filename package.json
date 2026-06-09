@@ -531,7 +531,7 @@
 		"@launchdarkly/node-server-sdk": "^9.0.3",
 		"@types/lodash": "4.14.116",
 		"@types/opn": "5.1.0",
-		"ajv": "^6.12.6",
+		"ajv": "^6.14.0",
 		"axios": "^1.17.0",
 		"axios-retry": "4.0.0",
 		"axios-retry-after": "2.0.0",
@@ -547,7 +547,7 @@
 		"request": "^2.34",
 		"rimraf": "^3.0.2",
 		"tar-fs": "^2.1.4",
-		"uuid": "^9.0.1"
+		"uuid": "^14.0.0"
 	},
 	"resolutions": {
 		"node.extend": "^1.1.7",
@@ -555,7 +555,7 @@
 		"axios": "^1.17.0",
 		"braces": ">=3.0.3",
 		"picomatch": ">=2.3.2",
-		"fast-uri": ">=3.1.2",
+		"fast-uri": ">=4.0.0",
 		"flatted": ">=3.4.2",
 		"handlebars": ">=4.7.9",
 		"serialize-javascript": ">=7.0.3",
