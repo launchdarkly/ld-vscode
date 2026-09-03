@@ -369,7 +369,7 @@ export class LaunchDarklyAPI {
 			headers: {
 				Authorization: apiToken,
 				'User-Agent': 'VSCodeExtension/' + this.ldConfig.getCtx().extension.packageJSON.version,
-				'LD-API-Version': beta ? 'beta' : '20220603',
+				'LD-API-Version': beta ? 'beta' : '20240415',
 			},
 		};
 		if (params) {
