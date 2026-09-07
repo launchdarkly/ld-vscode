@@ -3,6 +3,12 @@
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
 
+## [6.2.1] - 2026-09-07
+
+### Fixed
+
+- Fixed the REST client sending an outdated `LD-API-Version` header; it now sends `20240415`. (#170)
+
 ## [6.2.0] - 2026-01-28
 
 ### Added
