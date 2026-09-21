@@ -111,24 +111,25 @@ This is OFF by default. It can be enabled through Settings > LaunchDarkly Extens
 
 ## Contributing
 
-LaunchDarkly for Visual Studio Code is an [open source project](https://github.com/launchdarkly/ld-vscode). If you experience any issues, please [log an issue on our issue tracker](https://github.com/launchdarkly/ld-vscode/issues). If you'd like to contribute, we're happily taking pull requests.
+LaunchDarkly for Visual Studio Code is an [open source project](https://github.com/launchdarkly/ld-vscode). If you experience any issues, please [log an issue on our issue tracker](https://github.com/launchdarkly/ld-vscode/issues). If you'd like to contribute, we're happily taking pull requests. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## Development
 
 ### Prerequisites
-- Node.js (version 18 or higher)
-- [Visual Studio Code](https://code.visualstudio.com/)
+- Node.js (version 22 or higher)
+- [Yarn](https://classic.yarnpkg.com/) v1
+- [Visual Studio Code](https://code.visualstudio.com/) v1.82+
 
 ### Getting Started
 
 **Install dependencies**
    ```bash
-   npm install
+   yarn
    ```
 
 **Build the extension**
    ```bash
-   npm run compile
+   yarn build:setup && yarn compile
    ```
 
 **Start debugging**
@@ -138,9 +139,10 @@ LaunchDarkly for Visual Studio Code is an [open source project](https://github.c
 
 ### Development Workflow
 
-- **Watch mode**: Run `npm run watch` to automatically recompile on file changes
-- **Testing**: Run `npm test` to execute the test suite
-- **Linting**: Run `npm run lint` to check code style
+- **Watch mode**: Run `yarn watch` to automatically recompile on file changes
+- **Testing**: Run `yarn pretest && yarn test` to execute the test suite
+- **Linting**: Run `yarn lint` to check code style
+- **Formatting**: Run `yarn run prettier:check` to verify code formatting
 
 ### Debugging
 
