@@ -90,6 +90,9 @@ export async function setupComponents(config: ILDExtensionConfiguration, reload 
 		if (config.getAliases().codeRefsVersionCheck()) {
 			config.getAliases().setupStatusBar();
 			await config.getAliases().start();
+			if (!workspace.isTrusted) {
+				config.getCtx().subscriptions.push(workspace.onDidGrantWorkspaceTrust(() => config.getAliases()?.start()));
+			}
 		} else {
 			window.showErrorMessage('ld-find-code-refs version > 2 supported.');
 		}
