@@ -2,7 +2,7 @@
 	"name": "launchdarkly",
 	"displayName": "LaunchDarkly",
 	"description": "Manage LaunchDarkly feature flags directly from within your code",
-	"version": "6.2.1",
+	"version": "6.2.2",
 	"publisher": "launchdarklyofficial",
 	"engines": {
 		"vscode": "^1.82.0"
@@ -17,6 +17,16 @@
 		"onStartupFinished"
 	],
 	"main": "./dist/extension",
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": "limited",
+			"description": "The Code References feature runs an external binary with workspace-provided paths and settings. It is disabled in untrusted workspaces.",
+			"restrictedConfigurations": [
+				"launchdarkly.project",
+				"launchdarkly.codeRefsPath"
+			]
+		}
+	},
 	"contributes": {
 		"icons": {
 			"launchdarkly-logo": {

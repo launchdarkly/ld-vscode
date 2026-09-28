@@ -2,6 +2,12 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [6.2.2] - 2026-09-28
+
+### Security
+
+- Fixed a command injection vulnerability in Code References alias generation. The `ld-find-code-refs` binary is now invoked with `execFile` and an argument array instead of a shell command string, so workspace-controlled values (`launchdarkly.project`, workspace folder paths) can no longer inject shell commands or expose `LD_ACCESS_TOKEN`.
+- Declared `untrustedWorkspaces` support as `limited`, restricting workspace values for `launchdarkly.project` and `launchdarkly.codeRefsPath` in Restricted Mode.
 
 ## [6.2.1] - 2026-09-07
 
@@ -16,26 +22,26 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 - Added "EU" as a first-class option in the instance picker during sign-in, making it easier for EU customers to connect to `app.eu.launchdarkly.com`
 
 ## [6.1.0] - 2025-12-05
+
 - Bumping major and minor version to address rogue published version that is not captured in our package.json
 
-
 ## [5.1.0] - 2025-09-01
- 
+
 ### Fixed
 
 - Bug with token validation
-- Updated broken quick link urls 
-- Upgraded failing dependencies 
+- Updated broken quick link urls
+- Upgraded failing dependencies
 
 ### Changed
 
 - Login flow
-- Better handling of invalid sessions 
+- Better handling of invalid sessions
 
-### Added 
+### Added
 
 - Ability to sign out of session
-- Custom error handling for failed authentication 
+- Custom error handling for failed authentication
 - Developement instructions into README
 
 ## [5.0.0] - 2024-02-06
@@ -46,10 +52,12 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 - Initial setup now recovers better if there's been a problem.
 
 ## Changed
+
 - Initial setup is now split into Sign in and Configuration.
 - Updated CLI version of Code References.
 
 ## Added
+
 - Code lens and hover now show SDK availability of a flag.
 - Sign via through AuthProvider API.
 - `LaunchDarkly: Flag Actions` command.
