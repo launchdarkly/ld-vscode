@@ -7,7 +7,7 @@ All notable changes to the "launchdarkly" extension will be documented in this f
 ### Security
 
 - Fixed a command injection vulnerability in Code References alias generation. The `ld-find-code-refs` binary is now invoked with `execFile` and an argument array instead of a shell command string, so workspace-controlled values (`launchdarkly.project`, workspace folder paths) can no longer inject shell commands or expose `LD_ACCESS_TOKEN`.
-- Declared `untrustedWorkspaces` support as `limited`, restricting workspace values for `launchdarkly.project` and `launchdarkly.codeRefsPath` in Restricted Mode.
+- Declared `untrustedWorkspaces` support as `limited`: Code References is disabled in untrusted workspaces, and workspace values for `launchdarkly.project` and `launchdarkly.codeRefsPath` are restricted in Restricted Mode.
 
 ## [6.2.1] - 2026-09-07
 
