@@ -38,9 +38,6 @@ export class FlagAliases {
 	aliases: Array<string>;
 
 	async start(): Promise<void> {
-		if (!workspace.isTrusted) {
-			return;
-		}
 		const intConfig = this.config?.getConfig();
 		if (intConfig && (await intConfig.isConfigured())) {
 			const aliasFile = await workspace.findFiles('.launchdarkly/coderefs.yaml');
@@ -143,7 +140,7 @@ export class FlagAliases {
 	}
 
 	async generateAndReadAliases(directory = workspace.workspaceFolders?.[0] ?? null): Promise<void> {
-		if (!workspace.isTrusted || !directory || !this.config.getSession()) {
+		if (!directory || !this.config.getSession()) {
 			return;
 		}
 		const refsDir = directory.uri.fsPath;
@@ -198,9 +195,6 @@ export class FlagAliases {
 	}
 
 	async codeRefsVersionCheck(): Promise<boolean> {
-		if (!workspace.isTrusted) {
-			return false;
-		}
 		try {
 			const codeRefsBin = await this.getCodeRefsBin();
 			if (!codeRefsBin) {
