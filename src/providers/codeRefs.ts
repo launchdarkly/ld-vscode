@@ -1,5 +1,5 @@
 import { EventEmitter, ExtensionContext, StatusBarAlignment, StatusBarItem, window, workspace } from 'vscode';
-import { exec, ExecOptions } from 'child_process';
+import { execFile, ExecOptions } from 'child_process';
 import { createReadStream } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -54,9 +54,9 @@ export class FlagAliases {
 		}
 	}
 
-	exec(command: string, options: ExecOptions): Promise<{ stdout: string; stderr: string }> {
+	exec(file: string, args: string[], options: ExecOptions): Promise<{ stdout: string; stderr: string }> {
 		return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-			exec(command, options, (error, stdout, stderr) => {
+			execFile(file, args, options, (error, stdout, stderr) => {
 				if (error) {
 					reject({ error, stdout: stdout.toString(), stderr: stderr.toString() });
 				}
@@ -110,8 +110,23 @@ export class FlagAliases {
 		const apiToken = legacyAuth() ? session.accessToken : `Bearer ${session.accessToken}`;
 		try {
 			const codeRefsBin = await this.getCodeRefsBin();
-			const command = `${codeRefsBin} --dir="${directory}" --dryRun --outDir="${outDir}" --projKey="${intConfig.project}" --repoName="${repoName}" --baseUri="${session.fullUri}" --contextLines=-1 --branch=scan --revision=0`;
-			const output = await this.exec(command, {
+			const args = [
+				'--dir',
+				directory,
+				'--dryRun',
+				'--outDir',
+				outDir,
+				'--projKey',
+				intConfig.project,
+				'--repoName',
+				repoName,
+				'--baseUri',
+				session.fullUri,
+				'--contextLines=-1',
+				'--branch=scan',
+				'--revision=0',
+			];
+			const output = await this.exec(codeRefsBin, args, {
 				env: { LD_ACCESS_TOKEN: apiToken, GOMAXPROCS: '1' },
 				timeout: 20 * 60000,
 			});
@@ -185,8 +200,7 @@ export class FlagAliases {
 			if (!codeRefsBin) {
 				return false;
 			}
-			const command = `${codeRefsBin} --version`;
-			const output = await this.exec(command, {});
+			const output = await this.exec(codeRefsBin, ['--version'], {});
 			if (output.stderr) {
 				window.showErrorMessage(output.stderr);
 				return false;

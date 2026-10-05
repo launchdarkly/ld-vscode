@@ -2,6 +2,11 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [6.2.2] - 2026-09-28
+
+### Security
+
+- Fixed a command injection vulnerability in Code References alias generation. The extension now runs `ld-find-code-refs` with `execFile` and an argument array instead of a shell command string. Values that come from the workspace, such as `launchdarkly.project` and the workspace folder path, can no longer run shell commands or read `LD_ACCESS_TOKEN`.
 
 ## [6.2.1] - 2026-09-07
 
