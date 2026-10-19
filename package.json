@@ -556,7 +556,7 @@
 		"picomatch": ">=2.3.2",
 		"fast-uri": ">=4.1.5",
 		"flatted": ">=3.4.2",
-		"handlebars": ">=4.7.9",
+		"handlebars": ">=4.7.10",
 		"serialize-javascript": ">=7.0.3",
 		"@xmldom/xmldom": ">=0.9.12",
 		"tar": ">=7.5.21",
