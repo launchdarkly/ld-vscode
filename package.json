@@ -523,7 +523,6 @@
 		"ts-loader": "^8.2.0",
 		"ts-mockito": "2.6.1",
 		"typescript": "^5.3.3",
-		"vscode-test": "^1.6.1",
 		"webpack": "^5.104.1",
 		"webpack-cli": "^4.6.0"
 	},
@@ -568,7 +567,6 @@
 		"form-data": ">=4.0.6",
 		"browserslist": ">=4.28.7",
 		"baseline-browser-mapping": ">=2.11.0",
-		"@tootallnate/once": "^2.0.1",
 		"uuid": "^11.1.1"
 	}
 }
