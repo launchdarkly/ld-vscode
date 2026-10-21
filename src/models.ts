@@ -640,7 +640,7 @@ export interface IFlagAliases {
 	aliasUpdates: EventEmitter<boolean | null>;
 	codeRefsVersionCheck(): Promise<boolean>;
 	setupStatusBar(): void;
-	exec(command: string, options: ExecOptions): Promise<{ stdout: string; stderr: string }>;
+	exec(file: string, args: string[], options: ExecOptions): Promise<{ stdout: string; stderr: string }>;
 	generateAndReadAliases(directory?: WorkspaceFolder): Promise<void>;
 	getListOfMapKeys(): Array<string> | undefined;
 	getMap(): Map<string, string> | undefined;

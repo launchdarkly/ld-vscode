@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, beta, prerelease ]
+    branches: [main, beta, prerelease]
     paths:
       - 'src/**'
       - 'package.json'
@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
         with:
-          fetch-depth: 2  # Need previous commit to compare versions
+          fetch-depth: 2 # Need previous commit to compare versions
 
       - name: Extract branch name
         shell: bash
@@ -52,7 +52,7 @@ jobs:
       - run: yarn run lint
       - name: Publish to Visual Studio Marketplace
         if: ${{ (steps.version_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.extract_branch.outputs.branch != 'prerelease' }}
-        uses: HaaLeo/publish-vscode-extension@v1.5.0
+        uses: HaaLeo/publish-vscode-extension@65512ae7dcf96159b51fdd7ed73eb17d5cacad33 # v1.5.0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
@@ -60,7 +60,7 @@ jobs:
 
       - name: Publish to Visual Studio Marketplace for pre-release
         if: ${{ (steps.version_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.extract_branch.outputs.branch == 'prerelease' }}
-        uses: HaaLeo/publish-vscode-extension@v1.5.0
+        uses: HaaLeo/publish-vscode-extension@65512ae7dcf96159b51fdd7ed73eb17d5cacad33 # v1.5.0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
@@ -69,7 +69,7 @@ jobs:
 
       - name: Publish to Open VSX Registry
         if: ${{ steps.version_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' }}
-        uses: HaaLeo/publish-vscode-extension@v0
+        uses: HaaLeo/publish-vscode-extension@aae4c55fd9e724685834ff0a9488ad57c8f3ecf1 # v0
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           yarn: true
