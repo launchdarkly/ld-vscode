@@ -52,7 +52,7 @@ jobs:
       - run: yarn run lint
       - name: Publish to Visual Studio Marketplace
         if: ${{ (steps.version_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.extract_branch.outputs.branch != 'prerelease' }}
-        uses: HaaLeo/publish-vscode-extension@65512ae7dcf96159b51fdd7ed73eb17d5cacad33 # v1.5.0
+        uses: HaaLeo/publish-vscode-extension@1b8df468b849f76a143b8c18bf0ffa2075398d12 # v2.1.0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
@@ -60,7 +60,7 @@ jobs:
 
       - name: Publish to Visual Studio Marketplace for pre-release
         if: ${{ (steps.version_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch') && steps.extract_branch.outputs.branch == 'prerelease' }}
-        uses: HaaLeo/publish-vscode-extension@65512ae7dcf96159b51fdd7ed73eb17d5cacad33 # v1.5.0
+        uses: HaaLeo/publish-vscode-extension@1b8df468b849f76a143b8c18bf0ffa2075398d12 # v2.1.0
         with:
           pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           registryUrl: https://marketplace.visualstudio.com
@@ -69,7 +69,7 @@ jobs:
 
       - name: Publish to Open VSX Registry
         if: ${{ steps.version_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' }}
-        uses: HaaLeo/publish-vscode-extension@aae4c55fd9e724685834ff0a9488ad57c8f3ecf1 # v0
+        uses: HaaLeo/publish-vscode-extension@1b8df468b849f76a143b8c18bf0ffa2075398d12 # v2.1.0
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           yarn: true
