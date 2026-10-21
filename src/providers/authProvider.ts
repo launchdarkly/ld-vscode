@@ -14,7 +14,7 @@ import {
 	window,
 	workspace,
 } from 'vscode';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'crypto';
 import { PromiseAdapter, promiseFromEvent } from '../utils/common';
 import fetch from 'node-fetch';
 import { ILaunchDarklyAuthenticationSession, Member, Team } from '../models';
@@ -127,7 +127,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 			);
 
 			const session: ILaunchDarklyAuthenticationSession = {
-				id: uuid(),
+				id: randomUUID(),
 				accessToken: access_token,
 				refreshToken: refresh_token,
 				account: {
@@ -194,7 +194,7 @@ export class LaunchDarklyAuthenticationProvider implements AuthenticationProvide
 				cancellable: true,
 			},
 			async (_, token) => {
-				const stateId = uuid();
+				const stateId = randomUUID();
 				this._pendingStates.push(stateId);
 				const scopeString = scopes.join(' ');
 				const instances: QuickPickItem[] = [
