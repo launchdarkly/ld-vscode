@@ -2,6 +2,16 @@
 
 All notable changes to the "launchdarkly" extension will be documented in this file.
 
+## [6.2.3] - 2026-10-22
+
+### Security
+
+- Updated dependencies to resolve open Dependabot security alerts, including `axios`, `form-data`, `tar-fs`, `follow-redirects`, and `http-cache-semantics`. (#175, #182, #184)
+
+### Changed
+
+- Replaced the `uuid` package with Node's built-in `crypto.randomUUID()` for generating authentication session and state IDs. (#183)
+
 ## [6.2.2] - 2026-09-28
 
 ### Security
