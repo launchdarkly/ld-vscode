@@ -508,7 +508,7 @@
 		"chai": "^4.3.10",
 		"clean-webpack-plugin": "4.0.0",
 		"eslint": "8.55.0",
-		"eslint-config-prettier": "9.1.0",
+		"eslint-config-prettier": "10.1.8",
 		"expect": "^26.1.0",
 		"expect-mocha-snapshot": "2.1.5",
 		"glob": "7.2.0",
