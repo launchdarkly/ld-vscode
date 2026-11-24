@@ -562,7 +562,7 @@
 		"micromatch": ">=4.0.8",
 		"qs": ">=6.16.0",
 		"ip-address": ">=10.5.1",
-		"follow-redirects": ">=1.16.1",
+		"follow-redirects": "1.16.2",
 		"form-data": ">=4.0.6",
 		"browserslist": ">=4.28.7",
 		"baseline-browser-mapping": ">=2.11.0",
