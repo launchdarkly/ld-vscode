@@ -570,6 +570,6 @@
 		"**/@typescript-eslint/typescript-estree/minimatch": "11.0.1",
 		"**/@vscode/test-cli/minimatch": "11.0.1",
 		"**/c8/test-exclude/minimatch": "11.0.1",
-		"**/mocha/minimatch": "11.0.1"
+		"**/@vscode/test-cli/mocha/minimatch": "11.0.1"
 	}
 }

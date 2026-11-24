@@ -1,5 +1,6 @@
 import { strict as assert } from 'assert';
 import { createRequire } from 'module';
+import { resolve } from 'path';
 
 suite('Minimatch tooling', () => {
 	test('keeps file matching available to the test runner, coverage and linter', () => {
@@ -14,5 +15,17 @@ suite('Minimatch tooling', () => {
 			assert.equal(minimatch('test/providers.test.ts', 'test/*.test.ts'), true);
 			assert.equal(minimatch('src/extension.ts', 'test/*.test.ts'), false);
 		}
+	});
+
+	test('honors ignore patterns in the standalone Mocha runner', () => {
+		const mocha = createRequire(require.resolve('mocha'));
+		const collectFiles = mocha('./lib/cli/collect-files');
+		const included = resolve(__dirname, 'minimatchTooling.test.js');
+		const excluded = resolve(__dirname, 'providers.test.js');
+
+		assert.deepEqual(
+			collectFiles({ spec: [included, excluded], extension: ['js'], file: [], ignore: ['**/providers.test.js'] }).files,
+			[included],
+		);
 	});
 });
