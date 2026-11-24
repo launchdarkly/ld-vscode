@@ -569,6 +569,6 @@
 		"uuid": "^14.0.3",
 		"**/@vscode/test-cli/glob": "14.0.2",
 		"**/c8/test-exclude/glob": "14.0.2",
-		"**/mocha/glob": "14.0.2"
+		"**/@vscode/test-cli/mocha/glob": "14.0.2"
 	}
 }
